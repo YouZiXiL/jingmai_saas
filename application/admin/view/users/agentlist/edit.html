@@ -1,0 +1,319 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Username')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-username" class="form-control" name="row[username]" type="text" value="{$row.username|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Nickname')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-nickname" class="form-control" name="row[nickname]" type="text" value="{$row.nickname|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Password')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-password" class="form-control" name="row[password]" type="text" value="{$row.password|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Salt')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-salt" class="form-control" name="row[salt]" type="text" value="{$row.salt|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Avatar')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <div class="input-group">-->
+<!--                <input id="c-avatar" class="form-control" size="50" name="row[avatar]" type="text" value="{$row.avatar|htmlentities}">-->
+<!--                <div class="input-group-addon no-border no-padding">-->
+<!--                    <span><button type="button" id="faupload-avatar" class="btn btn-danger faupload" data-input-id="c-avatar" data-mimetype="image/gif,image/jpeg,image/png,image/jpg,image/bmp,image/webp" data-multiple="false" data-preview-id="p-avatar"><i class="fa fa-upload"></i> {:__('Upload')}</button></span>-->
+<!--                    <span><button type="button" id="fachoose-avatar" class="btn btn-primary fachoose" data-input-id="c-avatar" data-mimetype="image/*" data-multiple="false"><i class="fa fa-list"></i> {:__('Choose')}</button></span>-->
+<!--                </div>-->
+<!--                <span class="msg-box n-right" for="c-avatar"></span>-->
+<!--            </div>-->
+<!--            <ul class="row list-inline faupload-preview" id="p-avatar"></ul>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Email')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-email" class="form-control" name="row[email]" type="text" value="{$row.email|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Mobile')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-mobile" class="form-control" name="row[mobile]" type="text" value="{$row.mobile|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Loginfailure')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-loginfailure" data-rule="required" min="0" class="form-control" name="row[loginfailure]" type="number" value="{$row.loginfailure|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Logintime')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-logintime" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[logintime]" type="text" value="{:$row.logintime?datetime($row.logintime):''}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Loginip')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-loginip" class="form-control" name="row[loginip]" type="text" value="{$row.loginip|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Token')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-token" class="form-control" name="row[token]" type="text" value="{$row.token|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_shouzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_shouzhong" class="form-control" step="0.01" name="row[agent_shouzhong]" type="number" value="{$row.agent_shouzhong|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_xuzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_xuzhong" class="form-control" step="0.01" name="row[agent_xuzhong]" type="number" value="{$row.agent_xuzhong|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_db_ratio')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_db_ratio" class="form-control" step="0.01" name="row[agent_db_ratio]" type="number" value="{$row.agent_db_ratio|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_sf_ratio')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_sf_ratio" class="form-control" step="0.01" name="row[agent_sf_ratio]" type="number" value="{$row.agent_sf_ratio|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_jd_ratio')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_jd_ratio" class="form-control" step="0.01" name="row[agent_jd_ratio]" type="number" value="{$row.agent_jd_ratio|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Users_shouzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-users_shouzhong" data-rule="required" class="form-control" step="0.01" name="row[users_shouzhong]" type="number" value="{$row.users_shouzhong|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Users_xuzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-users_xuzhong" data-rule="required" class="form-control" step="0.01" name="row[users_xuzhong]" type="number" value="{$row.users_xuzhong|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Users_shouzhong_ratio')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-users_shouzhong_ratio" data-rule="required" class="form-control" step="0.01" name="row[users_shouzhong_ratio]" type="number" value="{$row.users_shouzhong_ratio|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Zizhu')}:</label>
+        <div class="col-xs-12 col-sm-8">
+                        
+            <select  id="c-zizhu" data-rule="required" class="form-control selectpicker" name="row[zizhu]">
+                {foreach name="zizhuList" item="vo"}
+                    <option value="{$key}" {in name="key" value="$row.zizhu"}selected{/in}>{$vo}</option>
+                {/foreach}
+            </select>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Zhonghuo')}:</label>
+        <div class="col-xs-12 col-sm-8">
+                        
+            <select  id="c-zhonghuo" data-rule="required" class="form-control selectpicker" name="row[zhonghuo]">
+                {foreach name="zhonghuoList" item="vo"}
+                    <option value="{$key}" {in name="key" value="$row.zhonghuo"}selected{/in}>{$vo}</option>
+                {/foreach}
+            </select>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Coupon')}:</label>
+        <div class="col-xs-12 col-sm-8">
+                        
+            <select  id="c-coupon" data-rule="required" class="form-control selectpicker" name="row[coupon]">
+                {foreach name="couponList" item="vo"}
+                    <option value="{$key}" {in name="key" value="$row.coupon"}selected{/in}>{$vo}</option>
+                {/foreach}
+            </select>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Qudao_close')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-qudao_close" class="form-control" name="row[qudao_close]" type="text" value="{$row.qudao_close|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('City_close')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-city_close" class="form-control" name="row[city_close]" type="text" value="{$row.city_close|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_guanzhu')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-wx_guanzhu" class="form-control" name="row[wx_guanzhu]" type="text" value="{$row.wx_guanzhu|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Qywx_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-qywx_id" data-source="qywx/index" class="form-control selectpage" name="row[qywx_id]" type="text" value="{$row.qywx_id|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Kf_url')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-kf_url" class="form-control" name="row[kf_url]" type="text" value="{$row.kf_url|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_title')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-wx_title" class="form-control" name="row[wx_title]" type="text" value="{$row.wx_title|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Ordtips')}:</label>
+        <div class="col-xs-12 col-sm-8">
+                        
+            <select  id="c-ordtips" data-rule="required" class="form-control selectpicker" name="row[ordtips]">
+                {foreach name="ordtipsList" item="vo"}
+                    <option value="{$key}" {in name="key" value="$row.ordtips"}selected{/in}>{$vo}</option>
+                {/foreach}
+            </select>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Ordtips_title')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-ordtips_title" class="form-control" name="row[ordtips_title]" type="text" value="{$row.ordtips_title|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Ordtips_cnt')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-ordtips_cnt" class="form-control" name="row[ordtips_cnt]" type="text" value="{$row.ordtips_cnt|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Zhongguo_tips')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-zhongguo_tips" class="form-control" name="row[zhongguo_tips]" type="text" value="{$row.zhongguo_tips|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Button_txt')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-button_txt" class="form-control" name="row[button_txt]" type="text" value="{$row.button_txt|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Order_tips')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-order_tips" class="form-control" name="row[order_tips]" type="text" value="{$row.order_tips|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Bujiao_tips')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-bujiao_tips" class="form-control" name="row[bujiao_tips]" type="text" value="{$row.bujiao_tips|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Banner')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-banner" class="form-control" name="row[banner]" type="text" value="{$row.banner|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Add_tips')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-add_tips" class="form-control" name="row[add_tips]" type="text" value="{$row.add_tips|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Share_tips')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-share_tips" class="form-control" name="row[share_tips]" type="text" value="{$row.share_tips|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Share_pic')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-share_pic" class="form-control" name="row[share_pic]" type="text" value="{$row.share_pic|htmlentities}">
+        </div>
+    </div>
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_mchid')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-wx_mchid" class="form-control" name="row[wx_mchid]" type="text" value="{$row.wx_mchid|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_mchprivatekey')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-wx_mchprivatekey" class="form-control" name="row[wx_mchprivatekey]" type="text" value="{$row.wx_mchprivatekey|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_mchcertificateserial')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-wx_mchcertificateserial" class="form-control" name="row[wx_mchcertificateserial]" type="text" value="{$row.wx_mchcertificateserial|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_platformcertificate')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <textarea id="c-wx_platformcertificate" class="form-control " rows="5" name="row[wx_platformcertificate]" cols="50">{$row.wx_platformcertificate|htmlentities}</textarea>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_serial_no')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-wx_serial_no" class="form-control" name="row[wx_serial_no]" type="text" value="{$row.wx_serial_no|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Yy_trance')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-yy_trance" class="form-control" name="row[yy_trance]" type="number" value="{$row.yy_trance|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Amount')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-amount" data-rule="required" class="form-control" step="0.01" name="row[amount]" type="number" value="{$row.amount|htmlentities}">-->
+<!--        </div>-->
+<!--    </div>-->
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>

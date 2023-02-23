@@ -1,0 +1,134 @@
+<form id="detail-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Tag_type')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-tag_type" class="form-control" readonly  type="text" value="{$row.tag_type|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group {$row.waybill ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Waybill')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-waybill" class="form-control" readonly  type="text" value="{$row.waybill|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('下单用户')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-users_mobile" class="form-control" readonly  type="text" value="{$row.users_mobile|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group {$row.channel ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('渠道名称')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-channel" class="form-control" readonly  type="text" value="{$row.channel|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Sender')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-sender" class="form-control" readonly  type="text" value="{$row.sender|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Sender_mobile')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-sender_mobile" class="form-control" readonly  type="text" value="{$row.sender_mobile|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Sender_address')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-sender_address" class="form-control" readonly  type="text" value="{$row.sender_address|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Receiver')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-receiver" class="form-control" readonly type="text" value="{$row.receiver|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Receiver_mobile')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-receiver_mobile" class="form-control" readonly  type="text" value="{$row.receiver_mobile|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Receive_address')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-receive_address" class="form-control" readonly  type="text" value="{$row.receive_address|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group {$row.cancel_time ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Cancel_time')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-cancel_time" readonly class="form-control" data-date-format="YYYY-MM-DD HH:mm:ss" type="text" value="{:$row.cancel_time?datetime($row.cancel_time):''}">
+    </div>
+  </div>
+
+  <div class="form-group {$row.yy_fail_reason ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('失败原因')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <textarea id="c-yy_fail_reason" readonly class="form-control" cols="30">{$row.yy_fail_reason|htmlentities}</textarea>
+    </div>
+  </div>
+
+  <div class="form-group {$row.insured ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Insured')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-insured" class="form-control" readonly  type="number" value="{$row.insured|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group {$row.bill_remark ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Bill_remark')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-bill_remark" class="form-control" readonly  type="text" value="{$row.bill_remark|htmlentities}">
+    </div>
+  </div>
+
+  <div class="form-group {$row.final_weight_time ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Final_weight_time')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-final_weight_time" readonly class="form-control" data-date-format="YYYY-MM-DD HH:mm:ss" type="text" value="{:$row.final_weight_time?datetime($row.final_weight_time):''}">
+    </div>
+  </div>
+  <div class="form-group {$row.consume_time ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Consume_time')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-consume_time" readonly class="form-control" data-date-format="YYYY-MM-DD HH:mm:ss" type="text" value="{:$row.consume_time?datetime($row.consume_time):''}">
+    </div>
+  </div>
+  <div class="form-group {$row.vloum_long ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Vloum_long')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-vloum_long" class="form-control" readonly  type="number" value="{$row.vloum_long|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group {$row.vloum_width ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Vloum_width')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-vloum_width" class="form-control" readonly  type="number" value="{$row.vloum_width|htmlentities}">
+    </div>
+  </div>
+  <div class="form-group {$row.vloum_height ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Vloum_height')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-vloum_height" class="form-control" readonly  type="number" value="{$row.vloum_height|htmlentities}">
+    </div>
+  </div>
+
+  <div class="form-group {$row.item_pic ? '' : 'hidden'}">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Item_pic')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <img decoding="async" src="{$row.item_pic|htmlentities}" class="img-thumbnail"/>
+    </div>
+  </div>
+
+
+  <div class="hide layer-footer">
+    <label class="control-label col-xs-12 col-sm-2"></label>
+    <div class="col-xs-12 col-sm-8">
+      <button type="reset" class="btn btn-primary btn-embossed btn-close" onclick="Layer.closeAll();">{:__('Close')}</button>
+    </div>
+  </div>
+</form>

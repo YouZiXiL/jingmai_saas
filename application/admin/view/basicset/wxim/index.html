@@ -1,0 +1,19 @@
+<form id="wxim-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label for="wx_im_bot" class="control-label col-xs-12 col-sm-2">企业微信机器人链接:</label>
+        <div class="col-xs-12 col-sm-4 ">
+            <input type="text"  class="form-control" id="wx_im_bot" name="row[wx_im_bot]" autocomplete="off" value="{$row.wx_im_bot}"  />
+            <div class="text-success" style="">用于通知企业微信群</div>
+        </div>
+    </div>
+
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,52 @@
+<form id="pay-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+
+    <div class="form-group">
+        <label for="wx_mchid" class="control-label col-xs-12 col-sm-2">微信商户ID:</label>
+        <div class="col-xs-12 col-sm-4 ">
+            <input type="text"   class="form-control" id="wx_mchid" name="row[wx_mchid]" autocomplete="off" value="{$row.wx_mchid}"  />
+            <div class="text-primary" style="">进入微信商户平台->商户信息->基本信息->商户号</div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="wx_mchprivatekey" class="control-label col-xs-12 col-sm-2">微信支付密钥:</label>
+        <div class="col-xs-12 col-sm-4 ">
+            <input type="text"  class="form-control" id="wx_mchprivatekey" name="row[wx_mchprivatekey]" autocomplete="off" value="{$row.wx_mchprivatekey}"  />
+            <div class="text-primary" style="">进入微信商户平台->API安全->API密钥</div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="wx_mchcertificateserial" class="control-label col-xs-12 col-sm-2">微信证书序列号:</label>
+        <div class="col-xs-12 col-sm-4 ">
+            <input type="text"  class="form-control" id="wx_mchcertificateserial" name="row[wx_mchcertificateserial]" autocomplete="off" value="{$row.wx_mchcertificateserial}"  />
+            <div class="text-primary" style="">进入微信商户平台->API安全->管理证书</div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="wx_platformcertificate" class="control-label col-xs-12 col-sm-2">微信证书密钥:</label>
+        <div class="col-xs-12 col-sm-4 ">
+            <textarea id="wx_platformcertificate" name="row[wx_platformcertificate]" class="form-control" cols="30" rows="5">{$row.wx_platformcertificate}</textarea>
+            <div class="text-primary" style="">打开证书文件apiclient_key.pem，复制内容</div>
+        </div>
+    </div>
+
+    <div class="form-group hidden">
+        <label for="wx_serial_no" class="control-label col-xs-12 col-sm-2">微信平台序列号:</label>
+        <div class="col-xs-12 col-sm-4 ">
+            <input type="text"  class="form-control" id="wx_serial_no" name="row[wx_serial_no]" autocomplete="off" value="{$row.wx_serial_no}"  />
+        </div>
+    </div>
+
+
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>

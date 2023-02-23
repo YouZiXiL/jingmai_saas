@@ -1,0 +1,70 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Name')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-name" class="form-control" name="row[name]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Head_pic')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-head_pic" class="form-control" name="row[head_pic]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Is_auth')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-is_auth" class="form-control" name="row[is_auth]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_auth')}:</label>
+        <div class="col-xs-12 col-sm-8">
+                        
+            <select  id="c-wx_auth" class="form-control selectpicker" name="row[wx_auth]">
+                {foreach name="wxAuthList" item="vo"}
+                    <option value="{$key}" {in name="key" value="微信认证"}selected{/in}>{$vo}</option>
+                {/foreach}
+            </select>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Yuanshi_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-yuanshi_id" data-rule="required" data-source="yuanshi/index" class="form-control selectpage" name="row[yuanshi_id]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Body_name')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-body_name" class="form-control" name="row[body_name]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Auth_type')}:</label>
+        <div class="col-xs-12 col-sm-8">
+                        
+            <select  id="c-auth_type" class="form-control selectpicker" name="row[auth_type]">
+                {foreach name="authTypeList" item="vo"}
+                    <option value="{$key}" {in name="key" value=""}selected{/in}>{$vo}</option>
+                {/foreach}
+            </select>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('App_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-app_id" data-rule="required" data-source="app/index" class="form-control selectpage" name="row[app_id]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
