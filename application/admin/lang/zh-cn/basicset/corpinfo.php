@@ -24,7 +24,7 @@ return [
     'Users_shouzhong'         => '用户首重价格￥',
     'Users_xuzhong'           => '用户续重价格￥',
     'Users_shouzhong_ratio'   => '用户首重增加比例%',
-    'Zizhu'                   => 'H5自助取消订单',
+    'Zizhu'                   => '自助取消订单',
     'Zhonghuo'                => '重货渠道',
     'Coupon'                  => '优惠券营销',
     'Qudao_close'             => '关闭渠道',

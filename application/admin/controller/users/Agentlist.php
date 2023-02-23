@@ -30,7 +30,10 @@ class Agentlist extends Backend
     {
         parent::_initialize();
         $this->model = new \app\admin\model\users\Agentlist;
-
+        $this->view->assign("zizhuList", $this->model->getZizhuList());
+        $this->view->assign("zhonghuoList", $this->model->getZhonghuoList());
+        $this->view->assign("couponList", $this->model->getCouponList());
+        $this->view->assign("ordtipsList", $this->model->getOrdtipsList());
     }
 
 
