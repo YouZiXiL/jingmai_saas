@@ -245,7 +245,7 @@ class Wxcallback extends Controller
         }else{
             $res=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token='.$authorization_info['authorizer_access_token']);
             $res=json_decode($res,true);
-            
+
             if (!array_key_exists('template_list',$res)){
                 exit('获取消息模版失败');
             }
@@ -668,6 +668,7 @@ class Wxcallback extends Controller
             }
 
             $Common=new Common();
+            $Dbcommmon= new Dbcommom();
             $content=[
                 'channelId'=> $orders['channel_id'],
                 'channelTag'=>$orders['channel_tag'],
@@ -720,7 +721,7 @@ class Wxcallback extends Controller
 
                 if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
                     //推送企业微信消息
-                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders['out_trade_no']);
+                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders['out_trade_no'],$orders['sender'],$orders['sender_mobile']);
                 }
 
             }else{
@@ -733,7 +734,7 @@ class Wxcallback extends Controller
                     'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                     'pay_status'=>1,
                 ];
-                $Dbcommmon= new Dbcommom();
+
                 $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
             }
             db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($updata);

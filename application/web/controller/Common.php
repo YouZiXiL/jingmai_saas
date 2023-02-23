@@ -31,7 +31,7 @@ class Common
         ];
         $res=$this->httpRequest('https://api.yunyangwl.com/api/wuliu/openService',$data ,'POST');
 
-       return json_decode($res,true);
+        return json_decode($res,true);
 
 
 
@@ -184,13 +184,13 @@ class Common
     function wx_pay($merchantId,$merchantCertificateSerial){
 
         // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
-                $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$merchantId.'.pem');
-                $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+        $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$merchantId.'.pem');
+        $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
         // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
-                $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$merchantId.'.pem');
-                $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+        $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$merchantId.'.pem');
+        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
         // 从「微信支付平台证书」中获取「证书序列号」
-                $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
+        $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
         // 构造一个 APIv3 客户端实例
 
         return Builder::factory([
@@ -247,12 +247,17 @@ class Common
      * @param $order_sn
      * @return void
      */
-    function wxim_bot($wx_im_bot,$order_sn){
+    function wxim_bot($wx_im_bot,$order_sn,$sender,$sender_mobile){
         $common=new Common();
-        $common->httpRequest($wx_im_bot,[
-            'msgtype'=>'markdown',
+        $common->httpRequest($wx_im_bot,['msgtype'=>'markdown',
             'markdown'=>[
-                'content'=>'>商户订单号:'.PHP_EOL.'<font color="info">'.$order_sn.'</font>'.PHP_EOL.' <font color="comment">已取消</font>'
+                'content'=>'>商户订单号:'.PHP_EOL.
+                    '<font color="info">'.$order_sn.'</font>'.PHP_EOL.
+                    '发件人:'.PHP_EOL.
+                    '<font color="warning">'.$sender.'</font>'.PHP_EOL.
+                    '发件人手机号:'.PHP_EOL.
+                    '<font color="warning">'.$sender_mobile.'</font>'.PHP_EOL.
+                    ' <font color="comment">已取消</font>'
             ]
         ],'POST');
     }

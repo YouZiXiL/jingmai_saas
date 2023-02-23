@@ -10,6 +10,7 @@ use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\Exception;
 use think\exception\DbException;
+use think\Log;
 use think\Request;
 use think\response\Json;
 use WeChatPay\Crypto\Rsa;
@@ -209,7 +210,9 @@ class Yunyang extends Controller
             !empty($param['vloum_height']) &&($content['vloumHeight'] = $param['vloum_height']);
             $agent_info=db('admin')->field('agent_shouzhong,agent_xuzhong,agent_db_ratio,agent_sf_ratio,agent_jd_ratio,users_shouzhong,users_xuzhong,users_shouzhong_ratio,qudao_close')->where('id',$this->user->agent_id)->find();
             $data=$this->common->yunyang_api('CHECK_CHANNEL_INTELLECT',$content);
+            Log::log(json_encode($data).PHP_EOL.json_encode($content));
             if ($data['code']!=1){
+                Log::error(json_encode($data).PHP_EOL.json_encode($content).PHP_EOL);
                 return json(['status'=>400,'data'=>'','msg'=>$data['message']]);
             }
             $qudao_close=explode('|', $agent_info['qudao_close']);
@@ -676,7 +679,7 @@ class Yunyang extends Controller
         }
         db('orders')->where('id',$id)->where('user_id',$this->user->id)->update(['cancel_time'=>time()]);
         if (!empty($agent_info['wx_im_bot'])&&$row['weight']>=3){
-            $this->common->wxim_bot($agent_info['wx_im_bot'],$row['out_trade_no']);
+            $this->common->wxim_bot($agent_info['wx_im_bot'],$row['out_trade_no'],$row['sender'],$row['sender_mobile']);
         }
         return json(['status'=>200,'data'=>'','msg'=>'取消成功']);
     }
