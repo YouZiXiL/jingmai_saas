@@ -108,7 +108,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 {
                                     name: 'uploads_app',
                                     text: function (row) {
-                                            if (row.xcx_audit==='5'){
+                                            if (row.xcx_audit==='5'||row.xcx_audit==='3'){
                                                 return '更新代码';
                                             }else{
                                                 return '上传代码';
@@ -140,6 +140,32 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                             return false;
                                         }else{
                                             return true;
+                                        }
+
+                                    }
+                                }, {
+                                    name: 'audit_app',
+                                    text: __('审核代码'),
+                                    title: __('审核代码'),
+                                    classname: 'btn btn-xs btn-success btn-magic btn-ajax',
+                                    icon: 'fa fa-magic',
+                                    url: 'wxauth/authlist/audit_app',
+                                    confirm: '确认审核代码',
+                                    success: function (data, ret) {
+                                        table.bootstrapTable('refresh');
+                                        Layer.alert(ret.msg);
+                                        //如果需要阻止成功提示，则必须使用return false;
+                                        return false;
+                                    },
+                                    error: function (data, ret) {
+                                        Layer.alert(ret.msg);
+                                        return false;
+                                    },
+                                    visible: function (row) {
+                                        if (row.xcx_audit==='3'){
+                                            return true;
+                                        }else{
+                                            return false;
                                         }
 
                                     }

@@ -202,7 +202,28 @@ class Authlist extends Backend
         if ($res['errcode']!=0){
             $this->error($res['errmsg']);
         }
+        $row->save(['xcx_audit'=>3,'user_version'=>$template_list['user_version']]);
+        $this->success('成功');
 
+    }
+
+    /**
+     * 审核代码
+     * @param $ids
+     * @return void
+     * @throws DbException
+     */
+    function audit_app($ids){
+        $row = $this->model->get($ids);
+        $common=new Common();
+
+        $xcx_access_token=$common->get_authorizer_access_token($row['app_id']);
+
+        $res=$common->httpRequest('https://api.weixin.qq.com/wxa/security/get_code_privacy_info?access_token='.$xcx_access_token);
+        $res=json_decode($res,true);
+        if ($res['errcode']!=0){
+            $this->error($res['errmsg']);
+        }
         $get_category=$common->httpRequest('https://api.weixin.qq.com/wxa/get_category?access_token='.$xcx_access_token);
         $get_category=json_decode($get_category,true);
         if ($get_category['errcode']!=0){
@@ -217,11 +238,9 @@ class Authlist extends Backend
         if ($res['errcode']!=0){
             $this->error($res['errmsg']);
         }
-        $row->save(['xcx_audit'=>4,'user_version'=>$template_list['user_version']]);
+        $row->save(['xcx_audit'=>4]);
         $this->success('成功');
-
     }
-
 
     function release_app($ids=null){
         $row = $this->model->get($ids);
