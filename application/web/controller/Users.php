@@ -4,9 +4,27 @@ namespace app\web\controller;
 
 use app\web\model\UserScoreLog;
 use think\Controller;
+use think\Exception;
 
 class Users extends Controller
 {
+    protected $user;
+    public function _initialize()
+    {
+
+        try {
+            $phpsessid=$this->request->header('phpsessid')??$this->request->header('PHPSESSID');
+            //file_put_contents('phpsessid.txt',$phpsessid.PHP_EOL,FILE_APPEND);
+            $session=cache($phpsessid);
+            if (empty($session)||empty($phpsessid)||$phpsessid==''){
+                throw new Exception('请先登录');
+            }
+            $this->user = (object)$session;
+            $this->common= new Common();
+        } catch (Exception $e) {
+            exit(json(['status' => 100, 'data' => '', 'msg' => $e->getMessage()])->send());
+        }
+    }
     public function checkinlist()
     {
         $datelist=[];
