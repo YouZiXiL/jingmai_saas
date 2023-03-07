@@ -269,6 +269,25 @@ class Users extends Controller
         return \json($data);
     }
 
+    //优惠券列表
+    public function getcouponlist(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $params=$this->request->param();
+        $page=$params["page"]??1;
+
+        //1、获得用户
+        $user_info= \app\web\model\Users::get($this->user->id);
+        $scorelist=$user_info->getcouponlist()->order("id","desc")->page($page,6)->select();
+        $data["data"]=$scorelist;
+
+        return \json($data);
+
+    }
+
     private function getinvitecode($length=3){
 
         $rootstr="ABCDEFGHJKLMNPQRSTUVWXYZAAYYACCAHAKA";
