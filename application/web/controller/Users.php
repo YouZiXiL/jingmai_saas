@@ -2,7 +2,11 @@
 
 namespace app\web\controller;
 
+use app\web\model\Agent_couponlist;
+use app\web\model\Cashserviceinfo;
 use app\web\model\Checkin;
+use app\web\model\Couponlist;
+use app\web\model\Rebatelist;
 use app\web\model\UserScoreLog;
 use think\Controller;
 use think\Exception;
@@ -10,6 +14,7 @@ use think\Exception;
 class Users extends Controller
 {
     protected $user;
+    protected $page_rows=10;
     public function _initialize()
     {
 
@@ -40,6 +45,7 @@ class Users extends Controller
         $user_detail["nickname"]=$user_info->nick_name;
         $user_detail["avatar"]=$user_info->avatar;
         $user_detail["money"]=number_format($user_info->money,2);
+        $user_detail["service_rate"]=0.08;//从商家服务表中获得 商家可自定义比例 建议8%
         if(!empty($user_info->myinvitecode))
             $user_detail["invitecode"]=$user_info->myinvitecode;
 
@@ -181,48 +187,55 @@ class Users extends Controller
     }
 
     //最终返回样式尚未确定 后期需修改
+    //返利明细
+    //返回用户信息
+    //返回信息：直推、间推 返佣金额、返佣时间 此接口查询的是余额明细 即未提取的金额明细
+    //建立一张返现表 添加邀请码列 便于分页
     public function rebateinfolist(){
         $data=[
             'status'=>200,
             'data'=>"",
             'msg'=>'Success'
         ];
+        $orders=[];
+        $params=$this->request->param();
+        $page=$params["page"]??1;
         //1、获得用户
         $user_info= \app\web\model\Users::get($this->user->id);
-        $allusers=$user_info->getallinviteusers();
-        $orders=[];
+        $rebate=new Rebatelist();
 
-
-        foreach ($allusers as $subuser){
-            if($subuser["invitercode"]==$user_info["myinvitecode"]){
-                $tag="直推收益";
-                $rate=0.05;//从代理商配置数据库中获得
-            }
-            else{
-                $tag="间推收益";
-                $rate=0.01;//从代理商配置数据库中获得
-            }
-            $subuserorders=$subuser->getrebates()->where("state","2")->where("cancel_time","null")->select();
-
-            if(!empty($subuserorders)){
-                foreach ($subuserorders as $subuserorder)
-                {
-                    $item["id"]=$subuserorder["id"];
-                    $item["user_id"]=$subuserorder["user_id"];
-                    //用户总付费+超重费用-超轻费用
-                    $item["final_price"]=($subuserorder["final_price"]+$subuserorder["payinback"])*$rate;
-
-                    $item["final_rebate"]=number_format($item["final_price"],2);
-
-                    $item["tag"]=$tag;
-                    array_push($orders,$item);
-
+        $userorders=$rebate->where("state","2")->where("cancel_time","null")->order("id","desc")->page($page,$this->page_rows)->where(function ($query) use($user_info){
+            $query->where("invitercode",$user_info->myinvitecode)->whereOr("fainvitercode",$user_info->myinvitecode);
+        })->select();
+        if(!empty($userorders)){
+            foreach ($userorders as $userorder)
+            {
+                if($userorder["invitercode"]==$user_info["myinvitecode"]){
+                    $tag="直推收益";
+                    $rate=0.05;//从代理商配置数据库中获得
                 }
+                else{
+                    $tag="间推收益";
+                    $rate=0.01;//从代理商配置数据库中获得
+                }
+
+                $item["id"]=$userorder["id"];
+                $item["user_id"]=$userorder["user_id"];
+                //用户总付费+超重费用-超轻费用
+                $item["final_price"]=($userorder["final_price"]+$userorder["payinback"])*$rate;
+
+                $item["final_rebate"]=number_format($item["final_price"],2);
+
+                $item["tag"]=$tag;
+                array_push($orders,$item);
+
             }
         }
+
         $data["data"]=$orders;
         return \json($data);
     }
+
 
     //获取邀请码以及邀请二维码
     public function rebate_code(){
@@ -269,7 +282,52 @@ class Users extends Controller
         return \json($data);
     }
 
+    //通过发放的券码 获得优惠券
+    public function couponbycode(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'兑换成功'
+        ];
+        $params=$this->request->param();
+        if(empty($params["code"])){
+            $data["msg"]="兑换失败X02";
+            $data["status"]=400;
+        }
+        else{
+            $code=$params["code"];
+            $couponinfo = Agent_couponlist::get(["papercode"=>$code,"state"=>1]);
+            if(empty($couponinfo)){
+                $data["msg"]="兑换失败X01";
+                $data["status"]=400;
+            }
+            else{
+
+//                return \json($couponinfo);
+
+                $usercoupon=new Couponlist();
+                $usercoupon->papercode=$couponinfo["papercode"];
+                $usercoupon->user_id=$this->user->id;
+                $usercoupon->gain_way=1;
+                $usercoupon->money=$couponinfo["money"];
+                $usercoupon->type=$couponinfo["type"];
+                $usercoupon->scene=$couponinfo["scene"];
+                $usercoupon->uselimits=$couponinfo["uselimits"];
+                $usercoupon->state=1;
+                $usercoupon->validdate=strtotime($couponinfo["validdatestart"]);
+                $usercoupon->validdateend=$couponinfo["validdateend"];
+                $usercoupon->createtime=time();
+                $usercoupon->updatetime=time();
+                $usercoupon->save();
+                $couponinfo->state=2;
+                $couponinfo->save();
+            }
+        }
+
+        return \json($data);
+    }
     //优惠券列表
+
     public function getcouponlist(){
         $data=[
             'status'=>200,
@@ -287,6 +345,76 @@ class Users extends Controller
         return \json($data);
 
     }
+
+
+    //提现(提交 真实姓名 支付宝账号等信息)
+    public function cashservice(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $params=$this->request->param();
+
+        //1、获取用户余额
+        $userinfo= \app\web\model\Users::get($this->user->id);
+        //2、获取商家提现手续费率
+        $rate=0.08;//应该从控制台设置获得
+
+        $balance=$userinfo->money;
+        if($userinfo->money<$params["money"]){
+            $data["status"]=400;
+            $data["msg"]="提交信息有误";
+        }
+        else{
+            if($rate!=$params["servicerate"]){
+                $data["status"]=400;
+
+                $data["msg"]="提交信息有误XX2";
+            }
+            else{
+                $cashservice=new Cashserviceinfo();
+                $cashservice->user_id=$userinfo->id;
+                $cashservice->balance=$balance;
+                $cashservice->cashout=$params["money"];
+                $cashservice->servicerate=$rate;
+                $cashservice->actualamount=number_format($params["money"]-$params["money"]*$rate,2);
+                $cashservice->realname=$params["realname"];
+                $cashservice->aliid=$params["alinum"];
+                $cashservice->state=1;
+                $cashservice->createtime=time();
+                $cashservice->updatetime=time();
+
+                $cashservice->save();
+
+                $userinfo->money-=$params["money"];
+                $userinfo->save();
+            }
+        }
+        $data["data"]=$params;
+
+        return \json($data);
+    }
+    //提现记录
+    public function cashoutlist(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $params=$this->request->param();
+        $page=$params["page"]??1;
+        $cashserviceinfo=new Cashserviceinfo();
+        $cashlist=$cashserviceinfo->field("balance,cashout,servicerate,actualamount,realname,aliid,state,createtime")->where(["user_id"=>$this->user->id])->order("id","desc")->page($page,$this->page_rows)->select();
+
+
+
+        $data["data"]=$cashlist;
+
+
+        return \json($data);
+    }
+
 
     private function getinvitecode($length=3){
 
