@@ -20,3 +20,16 @@
 3、商家赠送优惠券表 fa_agent_couponlist
     新建表
     商家生成优惠券码 用户用码兑换优惠券
+
+2023-3-10
+ 1、代理商开放优惠券表 fa_agent_couponmanager
+    新建表
+    代理商设置优惠券类型、价格等信息
+ 2、用户提现信息表  fa_cashserviceinfo
+    新建表
+    用来记录用户对返现金额的提现情况
+ 3、优惠券订单表 fa_couponorders
+    新建表
+    用来记录优惠券购买信息
+ 4、订单表 fa_orders
+    添加 couponid 字段 默认值未0 如果该字段非空表示 该笔订单使用优惠券了

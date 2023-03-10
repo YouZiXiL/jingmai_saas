@@ -262,7 +262,20 @@ class Common
         ],'POST');
     }
 
+    //指定长度的随机数
+    function getinvitecode($length=3){
 
+        $rootstr="ABCDEFGHJKLMNPQRSTUVWXYZAAYYACCAHAKA";
+        $rootlen=strlen($rootstr)-1;
+        $count=0;
+        $code="";
+        while ($count<$length){
+            $code.=substr($rootstr,rand(0,$rootlen),1);
+            $count++;
+        }
+
+        return $code;
+    }
 
 
 }

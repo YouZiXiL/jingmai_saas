@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\web\model\Agent_couponlist;
+use app\web\model\AgentCouponmanager;
 use app\web\model\Cashserviceinfo;
 use app\web\model\Checkin;
 use app\web\model\Couponlist;
@@ -10,6 +11,9 @@ use app\web\model\Rebatelist;
 use app\web\model\UserScoreLog;
 use think\Controller;
 use think\Exception;
+use think\Request;
+use WeChatPay\Crypto\Rsa;
+use WeChatPay\Formatter;
 
 class Users extends Controller
 {
@@ -415,6 +419,312 @@ class Users extends Controller
         return \json($data);
     }
 
+    //积分兑换
+    //1、判断积分是否足够
+    //2、判断是否有库存
+    //3、更新积分表、优惠券表
+    //4、同步到代理商发放的优惠券表
+
+    public function couponbyscore(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'兑换成功 积分 -100'
+        ];
+
+
+        $params=$this->request->param();
+        if(empty($params["score"])||empty($params["couponid"])){
+            $data["msg"]="兑换失败";
+            $data["status"]=400;
+            return \json($data);
+        }
+        $user_info= \app\web\model\Users::get($this->user->id);
+        $coupon_manager=AgentCouponmanager::get($params["couponid"]);
+        if( $user_info->score<$params["score"]){
+            $data["msg"]="积分不足";
+            $data["status"]=400;
+        }
+        else{
+
+            if(empty($coupon_manager)){
+                $data["msg"]="兑换失败0X01";
+                $data["status"]=400;
+            }
+            else{
+                if($coupon_manager["couponcount"]<=0){
+                    $data["msg"]="兑换失败 本轮活动已结束";
+                    $data["status"]=400;
+                    return \json($data);
+                }
+
+
+                $couponlist=new Couponlist();
+                $couponlistdata=[];//
+                $couponlistdataag=[];
+                $index=0;
+                $user_info->score-=$coupon_manager["score"];
+                $user_info->save();
+
+                $userscore=new UserScoreLog();
+                $userscore->user_id=$this->user->id;
+                $userscore->score=$coupon_manager["score"];
+                $userscore->before=$user_info->score+$coupon_manager["score"];
+                $userscore->after=$user_info->score;
+                $userscore->memo="兑换优惠券";
+                $userscore->createtime=time();
+                $userscore->save();
+
+                while ($index<$coupon_manager->conpon_group_count){
+
+                    $item["user_id"]=$this->user->id;
+                    $key ="JF-".$this->common->getinvitecode(5)."-".$this->common->getinvitecode(5)."-".$this->common->getinvitecode(5)."-".$this->common->getinvitecode(5)."-".$this->user->id.strtoupper(uniqid());//$params["agent_id"];
+
+                    $item["papercode"]=$key;
+                    $item["gain_way"]=$coupon_manager["gain_way"];
+                    $item["money"]=$coupon_manager["money"];
+                    $item["type"]=$coupon_manager["type"];
+                    $item["scene"]=$coupon_manager["scene"];
+                    $item["uselimits"]=$coupon_manager["uselimits"];
+                    $item["state"]=1;
+                    $item["validdate"]=strtotime(date("Y-m-d"));
+                    $item["validdateend"]=strtotime(date("Y-m-d "."23:59:59",strtotime("+".$coupon_manager["limitsday"]."day")));
+                    $item["createtime"]=time();
+                    $item["updatetime"]=time();
+                    array_push($couponlistdata,$item);
+
+                    $itemag=$item;
+                    $itemag["validdatestart"]=$item["validdate"];
+                    $itemag["state"]=2;
+                    $itemag = array_diff_key($itemag,["validdate"=>"ddd","user_id"=>"xx"]);
+                    array_push($couponlistdataag,$itemag);
+
+
+                    $index++;
+                }
+                $couponlist->saveAll($couponlistdata);
+                $agentcouponlist=new Agent_couponlist();
+                $agentcouponlist->saveAll($couponlistdataag);
+
+                $coupon_manager["couponcount"]-=1;
+
+                $coupon_manager->save();
+            }
+
+
+        }
+        return \json($data);
+    }
+
+    //超值购买优惠券
+    public function couponbymoney(){
+
+        $param=$this->request->param();
+
+
+
+        $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
+
+
+        if ($agent_info['status']=='hidden'){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户已禁止使用']);
+        }
+        if ($agent_info['agent_expire_time']<=time()){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户已过期']);
+        }
+        if (empty($agent_info['wx_mchid'])||empty($agent_info['wx_mchcertificateserial'])){
+            return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
+        }
+
+        $coupon_info=db('agent_couponmanager')->where('id',$param["coupon_id"])->find();
+        if(empty($coupon_info)){
+            return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
+        }
+
+        if ($coupon_info['gain_way']==4){
+            if($coupon_info['couponcount']<=0){
+                return json(['status'=>400,'data'=>'','msg'=>'本轮活动已结束']);
+            }
+        }
+        else{
+            return json(['status'=>400,'data'=>'','msg'=>'请重新刷新活动']);
+        }
+
+        $out_trade_no='CZ'.$this->common->get_uniqid();
+        $data=[
+            'user_id'=>$this->user->id,
+            'agent_id'=>$this->user->agent_id,
+            'coupon_id'=>$param["coupon_id"],
+
+            'price'=>$coupon_info['price'],
+            'wx_mchid'=>$agent_info['wx_mchid'],
+            'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+            'pay_status'=>0,
+
+            'create_time'=>time()
+        ];
+
+        $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+        $json=[
+            'mchid'        => $agent_info['wx_mchid'],
+            'out_trade_no' => $out_trade_no,
+            'appid'        => $this->user->app_id,
+            'description'  => '优惠券-'.$out_trade_no,
+            'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_couponorder_pay',//购买优惠券成功回调
+            'amount'       => [
+                'total'    =>(int)bcmul($coupon_info[price],100),
+                'currency' => 'CNY'
+            ],
+            'payer'        => [
+                'openid'   =>$this->user->open_id
+            ]
+        ];
+
+        try {
+            $resp = $wx_pay
+                ->chain('v3/pay/transactions/jsapi')
+                ->post(['json' =>$json]);
+
+
+            $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
+            $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+            //获取小程序通知模版
+
+            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template')->find();
+
+            $prepay_id=json_decode($resp->getBody(),true);
+            if (!array_key_exists('prepay_id',$prepay_id)){
+                throw new Exception('拉取支付错误');
+            }
+            $params = [
+                'appId'     => $this->user->app_id,
+                'timeStamp' => (string)Formatter::timestamp(),
+                'nonceStr'  => Formatter::nonce(),
+                'package'   =>'prepay_id='. $prepay_id['prepay_id'],
+            ];
+            $params += [
+                'paySign' => Rsa::sign(
+                    Formatter::joinedByLineFeed(...array_values($params)),
+                    $merchantPrivateKeyInstance),
+                'signType' => 'RSA',
+                'waybill_template'=>$template['waybill_template'],
+                'pay_template'=>$template['pay_template'],
+            ];
+
+            $inset=db('couponorders')->insert($data);
+            if (!$inset){
+                throw new Exception('插入数据失败');
+            }
+            return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
+        } catch (\Exception $e) {
+
+            file_put_contents('create_couponorders.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+
+            // 进行错误处理
+            return json(['status'=>400,'data'=>'','msg'=>'商户号配置错误,请联系管理员']);
+        }
+    }
+
+    //秒杀购买优惠券
+    public function couponbymoney_fast(){
+        $param=$this->request->param();
+
+        $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
+
+
+        if ($agent_info['status']=='hidden'){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户已禁止使用']);
+        }
+        if ($agent_info['agent_expire_time']<=time()){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户已过期']);
+        }
+        if (empty($agent_info['wx_mchid'])||empty($agent_info['wx_mchcertificateserial'])){
+            return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
+        }
+
+        $coupon_info=db('agent_couponmanager')->where('id',$param["coupon_id"])->find();
+        if(empty($coupon_info)){
+            return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
+        }
+        //超值购
+        if($coupon_info['gain_way']!=3){
+            return json(['status'=>400,'data'=>'','msg'=>'请重新刷新活动']);
+        }
+
+        $out_trade_no='MS'.$this->common->get_uniqid();
+        $data=[
+            'user_id'=>$this->user->id,
+            'agent_id'=>$this->user->agent_id,
+            'coupon_id'=>$param["coupon_id"],
+
+            'price'=>$coupon_info['price'],
+            'wx_mchid'=>$agent_info['wx_mchid'],
+            'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+            'pay_status'=>0,
+
+            'create_time'=>time()
+        ];
+
+        $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+        $json=[
+            'mchid'        => $agent_info['wx_mchid'],
+            'out_trade_no' => $out_trade_no,
+            'appid'        => $this->user->app_id,
+            'description'  => '优惠券-'.$out_trade_no,
+            'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_couponordermf_pay',//购买优惠券成功回调
+            'amount'       => [
+                'total'    =>(int)bcmul($coupon_info[price],100),
+                'currency' => 'CNY'
+            ],
+            'payer'        => [
+                'openid'   =>$this->user->open_id
+            ]
+        ];
+
+        try {
+            $resp = $wx_pay
+                ->chain('v3/pay/transactions/jsapi')
+                ->post(['json' =>$json]);
+
+
+            $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
+            $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+            //获取小程序通知模版
+
+            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template')->find();
+
+            $prepay_id=json_decode($resp->getBody(),true);
+            if (!array_key_exists('prepay_id',$prepay_id)){
+                throw new Exception('拉取支付错误');
+            }
+            $params = [
+                'appId'     => $this->user->app_id,
+                'timeStamp' => (string)Formatter::timestamp(),
+                'nonceStr'  => Formatter::nonce(),
+                'package'   =>'prepay_id='. $prepay_id['prepay_id'],
+            ];
+            $params += [
+                'paySign' => Rsa::sign(
+                    Formatter::joinedByLineFeed(...array_values($params)),
+                    $merchantPrivateKeyInstance),
+                'signType' => 'RSA',
+                'waybill_template'=>$template['waybill_template'],
+                'pay_template'=>$template['pay_template'],
+            ];
+
+            $inset=db('couponorders')->insert($data);
+            if (!$inset){
+                throw new Exception('插入数据失败');
+            }
+            return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
+        } catch (\Exception $e) {
+
+            file_put_contents('create_couponorders.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+
+            // 进行错误处理
+            return json(['status'=>400,'data'=>'','msg'=>'商户号配置错误,请联系管理员']);
+        }
+    }
 
     private function getinvitecode($length=3){
 

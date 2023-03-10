@@ -88,6 +88,14 @@ class Login extends Controller
                 $user_info['login_time']=$time;
                 $user_info['agent_id']=$agent_id;
                 $user_info['token']=$_3rd_session;
+                //如果携带邀请码登录
+                if(!empty($param["invitercode"])){
+                    $pauser=$user->get(["myinvitecode"=>$param["invitercode"]]);
+                    if(!empty($pauser)){
+                        $user_info["invitercode"]=$param["invitercode"];
+                        $user_info["fainvitercode"]=$pauser["invitercode"];
+                    }
+                }
                 $s=$user->save($user_info);
                 $user_id=$user->id;
 

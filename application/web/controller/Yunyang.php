@@ -5,6 +5,7 @@ namespace app\web\controller;
 
 use app\common\exception\UploadException;
 use app\common\library\Upload;
+use app\web\model\Couponlist;
 use think\Controller;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -451,7 +452,16 @@ class Yunyang extends Controller
         !empty($check_channel_intellect['vloum_long']) &&($data['vloum_long'] = $check_channel_intellect['vloumLong']);
         !empty($check_channel_intellect['vloum_width']) &&($data['vloum_width'] = $check_channel_intellect['vloum_width']);
         !empty($check_channel_intellect['vloum_height']) &&($data['vloum_height'] = $check_channel_intellect['vloum_height']);
-
+        $couponmoney=0;
+        if(!empty($param["couponid"])){
+            $couponinfo=Couponlist::get(["id"=>$param["couponid"],"state"=>1]);
+            if($check_channel_intellect['final_price']<$couponinfo["uselimits"]){
+                return json(['status'=>400,'data'=>'','msg'=>'优惠券信息错误']);
+            }
+            else{
+                $couponmoney=$couponinfo["money"];
+            }
+        }
         $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
         $json=[
             'mchid'        => $agent_info['wx_mchid'],
@@ -460,7 +470,7 @@ class Yunyang extends Controller
             'description'  => '快递下单-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_order_pay',
             'amount'       => [
-                'total'    =>(int)bcmul($check_channel_intellect['final_price'],100),
+                'total'    =>(int)bcmul($check_channel_intellect['final_price']-$couponmoney,100),
                 'currency' => 'CNY'
             ],
             'payer'        => [
@@ -498,11 +508,17 @@ class Yunyang extends Controller
                 'waybill_template'=>$template['waybill_template'],
                 'pay_template'=>$template['pay_template'],
             ];
-
+            if(!empty($couponinfo)){
+                $couponinfo["state"]=2;
+                $couponinfo->save();
+                //表示该笔订单使用了优惠券
+                $data["couponid"]=$param["couponid"];
+            }
             $inset=db('orders')->insert($data);
             if (!$inset){
                 throw new Exception('插入数据失败');
             }
+
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         } catch (\Exception $e) {
 
@@ -678,6 +694,14 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
         }
         db('orders')->where('id',$id)->where('user_id',$this->user->id)->update(['cancel_time'=>time()]);
+        // 退还优惠券
+        if(!empty($row["couponid"])){
+            $coupon=Couponlist::get($row["couponid"]);
+            if(!empty($coupon)){
+                $coupon["state"]=1;
+                $coupon->save();
+            }
+        }
         if (!empty($agent_info['wx_im_bot'])&&$row['weight']>=3){
             $this->common->wxim_bot($agent_info['wx_im_bot'],$row['out_trade_no'],$row['sender'],$row['sender_mobile']);
         }
