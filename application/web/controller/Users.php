@@ -23,6 +23,7 @@ class Users extends Controller
 
     protected $admin;
 
+    protected $common;
     public function _initialize()
     {
 
