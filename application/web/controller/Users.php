@@ -276,6 +276,22 @@ class Users extends Controller
             'data'=>"",
             'msg'=>'Success'
         ];
+
+        $params=$this->request->param();
+        if(empty($params["env_version"])){
+            $data["status"]=400;
+            $data["msg"]="请输入发布版本类型";
+            return json($data);
+        }
+        else{
+            if(!in_array($params["env_version"],["release","trial","develop"])){
+                $data["status"]=400;
+                $data["msg"]="env_version 值不规范";
+                return json($data);
+
+            }
+        }
+
         $currentuser= \app\web\model\Users::get($this->user->id);
 
         if(!empty($currentuser->myinvitecode) && $currentuser->myinvitecode<>'0'){
@@ -284,9 +300,26 @@ class Users extends Controller
             $currentuser->myinvitecode=$this->getinvitecode().substr($currentuser->mobile,-4);
             $currentuser->save();
         }
+        //获取小程序码
+        $url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=".$this->common->get_authorizer_access_token($params["app_id"]);
 
-        //未写获取小程序码 需加上获取小程序码
-
+//        $content=[
+//            "page"=>"pages/index/index",
+//            "scene"=>"myinvitecode=".$currentuser->myinvitecode,
+//            "check_path"=>true,
+//            "env_version"=>$params["env_version"]
+//        ];
+//        $url=$this->common->httpRequest($url,$content,"POST");
+//
+//        $json_obj=json_decode($url,true);
+//        if(!empty($json_obj["errcode"])){
+//            $data["status"]=400;
+//            $data["msg"]="错误类型: ".$json_obj["errcode"];
+//            return json($data);
+//        }
+//        else{
+//
+//        }
         $invitedata=[
             "code"=>$currentuser->myinvitecode,
             "url"=>""//小程序码链接
