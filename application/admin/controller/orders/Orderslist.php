@@ -6,12 +6,13 @@ use app\admin\model\users\Blacklist;
 use app\admin\model\users\Userslist;
 use app\common\controller\Backend;
 use app\web\controller\Common;
-use app\web\controller\Dbcommom;
+use app\web\controller\DoJob;
 use think\Db;
 use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
 use think\exception\ValidateException;
+use think\Queue;
 use think\response\Json;
 
 /**
@@ -246,8 +247,9 @@ class Orderslist extends Backend
                 'checkType'=>3,
             ];
             $data=$common->yunyang_api('AFTER_SALE',$content);
+
             if ($data['code']!=1){
-                $this->error($data['message']);
+                $this->error($data['result']);
             }
         }
 

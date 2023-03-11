@@ -169,14 +169,14 @@ class Yunyang extends Controller
 
             $param=$this->request->param();
             if($param['weight']<=0){
-                return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
+                throw new Exception('参数错误');
             }
             if (empty($param['channel_tag'])||($param['channel_tag']!='智能'&&$param['channel_tag']!='重货')){
-                return json(['status'=>400,'data'=>'','msg'=>'快递渠道错误']);
+                throw new Exception('快递渠道错误');
             }
             $bujiao=db('orders')->where('user_id',$this->user->id)->where('agent_id',$this->user->agent_id)->where('pay_status',1)->where('overload_status|consume_status',1)->find();
             if($bujiao){
-                return json(['status'=>400,'data'=>'','msg'=>'请先补缴欠费运单']);
+                throw new Exception('请先补缴欠费运单');
             }
             if (empty($param['insured'])){
                 $param['insured']=0;
@@ -184,7 +184,7 @@ class Yunyang extends Controller
             $jijian_address=db('users_address')->where('id',$param['jijian_id'])->find();
             $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
             if (empty($jijian_address)||empty($shoujian_address)){
-                return json(['status'=>400,'data'=>'','msg'=>'收件或寄件信息错误']);
+                throw new Exception('收件或寄件信息错误');
             }
             $content=[
                 'channelTag'=>$param['channel_tag'], // 智能|重货
@@ -211,16 +211,15 @@ class Yunyang extends Controller
             !empty($param['vloum_height']) &&($content['vloumHeight'] = $param['vloum_height']);
             $agent_info=db('admin')->field('agent_shouzhong,agent_xuzhong,agent_db_ratio,agent_sf_ratio,agent_jd_ratio,users_shouzhong,users_xuzhong,users_shouzhong_ratio,qudao_close')->where('id',$this->user->agent_id)->find();
             $data=$this->common->yunyang_api('CHECK_CHANNEL_INTELLECT',$content);
-            Log::log(json_encode($data).PHP_EOL.json_encode($content));
+
             if ($data['code']!=1){
-                Log::error(json_encode($data).PHP_EOL.json_encode($content).PHP_EOL);
-                return json(['status'=>400,'data'=>'','msg'=>$data['message']]);
+                throw new Exception('收件或寄件信息错误,请仔细填写');
             }
             $qudao_close=explode('|', $agent_info['qudao_close']);
             $arr=[];
             $time=time();
             foreach ($data['result'] as $k=>&$v){
-                if (in_array($v['tagType'],$qudao_close)){
+                if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
                     unset($data['result'][$k]);
                     continue;
                 }
@@ -311,7 +310,6 @@ class Yunyang extends Controller
                     $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
                 }else{
                     continue;
-                    //return json(['status'=>400,'data'=>'','msg'=>'没有指定快递渠道请联系管理员']);
                 }
 
                 $finalPrice=sprintf("%.2f",$users_price+$v['freightInsured']);//用户拿到的价格=用户运费价格+保价费
@@ -323,19 +321,14 @@ class Yunyang extends Controller
                 $v['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
                 $v['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                 $v['agent_price']=sprintf("%.2f",$agent_price+$v['freightInsured']);//代理商结算
-
                 $v['jijian_id']=$param['jijian_id'];//寄件id
                 $v['shoujian_id']=$param['shoujian_id'];//收件id
                 $v['weight']=$param['weight'];//重量
                 $v['package_count']=$param['package_count'];//包裹数量
-
-
                 !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价费用
                 !empty($param['vloum_long']) &&($v['vloumLong'] = $param['vloum_long']);//货物长度
                 !empty($param['vloum_width']) &&($v['vloumWidth'] = $param['vloum_width']);//货物宽度
                 !empty($param['vloum_height']) &&($v['vloumHeight'] = $param['vloum_height']);//货物高度
-
-
                 $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
                 $arr[$k]['final_price']=$finalPrice;
                 $arr[$k]['insert_id']=$insert_id;
@@ -343,12 +336,10 @@ class Yunyang extends Controller
             }
             $arrs=array_values($arr);
             if (empty($arrs)){
-                file_put_contents('check_channel_intellect.txt',json_encode($data).PHP_EOL.json_encode($content).PHP_EOL,FILE_APPEND);
-                return json(['status'=>400,'data'=>'','msg'=>'没有指定快递渠道请联系客服']);
+                throw new Exception('没有指定快递渠道请联系客服');
             }
             return json(['status'=>200,'data'=>$arrs,'msg'=>'成功']);
         }catch (\Exception $e){
-            file_put_contents('check_channel_intellect.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
     }
@@ -382,6 +373,11 @@ class Yunyang extends Controller
         if (!$info){
             return json(['status'=>400,'data'=>'','msg'=>'没有指定快递渠道']);
         }
+
+        if ($agent_info['amount']<=200){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
+        }
+
         $check_channel_intellect=json_decode($info['content'],true);
         if ($agent_info['amount']<$check_channel_intellect['agent_price']){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,无法下单']);
@@ -417,7 +413,7 @@ class Yunyang extends Controller
             'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
             'final_freight'=>0,//云洋最终运费
             'pay_status'=>0,
-            'order_status'=>'接单中',
+            'order_status'=>'派单中',
             'overload_price'=>0,//超重金额
             'agent_overload_price'=>0,//代理商超重金额
             'tralight_price'=>0,//超轻金额
@@ -518,7 +514,6 @@ class Yunyang extends Controller
             if (!$inset){
                 throw new Exception('插入数据失败');
             }
-
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         } catch (\Exception $e) {
 
@@ -703,7 +698,7 @@ class Yunyang extends Controller
             }
         }
         if (!empty($agent_info['wx_im_bot'])&&$row['weight']>=3){
-            $this->common->wxim_bot($agent_info['wx_im_bot'],$row['out_trade_no'],$row['sender'],$row['sender_mobile']);
+            $this->common->wxim_bot($agent_info['wx_im_bot'],$row);
         }
         return json(['status'=>200,'data'=>'','msg'=>'取消成功']);
     }
@@ -715,45 +710,31 @@ class Yunyang extends Controller
         // 获取表单上传文件 例如上传了001.jpg
         $id=$this->request->param('id');
         $file = $this->request->file('pic');
-        // 移动到框架应用根目录/public/uploads/ 目录下
-        if($file){
-            $info = $file->validate(['size'=>1024*1024*2,'ext'=>'jpg,png,jpeg,bmp,webp'])->move(ROOT_PATH . 'public' . DS . 'uploads');
-            if($info){
-                try {
-                    $imgInfo = getimagesize('uploads'.DS.$info->getSaveName());
-                    $suffix = strtolower(pathinfo($info->getFilename(), PATHINFO_EXTENSION));
-                    $suffix = $suffix && preg_match("/^[a-zA-Z0-9]+$/", $suffix) ? $suffix : 'file';
-                    //成功上传后 获取上传信息
-                    $params = array(
-                        'admin_id'    => $this->user->agent_id,
-                        'user_id'     => $this->user->id,
-                        'filename'    => $info->getFilename(),
-                        'filesize'    => $info->getSize(),
-                        'imagewidth'  => $imgInfo[0] ?? 0,
-                        'imageheight' => $imgInfo[1] ?? 0,
-                        'imagetype'   => $suffix,
-                        'imageframes' => 0,
-                        'mimetype'    => $info->getMime(),
-                        'url'         => DS . 'uploads'.DS.$info->getSaveName(),
-                        'uploadtime'  => time(),
-                        'storage'     => 'local',
-                        'sha1'        => $info->hash(),
-                        'extparam'    => '',
-                        'createtime'  => time()
-                    );
-                    db('attachment')->insert($params);
-                    db('orders')->where('id',$id)->update(['item_pic'=>$this->request->domain() . DS . 'uploads'.DS.$info->getSaveName()]);
-                    return json(['status'=>200,'data'=>'','msg'=>'上传成功']);
-                }catch (Exception $e){
-                    return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
-                }
-            }else{
-                // 上传失败获取错误信息
-                return json(['status'=>400,'data'=>'','msg'=>$file->getError()]);
-            }
-        }else{
-            return json(['status'=>400,'data'=>'','msg'=>'请上传图片']);
+        try {
+        if (empty($file)||empty($id)){
+            throw new Exception('参数错误');
         }
+        //判断图片字节 最大5M
+        if ($file->getSize()>5242880){
+            throw new Exception('图片不能超过5M');
+        }
+
+        $row=db('orders')->where('id',$id)->where('user_id',$this->user->id)->find();
+        if($row['pay_status']!=1){
+            throw new Exception('此订单已取消');
+        }
+            $upload = new Upload($file);
+            if (!in_array($upload->getSuffix(),['jpg','png','jpeg','bmp','webp'])){
+                throw new Exception('图片类型错误');
+            }
+            $attachment = $upload->upload();
+            db('orders')->where('id',$id)->update(['item_pic'=>$this->request->domain() . $attachment->url]);
+            return json(['status'=>200,'data'=>'','msg'=>'上传成功']);
+        }catch (Exception $e){
+            return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
+        }
+
+
     }
 
     /**
@@ -862,44 +843,18 @@ class Yunyang extends Controller
      */
     function user_info(): Json
     {
-
         $pamar=$this->request->param();
         $avatar=$this->request->file('avatar');
         if (!empty($avatar)&&!empty($pamar['nick_name'])){
-            $info = $avatar->validate(['size'=>1024*1024*2,'ext'=>'jpg,png,jpeg,bmp,webp'])->move(ROOT_PATH . 'public' . DS . 'uploads');
-            if($info){
-                try {
-                    $imgInfo = getimagesize('uploads'.DS.$info->getSaveName());
-                    $suffix = strtolower(pathinfo($info->getFilename(), PATHINFO_EXTENSION));
-                    $suffix = $suffix && preg_match("/^[a-zA-Z0-9]+$/", $suffix) ? $suffix : 'file';
-                    //成功上传后 获取上传信息
-                    $params = array(
-                        'admin_id'    => $this->user->agent_id,
-                        'user_id'     => $this->user->id,
-                        'filename'    => $info->getFilename(),
-                        'filesize'    => $info->getSize(),
-                        'imagewidth'  => $imgInfo[0] ?? 0,
-                        'imageheight' => $imgInfo[1] ?? 0,
-                        'imagetype'   => $suffix,
-                        'imageframes' => 0,
-                        'mimetype'    => $info->getMime(),
-                        'url'         => DS . 'uploads'.DS.$info->getSaveName(),
-                        'uploadtime'  => time(),
-                        'storage'     => 'local',
-                        'sha1'        => $info->hash(),
-                        'extparam'    => '',
-                        'createtime'  => time()
-                    );
-                    db('attachment')->insert($params);
-                    db('users')->where('id',$this->user->id)->update(['nick_name'=>$pamar['nick_name'],'avatar'=>$this->request->domain() . DS . 'uploads'.DS.$info->getSaveName()]);
-                    return json(['status'=>200,'data'=>'','msg'=>'成功']);
-                }catch (Exception $e){
-                    return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
-                }
-            }else{
-                // 上传失败获取错误信息
-                return json(['status'=>400,'data'=>'','msg'=>$avatar->getError()]);
+            $upload = new Upload($avatar);
+            $attachment = $upload->upload();
+            try {
+                db('users')->where('id',$this->user->id)->update(['nick_name'=>$pamar['nick_name'],'avatar'=>$this->request->domain().$attachment->url]);
+                return json(['status'=>200,'data'=>'','msg'=>'成功']);
+            }catch (Exception $e){
+                return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
             }
+
         }
         $users=db('users')->where('id',$this->user->id)->find();
         return json([
@@ -1013,94 +968,74 @@ class Yunyang extends Controller
     {
         $pamar=$this->request->param();
         $file = $this->request->file('pic');
+      try {
         if (empty($file)||empty($pamar['id'])||empty($pamar['salf_weight'])||empty($pamar['salf_volume'])||empty($pamar['salf_content'])||!is_string($pamar['salf_content'])){
-            return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
+                throw new Exception('参数错误');
         }
-
+        //判断图片字节 最大5M
+        if ($file->getSize()>5242880){
+                throw new Exception('图片不能超过5M');
+            }
         $orders=db('orders')->where('id',$pamar['id'])->where('user_id',$this->user->id)->find();
         if (!$orders){
-            return json(['status'=>400,'data'=>'','msg'=>'没有此订单']);
+            throw new Exception('没有此订单');
         }
         $after_sale=db('after_sale')->where('order_id',$pamar['id'])->where('user_id',$this->user->id)->find();
         if ($after_sale){
-            return json(['status'=>400,'data'=>'','msg'=>'不能重复反馈']);
+            throw new Exception('不能重复反馈');
         }
         if ($orders['pay_status']!=1){
-            return json(['status'=>400,'data'=>'','msg'=>'此订单不能反馈']);
+            throw new Exception('此订单已取消');
         }
-        // 移动到框架应用根目录/public/uploads/ 目录下
-        $info = $file->validate(['size'=>1024*1024*2,'ext'=>'jpg,png,jpeg,bmp,webp'])->move(ROOT_PATH . 'public' . DS . 'uploads');
-        if($info){
-            try {
-                $imgInfo = getimagesize('uploads'.DS.$info->getSaveName());
-                $suffix = strtolower(pathinfo($info->getFilename(), PATHINFO_EXTENSION));
-                $suffix = $suffix && preg_match("/^[a-zA-Z0-9]+$/", $suffix) ? $suffix : 'file';
-                //成功上传后 获取上传信息
-                $params = array(
-                    'admin_id'    => $this->user->agent_id,
-                    'user_id'     => $this->user->id,
-                    'filename'    => $info->getFilename(),
-                    'filesize'    => $info->getSize(),
-                    'imagewidth'  => $imgInfo[0] ?? 0,
-                    'imageheight' => $imgInfo[1] ?? 0,
-                    'imagetype'   => $suffix,
-                    'imageframes' => 0,
-                    'mimetype'    => $info->getMime(),
-                    'url'         => DS . 'uploads'.DS.$info->getSaveName(),
-                    'uploadtime'  => time(),
-                    'storage'     => 'local',
-                    'sha1'        => $info->hash(),
-                    'extparam'    => '',
-                    'createtime'  => time()
-                );
-                db('attachment')->insert($params);
-                $content=[
-                    'subType'=>'2',
-                    'waybill'=>$orders['waybill'],
-                    'checkGoodsName'=>$orders['item_name'],
-                    'checkWeight'=>$pamar['salf_weight'],
-                    'checkVolume'=>$pamar['salf_volume'],
-                    'checkPicOne'=>$this->request->domain().DS.'uploads'.DS.$info->getSaveName(),
-                ];
-                $data=$this->common->yunyang_api('AFTER_SALE',$content);
-                if ($data['code']!=1){
-                    throw new Exception($data['message']);
-                }
-
-                // 成功上传后 获取上传信息
-                // 输出 20160820/42a79759f284b767dfcb2a0197904287.jpg
-                db('after_sale')->insert([
-                    'order_id'=>$pamar['id'],
-                    'user_id'=>$this->user->id,
-                    'agent_id'=>$this->user->agent_id,
-                    'out_trade_no'=>$orders['out_trade_no'],
-                    'waybill'=>$orders['waybill'],
-                    'salf_type'=>1,
-                    'item_name'=>$orders['item_name'],
-                    'weight'=>$orders['weight'],
-                    'final_weight'=>$orders['final_weight'],
-                    'salf_content'=>$pamar['salf_content'],//反馈内容
-                    'salf_weight'=>$pamar['salf_weight'],//反馈重量
-                    'salf_volume'=>$pamar['salf_volume'],//反馈体积
-                    'sender'=>$orders['sender'],
-                    'sender_city'=>$orders['sender_city'],
-                    'receiver'=>$orders['receiver'],
-                    'receive_city'=>$orders['receive_city'],
-                    'cope_status'=>0,
-                    'salf_num'=>1,
-                    'op_type'=>1,//申诉人 0代理商 1用户
-                    'pic'=>$this->request->domain() . DS . 'uploads'.DS.$info->getSaveName(),
-                    'create_time'=>time(),
-                    'update_time'=>time(),
-                ]);
-                return json(['status'=>200,'data'=>'','msg'=>'提交成功']);
-            }catch (Exception $e){
-                return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
+          $upload = new Upload($file);
+          if (!in_array($upload->getSuffix(),['jpg','png','jpeg','bmp','webp'])){
+              throw new Exception('图片类型错误');
+          }
+        $attachment = $upload->upload();
+            $content=[
+                'subType'=>'2',
+                'waybill'=>$orders['waybill'],
+                'checkGoodsName'=>$orders['item_name'],
+                'checkWeight'=>$pamar['salf_weight'],
+                'checkVolume'=>$pamar['salf_volume'],
+                'checkPicOne'=>$this->request->domain().$attachment->url,
+            ];
+            $data=$this->common->yunyang_api('AFTER_SALE',$content);
+            if ($data['code']!=1){
+                throw new Exception($data['message']);
             }
-        }else{
-            // 上传失败获取错误信息
-            return json(['status'=>400,'data'=>'','msg'=>$file->getError()]);
+
+            // 成功上传后 获取上传信息
+            // 输出 20160820/42a79759f284b767dfcb2a0197904287.jpg
+            db('after_sale')->insert([
+                'order_id'=>$pamar['id'],
+                'user_id'=>$this->user->id,
+                'agent_id'=>$this->user->agent_id,
+                'out_trade_no'=>$orders['out_trade_no'],
+                'waybill'=>$orders['waybill'],
+                'salf_type'=>1,
+                'item_name'=>$orders['item_name'],
+                'weight'=>$orders['weight'],
+                'final_weight'=>$orders['final_weight'],
+                'salf_content'=>$pamar['salf_content'],//反馈内容
+                'salf_weight'=>$pamar['salf_weight'],//反馈重量
+                'salf_volume'=>$pamar['salf_volume'],//反馈体积
+                'sender'=>$orders['sender'],
+                'sender_city'=>$orders['sender_city'],
+                'receiver'=>$orders['receiver'],
+                'receive_city'=>$orders['receive_city'],
+                'cope_status'=>0,
+                'salf_num'=>1,
+                'op_type'=>1,//申诉人 0代理商 1用户
+                'pic'=>$this->request->domain().$attachment->url,
+                'create_time'=>time(),
+                'update_time'=>time(),
+            ]);
+            return json(['status'=>200,'data'=>'','msg'=>'提交成功']);
+        }catch (Exception $e){
+            return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
+
 
     }
 
@@ -1168,6 +1103,4 @@ class Yunyang extends Controller
         ]);
         return json(['status'=>200,'data'=>'','msg'=>'成功']);
     }
-
-
 }

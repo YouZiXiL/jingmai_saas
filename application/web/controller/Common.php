@@ -74,23 +74,7 @@ class Common
      * @return string
      */
     public function get_uniqid(){
-        $order_id_main = date('Ymd') . rand(1000000,9999999);
-
-        //订单号码主体长度
-
-        $order_id_len = strlen($order_id_main);
-
-        $order_id_sum = 0;
-
-        for($a=0; $a<$order_id_len; $a++){
-
-            $order_id_sum += (int)(substr($order_id_main,$a,1));
-
-        }
-
-        //唯一订单号码（YYYYMMDDHHIISSNNNNNNNNCC）
-
-        return $order_id_main . str_pad((100 - $order_id_sum % 100) % 100,2,'0',STR_PAD_LEFT);
+        return (strtotime(date('YmdHis', time()))) . substr(microtime(), 2, 6) . sprintf('%03d', rand(0, 999));
     }
 
     //唯一订单号
@@ -184,13 +168,13 @@ class Common
     function wx_pay($merchantId,$merchantCertificateSerial){
 
         // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
-        $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$merchantId.'.pem');
-        $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+                $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$merchantId.'.pem');
+                $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
         // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
-        $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$merchantId.'.pem');
-        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+                $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$merchantId.'.pem');
+                $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
         // 从「微信支付平台证书」中获取「证书序列号」
-        $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
+                $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
         // 构造一个 APIv3 客户端实例
 
         return Builder::factory([
@@ -247,17 +231,20 @@ class Common
      * @param $order_sn
      * @return void
      */
-    function wxim_bot($wx_im_bot,$order_sn,$sender,$sender_mobile){
+    function wxim_bot($wx_im_bot,$order_info){
         $common=new Common();
         $common->httpRequest($wx_im_bot,['msgtype'=>'markdown',
             'markdown'=>[
                 'content'=>'>商户订单号:'.PHP_EOL.
-                    '<font color="info">'.$order_sn.'</font>'.PHP_EOL.
+                    '<font color="info">'.$order_info['out_trade_no'].'</font>'.PHP_EOL.
                     '发件人:'.PHP_EOL.
-                    '<font color="warning">'.$sender.'</font>'.PHP_EOL.
+                    '<font color="warning">'.$order_info['sender'].'</font>'.PHP_EOL.
                     '发件人手机号:'.PHP_EOL.
-                    '<font color="warning">'.$sender_mobile.'</font>'.PHP_EOL.
-                    ' <font color="comment">已取消</font>'
+                    '<font color="warning">'.$order_info['sender_mobile'].'</font>'.PHP_EOL.
+                    ' <font color="comment">已取消</font>'.PHP_EOL.
+                    ' <font color="comment">'.date("Y-m-d H:i:s", time()) .'</font>'.PHP_EOL.
+                    ' <font color="comment">下单时间</font>'.PHP_EOL.
+                    ' <font color="comment">'.date("Y-m-d H:i:s",$order_info['create_time']) .'</font>'
             ]
         ],'POST');
     }

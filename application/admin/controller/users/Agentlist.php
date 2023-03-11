@@ -33,6 +33,8 @@ class Agentlist extends Backend
         $this->view->assign("zizhuList", $this->model->getZizhuList());
         $this->view->assign("zhonghuoList", $this->model->getZhonghuoList());
         $this->view->assign("couponList", $this->model->getCouponList());
+        $this->view->assign("smssendList", $this->model->getSmsSendList());
+        $this->view->assign("voicesendList", $this->model->getVoiceSendList());
         $this->view->assign("ordtipsList", $this->model->getOrdtipsList());
     }
 
@@ -97,7 +99,7 @@ class Agentlist extends Backend
             $this->success("Ajax请求成功", null, ['id' => $ids]);
         }
 
-        $this->view->assign("row", $row->hidden(['zizhu','zhonghuo','coupon','logintime','ordtips','balance_notice','resource_notice','over_notice','fd_notice','agent_expire_time'])->toArray());
+        $this->view->assign("row", $row->hidden(['zizhu','zhonghuo','coupon','logintime','ordtips','balance_notice','resource_notice','over_notice','fd_notice','agent_expire_time','sms_send','voice_send'])->toArray());
 
         return $this->view->fetch();
     }

@@ -9,6 +9,7 @@ use app\web\model\AgentCouponmanager;
 use app\web\model\Couponlist;
 use think\Controller;
 use think\Exception;
+use think\Log;
 use think\Queue;
 use WeChatPay\Crypto\Rsa;
 use WeChatPay\Crypto\AesGcm;
@@ -269,7 +270,7 @@ class Wxcallback extends Controller
             ],'POST');
             $yundan=json_decode($yundan,true);
             if ($yundan['errcode']!=0){
-                exit('添加运单状态通知模板失败');
+                exit('添加运单状态通知模板失败'.PHP_EOL.$yundan['errmsg']);
             }
 
             $fankui=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
@@ -277,7 +278,7 @@ class Wxcallback extends Controller
             ],'POST');
             $fankui=json_decode($fankui,true);
             if ($fankui['errcode']!=0){
-                exit('添加反馈结果通知模板失败');
+                exit('添加反馈结果通知模板失败'.PHP_EOL.$fankui['errmsg']);
             }
 
             $bukuan=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
@@ -285,7 +286,7 @@ class Wxcallback extends Controller
             ],'POST');
             $bukuan=json_decode($bukuan,true);
             if ($bukuan['errcode']!=0){
-                exit('添加运费补款通知模板失败');
+                exit('添加运费补款通知模板失败'.PHP_EOL.$bukuan['errmsg']);
             }
 
             $data['waybill_template']=$yundan['template_id'];
@@ -391,7 +392,6 @@ class Wxcallback extends Controller
                     $up_data['final_weight_time']=time();
                     $up_data['tralight_price']=$users_tralight_amt;
                     $up_data['agent_tralight_price']=$agent_tralight_amt;
-                    file_put_contents('way_type.txt','运单号：'.$pamar['waybill'].PHP_EOL.'超轻：'.$users_tralight_amt.PHP_EOL,FILE_APPEND);
                 }
 
 
@@ -415,9 +415,6 @@ class Wxcallback extends Controller
                     }
                     $up_data['overload_price']=$users_overload_amt;//用户超重金额
                     $up_data['agent_overload_price']=$agent_overload_amt;//代理商超重金额
-                    file_put_contents('way_type.txt','运单号：'.$pamar['waybill'].PHP_EOL.'增加超重：'.$agent_overload_amt.PHP_EOL,FILE_APPEND);
-
-
                     $data = [
                         'type'=>1,
                         'agent_overload_amt' =>$agent_overload_amt,
@@ -433,17 +430,13 @@ class Wxcallback extends Controller
                     Queue::push(DoJob::class, $data,'way_type');
                 }
                 //更改耗材状态
-                if ($pamar['freightHaocai']!=0&&empty($orders['consume_time'])){
-                    $up_data['consume_status']=1;
+                if ($pamar['freightHaocai']!=0){
                     $up_data['haocai_freight']=$pamar['freightHaocai'];
-                    file_put_contents('way_type.txt','运单号：'.$pamar['waybill'].PHP_EOL.'增加耗材：'.$pamar['freightHaocai'].PHP_EOL,FILE_APPEND);
-
                     $data = [
                         'type'=>2,
                         'freightHaocai' =>$pamar['freightHaocai'],
                         'order_id' => $orders['id'],
                     ];
-
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
                 }
@@ -458,8 +451,7 @@ class Wxcallback extends Controller
                 }
                 db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
                 //发送小程序订阅消息(运单状态)
-                if ($orders['order_status']=='接单中'){
-                    file_put_contents('way_type.txt','发送小程序订阅消息(运单状态)'.PHP_EOL,FILE_APPEND);
+                if ($orders['order_status']=='派单中'){
                     $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                         'touser'=>$users['open_id'],  //接收者openid
                         'template_id'=>$agent_auth_xcx['waybill_template'],
@@ -478,7 +470,6 @@ class Wxcallback extends Controller
             }
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
-            file_put_contents('way_type.txt',json_encode($pamar).PHP_EOL.$e->getMessage().PHP_EOL,FILE_APPEND);
             return json(['code'=>1, 'message'=>'推送成功']);
         }
     }
@@ -699,9 +690,8 @@ class Wxcallback extends Controller
             !empty($orders['vloum_height']) &&($content['vloumHeight'] = $orders['vloum_height']);
             !empty($orders['bill_remark']) &&($content['billRemark'] = $orders['bill_remark']);
             $data=$Common->yunyang_api('ADD_BILL_INTELLECT',$content);
-
             if ($data['code']!=1){
-                file_put_contents('wx_order_pay.txt','下单失败'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
+                Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
                 $out_refund_no=$Common->get_uniqid();//下单退款订单号
                 //支付成功下单失败  执行退款操作
                 $updata=[
@@ -724,7 +714,7 @@ class Wxcallback extends Controller
 
                 if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
                     //推送企业微信消息
-                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders['out_trade_no'],$orders['sender'],$orders['sender_mobile']);
+                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                 }
 
             }else{
@@ -744,9 +734,7 @@ class Wxcallback extends Controller
 
             exit('success');
         }catch (\Exception $e){
-            file_put_contents('wx_order_pay.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
-
-            exit('success');
+            exit('fail');
         }
     }
 

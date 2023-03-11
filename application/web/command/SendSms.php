@@ -3,6 +3,7 @@
 namespace app\web\command;
 
 use app\web\controller\Common;
+use think\Config;
 use think\console\Command;
 use think\console\Input;
 use think\console\Output;
@@ -17,8 +18,9 @@ class SendSms extends Command
 
     protected function execute(Input $input, Output $output)
     {
+
         $common=new Common();
-        $request = Request::instance();
+        $domain=config('site.site_url');
         $kuaidi100_userid=config('site.kuaidi100_userid');
         $kuaidi100_key=config('site.kuaidi100_key');
         try {
@@ -39,7 +41,7 @@ class SendSms extends Command
                     'tid'=>7762,
                     'content'=>$content,
                     'outorder'=>$out_trade_no,
-                    'callback'=> $request->domain().'/web/wxcallback/send_sms'
+                    'callback'=> $domain.'/web/wxcallback/send_sms'
                 ],'POST',['Content-Type: application/x-www-form-urlencoded']);
                 $res=json_decode($res,true);
                 if ($res['status']==1){
@@ -74,7 +76,7 @@ class SendSms extends Command
                     'tid'=>7769,
                     'content'=>$content,
                     'outorder'=>$out_trade_no,
-                    'callback'=>$request->domain().'/web/wxcallback/send_sms'
+                    'callback'=>$domain.'/web/wxcallback/send_sms'
                 ],'POST',['Content-Type: application/x-www-form-urlencoded']);
                 $res=json_decode($res,true);
                 if ($res['status']==1){

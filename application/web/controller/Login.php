@@ -2,18 +2,11 @@
 
 namespace app\web\controller;
 
-
-
-
-
+use app\web\library\BaseException;
 use app\web\model\Users;
-use Symfony\Component\Yaml\Dumper;
 use think\Controller;
-use think\Exception;
 use think\exception\DbException;
 use think\Log;
-use think\Queue;
-use think\queue\Job;
 use think\Request;
 use think\response\Json;
 
@@ -30,17 +23,10 @@ class Login extends Controller
         $this->common= new Common();
     }
 
+    /**
+     * @throws BaseException
+     */
     function index(){
-        $data = [
-            'type'=>4,
-            'order_id' => 6684,
-        ];
-        // 将该任务推送到消息队列，等待对应的消费者去执行
-        Queue::push(DoJob::class, $data,'way_type');
-        dump(1);
-
-
-
 
     }
     /**
@@ -62,8 +48,6 @@ class Login extends Controller
             if (empty($json_obj['openid'])){
                 return json(['status'=>400,'data'=>'','msg'=>$json_obj['errmsg']]);
             }
-
-
             //  存储登录态
             $_3rd_session=$this->common->get_uniqid();
 
@@ -144,15 +128,15 @@ class Login extends Controller
      */
     function msg_list(): Json
     {
+        $msg=[];
+        $row=db('orders')->where('pay_status',1)->order('id','desc')->limit(10)->select();
+        foreach ($row as $k=>$v){
+            $msg[]='恭喜'.substr_replace($v['sender_mobile'],'****',3,4).'寄件成功，点击寄快件，立享折扣....';
+        }
+
         $data=[
             'status'=>200,
-            'data'=>[
-                '恭喜ZH***寄件成功，点击寄快件，立享折扣....',
-                '恭喜BA***寄件成功，点击寄快件，立享折扣....',
-                '恭喜LS***寄件成功，点击寄快件，立享折扣....',
-                '恭喜CD***寄件成功，点击寄快件，立享折扣....',
-                '恭喜EE***寄件成功，点击寄快件，立享折扣....',
-            ],
+            'data'=>$msg,
             'msg'=>'成功'
         ];
         return json($data);

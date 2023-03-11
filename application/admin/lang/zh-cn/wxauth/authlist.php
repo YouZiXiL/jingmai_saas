@@ -17,7 +17,7 @@ return [
     'Xcx_audit 0'    =>  '未审核',
     'Xcx_audit 1'    =>  '审核通过',
     'Xcx_audit 2'    =>  '审核失败',
-    'Xcx_audit 3'    =>  '审核延后',
+    'Xcx_audit 3'    =>  '待审核',
     'Xcx_audit 4'    =>  '审核中',
     'Xcx_audit 5'    =>  '已发布',
     'Id'     => '应用ID',

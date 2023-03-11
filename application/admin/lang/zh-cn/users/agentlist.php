@@ -81,5 +81,11 @@ return [
     'fd_notice_text'          => '反馈通知',
     'fd_notice 0'             => '关闭',
     'fd_notice 1'             => '开启',
-
+    'wx_im_bot'               => '企业微信机器人',
+    'sms_send_text'           => '定时发送短信',
+    'sms_send 0'              => '关闭',
+    'sms_send 1'              => '开启',
+    'voice_send_text'         => '定时发送语音',
+    'voice_send 0'            => '关闭',
+    'voice_send 1'            => '开启',
 ];

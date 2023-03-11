@@ -35,10 +35,22 @@ class Agentlist extends Model
         'resource_notice_text',
         'over_notice_text',
         'fd_notice_text',
+        'sms_send_text',
+        'voice_send_text',
     ];
     public function getBalanceNoticeList()
     {
         return ['0' => __('Balance_notice 0'), '1' => __('Balance_notice 1')];
+    }
+
+    public function getSmsSendList()
+    {
+        return ['0' => __('Sms_send 0'), '1' => __('Sms_send 1')];
+    }
+
+    public function getVoiceSendList()
+    {
+        return ['0' => __('Voice_send 0'), '1' => __('Voice_send 1')];
     }
 
     public function getResourceNoticeList()
@@ -78,6 +90,21 @@ class Agentlist extends Model
     {
         $value = $value ? $value : (isset($data['agent_expire_time']) ? $data['agent_expire_time'] : '');
         return is_numeric($value) ? date("Y-m-d H:i:s", $value) : $value;
+    }
+
+    public function getVoiceSendTextAttr($value, $data)
+    {
+
+        $value = $value ? $value : (isset($data['voice_send']) ? $data['voice_send'] : '');
+        $list = $this->getVoiceSendList();
+        return isset($list[$value]) ? $list[$value] : '';
+    }
+
+    public function getSmsSendTextAttr($value, $data)
+    {
+        $value = $value ? $value : (isset($data['sms_send']) ? $data['sms_send'] : '');
+        $list = $this->getSmsSendList();
+        return isset($list[$value]) ? $list[$value] : '';
     }
 
     public function getLogintimeTextAttr($value, $data)

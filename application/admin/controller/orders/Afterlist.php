@@ -3,6 +3,7 @@
 namespace app\admin\controller\orders;
 
 
+use app\admin\model\Admin;
 use app\common\controller\Backend;
 use app\web\controller\Common;
 use app\web\controller\Dbcommom;
@@ -166,6 +167,9 @@ class Afterlist extends Backend
             //取消订单处理
             if (($row['salf_type']==0&&$params['cope_status']==1)||($row['salf_type']==3&&$params['cope_status']==1)){
                 $orders=$orders->get(['id'=>$row['order_id']]);
+                if ($orders['pay_status']!=1){
+                    throw new Exception('此订单已取消');
+                }
                 $Dbcommon= new Dbcommom();
                 $commom=new Common();
                 //下单退款
@@ -240,6 +244,11 @@ class Afterlist extends Backend
             if ($row['salf_type']==1&&$params['cope_status']==1){
                
                 $orders=$orders->get(['id'=>$row['order_id']]);
+
+                if ($orders['overload_status']!=1){
+                    throw new Exception('此订单没有超重');
+                }
+
                 if (empty($params['cal_weight'])||$params['cal_weight']<$orders['weight']){
                     throw new Exception('更改重量填写错误');
                 }
@@ -262,9 +271,7 @@ class Afterlist extends Backend
                 $orders->allowField(true)->save($up_data);
                 $remark='核重退回金额：'.$dec_agent_overload_price.'元';
             }
-
-
-                $Admin= \app\web\model\Admin::get($row['agent_id']);
+                $Admin= Admin::get($row['agent_id']);
                 //发送公众号模板消息
                 $AgentAuth=AgentAuth::get(['agent_id'=>$row['agent_id'],'auth_type'=>1]);//授权的公众号
                 if ($AgentAuth){

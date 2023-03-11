@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use think\Log;
 use think\queue\Job;
 use WeChatPay\Builder;
 use WeChatPay\Crypto\Rsa;
@@ -26,7 +27,7 @@ class DoJob
             $attempts = $job->attempts();
             if ($attempts == 0 || $attempts == 1) {
                 // 重新发布这个任务
-                $job->release(5); //$delay为延迟时间，延迟2S后继续执行
+                $job->release(5); //$delay为延迟时间，延迟5S后继续执行
             } else{
                 $job->release(20); // 延迟20S后继续执行
             }
@@ -43,7 +44,6 @@ class DoJob
 
         try {
         if (empty($data['type'])){
-            file_put_contents('./public/job.txt','参数格式错误'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
             return true;
         }
         $common=new Common();
@@ -75,25 +75,30 @@ class DoJob
                     'final_weight_time'=>time(),
                     'out_overload_no'=>'CZ'.$common->get_uniqid(),
                 ]);
-                file_put_contents('./public/job.txt','超重处理成功'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
-            }else{
-                file_put_contents('./public/job.txt','超重重复数据'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
             }
 
         }elseif ($data['type']==2){
             $orders=db('orders')->where('id',$data['order_id'])->find();
             if (empty($orders['consume_time'])){
-
                 db('orders')->where('id',$orders['id'])->setInc('agent_price',$data['freightHaocai']);//代理商结算金额+耗材金额
                 //代理商减少余额  耗材
                 $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'运单号：'.$orders['waybill'].' 耗材扣除金额：'.$data['freightHaocai'].'元');
                 db('orders')->where('id',$orders['id'])->update([
                     'consume_time'=>time(),
                     'out_haocai_no'=>'HC'.$common->get_uniqid(),
+                    'consume_status'=>1
                 ]);
-                file_put_contents('./public/job.txt','耗材处理成功'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
             }else{
-                file_put_contents('./public/job.txt','耗材重复数据'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
+                //耗材变动
+                if ($orders['haocai_freight']!=$data['freightHaocai']){
+                    db('orders')->where('id',$orders['id'])->setDec('agent_price',$orders['haocai_freight']);//代理商结算金额-耗材金额
+                    //代理商余额 + 耗材
+                    $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['haocai_freight'],2,'运单号：'.$orders['waybill'].' 耗材退回金额：'.$orders['haocai_freight'].'元');
+
+                    db('orders')->where('id',$orders['id'])->setInc('agent_price',$data['freightHaocai']);//代理商结算金额+耗材金额
+                    //代理商减少余额  耗材
+                    $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'运单号：'.$orders['waybill'].' 耗材扣除金额：'.$data['freightHaocai'].'元');
+                }
             }
         }elseif ($data['type']==3){
 
@@ -127,7 +132,6 @@ class DoJob
                         'currency' => 'CNY'
                     ],
                 ]]);
-                file_put_contents('./public/job.txt','退款处理成功'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
         }elseif ($data['type']==4){
                 $row=db('orders')->where('id',$data['order_id'])->find();
                 if ($row['pay_status']!=2){
@@ -240,18 +244,13 @@ class DoJob
                     //代理结算金额 代理运费+保价金+耗材+超重
                     $Dbcommon->set_agent_amount($row['agent_id'],'setInc',$row['agent_price'],1,'运单号：'.$row['waybill'].' 已取消并退款');
                     db('orders')->where('id',$data['order_id'])->update($up_data);
-                    file_put_contents('./public/job.txt','取消退款处理成功'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
-                }else{
-                    file_put_contents('./public/job.txt','退款重复数据'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
                 }
-
-        }else{
-            file_put_contents('./public/job.txt','type错误'.PHP_EOL.json_encode($data).PHP_EOL,FILE_APPEND);
         }
             return true;
         }catch (\Exception $e){
-            file_put_contents('./public/job.txt','处理失败'.PHP_EOL.$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
+            Log::log($e->getMessage());
+            return false;
         }
-        return false;
+
     }
 }

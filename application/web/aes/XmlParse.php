@@ -8,7 +8,7 @@ use think\Exception;
  *
  * 提供提取消息格式中的密文及生成回复消息格式的接口.
  */
-class XmlParse
+class XMLParse
 {
 
 	/**
@@ -23,8 +23,10 @@ class XmlParse
 			$xml = new \DOMDocument();
 			$xml->loadXML($xmltext);
 			$array_e = $xml->getElementsByTagName('Encrypt');
+			$array_a = $xml->getElementsByTagName('ToUserName');
 			$encrypt = $array_e->item(0)->nodeValue;
-			return array(0, $encrypt);
+			$tousername = $array_a->item(0)->nodeValue;
+			return array(0, $encrypt, $tousername);
 		} catch (Exception $e) {
 			//print $e . "\n";
 			return array(ErrorCode::$ParseXmlError, null, null);

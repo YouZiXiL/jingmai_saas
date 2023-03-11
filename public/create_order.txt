@@ -1,6 +1,0 @@
-Client error: `POST https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi` resulted in a `400 Bad Request` response:
-{"code":"APPID_MCHID_NOT_MATCH","message":"appid和mch_id不匹配，请检查后再试"}
-
-Client error: `POST https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi` resulted in a `400 Bad Request` response:
-{"code":"APPID_MCHID_NOT_MATCH","message":"appid和mch_id不匹配，请检查后再试"}
-

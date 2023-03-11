@@ -14,7 +14,7 @@ class Dbcommom
      * @param $id //代理商id
      * @param $setType //改变类型 setInc增加  setDec减少
      * @param $amount  //改变金额
-     * @param $logType //资金类型 0订单支付 1订单退款 2系统加款 3系统扣款 4超重补款 5账户充值 6订单结算 7短信扣款 8耗材补款
+     * @param $logType //资金类型 0订单支付 1订单退款 2系统加款 3系统扣款 4超重补款 5账户充值 6订单结算 7短信扣款 8耗材扣款
      * @param $remark  //备注
      * @return bool
      */
@@ -42,7 +42,7 @@ class Dbcommom
                 'remark'=>$remark,
                 'create_time'=>time()
             ]);
-            if ($after_amount<=100){
+            if ($after_amount<=200){
                 if($Admin['open_id']&&$Admin['balance_notice']==1){
                     //发送公众号模板消息
                     $AgentAuth=AgentAuth::get(['agent_id'=>$id,'auth_type'=>1]);//授权的公众号
@@ -66,7 +66,7 @@ class Dbcommom
             Db::commit();
             return true;
         }catch (\Exception $e){
-            //file_put_contents('set_agent_amount.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+            file_put_contents('set_agent_amount.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
             // 回滚事务
             Db::rollback();
             return false;

@@ -44,6 +44,8 @@ class Userslist extends Backend
      */
     public function index()
     {
+        $this->relationSearch = true;
+        $this->searchFields='mobile';
         //设置过滤方法
         $this->request->filter(['strip_tags', 'trim']);
         if (false === $this->request->isAjax()) {
