@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\web\model\Agent_couponlist;
+use app\web\model\Agent_rule;
 use app\web\model\AgentCouponmanager;
 use app\web\model\Cashserviceinfo;
 use app\web\model\Checkin;
@@ -19,6 +20,9 @@ class Users extends Controller
 {
     protected $user;
     protected $page_rows=10;
+
+    protected $admin;
+
     public function _initialize()
     {
 
@@ -30,6 +34,15 @@ class Users extends Controller
                 throw new Exception('请先登录');
             }
             $this->user = (object)$session;
+            //将代理商信息缓存避免每次查询admin数据库
+            $agent = cache($this->user->app_id);
+            if (empty($agent)){
+                //admin 补充表结构 合并后需用 admin
+                $agent=db("admin")->where('agent_id',$this->user->agent_id)->find();
+
+                cache($this->user->app_id,$agent,3600*24*25);
+            }
+            $this->admin=$agent;
             $this->common= new Common();
         } catch (Exception $e) {
             exit(json(['status' => 100, 'data' => '', 'msg' => $e->getMessage()])->send());
@@ -63,103 +76,117 @@ class Users extends Controller
         $data["data"]=$user_detail;
         return \json($data);
     }
-    //签到API 使用了未修改表暂时不用
-//    public function checkin(){
-//
-//        $data=[
-//            'status'=>200,
-//            'data'=>"",
-//            'msg'=>'签到成功'
-//        ];
-//
-//        $userinfo= \app\web\model\Users::get($this->user->id);
-//        //此处从控制台获取 代理商设置状态 是否允许签到
-//        if($this->admin_seconde["is_opencheckin"]){
-//
-//            $checkin=Checkin::get(["user_id"=>$this->user->id])->find();
-//
-//            if(empty($checkin)){
-//                $checkin=new Checkin();
-//                $checkin->user_id=$this->user->id;
-//                $checkin->yearcyclerd=date("Y").'01';
-//                $checkin->creattime=time();
-//                $checkin->updatetime=time();
-//                $checkin->checktime=time();
-//                $checkin->save();
-//
-//                $userscore=new UserScoreLog();
-//                $userscore->user_id=$this->user->id;
-//                $userscore->score=$this->admin_seconde["checkin_sigleprize"];
-//                $userscore->before=$userinfo["score"];
-//                $userscore->after=$this->admin_seconde["checkin_sigleprize"]+$userinfo["score"];
-//                $userscore->memo="签到";
-//                $userscore->createtime=time();
-//                $userscore->save();
-//
-//                $userinfo["score"]=$userscore->after;
-//
-//                $userinfo->save();
-//            }
-//            else{
-//                //判断是否已签到
-//                if(!strcmp(date('Y-m-d'),date("Y-m-d",$checkin["checktime"]))){
-//
-//                    $data['msg']="每天只需签到一次";
-//
-//                }
-//                else{
-//                    //判断是连续签到
-//                    if(strcmp(date("Y-m-d",strtotime("-1 day")),date("Y-m-d",$checkin["checktime"]))){
-//
-//                        $checkin->checktime=time();
-//                        $checkin->checkdays+=1;
-//                        $checkin->maxcheckdays+=1;
-//
-//                        $data['msg']="签到成功 积分+".$this->admin_seconde["checkin_sigleprize"];
-//
-//                        //判断是否周期自定义 默认为7天
-//                        $cycledays=7;
-//                        if(!empty($this->admin_seconde["checkin_cycledays"])){
-//                            $cycledays=$this->admin_seconde["checkin_cycledays"];
-//                        }
-//
-//                        if($checkin->maxcheckdays==$cycledays){
-//                            $checkin->checkdays=0;
-//                            $checkin->maxcheckdays=0;
-//                            $data['msg']="签到成功 积分+".$this->admin_seconde["checkin_conti_prize"];
-//                        }
-//                    }
-//                    else{
-//                        $checkin->checkdays=1;
-//                        $checkin->maxcheckdays=1;
-//                        $data['msg']="签到成功 积分+".$this->admin_seconde["checkin_sigleprize"];
-//                    }
-//                    $checkin->checktime=time();
-//                    $checkin->save();
-//                    $userscore=new UserScoreLog();
-//                    $userscore->user_id=$this->user->id;
-//                    $userscore->score=$this->admin_seconde["checkin_sigleprize"];
-//                    $userscore->before=$userinfo["score"];
-//                    $userscore->after=$this->admin_seconde["checkin_sigleprize"]+$userinfo["score"];
-//                    $userscore->memo="签到";
-//                    $userscore->createtime=time();
-//                    $userscore->save();
-//                    $userinfo["score"]=$userscore->after;
-//                    $userinfo->save();
-//
-//                }
-//
-//            }
-//        }
-//        else{
-//            $data=[
-//                'status'=>200,
-//                'data'=>"",
-//                'msg'=>'签到异常0X001'
-//            ];
-//        }
-//        return \json($data);
-//    }
+    //返利规则
+    public function rebate_rule(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $agentrule=Agent_rule::get(["agent_id"=>$this->user->agent_id,"state"=>1]);
+
+        $data["data"]=$agentrule;
+
+        return \json($data);
+    }
+
+    //签到API 使用了未修改表 admin
+    public function checkin(){
+
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'签到成功'
+        ];
+
+        $userinfo= \app\web\model\Users::get($this->user->id);
+        //此处从控制台获取 代理商设置状态 是否允许签到
+        if($this->admin["is_opencheckin"]){
+
+            $checkin=Checkin::get(["user_id"=>$this->user->id])->find();
+
+            if(empty($checkin)){
+                $checkin=new Checkin();
+                $checkin->user_id=$this->user->id;
+                $checkin->yearcyclerd=date("Y").'01';
+                $checkin->creattime=time();
+                $checkin->updatetime=time();
+                $checkin->checktime=time();
+                $checkin->save();
+
+                $userscore=new UserScoreLog();
+                $userscore->user_id=$this->user->id;
+                $userscore->score=$this->admin["checkin_sigleprize"];
+                $userscore->before=$userinfo["score"];
+                $userscore->after=$this->admin["checkin_sigleprize"]+$userinfo["score"];
+                $userscore->memo="签到";
+                $userscore->createtime=time();
+                $userscore->save();
+
+                $userinfo["score"]=$userscore->after;
+
+                $userinfo->save();
+            }
+            else{
+                //判断是否已签到
+                if(!strcmp(date('Y-m-d'),date("Y-m-d",$checkin["checktime"]))){
+
+                    $data['msg']="每天只需签到一次";
+
+                }
+                else{
+                    //判断是连续签到
+                    if(strcmp(date("Y-m-d",strtotime("-1 day")),date("Y-m-d",$checkin["checktime"]))){
+
+                        $checkin->checktime=time();
+                        $checkin->checkdays+=1;
+                        $checkin->maxcheckdays+=1;
+
+                        $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
+
+                        //判断是否周期自定义 默认为7天
+                        $cycledays=7;
+                        if(!empty($this->admin["checkin_cycledays"])){
+                            $cycledays=$this->admin["checkin_cycledays"];
+                        }
+
+                        if($checkin->maxcheckdays==$cycledays){
+                            $checkin->checkdays=0;
+                            $checkin->maxcheckdays=0;
+                            $data['msg']="签到成功 积分+".$this->admin["checkin_conti_prize"];
+                        }
+                    }
+                    else{
+                        $checkin->checkdays=1;
+                        $checkin->maxcheckdays=1;
+                        $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
+                    }
+                    $checkin->checktime=time();
+                    $checkin->save();
+                    $userscore=new UserScoreLog();
+                    $userscore->user_id=$this->user->id;
+                    $userscore->score=$this->admin["checkin_sigleprize"];
+                    $userscore->before=$userinfo["score"];
+                    $userscore->after=$this->admin["checkin_sigleprize"]+$userinfo["score"];
+                    $userscore->memo="签到";
+                    $userscore->createtime=time();
+                    $userscore->save();
+                    $userinfo["score"]=$userscore->after;
+                    $userinfo->save();
+
+                }
+
+            }
+        }
+        else{
+            $data=[
+                'status'=>200,
+                'data'=>"",
+                'msg'=>'签到异常0X001'
+            ];
+        }
+        return \json($data);
+    }
     public function checkinlist()
     {
         $datelist=[];
@@ -281,7 +308,7 @@ class Users extends Controller
 
         //1、获得用户
         $user_info= \app\web\model\Users::get($this->user->id);
-        $scorelist=$user_info->getscorelist()->order("id","desc")->page($page,6)->select();
+        $scorelist=$user_info->getscorelist()->order("id","desc")->page($page,$this->page_rows)->select();
         $data["data"]=$scorelist;
         return \json($data);
     }
@@ -542,9 +569,7 @@ class Users extends Controller
         }
 
         if ($coupon_info['gain_way']==4){
-            if($coupon_info['couponcount']<=0){
-                return json(['status'=>400,'data'=>'','msg'=>'本轮活动已结束']);
-            }
+
         }
         else{
             return json(['status'=>400,'data'=>'','msg'=>'请重新刷新活动']);
@@ -650,6 +675,11 @@ class Users extends Controller
         if($coupon_info['gain_way']!=3){
             return json(['status'=>400,'data'=>'','msg'=>'请重新刷新活动']);
         }
+        else{
+            if($coupon_info['couponcount']<=0){
+                return json(['status'=>400,'data'=>'','msg'=>'本轮活动已结束']);
+            }
+        }
 
         $out_trade_no='MS'.$this->common->get_uniqid();
         $data=[
@@ -726,6 +756,15 @@ class Users extends Controller
         }
     }
 
+    //获取 商家开放的优惠券详情
+    public function getagentcouponlist(){
+
+        $couponmanager = new AgentCouponmanager();
+        $couponlist = $couponmanager->where("agent_id",$this->user->agent_id)->where("state",1)->where("couponcount",">",0)->select();
+
+        return \json($couponlist);
+
+    }
     private function getinvitecode($length=3){
 
         $rootstr="ABCDEFGHJKLMNPQRSTUVWXYZAAYYACCAHAKA";
