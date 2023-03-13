@@ -295,6 +295,13 @@ class Users extends Controller
         $currentuser= \app\web\model\Users::get($this->user->id);
 
         if(!empty($currentuser->myinvitecode) && $currentuser->myinvitecode<>'0'){
+            $invitedata=[
+                "mycode"=>$currentuser->myinvitecode,
+                "url"=>$currentuser->posterpath//小程序码链接
+            ];
+            $data["data"]=$invitedata;
+            //返回值：邀请码 以及带参小程序码
+            return \json($data);
         }
         else{
             $currentuser->myinvitecode=$this->getinvitecode().substr($currentuser->mobile,-4);
@@ -303,28 +310,51 @@ class Users extends Controller
         //获取小程序码
         $url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=".$this->common->get_authorizer_access_token($params["app_id"]);
 
-//        $content=[
-//            "page"=>"pages/index/index",
-//            "scene"=>"myinvitecode=".$currentuser->myinvitecode,
-//            "check_path"=>true,
-//            "env_version"=>$params["env_version"]
-//        ];
-//        $url=$this->common->httpRequest($url,$content,"POST");
-//
-//        $json_obj=json_decode($url,true);
-//        if(!empty($json_obj["errcode"])){
-//            $data["status"]=400;
-//            $data["msg"]="错误类型: ".$json_obj["errcode"];
-//            return json($data);
-//        }
-//        else{
-//
-//        }
-        $invitedata=[
-            "code"=>$currentuser->myinvitecode,
-            "url"=>""//小程序码链接
+        $content=[
+            "page"=>"pages/homepage/homepage",
+            "scene"=>"myinvitecode=".$currentuser->myinvitecode,
+            "check_path"=>true,
+            "env_version"=>$params["env_version"]
         ];
+        $url=$this->common->httpRequest($url,$content,"POST");
+        try {
+            // 判断是否是 json格式， 如果请求失败，会返回 JSON 格式的数据。
+            if (is_null(json_decode($url))){
+                /**
+                 * 不是json格式的数据   说明有数据流  json_decode($result)返回值是为 null
+                 * 这里返回的图片 Buffer 将图片保存到本地并返回外网链接
+                 */
+
+                $basepath=ROOT_PATH."public";
+                //此处以年月为分割目录
+                $midpath=DS."assets".DS."img".DS.\date("Y").DS.\date("m");
+                $target=$basepath.$midpath;
+                if(!file_exists($target)){
+                    mkdir($target);
+                }
+                $picName=$this->common->getinvitecode(5).$currentuser->myinvitecode."png";
+                $picpath=$target.DS.$picName;
+                file_put_contents($picpath,$url);
+
+                $currentuser->posterpath=$this->request->domain().$midpath.DS.$picName;
+                $currentuser->save();
+                $invitedata=[
+                    "mycode"=>$currentuser->myinvitecode,
+                    "url"=>$currentuser->posterpath//小程序码链接
+                ];
+            }
+            else{
+
+                $res = json_decode($url, true);
+                $invitedata=$res;
+            }
+        }
+        catch (Exception $e){
+            file_put_contents('xiochengxucode.txt',$e->getMessage().PHP_EOL.$url.PHP_EOL,FILE_APPEND);
+        }
+
         $data["data"]=$invitedata;
+
         //返回值：邀请码 以及带参小程序码
         return \json($data);
     }
