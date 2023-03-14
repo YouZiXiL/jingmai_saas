@@ -186,16 +186,6 @@ class Wxcallback extends Controller
             if ($res['errcode']!=0){
                 exit('配置小程序业务域名配置失败'.$res['errmsg']);
             }
-            $res=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/component/setprivacysetting?access_token='.$authorization_info['authorizer_access_token'],[
-                'setting_list'=>[['privacy_key'=>'Album','privacy_text'=>'订单详情上传图片'],['privacy_key'=>'PhoneNumber','privacy_text'=>'推送提醒']],
-                'owner_setting'=>['contact_email'=>'1037124449@qq.com','notice_method'=>'通过弹窗提醒用户'],
-
-            ],'POST');
-            $res=json_decode($res,true);
-            if ($res['errcode']!=0){
-                exit('设置小程序用户隐私保护指引失败');
-            }
-
             $res=$common->httpRequest('https://api.weixin.qq.com/wxa/changewxasearchstatus?access_token='.$authorization_info['authorizer_access_token'],[
                 'status'=>0,
             ],'POST');
