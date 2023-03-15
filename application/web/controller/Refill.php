@@ -4,6 +4,7 @@ namespace app\web\controller;
 
 use think\Controller;
 use think\Exception;
+use think\Request;
 
 //充值
 class Refill extends Controller
@@ -65,6 +66,29 @@ class Refill extends Controller
         return $this->common->httpRequest($this->baseapi.$currentapi,$content,"POST");
     }
 
+    //话费 充值
+    public function recharge_hf(){
+        $param=$this->request->param();
+        $currentapi="index/recharge";
+        if(empty($param["product_id"] || empty($param["mobile"]) || empty($param["mobile"]))){
+            return json(["errno"=>"400","errmsg"=>"请输入有效参数","data"=>""]);
+        }
+        $data=[
+            "out_trade_num"=>'HF'.$this->common->get_uniqid(),
+            "product_id"=>$param["product_id"],
+            "mobile"=>$param["mobile"],
+            "notify_url"=>Request::instance()->domain().'/web/wxcallback/refillcallback',
+        ];
+
+        $content=[
+            "userid"=>$this->userid,
+            "sign"=>$this->getsign($data)
+        ];
+        $content+=$data;
+
+
+
+    }
     public function getsign($params=[]){
         $params["userid"]=$this->userid;
         ksort($params);

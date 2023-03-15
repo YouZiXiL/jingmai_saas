@@ -1088,7 +1088,259 @@ class Wxcallback extends Controller
             exit('success');
         }
     }
+    /**
+     * 微信下单支付回调
+     */
+    function wx_tcorder_pay(){
 
+        $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
+        $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
+        $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
+        $inWechatpayNonce = $this->request->header('Wechatpay-Nonce');
+        $inBody = file_get_contents('php://input');
+
+        $agent_info=db('admin')->where('wx_serial_no',$inWechatpaySerial)->find();
+        // 根据通知的平台证书序列号，查询本地平台证书文件，
+        $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$agent_info['wx_mchid'].'.pem');
+        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+        // 检查通知时间偏移量，允许5分钟之内的偏移
+        $timeOffsetStatus = 300 >= abs(Formatter::timestamp() - (int)$inWechatpayTimestamp);
+        $verifiedStatus = Rsa::verify(
+        // 构造验签名串
+            Formatter::joinedByLineFeed($inWechatpayTimestamp, $inWechatpayNonce, $inBody),
+            $inWechatpaySignature,
+            $platformPublicKeyInstance
+        );
+        try {
+            if (!$timeOffsetStatus && !$verifiedStatus) {
+                throw new Exception('签名构造错误或超时');
+            }
+            // 转换通知的JSON文本消息为PHP Array数组
+            $inBodyArray =json_decode($inBody, true);
+            // 使用PHP7的数据解构语法，从Array中解构并赋值变量
+            ['resource' => [
+                'ciphertext'      => $ciphertext,
+                'nonce'           => $nonce,
+                'associated_data' => $aad
+            ]] = $inBodyArray;
+            // 加密文本消息解密
+            $inBodyResource = AesGcm::decrypt($ciphertext, $agent_info['wx_mchprivatekey'], $nonce, $aad);
+            // 把解密后的文本转换为PHP Array数组
+            $inBodyResourceArray = json_decode($inBodyResource, true);
+            if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
+                throw new Exception('未支付');
+            }
+            $orders=db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            if(!$orders){
+                throw new Exception('找不到指定订单');
+            }
+            //如果订单未支付  调用云洋下单接口
+            if ($orders['pay_status']!=0){
+                throw new Exception('重复回调');
+            }
+
+            $Common=new Common();
+            $Dbcommmon= new Dbcommom();
+            $content=[
+                'third_logistics_id'=> $orders['channel_id'],
+                'waybill'=>$orders["waybill"]
+            ];
+            $data=$Common->yunyangtc_api('ADD_BILL',$content);
+            if ($data['code']!=1){
+                Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
+                $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                //支付成功下单失败  执行退款操作
+                $updata=[
+                    'pay_status'=>2,
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'yy_fail_reason'=>$data['message'],
+                    'order_status'=>'下单失败咨询客服',
+                    'out_refund_no'=>$out_refund_no,
+                ];
+
+                $data = [
+                    'type'=>3,
+                    'order_id'=>$orders['id'],
+                    'out_refund_no' => $out_refund_no,
+                    'reason'=>$data['message'],
+                ];
+
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $data,'way_type');
+
+                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                    //推送企业微信消息
+                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                }
+
+            }else{
+
+                //支付成功下单成功
+                $result=$data['result'];
+                $updata=[
+                    'waybill'=>$result['waybill'],
+                    'shopbill'=>$result['shopbill'],
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'pay_status'=>1,
+                ];
+
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
+            }
+            db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($updata);
+
+            exit('success');
+        }catch (\Exception $e){
+            exit('fail');
+        }
+    }
+
+    /**
+     * 云洋 同城订单回调
+     */
+    function waytc_type(){
+        $pamar=$this->request->param();
+        try {
+            if (empty($pamar)){
+                throw new Exception('传来的数据为空');
+            }
+            $common= new Common();
+            $data=[
+                'waybill'=>$pamar['waybill'],
+                'shopbill'=>$pamar['shopbill'],
+                'type'=>$pamar['type'],
+                'weight'=>$pamar['weight'],
+                'real_weight'=>$pamar['realWeight']??'',
+                'transfer_weight'=>$pamar['transferWeight']??'',
+                'cal_weight'=>$pamar['calWeight'],
+                'volume'=>$pamar['volume']??'',
+                'parse_weight'=>$pamar['parseWeight'],
+                'freight'=>$pamar['freight'],
+                'freight_insured'=>$pamar['freightInsured'],
+                'freight_haocai'=>$pamar['freightHaocai'],
+                'change_bill'=>$pamar['changeBill'],
+                'change_bill_freight'=>$pamar['changeBillFreight'],
+                'fee_over'=>$pamar['feeOver'],
+                'link_name'=>$pamar['linkName'],
+                'bill_type'=>$pamar['billType'],
+                'comments'=>$pamar['comments'],
+                'total_price'=>$pamar['totalPrice']??'',
+                'create_time'=>$pamar['timeStamp'],
+            ];
+            db('yy_callback')->insert($data);
+
+            $orders=db('orders')->where('shopbill',$pamar['shopbill'])->find();
+            if ($orders){
+                if ($orders['order_status']=='已取消'){
+                    throw new Exception('订单已取消');
+                }
+                $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+                $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+                $users=db('users')->where('id',$orders['user_id'])->find();
+                $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
+
+                $up_data=[
+                    'final_freight'=>$pamar['freight'],
+                    'comments'=>str_replace("null","",$pamar['comments'])
+                ];
+                if(!empty($pamar['type'])){
+                    $up_data['order_status']=$pamar['type'];
+                }
+                if ($orders['final_weight']==0){
+                    $up_data['final_weight']=$pamar['calWeight'];
+                }
+                //超轻处理
+                $weight=floor($orders['weight']-$pamar['calWeight']);
+                if ($weight>0&&$pamar['calWeight']!=0&&empty($orders['final_weight_time'])){
+
+
+                    $price=$pamar['freight'];
+                    $agent_tc=$agent_info["agent_tc"]??0.1;//公司上浮百分比 默认为0.1
+                    $agent_price=$price+$price*$agent_tc;
+                    $agent_tc_ratio=$agent_info["agent_tc_ratio"]??0;//代理商上浮百分比 默认为0
+                    $users_price=$agent_price+$agent_price*$agent_tc_ratio;
+
+                    $up_data['tralight_status']=1;
+                    $up_data['final_weight_time']=time();
+                    $up_data['tralight_price']=number_format($orders["final_price"]-$users_price,2);
+                    $up_data['agent_tralight_price']=number_format($orders["agent_price"]-$agent_price,2);
+                }
+
+
+                //更改超重状态
+                if ($orders['weight']<$pamar['calWeight']&&empty($orders['final_weight_time'])){
+                    $up_data['overload_status']=1;
+                    $overload_weight=ceil($pamar['calWeight']-$orders['weight']);//超出重量
+
+                    $price=$pamar['freight'];
+                    $agent_tc=$agent_info["agent_tc"]??0.1;//公司上浮百分比 默认为0.1
+                    $agent_price=$price+$price*$agent_tc;
+                    $agent_tc_ratio=$agent_info["agent_tc_ratio"]??0;//代理商上浮百分比 默认为0
+                    $users_price=$agent_price+$agent_price*$agent_tc_ratio;
+
+                    $up_data['overload_price']=number_format($users_price-$orders["final_price"],2);;//用户超重金额
+                    $up_data['agent_overload_price']=number_format($agent_price-$orders["agent_price"],2);//代理商超重金额
+                    $data = [
+                        'type'=>1,
+                        'agent_overload_amt' =>$up_data['agent_overload_price'],
+                        'order_id' => $orders['id'],
+                        'xcx_access_token'=>$xcx_access_token,
+                        'open_id'=>$users['open_id'],
+                        'template_id'=>$agent_auth_xcx['pay_template'],
+                        'cal_weight'=>$overload_weight .'kg',
+                        'users_overload_amt'=>$up_data['overload_price'].'元'
+                    ];
+
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
+                }
+                //更改耗材状态
+                if ($pamar['freightHaocai']!=0){
+                    $up_data['haocai_freight']=$pamar['freightHaocai'];
+                    $data = [
+                        'type'=>2,
+                        'freightHaocai' =>$pamar['freightHaocai'],
+                        'order_id' => $orders['id'],
+                    ];
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
+                }
+
+                if($pamar['type']=='已取消'&&$orders['pay_status']!=2){
+                    $data = [
+                        'type'=>4,
+                        'order_id' => $orders['id'],
+                    ];
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
+                }
+                db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
+                //发送小程序订阅消息(运单状态)
+                if ($orders['order_status']=='派单中'){
+                    $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
+                        'touser'=>$users['open_id'],  //接收者openid
+                        'template_id'=>$agent_auth_xcx['waybill_template'],
+                        'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                        'data'=>[
+                            'character_string13'=>['value'=>$orders['waybill']],
+                            'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
+                            'thing10'=>['value'=>$orders['receive_province'].$orders['receive_city']],
+                            'phrase3'=>['value'=>$pamar['type']],
+                            'thing8'  =>['value'=>'点击查看配送信息',]
+                        ],
+                        'miniprogram_state'=>'formal',
+                        'lang'=>'zh_CN'
+                    ],'POST');
+                }
+            }
+            return json(['code'=>1, 'message'=>'推送成功']);
+        }catch (\Exception $e){
+            return json(['code'=>1, 'message'=>'推送成功']);
+        }
+    }
+
+    function refillcallback(){
+
+    }
     //非接口
     function updatecouponlist($couponid,$type,$user_id){
 

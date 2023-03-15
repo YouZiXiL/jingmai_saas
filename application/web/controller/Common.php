@@ -36,6 +36,26 @@ class Common
 
 
     }
+    function yunyangtc_api($serviceCode,$content){
+        $requestId=$this->get_uniqid();
+        list($msec, $sec) = explode(' ', microtime());
+        $timeStamp= (float)sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
+        $yy_appid='F553A7BAA2F14B57922A96481B442D81';
+        $yy_secret_key='d640e956-cc04-46da-ab24-221d03d42619';
+        $sign=md5($yy_appid.$requestId.$timeStamp.$yy_secret_key);
+        $data=[
+            'serviceCode'=>$serviceCode,
+            'timeStamp'=>(string)$timeStamp,
+            'requestId'=>$requestId,
+            'appid'=>(string)$yy_appid,
+            'sign'=>$sign,
+            'content'=>$content
+        ];
+        $res=$this->httpRequest('https://api.yunyangwl.com/api/wuliu/cityService',$data ,'POST');
+
+        return json_decode($res,true);
+
+    }
 
     //http请求
     //$data  数组

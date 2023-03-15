@@ -536,7 +536,7 @@ class Yunyang extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
-        $order=db('orders')->where('pay_status','<>',0)->field('id,waybill,sender_province,receive_province,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10);
+        $order=db('orders')->where("channel_tag","<>","同城")->where('pay_status','<>',0)->field('id,waybill,sender_province,receive_province,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10);
         if (!empty($param['search_field'])){
             $res=$order->where('receiver_mobile|sender_mobile|waybill|receiver',$param['search_field'])->select();
         }elseif(!empty($param['no_pay'])){
