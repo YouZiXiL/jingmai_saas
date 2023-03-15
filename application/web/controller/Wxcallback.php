@@ -1339,7 +1339,435 @@ class Wxcallback extends Controller
     }
 
     function refillcallback(){
+        $common=new Common();
+        $data = $_POST;//接收所有post的数据
+        unset($data['sign']);//删除掉sign字段
+        ksort($data);//排序
+        $sign_str = urldecode(http_build_query($data)) . '&apikey=' . $common->apikey;//获得签名原串
+        $mysign=strtoupper(md5($sign_str));//签名
 
+        if($mysign==$_POST['sign']){
+            $orders=db('refilllist')->where('out_trade_num',$_POST['out_trade_num'])->find();
+
+            $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+            $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+            $users=db('users')->where('id',$orders['user_id'])->find();
+            $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
+
+            $data=[
+                'userid'=>$_POST['userid'],
+                'order_number'=>$_POST['order_number'],
+                'out_trade_num'=>$_POST['out_trade_num'],
+                'otime'=>$_POST['otime'],
+                'state'=>$_POST['state'],
+                'mobile'=>$_POST['mobile'],
+                'remark'=>$_POST['remark'],
+                'charge_amount'=>$_POST['charge_amount'],
+                'voucher'=>$_POST['voucher'],
+                'charge_kami'=>$_POST['charge_kami'],
+                'sign'=>$_POST['sign'],
+            ];
+
+            db('refill_callback')->insert($data);
+
+
+
+            $data=[
+                "out_trade_num"=>$_POST["out_trade_num"],
+                "state"=>$_POST['state']
+
+            ];
+            if($_POST['state']==0){
+                $data["order_status"]="充值中";
+
+            }
+            elseif($_POST['state']==1){
+                $data["order_status"]="充值成功";
+
+                //发送小程序订阅消息(充值状态)
+                $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
+                    'touser'=>$users['open_id'],  //接收者openid
+                    'template_id'=>$agent_auth_xcx['waybill_template'],
+                    'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                    'data'=>[
+                        'character_string13'=>['value'=>$orders['waybill']],
+                        'thing9'=>['value'=>"手机号：".$_POST['mobile']],
+                        'thing10'=>['value'=>$data["order_status"]],
+                        'phrase3'=>['value'=>"成功"],
+                        'thing8'  =>['value'=>'点击查看订单信息',]
+                    ],
+                    'miniprogram_state'=>'formal',
+                    'lang'=>'zh_CN'
+                ],'POST');
+            }
+            elseif($_POST['state']==-1){
+                $data["order_status"]="充值取消";
+                //发送小程序订阅消息(充值状态)
+                $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
+                    'touser'=>$users['open_id'],  //接收者openid
+                    'template_id'=>$agent_auth_xcx['waybill_template'],
+                    'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                    'data'=>[
+                        'character_string13'=>['value'=>$orders['waybill']],
+                        'thing9'=>['value'=>"手机号：".$_POST['mobile']],
+                        'thing10'=>['value'=>$data["order_status"]],
+                        'phrase3'=>['value'=>"取消"],
+                        'thing8'  =>['value'=>'点击查看订单信息',]
+                    ],
+                    'miniprogram_state'=>'formal',
+                    'lang'=>'zh_CN'
+                ],'POST');
+                //需适配消息格式
+                $datas = [
+                    'type'=>4,
+                    'order_id' => $orders['id'],
+
+                ];
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $datas,'way_type');
+            }
+            elseif($_POST['state']==2){
+                $data["order_status"]="充值失败";
+                //需适配消息格式
+                $datas = [
+                    'type'=>4,
+                    'order_id' => $orders['id'],
+                ];
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $datas,'way_type');
+            }
+
+            db('refilllist')->where('out_trade_num',$_POST['out_trade_num'])->update($data);
+
+
+            //签名正确
+            return "success";
+        }
+        else{
+            return "error";
+        }
+    }
+    //话费回调
+    function wx_hforder_pay(){
+        $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
+        $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
+        $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
+        $inWechatpayNonce = $this->request->header('Wechatpay-Nonce');
+        $inBody = file_get_contents('php://input');
+
+        $agent_info=db('admin')->where('wx_serial_no',$inWechatpaySerial)->find();
+        // 根据通知的平台证书序列号，查询本地平台证书文件，
+        $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$agent_info['wx_mchid'].'.pem');
+        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+        // 检查通知时间偏移量，允许5分钟之内的偏移
+        $timeOffsetStatus = 300 >= abs(Formatter::timestamp() - (int)$inWechatpayTimestamp);
+        $verifiedStatus = Rsa::verify(
+        // 构造验签名串
+            Formatter::joinedByLineFeed($inWechatpayTimestamp, $inWechatpayNonce, $inBody),
+            $inWechatpaySignature,
+            $platformPublicKeyInstance
+        );
+        try {
+            if (!$timeOffsetStatus && !$verifiedStatus) {
+                throw new Exception('签名构造错误或超时');
+            }
+            // 转换通知的JSON文本消息为PHP Array数组
+            $inBodyArray =json_decode($inBody, true);
+            // 使用PHP7的数据解构语法，从Array中解构并赋值变量
+            ['resource' => [
+                'ciphertext'      => $ciphertext,
+                'nonce'           => $nonce,
+                'associated_data' => $aad
+            ]] = $inBodyArray;
+            // 加密文本消息解密
+            $inBodyResource = AesGcm::decrypt($ciphertext, $agent_info['wx_mchprivatekey'], $nonce, $aad);
+            // 把解密后的文本转换为PHP Array数组
+            $inBodyResourceArray = json_decode($inBodyResource, true);
+            if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
+                throw new Exception('未支付');
+            }
+            $orders=db('refilllist')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            if(!$orders){
+                throw new Exception('找不到指定订单');
+            }
+            //如果订单未支付  调用云洋下单接口
+            if ($orders['pay_status']!=0){
+                throw new Exception('重复回调');
+            }
+
+            $Common=new Common();
+            $Dbcommmon= new Dbcommom();
+            $content=[
+                'out_trade_num'=> $orders['out_trade_num'],
+                'product_id'=>$orders['product_id'],
+                'mobile'=> $orders['mobile'],
+                'notify_url'=>Request::instance()->domain().'/web/wxcallback/refillcallback',
+            ];
+
+            $data=$Common->chongzhi('index/recharge',$content);
+            if (!empty($data["code"])){
+                Log::error('话费充值失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
+                $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                //支付成功下单失败  执行退款操作
+                $updata=[
+                    'pay_status'=>2,
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'refill_fail_reason'=>$data['errmsg'],
+                    'order_status'=>'下单失败咨询客服',
+                    'out_refund_no'=>$out_refund_no,
+                ];
+
+                $data = [
+                    'type'=>3,
+                    'order_id'=>$orders['id'],
+                    'out_refund_no' => $out_refund_no,
+                    'reason'=>$data['message'],
+                ];
+
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $data,'way_type');
+
+                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                    //推送企业微信消息
+                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                }
+
+            }else{
+
+                //支付成功下单成功
+                $result=$data['data'];
+                $updata=[
+//                    'waybill'=>$result['waybill'],
+//                    'shopbill'=>$result['shopbill'],
+                    "order_number"=>$result['order_number'],
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'pay_status'=>1,
+                ];
+
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['order_number'].' 下单支付成功');
+            }
+            db('refilllist')->where('out_trade_num',$inBodyResourceArray['out_trade_no'])->update($updata);
+
+            exit('success');
+        }catch (\Exception $e){
+            exit('fail');
+        }
+    }
+    //电费回调
+    function wx_dforder_pay(){
+        $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
+        $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
+        $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
+        $inWechatpayNonce = $this->request->header('Wechatpay-Nonce');
+        $inBody = file_get_contents('php://input');
+
+        $agent_info=db('admin')->where('wx_serial_no',$inWechatpaySerial)->find();
+        // 根据通知的平台证书序列号，查询本地平台证书文件，
+        $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$agent_info['wx_mchid'].'.pem');
+        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+        // 检查通知时间偏移量，允许5分钟之内的偏移
+        $timeOffsetStatus = 300 >= abs(Formatter::timestamp() - (int)$inWechatpayTimestamp);
+        $verifiedStatus = Rsa::verify(
+        // 构造验签名串
+            Formatter::joinedByLineFeed($inWechatpayTimestamp, $inWechatpayNonce, $inBody),
+            $inWechatpaySignature,
+            $platformPublicKeyInstance
+        );
+        try {
+            if (!$timeOffsetStatus && !$verifiedStatus) {
+                throw new Exception('签名构造错误或超时');
+            }
+            // 转换通知的JSON文本消息为PHP Array数组
+            $inBodyArray =json_decode($inBody, true);
+            // 使用PHP7的数据解构语法，从Array中解构并赋值变量
+            ['resource' => [
+                'ciphertext'      => $ciphertext,
+                'nonce'           => $nonce,
+                'associated_data' => $aad
+            ]] = $inBodyArray;
+            // 加密文本消息解密
+            $inBodyResource = AesGcm::decrypt($ciphertext, $agent_info['wx_mchprivatekey'], $nonce, $aad);
+            // 把解密后的文本转换为PHP Array数组
+            $inBodyResourceArray = json_decode($inBodyResource, true);
+            if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
+                throw new Exception('未支付');
+            }
+            $orders=db('refilllist')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            if(!$orders){
+                throw new Exception('找不到指定订单');
+            }
+            //如果订单未支付  调用云洋下单接口
+            if ($orders['pay_status']!=0){
+                throw new Exception('重复回调');
+            }
+
+            $Common=new Common();
+            $Dbcommmon= new Dbcommom();
+            $content=[
+                'out_trade_num'=> $orders['out_trade_num'],
+                'product_id'=>$orders['product_id'],
+                'mobile'=> $orders['mobile'],
+                'notify_url'=>Request::instance()->domain().'/web/wxcallback/refillcallback',
+                "area"=>$orders['area'],
+                "ytype"=>$orders['ytype'],
+                "id_card_no"=>$orders["id_card_no"],
+                "city"=>$orders["city"]
+            ];
+
+            $data=$Common->chongzhi('index/recharge',$content);
+            if (!empty($data["code"])){
+                Log::error('话费充值失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
+                $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                //支付成功下单失败  执行退款操作
+                $updata=[
+                    'pay_status'=>2,
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'refill_fail_reason'=>$data['errmsg'],
+                    'order_status'=>'下单失败咨询客服',
+                    'out_refund_no'=>$out_refund_no,
+                ];
+
+                $data = [
+                    'type'=>3,
+                    'order_id'=>$orders['id'],
+                    'out_refund_no' => $out_refund_no,
+                    'reason'=>$data['message'],
+                ];
+
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $data,'way_type');
+
+                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                    //推送企业微信消息
+                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                }
+
+            }else{
+
+                //支付成功下单成功
+                $result=$data['data'];
+                $updata=[
+//                    'waybill'=>$result['waybill'],
+//                    'shopbill'=>$result['shopbill'],
+                    "order_number"=>$result['order_number'],
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'pay_status'=>1,
+                ];
+
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['order_number'].' 下单支付成功');
+            }
+            db('refilllist')->where('out_trade_num',$inBodyResourceArray['out_trade_no'])->update($updata);
+
+            exit('success');
+        }catch (\Exception $e){
+            exit('fail');
+        }
+    }
+    //燃气费回调
+    function wx_rqforder_pay(){
+        $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
+        $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
+        $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
+        $inWechatpayNonce = $this->request->header('Wechatpay-Nonce');
+        $inBody = file_get_contents('php://input');
+
+        $agent_info=db('admin')->where('wx_serial_no',$inWechatpaySerial)->find();
+        // 根据通知的平台证书序列号，查询本地平台证书文件，
+        $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$agent_info['wx_mchid'].'.pem');
+        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+        // 检查通知时间偏移量，允许5分钟之内的偏移
+        $timeOffsetStatus = 300 >= abs(Formatter::timestamp() - (int)$inWechatpayTimestamp);
+        $verifiedStatus = Rsa::verify(
+        // 构造验签名串
+            Formatter::joinedByLineFeed($inWechatpayTimestamp, $inWechatpayNonce, $inBody),
+            $inWechatpaySignature,
+            $platformPublicKeyInstance
+        );
+        try {
+            if (!$timeOffsetStatus && !$verifiedStatus) {
+                throw new Exception('签名构造错误或超时');
+            }
+            // 转换通知的JSON文本消息为PHP Array数组
+            $inBodyArray =json_decode($inBody, true);
+            // 使用PHP7的数据解构语法，从Array中解构并赋值变量
+            ['resource' => [
+                'ciphertext'      => $ciphertext,
+                'nonce'           => $nonce,
+                'associated_data' => $aad
+            ]] = $inBodyArray;
+            // 加密文本消息解密
+            $inBodyResource = AesGcm::decrypt($ciphertext, $agent_info['wx_mchprivatekey'], $nonce, $aad);
+            // 把解密后的文本转换为PHP Array数组
+            $inBodyResourceArray = json_decode($inBodyResource, true);
+            if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
+                throw new Exception('未支付');
+            }
+            $orders=db('refilllist')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            if(!$orders){
+                throw new Exception('找不到指定订单');
+            }
+            //如果订单未支付  调用云洋下单接口
+            if ($orders['pay_status']!=0){
+                throw new Exception('重复回调');
+            }
+
+            $Common=new Common();
+            $Dbcommmon= new Dbcommom();
+            $content=[
+                'out_trade_num'=> $orders['out_trade_num'],
+                'product_id'=>$orders['product_id'],
+                'mobile'=> $orders['mobile'],
+                'notify_url'=>Request::instance()->domain().'/web/wxcallback/refillcallback',
+            ];
+
+            $data=$Common->chongzhi('index/recharge',$content);
+            if (!empty($data["code"])){
+                Log::error('话费充值失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
+                $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                //支付成功下单失败  执行退款操作
+                $updata=[
+                    'pay_status'=>2,
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'refill_fail_reason'=>$data['errmsg'],
+                    'order_status'=>'下单失败咨询客服',
+                    'out_refund_no'=>$out_refund_no,
+                ];
+
+                $data = [
+                    'type'=>3,
+                    'order_id'=>$orders['id'],
+                    'out_refund_no' => $out_refund_no,
+                    'reason'=>$data['message'],
+                ];
+
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $data,'way_type');
+
+                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                    //推送企业微信消息
+                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                }
+
+            }else{
+
+                //支付成功下单成功
+                $result=$data['data'];
+                $updata=[
+//                    'waybill'=>$result['waybill'],
+//                    'shopbill'=>$result['shopbill'],
+                    "order_number"=>$result['order_number'],
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'pay_status'=>1,
+                ];
+
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['order_number'].' 下单支付成功');
+            }
+            db('refilllist')->where('out_trade_num',$inBodyResourceArray['out_trade_no'])->update($updata);
+
+            exit('success');
+        }catch (\Exception $e){
+            exit('fail');
+        }
     }
     //非接口
     function updatecouponlist($couponid,$type,$user_id){

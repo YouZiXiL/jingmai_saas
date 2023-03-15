@@ -7,6 +7,9 @@ use WeChatPay\Crypto\Rsa;
 use WeChatPay\Util\PemUtil;
 class Common
 {
+    public $baseapi="http://tckj.app58.cn/yrapi.php/";
+    public $apikey="UE7gnOvXfedZLJD2lRqTkNpCK5QzGu3w";
+    public $userid=10734;
 
     /**
      * 云洋接口
@@ -269,6 +272,23 @@ class Common
         ],'POST');
     }
 
+    public function chongzhi($path,$data){
+        $content=[
+            "userid"=>$this->userid,
+            "sign"=>$this->getsign($data)
+        ];
+        $content+=$data;
+
+        return json_decode($allproduct=$this->common->httpRequest($this->baseapi.$path,$content,"POST"));
+    }
+    //空中充值的签名规则
+    public function getsign($params=[]){
+        $params["userid"]=$this->userid;
+        ksort($params);
+        $sign_str = http_build_query($params) . '&apikey='.$this->apikey;
+        $sign = strtoupper(md5(urldecode($sign_str)));
+        return $sign;
+    }
     //指定长度的随机数
     function getinvitecode($length=3){
 

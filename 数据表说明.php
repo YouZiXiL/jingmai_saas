@@ -39,6 +39,10 @@
     主要设置返佣规则
  2、控制台用户表 fa_admin
     修改表
-2024-3-14
+2023-3-14
  1、地址表 fa_users_address
     添加同城相关字段
+2023-3-15
+ 1、充值订单表 fa_refilllist
+ 2、充值渠道信息表 fa_refill_product
+ 3、充值回调表 fa_refill_callback
