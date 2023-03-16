@@ -46,3 +46,6 @@
  1、充值订单表 fa_refilllist
  2、充值渠道信息表 fa_refill_product
  3、充值回调表 fa_refill_callback
+
+2023-3-16
+ 1、admin 表添加 代理商给用户增加比例 字段

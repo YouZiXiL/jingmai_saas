@@ -1770,6 +1770,129 @@ class Wxcallback extends Controller
         }
     }
     //非接口
+
+    /**
+     * 顺丰微信下单支付回调
+     */
+    function wx_sforder_pay(){
+
+        $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
+        $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
+        $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
+        $inWechatpayNonce = $this->request->header('Wechatpay-Nonce');
+        $inBody = file_get_contents('php://input');
+
+        $agent_info=db('admin')->where('wx_serial_no',$inWechatpaySerial)->find();
+        // 根据通知的平台证书序列号，查询本地平台证书文件，
+        $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$agent_info['wx_mchid'].'.pem');
+        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+        // 检查通知时间偏移量，允许5分钟之内的偏移
+        $timeOffsetStatus = 300 >= abs(Formatter::timestamp() - (int)$inWechatpayTimestamp);
+        $verifiedStatus = Rsa::verify(
+        // 构造验签名串
+            Formatter::joinedByLineFeed($inWechatpayTimestamp, $inWechatpayNonce, $inBody),
+            $inWechatpaySignature,
+            $platformPublicKeyInstance
+        );
+        try {
+            if (!$timeOffsetStatus && !$verifiedStatus) {
+                throw new Exception('签名构造错误或超时');
+            }
+            // 转换通知的JSON文本消息为PHP Array数组
+            $inBodyArray =json_decode($inBody, true);
+            // 使用PHP7的数据解构语法，从Array中解构并赋值变量
+            ['resource' => [
+                'ciphertext'      => $ciphertext,
+                'nonce'           => $nonce,
+                'associated_data' => $aad
+            ]] = $inBodyArray;
+            // 加密文本消息解密
+            $inBodyResource = AesGcm::decrypt($ciphertext, $agent_info['wx_mchprivatekey'], $nonce, $aad);
+            // 把解密后的文本转换为PHP Array数组
+            $inBodyResourceArray = json_decode($inBodyResource, true);
+            if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
+                throw new Exception('未支付');
+            }
+            $orders=db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            if(!$orders){
+                throw new Exception('找不到指定订单');
+            }
+            //如果订单未支付  调用云洋下单接口
+            if ($orders['pay_status']!=0){
+                throw new Exception('重复回调');
+            }
+
+            $Common=new Common();
+            $Dbcommmon= new Dbcommom();
+            $content=[
+                "productCode"=>$orders['channel_id'],
+                "senderPhone"=>$orders['sender_mobile'],
+                "senderName"=>$orders['sender'],
+                "senderAddress"=>$orders['sender_address'],
+                "receiveAddress"=>$orders['receive_address'],
+                "receivePhone"=>$orders['receiver_mobile'],
+                "receiveName"=>$orders['receiver'],
+                "goods"=>$orders['item_name'],
+                "packageNum"=>$orders['package_count'],
+                'weight'=>$orders['weight'],
+                "payMethod"=>3,
+                "thirdOrderNo"=>$orders["out_trade_no"]
+            ];
+            !empty($orders['insured']) &&($content['guaranteeValueAmount'] = $orders['insured']);
+            !empty($orders['vloum_long']) &&($content['length'] = $orders['vloum_long']);
+            !empty($orders['vloum_width']) &&($content['width'] = $orders['vloum_width']);
+            !empty($orders['vloum_height']) &&($content['height'] = $orders['vloum_height']);
+            !empty($orders['bill_remark']) &&($content['remark'] = $orders['bill_remark']);
+            $data=$Common->shunfeng_api('http://api.wanhuida888.com/openApi/doOrder',$content);
+            if (!empty($data['code'])){
+                Log::error('Q必达下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
+                $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                //支付成功下单失败  执行退款操作
+                $updata=[
+                    'pay_status'=>2,
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'yy_fail_reason'=>$data['msg'],
+                    'order_status'=>'下单失败咨询客服',
+                    'out_refund_no'=>$out_refund_no,
+                ];
+
+                $data = [
+                    'type'=>3,
+                    'order_id'=>$orders['id'],
+                    'out_refund_no' => $out_refund_no,
+                    'reason'=>$data['msg'],
+                ];
+
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $data,'way_type');
+
+                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                    //推送企业微信消息
+                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                }
+
+            }else{
+
+                //支付成功下单成功
+                $result=$data['data'];
+                $updata=[
+                    'waybill'=>$result['waybillNo'],
+                    'shopbill'=>$result['orderNo'],
+                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                    'pay_status'=>1,
+                ];
+
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
+            }
+            db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($updata);
+
+            exit('success');
+        }catch (\Exception $e){
+            exit('fail');
+        }
+    }
+
+
     function updatecouponlist($couponid,$type,$user_id){
 
         $common=new Common();

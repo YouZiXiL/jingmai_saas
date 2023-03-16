@@ -112,13 +112,13 @@ class Yunyangtc extends Controller
     }
 
     /**
-     * 设置默认寄件地址
+     * 设置置顶地址状态
      */
     function set_default_address(): Json
     {
         $param=$this->request->param();
-        db('users_address')->where('user_id',$this->user->id)->update(['istcdefault'=>0]);
-        db('users_address')->where('id',$param['id'])->update(['istcdefault'=>1]);
+//        db('users_address')->where('user_id',$this->user->id)->update(['istcdefault'=>0]);
+        db('users_address')->where('id',$param['id'])->update(['istop'=>$param["state"]]);
         return json(['status'=>200, 'data'=>'', 'msg'=>'成功']);
 
     }
@@ -134,15 +134,37 @@ class Yunyangtc extends Controller
     }
 
     /**
-     * 获取默认地址
+     * 获取置顶地址
      */
     function get_default_address(): Json
     {
-        $res=db('users_address')->where('user_id',$this->user->id)->where('istcdefault',1)->find();
+
+        $res=db('users_address')->where('user_id',$this->user->id)->where('istop',2)->select();
         //file_put_contents('get_default_address.txt',json_encode($res).PHP_EOL.json_encode($this->user).PHP_EOL,FILE_APPEND);
         return json(['status'=>200, 'data'=>$res, 'msg'=>'成功']);
     }
-
+    /**
+     * 地址库列表
+     */
+    function address_list(): Json
+    {
+        $param=$this->request->param();
+        if (empty($param['page'])){
+            $param['page']=1;
+        }
+        $db=db('users_address')->order('id','desc')->page($param['page'],10)->where('user_id',$this->user->id)->where('type',2);
+        if (!empty($param['search_field'])){
+            $res=$db->where('name|mobile',$param['search_field'])->select();
+        }else{
+            $res=$db->select();
+        }
+        $data=[
+            'status'=>200,
+            'data'=>$res,
+            'msg'=>'成功'
+        ];
+        return json($data);
+    }
     /**
      * 选择快递公司
      */

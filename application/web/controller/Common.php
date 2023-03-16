@@ -60,6 +60,52 @@ class Common
 
     }
 
+    /**
+     * 顺丰接口
+     * @string $serviceCode
+     * @array $content
+     */
+    function shunfeng_api($url,$content){
+        $version="V1.0";
+        list($msec, $sec) = explode(' ', microtime());
+        $timeStamp= (float)sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
+        $appid=config('site.shunfeng_appid');
+        $secret_key=config('site.shunfeng_secret_key');
+        $sign=md5($appid.$version.$timeStamp.$secret_key);
+        $header=array('Content-Type: application/json; charset=utf-8',
+            "sign:".$sign,
+            "timestamp:".$timeStamp,
+            "version:".$version,
+            "appid:".$appid
+            );
+
+        $res=$this->sfhttpRequest($url,$content ,'POST',$content);
+
+        return json_decode($res,true);
+
+    }
+    //Q 必达专用请求
+    function sfhttpRequest($url, $data='', $method='GET',$header=['Content-Type: application/json; charset=utf-8']){
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']??'');
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($curl, CURLOPT_AUTOREFERER, 1);
+        if($method=='POST'||$method=='post')
+        {
+            $data=json_encode($data,JSON_UNESCAPED_UNICODE);
+            curl_setopt($curl, CURLOPT_POSTFIELDS,$data );
+            curl_setopt($curl, CURLOPT_POST, 1);
+        }
+        curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+        curl_setopt($curl, CURLOPT_HTTPHEADER,$header);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        $result = curl_exec($curl);
+        curl_close($curl);
+        return $result;
+    }
     //http请求
     //$data  数组
     function httpRequest($url, $data='', $method='GET',$header=['Content-Type: application/json; charset=utf-8']){
