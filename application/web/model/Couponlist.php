@@ -28,4 +28,11 @@ class Couponlist extends Model
         }
         return date("Y-m-d",$value);;
     }
+    public function getPapercodeAttr($value)
+    {
+        if(empty($value)){
+            return "****-****";
+        }
+        return $value;;
+    }
 }

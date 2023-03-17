@@ -138,8 +138,11 @@ class Yunyangtc extends Controller
      */
     function get_default_address(): Json
     {
-
-        $res=db('users_address')->where('user_id',$this->user->id)->where('istop',2)->select();
+        $param=$this->request->param();
+        if (empty($param['page'])){
+            $param['page']=1;
+        }
+        $res=db('users_address')->order('id','desc')->page($param['page'],10)->where('user_id',$this->user->id)->where('istop',2);
         //file_put_contents('get_default_address.txt',json_encode($res).PHP_EOL.json_encode($this->user).PHP_EOL,FILE_APPEND);
         return json(['status'=>200, 'data'=>$res, 'msg'=>'成功']);
     }
@@ -208,6 +211,7 @@ class Yunyangtc extends Controller
             ];
             !empty($param['insured']) &&($content['insured'] = $param['insured']);
             !empty($param['billRemark']) &&($content['billRemark'] = $param['billRemark']);
+            !empty($param['pickupStartTime']) &&($content['pickupStartTime'] = strtotime($param['pickupStartTime']));
 
             $agent_info=db('admin')->field('agent_tc_ratio,agent_tc')->where('id',$this->user->agent_id)->find();
             $data=$this->common->yunyangtc_api('QUERY_DELIVER_FEE',$content);
@@ -240,7 +244,7 @@ class Yunyangtc extends Controller
                 $v['jijian_id']=$param['jijian_id'];//寄件id
                 $v['shoujian_id']=$param['shoujian_id'];//收件id
                 $v['weight']=$param['weight'];//重量
-                $v['waybill']=$data['message'];//重量
+                $v['waybill']=$data['message'];//商户订单号
 
                 !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价费用
                 $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>"同城",'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);

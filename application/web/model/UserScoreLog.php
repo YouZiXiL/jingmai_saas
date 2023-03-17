@@ -12,4 +12,10 @@ class UserScoreLog extends Model
     {
         return date("Y-m-d",$value);
     }
+    public function getScoreAttr($name)
+    {
+        if($this->getAttr("memo")=="兑换优惠券")
+            $name=-$name;
+        return $name;
+    }
 }

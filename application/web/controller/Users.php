@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\web\model\Admin;
 use app\web\model\Agent_couponlist;
 use app\web\model\Agent_rule;
 use app\web\model\AgentCouponmanager;
@@ -58,12 +59,12 @@ class Users extends Controller
         ];
         //1、获得用户
         $user_info= \app\web\model\Users::get($this->user->id);
-
+        $agent_info=Admin::get($this->user->agent_id);
         $user_detail["score"]=$user_info->score;
         $user_detail["nickname"]=$user_info->nick_name;
         $user_detail["avatar"]=$user_info->avatar;
         $user_detail["money"]=number_format($user_info->money,2);
-        $user_detail["service_rate"]=0.08;//从商家服务表中获得 商家可自定义比例 建议8%
+        $user_detail["service_rate"]=$agent_info->service_rate??0.08;//从商家服务表中获得 商家可自定义比例 建议8%
         if(!empty($user_info->myinvitecode))
             $user_detail["invitecode"]=$user_info->myinvitecode;
 
@@ -820,15 +821,124 @@ class Users extends Controller
         }
     }
 
+    //购买会员
+    public function vipbymoney(){
+
+        $param=$this->request->param();
+
+
+
+        $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
+
+
+        if ($agent_info['status']=='hidden'){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户已禁止使用']);
+        }
+        if ($agent_info['agent_expire_time']<=time()){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户已过期']);
+        }
+        if (empty($agent_info['wx_mchid'])||empty($agent_info['wx_mchcertificateserial'])){
+            return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
+        }
+
+        $vip_info=db('agent_vipmanager')->where('id',$param["vip_id"])->find();
+        if(empty($vip_info)){
+            return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
+        }
+
+        $out_trade_no='HY'.$this->common->get_uniqid();
+        $data=[
+            'user_id'=>$this->user->id,
+            'agent_id'=>$this->user->agent_id,
+            'vip_id'=>$param["vip_id"],
+
+            'price'=>$vip_info['price'],
+            'wx_mchid'=>$agent_info['wx_mchid'],
+            'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+            'pay_status'=>0,
+            'create_time'=>time()
+        ];
+
+        $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+        $json=[
+            'mchid'        => $agent_info['wx_mchid'],
+            'out_trade_no' => $out_trade_no,
+            'appid'        => $this->user->app_id,
+            'description'  => '优惠券-'.$out_trade_no,
+            'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_viporder_pay',//购买优惠券成功回调
+            'amount'       => [
+                'total'    =>(int)bcmul($vip_info[price],100),
+                'currency' => 'CNY'
+            ],
+            'payer'        => [
+                'openid'   =>$this->user->open_id
+            ]
+        ];
+
+        try {
+            $resp = $wx_pay
+                ->chain('v3/pay/transactions/jsapi')
+                ->post(['json' =>$json]);
+
+
+            $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
+            $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+            //获取小程序通知模版
+
+            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template')->find();
+
+            $prepay_id=json_decode($resp->getBody(),true);
+            if (!array_key_exists('prepay_id',$prepay_id)){
+                throw new Exception('拉取支付错误');
+            }
+            $params = [
+                'appId'     => $this->user->app_id,
+                'timeStamp' => (string)Formatter::timestamp(),
+                'nonceStr'  => Formatter::nonce(),
+                'package'   =>'prepay_id='. $prepay_id['prepay_id'],
+            ];
+            $params += [
+                'paySign' => Rsa::sign(
+                    Formatter::joinedByLineFeed(...array_values($params)),
+                    $merchantPrivateKeyInstance),
+                'signType' => 'RSA',
+                'waybill_template'=>$template['waybill_template'],
+                'pay_template'=>$template['pay_template'],
+            ];
+
+            $inset=db('viporders')->insert($data);
+            if (!$inset){
+                throw new Exception('插入数据失败');
+            }
+            return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
+        } catch (\Exception $e) {
+
+            file_put_contents('create_VIPorders.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+
+            // 进行错误处理
+            return json(['status'=>400,'data'=>'','msg'=>'商户号配置错误,请联系管理员']);
+        }
+    }
+
     //获取 商家开放的优惠券详情
     public function getagentcouponlist(){
 
         $couponmanager = new AgentCouponmanager();
         $couponlist = $couponmanager->where("agent_id",$this->user->agent_id)->where("state",1)->where("couponcount",">",0)->select();
 
-        return \json($couponlist);
+        return \json(['status'=>200,'data'=>$couponlist,'msg'=>'success']);
 
     }
+    //会员功能
+    public function getagentviplist(){
+
+
+        $couponlist = db("agent_vipmanager")->where("agent_id",$this->user->agent_id)->where("state",1)->select();
+
+        return \json(['status'=>200,'data'=>$couponlist,'msg'=>'success']);
+
+    }
+
     private function getinvitecode($length=3){
 
         $rootstr="ABCDEFGHJKLMNPQRSTUVWXYZAAYYACCAHAKA";

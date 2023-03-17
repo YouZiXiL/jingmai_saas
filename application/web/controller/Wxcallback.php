@@ -7,6 +7,7 @@ use app\web\aes\WxBizMsgCrypt;
 use app\web\model\Agent_couponlist;
 use app\web\model\AgentCouponmanager;
 use app\web\model\Couponlist;
+use app\web\model\Rebatelist;
 use think\Controller;
 use think\Exception;
 use think\Log;
@@ -348,6 +349,26 @@ class Wxcallback extends Controller
                 $users=db('users')->where('id',$orders['user_id'])->find();
                 $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
 
+                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                if(empty($rebatelist)){
+                    $rebatelist=new Rebatelist();
+                    $data=[
+                        "user_id"=>$users["id"],
+                        "invitercode"=>$users["invitercode"],
+                        "fainvitercode"=>$users["fainvitercode"],
+                        "out_trade_no"=>$orders["out_trade_no"],
+                        "final_price"=>$orders["final_price"],
+                        "payinback"=>0,
+                        "state"=>1,
+                        "rebate_amount"=>$orders["user_id"],
+                        "createtime"=>time(),
+                        "updatetime"=>time()
+                    ];
+                    $rebatelist->save($data);
+                }
+                $rebatelistdata=[
+                    "updatetime"=>time()
+                ];
                 $up_data=[
                     'final_freight'=>$pamar['freight'],
                     'comments'=>str_replace("null","",$pamar['comments'])
@@ -382,6 +403,8 @@ class Wxcallback extends Controller
                     $up_data['final_weight_time']=time();
                     $up_data['tralight_price']=$users_tralight_amt;
                     $up_data['agent_tralight_price']=$agent_tralight_amt;
+                    $rebatelistdata["payinback"]=-$up_data['tralight_price'];
+
                 }
 
 
@@ -415,6 +438,9 @@ class Wxcallback extends Controller
                         'cal_weight'=>$overload_weight .'kg',
                         'users_overload_amt'=>$users_overload_amt.'元'
                     ];
+                    $rebatelistdata["payinback"]=$up_data['overload_price'];
+
+                    $rebatelistdata["state"]=2;
 
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
@@ -436,12 +462,30 @@ class Wxcallback extends Controller
                         'type'=>4,
                         'order_id' => $orders['id'],
                     ];
+                    $rebatelistdata["cancel_time"]=time();
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
                 }
                 db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'){
+
+                    if( $rebatelist->state !=2 && $rebatelist->state !=3){
+                        if(!empty($rebatelist["invitercode"])){
+                            $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
+                            if(!empty($fauser)){
+                                $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*$agent_info["imm_rate"]??0;
+                            }
+                        }
+                        if(!empty($rebatelist["fainvitercode"])){
+                            $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
+                            if(!empty($gruser)){
+                                $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*$agent_info["imm_rate"]??0;
+                            }
+                        }
+                        $rebatelistdata["state"]=3;
+                    }
+
                     $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                         'touser'=>$users['open_id'],  //接收者openid
                         'template_id'=>$agent_auth_xcx['waybill_template'],
@@ -457,6 +501,7 @@ class Wxcallback extends Controller
                         'lang'=>'zh_CN'
                     ],'POST');
                 }
+                $rebatelist->save($rebatelistdata);
             }
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
@@ -1263,6 +1308,7 @@ class Wxcallback extends Controller
                     $up_data['final_weight_time']=time();
                     $up_data['tralight_price']=number_format($orders["final_price"]-$users_price,2);
                     $up_data['agent_tralight_price']=number_format($orders["agent_price"]-$agent_price,2);
+
                 }
 
 
@@ -1289,7 +1335,7 @@ class Wxcallback extends Controller
                         'cal_weight'=>$overload_weight .'kg',
                         'users_overload_amt'=>$up_data['overload_price'].'元'
                     ];
-
+                    $up_data['tralight_price']=$up_data['overload_price'];
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
                 }
@@ -1316,6 +1362,8 @@ class Wxcallback extends Controller
                 db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'){
+                    //如果未 计入 并且 没有补缴 则计入
+
                     $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                         'touser'=>$users['open_id'],  //接收者openid
                         'template_id'=>$agent_auth_xcx['waybill_template'],
@@ -1331,6 +1379,7 @@ class Wxcallback extends Controller
                         'lang'=>'zh_CN'
                     ],'POST');
                 }
+
             }
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
@@ -1338,6 +1387,7 @@ class Wxcallback extends Controller
         }
     }
 
+    //充值回调
     function refillcallback(){
         $common=new Common();
         $data = $_POST;//接收所有post的数据
@@ -1769,7 +1819,7 @@ class Wxcallback extends Controller
             exit('fail');
         }
     }
-    //非接口
+
 
     /**
      * 顺丰微信下单支付回调
@@ -1893,6 +1943,269 @@ class Wxcallback extends Controller
     }
 
 
+    /**
+     * 会员微信下单支付回调
+     */
+    function wx_viporder_pay(){
+
+        $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
+        $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
+        $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
+        $inWechatpayNonce = $this->request->header('Wechatpay-Nonce');
+        $inBody = file_get_contents('php://input');
+
+        $agent_info=db('admin')->where('wx_serial_no',$inWechatpaySerial)->find();
+        // 根据通知的平台证书序列号，查询本地平台证书文件，
+        $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$agent_info['wx_mchid'].'.pem');
+        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+        // 检查通知时间偏移量，允许5分钟之内的偏移
+        $timeOffsetStatus = 300 >= abs(Formatter::timestamp() - (int)$inWechatpayTimestamp);
+        $verifiedStatus = Rsa::verify(
+        // 构造验签名串
+            Formatter::joinedByLineFeed($inWechatpayTimestamp, $inWechatpayNonce, $inBody),
+            $inWechatpaySignature,
+            $platformPublicKeyInstance
+        );
+        try {
+            if (!$timeOffsetStatus && !$verifiedStatus) {
+                throw new Exception('签名构造错误或超时');
+            }
+            // 转换通知的JSON文本消息为PHP Array数组
+            $inBodyArray =json_decode($inBody, true);
+            // 使用PHP7的数据解构语法，从Array中解构并赋值变量
+            ['resource' => [
+                'ciphertext'      => $ciphertext,
+                'nonce'           => $nonce,
+                'associated_data' => $aad
+            ]] = $inBodyArray;
+            // 加密文本消息解密
+            $inBodyResource = AesGcm::decrypt($ciphertext, $agent_info['wx_mchprivatekey'], $nonce, $aad);
+            // 把解密后的文本转换为PHP Array数组
+            $inBodyResourceArray = json_decode($inBodyResource, true);
+            if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
+                throw new Exception('未支付');
+            }
+
+            $orders=db('viporders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            if(!$orders){
+                throw new Exception('找不到指定订单');
+            }
+            //如果订单已支付  调用云洋下单接口
+            if ($orders['pay_status']!=0){
+                throw new Exception('重复回调');
+            }
+
+            $updata=[
+                'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                'pay_status'=>1,
+            ];
+
+
+            db('viporders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($updata);
+
+            $user=\app\web\model\Users::get($orders["user_id"]);
+            $user->uservip=2;
+            $user->vipvaliddate=strtotime("+1 month +1 day");
+            $user->save();
+            $this->updatecouponlistbyvip("HY",$orders["user_id"],$orders["agent_id"]);
+            exit('success');
+        }catch (\Exception $e){
+            file_put_contents('wx_order_pay.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
+
+            exit('success');
+        }
+    }
+    //Q必达回调
+    //pushType推送状态 1状态变更 2计费变更 3快递员变更 4订单变更
+    function q_callback(){
+        $params = $this->request->param();
+        if(empty($params["pushType"])){
+            return "error";
+        }
+        else{
+            try {
+                // 返回参数
+                $data=[
+                    'thirdOrderNo'=>$params['thirdOrderNo'],
+                    'waybillNo'=>$params['waybillNo'],
+                    'orderNo'=>$params['orderNo'],
+                    'type'=>$params['type'],
+                    "pushType"=>$params['pushType'],
+                    'data'=>json_encode($params['data'])
+                ];
+                db('q_callback')->insert($data);
+                $common= new Common();
+                $orders=db('orders')->where('out_trade_no',$params['thirdOrderNo'])->find();
+                //判断具体返回信息后可改为等号
+                if (count(explode("取消",$orders['order_status']))>1){
+                    return "SUCCESS";
+                }
+                $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+                $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+                $users=db('users')->where('id',$orders['user_id'])->find();
+                $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
+
+                $updatedata=[];
+                if($params["pushType"]==1){
+                    $updatedata=[
+                        "order_status"=>$params["data"]["status"]."-".$params["data"]["desc"]
+                    ];
+                    $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                    if(empty($rebatelist)){
+                        $rebatelist=new Rebatelist();
+                        $data=[
+                            "user_id"=>$users["id"],
+                            "invitercode"=>$users["invitercode"],
+                            "fainvitercode"=>$users["fainvitercode"],
+                            "out_trade_no"=>$orders["out_trade_no"],
+                            "final_price"=>$orders["final_price"],
+                            "payinback"=>0,
+                            "state"=>1,
+                            "rebate_amount"=>$orders["user_id"],
+                            "createtime"=>time(),
+                            "updatetime"=>time()
+                        ];
+                        $rebatelist->save($data);
+                    }
+                    $rebatelistdata=[
+                        "updatetime"=>time()
+                    ];
+                    if($params["data"]["status"]==1){
+                        //发送小程序订阅消息(运单状态)
+                        $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
+                            'touser'=>$users['open_id'],  //接收者openid
+                            'template_id'=>$agent_auth_xcx['waybill_template'],
+                            'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                            'data'=>[
+                                'character_string13'=>['value'=>$orders['waybill']],
+                                'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
+                                'thing10'=>['value'=>$orders['receive_province'].$orders['receive_city']],
+                                'phrase3'=>['value'=>$params["data"]['desc']],
+                                'thing8'  =>['value'=>'点击查看快递信息与物流详情',]
+                            ],
+                            'miniprogram_state'=>'formal',
+                            'lang'=>'zh_CN'
+                        ],'POST');
+                    }
+                    elseif ($params["data"]["status"]==5){
+                        if( $rebatelist->state !=2 && $rebatelist->state !=3){
+                            if(!empty($rebatelist["invitercode"])){
+                                $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
+                                if(!empty($fauser)){
+                                    $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*$agent_info["imm_rate"]??0;
+                                }
+                            }
+                            if(!empty($rebatelist["fainvitercode"])){
+                                $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
+                                if(!empty($gruser)){
+                                    $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*$agent_info["imm_rate"]??0;
+                                }
+                            }
+                            $rebatelistdata["state"]=3;
+                        }
+
+                    }
+                    elseif ($params["data"]["status"]==6){
+                        $rebatelistdata["cancel_time"]=time();
+                    }
+
+                }elseif ($params["pushType"]==2){
+
+
+                    $up_data=[
+                        'final_freight'=>$params["data"]['totalFee']
+                    ];
+                    if ($orders['final_weight']==0){
+                        $up_data['final_weight']=$params["data"]['weightFee'];
+                    }
+                    $haocai=0;
+                    foreach ($params["data"]["feeList"] as $fee){
+
+                        //耗材
+                        if($fee["type"]==3 ||$fee["type"]==7){
+
+                            $up_data['haocai_freight']+=$fee["fee"];
+                            $data = [
+                                'type'=>2,
+                                'freightHaocai' =>$fee['fee'],
+                                'order_id' => $orders['id'],
+                            ];
+                            $haocai=$up_data['haocai_freight'];
+                            // 将该任务推送到消息队列，等待对应的消费者去执行
+                            Queue::push(DoJob::class, $data,'way_type');
+
+                        }
+                    }
+                    $pamar=$params["data"];
+                    //超轻处理
+                    $weight=floor($orders['weight']-$pamar['weightFee']);
+                    if ($weight>0&&$pamar['weightFee']!=0&&empty($orders['final_weight_time'])){
+
+                        $tralight_weight=$weight;//超轻重量
+
+                        $weightprice=$orders["freight"]-($pamar["totalFee"]-$haocai);
+
+                        if($weightprice>0){
+                            $dicount=number_format($pamar['totalFee']/$params['originalFee'],2);
+
+                            $up_data['tralight_status']=1;
+                            $up_data['final_weight_time']=time();
+                            $up_data['tralight_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
+                            $up_data['agent_tralight_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100),2);
+
+                            $rebatelistdata["payinback"]=-$up_data['tralight_price'];
+
+                        }
+
+                    }
+
+
+                    //更改超重状态
+                    if ($orders['weight']<$pamar['calWeight']&&empty($orders['final_weight_time'])){
+                        $up_data['overload_status']=1;
+                        $overload_weight=ceil($pamar['calWeight']-$orders['weight']);//超出重量
+
+                        $weightprice=$pamar["totalFee"]-$haocai-$orders["freight"];
+
+                        $dicount=number_format($pamar['totalFee']/$params['originalFee'],2);
+
+
+                        $up_data['overload_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);//用户超重金额
+                        $up_data['agent_overload_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100),2);//代理商超重金额
+                        $data = [
+                            'type'=>1,
+                            'agent_overload_amt' =>$up_data['agent_overload_price'],
+                            'order_id' => $orders['id'],
+                            'xcx_access_token'=>$xcx_access_token,
+                            'open_id'=>$users['open_id'],
+                            'template_id'=>$agent_auth_xcx['pay_template'],
+                            'cal_weight'=>$overload_weight .'kg',
+                            'users_overload_amt'=>$up_data['agent_overload_price'].'元'
+                        ];
+                        $rebatelistdata["payinback"]=$up_data['overload_price'];
+
+                        $rebatelistdata["state"]=2;
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
+                    }
+
+                }elseif ($params["pushType"]==3){
+                    $up_data['comments']=$params["data"]['courierInfo'];
+                }elseif ($params["pushType"]==4){
+                    $up_data['waybill']=$params["data"]['newWaybillNo'];
+                }
+                $rebatelist->save($rebatelistdata);
+                db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
+                exit("SUCCESS");
+            }
+            catch (Exception $exception){
+                exit("fail");
+            }
+        }
+    }
+
+
+    //非接口
     function updatecouponlist($couponid,$type,$user_id){
 
         $common=new Common();
@@ -1938,6 +2251,52 @@ class Wxcallback extends Controller
 
         $coupon_manager->save();
     }
+    function updatecouponlistbyvip($type,$user_id,$agent_id){
 
+        $common=new Common();
+        $coupon_managers=AgentCouponmanager::all(["agent_id"=>$agent_id,"gain_way"=>2,"state"=>1]);
+
+        $couponlist=new Couponlist();
+        $couponlistdata=[];//
+        $couponlistdataag=[];
+        $index=0;
+
+        foreach ( $coupon_managers as $coupon_manager){
+            while ($index<$coupon_manager->conpon_group_count){
+
+                $item["user_id"]=$user_id;
+                $key =$type.$common->getinvitecode(5)."-".$common->getinvitecode(5)."-".$common->getinvitecode(5)."-".$common->getinvitecode(5)."-".strval($user_id).strtoupper(uniqid());//$params["agent_id"];
+
+                $item["papercode"]=$key;
+                $item["gain_way"]=$coupon_manager["gain_way"];
+                $item["money"]=$coupon_manager["money"];
+                $item["type"]=$coupon_manager["type"];
+                $item["scene"]=$coupon_manager["scene"];
+                $item["uselimits"]=$coupon_manager["uselimits"];
+                $item["state"]=1;
+                $item["validdate"]=strtotime(date("Y-m-d"));
+                $item["validdateend"]=strtotime(date("Y-m-d "."23:59:59",strtotime("+".$coupon_manager["limitsday"]."day")));
+                $item["createtime"]=time();
+                $item["updatetime"]=time();
+                array_push($couponlistdata,$item);
+
+                $itemag=$item;
+                $itemag["validdatestart"]=$item["validdate"];
+                $itemag["state"]=2;
+                $itemag = array_diff_key($itemag,["validdate"=>"ddd","user_id"=>"xx"]);
+                array_push($couponlistdataag,$itemag);
+
+
+                $index++;
+            }
+            $couponlist->saveAll($couponlistdata);
+            $agentcouponlist=new Agent_couponlist();
+            $agentcouponlist->saveAll($couponlistdataag);
+
+            $coupon_manager["couponcount"]-=1;
+
+            $coupon_manager->save();
+        }
+    }
 
 }

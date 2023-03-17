@@ -218,6 +218,7 @@ class Shunfeng extends Controller
             'weight'=>$check_channel_intellect['weight'],
             'package_count'=>$check_channel_intellect['package_count'],
             'item_name'=>$param['item_name'],
+            'originalFee'=>$check_channel_intellect['originalFee'],
             'create_time'=>time()
         ];
         !empty($param['bill_remark']) &&($data['bill_remark'] = $param['bill_remark']);
@@ -240,7 +241,7 @@ class Shunfeng extends Controller
             'mchid'        => $agent_info['wx_mchid'],
             'out_trade_no' => $out_trade_no,
             'appid'        => $this->user->app_id,
-            'description'  => '快递下单-'.$out_trade_no,
+            'description'  => '顺丰下单-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_sforder_pay',
             'amount'       => [
                 'total'    =>(int)bcmul($check_channel_intellect['final_price']-$couponmoney,100),
