@@ -63,8 +63,8 @@ class Yunyangtc extends Controller
                     'province'=>$param['province'],
                     'city'=>$param['city'],
                     'county'=>$param['county'],
-                    'addlat'=>$param['addlat'],
-                    'addlgt'=>$param['addlgt'],
+                    'lat'=>$param['addlat'],
+                    'lng'=>$param['addlgt'],
                     'location'=>str_replace(PHP_EOL, '', $param['location']),
                     'address'=>$address
                 ]);
@@ -81,8 +81,8 @@ class Yunyangtc extends Controller
                     'province'=>$param['province'],
                     'city'=>$param['city'],
                     'county'=>$param['county'],
-                    'addlat'=>$param['addlat'],
-                    'addlgt'=>$param['addlgt'],
+                    'lat'=>$param['addlat'],
+                    'lng'=>$param['addlgt'],
                     'istcdefault'=>0,
                     'type'=>1,
                     'location'=>str_replace(PHP_EOL, '', $param['location']),
