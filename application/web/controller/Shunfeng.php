@@ -99,14 +99,15 @@ class Shunfeng extends Controller
 
                 }
                 else{
-                    $v["agent_price"]=number_format($v["originalFee"]*($v["discount"]/10+$agent_info["agent_sf_ratio"]/100),2);
-                    $v["users_price"]=number_format($v["originalFee"]*($v["discount"]/10+$agent_info["agent_sf_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
-                    $v["insert_id"]=$insert_id;
+                    $v["agent_price"]=number_format($v["originalFee"]*($v["discount"]/10+$agent_info["agent_sf_ratio"]/100)+$v["guarantFee"],2);
+                    $v["users_price"]=number_format($v["originalFee"]*($v["discount"]/10+$agent_info["agent_sf_ratio"]/100+$agent_info["sf_users_ratio"]/100)+$v["guarantFee"],2);
+                    $v["insured"]=$param['insured'];
                     $v['jijian_id']=$param['jijian_id'];//寄件id
                     $v['shoujian_id']=$param['shoujian_id'];//收件id
                     $v['weight']=$param['weight'];//重量
                     $v['package_count']=$param['package_count'];//包裹数量
                     $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>"顺丰",'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
+                    $v["insert_id"]=$insert_id;
 
                     array_push($arr,$v);
                 }
@@ -184,7 +185,7 @@ class Shunfeng extends Controller
             'users_shouzhong'=>0,
             'users_xuzhong'=>0,
             'agent_price'=>0,
-            'insured_price'=>0,//保价费用 顺丰直接加在基础费用里了
+            'insured_price'=>$check_channel_intellect["guarantFee"],//专享保价费用
             'comments'=>'无',
             'wx_mchid'=>$agent_info['wx_mchid'],
             'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
@@ -222,7 +223,7 @@ class Shunfeng extends Controller
             'create_time'=>time()
         ];
         !empty($param['bill_remark']) &&($data['bill_remark'] = $param['bill_remark']);
-        !empty($check_channel_intellect['volume']) &&($data['insured'] = $check_channel_intellect['volume']);
+        !empty($check_channel_intellect['insured']) &&($data['insured'] = $check_channel_intellect['insured']);
         !empty($check_channel_intellect['vloum_long']) &&($data['vloum_long'] = $check_channel_intellect['vloumLong']);
         !empty($check_channel_intellect['vloum_width']) &&($data['vloum_width'] = $check_channel_intellect['vloum_width']);
         !empty($check_channel_intellect['vloum_height']) &&($data['vloum_height'] = $check_channel_intellect['vloum_height']);

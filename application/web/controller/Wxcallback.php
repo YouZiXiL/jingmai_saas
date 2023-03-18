@@ -2181,7 +2181,7 @@ class Wxcallback extends Controller
 
                         $tralight_weight=$weight;//超轻重量
 
-                        $weightprice=$orders["freight"]-($pamar["totalFee"]-$haocai);
+                        $weightprice=$orders["freight"]-$orders["insured_price"]??0-($pamar["totalFee"]-$haocai);
 
                         if($weightprice>0){
                             $dicount=number_format($pamar['totalFee']/$params['originalFee'],2);
