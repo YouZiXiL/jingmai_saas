@@ -84,7 +84,7 @@ class Yunyangtc extends Controller
                     'lat'=>$param['addlat'],
                     'lng'=>$param['addlgt'],
                     'istcdefault'=>0,
-                    'type'=>1,
+                    'type'=>2,
                     'location'=>str_replace(PHP_EOL, '', $param['location']),
                     'default_status'=>0,
                     'create_time'=>time(),
