@@ -1553,8 +1553,17 @@ class Wxcallback extends Controller
                 'mobile'=> $orders['mobile'],
                 'notify_url'=>Request::instance()->domain().'/web/wxcallback/refillcallback',
             ];
+            $isopenrecharge=config('site.openrecharge')??1;
+            $data=[
+                'code'=>0,
+                "order_number"=>"ZCZ".get_uniqid(),//自充值订单 由管理员手动充值
+                ];
+            if($isopenrecharge==1){
 
-            $data=$Common->chongzhi('index/recharge',$content);
+            }
+            else{
+                $data=$Common->chongzhi('index/recharge',$content);
+            }
             if (!empty($data["code"])){
                 Log::error('话费充值失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
                 $out_refund_no=$Common->get_uniqid();//下单退款订单号
@@ -1595,6 +1604,9 @@ class Wxcallback extends Controller
                 ];
 
                 $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['order_number'].' 下单支付成功');
+            }
+            if($isopenrecharge==1){
+                $updata["state"]=8;
             }
             db('refilllist')->where('out_trade_num',$inBodyResourceArray['out_trade_no'])->update($updata);
 
@@ -1664,7 +1676,17 @@ class Wxcallback extends Controller
                 "city"=>$orders["city"]
             ];
 
-            $data=$Common->chongzhi('index/recharge',$content);
+            $isopenrecharge=config('site.openrecharge')??1;
+            $data=[
+                'code'=>0,
+                "order_number"=>"ZCZ".get_uniqid(),//自充值订单 由管理员手动充值
+            ];
+            if($isopenrecharge==1){
+
+            }
+            else{
+                $data=$Common->chongzhi('index/recharge',$content);
+            }
             if (!empty($data["code"])){
                 Log::error('话费充值失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
                 $out_refund_no=$Common->get_uniqid();//下单退款订单号
@@ -1705,6 +1727,9 @@ class Wxcallback extends Controller
                 ];
 
                 $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['order_number'].' 下单支付成功');
+            }
+            if($isopenrecharge==1){
+                $updata["state"]=8;
             }
             db('refilllist')->where('out_trade_num',$inBodyResourceArray['out_trade_no'])->update($updata);
 
@@ -1770,7 +1795,17 @@ class Wxcallback extends Controller
                 'notify_url'=>Request::instance()->domain().'/web/wxcallback/refillcallback',
             ];
 
-            $data=$Common->chongzhi('index/recharge',$content);
+            $isopenrecharge=config('site.openrecharge')??1;
+            $data=[
+                'code'=>0,
+                "order_number"=>"ZCZ".get_uniqid(),//自充值订单 由管理员手动充值
+            ];
+            if($isopenrecharge==1){
+
+            }
+            else{
+                $data=$Common->chongzhi('index/recharge',$content);
+            }
             if (!empty($data["code"])){
                 Log::error('话费充值失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
                 $out_refund_no=$Common->get_uniqid();//下单退款订单号
@@ -1811,6 +1846,9 @@ class Wxcallback extends Controller
                 ];
 
                 $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['order_number'].' 下单支付成功');
+            }
+            if($isopenrecharge==1){
+                $updata["state"]=8;
             }
             db('refilllist')->where('out_trade_num',$inBodyResourceArray['out_trade_no'])->update($updata);
 

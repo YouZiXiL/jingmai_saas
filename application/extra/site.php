@@ -80,5 +80,8 @@ ASt4V0K4Pn6cd84Eq0qxH2BbSg==
   'api_space_token' => 'ypq3zfse6kt4l8dnh5ltscm4z8hazsfy',
   'kdzs_appkey' => '937CF7748D3A4B99BB9EB643F1EAA504',
   'kdzs_secret' => '041FD21A6B014580A0ACEA0E05E5019B',
+    'shunfeng_appid'=>'CCAVFR',
+    'shunfeng_secret_key'=>'a58c7859da198a762152a35107594182',
+    'openrecharge'=>'1',//1、关闭空中充值 2、开启空中充值 若使用此处配置 则不再使用数据库表中的字段
   'site_url' => 'https://jingxi.bajiehuidi.com',
 );
