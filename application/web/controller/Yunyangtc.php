@@ -51,10 +51,13 @@ class Yunyangtc extends Controller
                 throw new Exception('手机号错误');
             }
             $address="";
+            $logo="";
             if(!empty($param["logo"])){
-                $address =$param["logo"];
+                $logo =$param["logo"];
             }
-
+            if(!empty($param["address"])){
+                $address =$param["address"];
+            }
 
             if (!empty($param['id'])){
                 db('users_address')->where('id',$param['id'])->update([
@@ -66,7 +69,9 @@ class Yunyangtc extends Controller
                     'lat'=>$param['addlat'],
                     'lng'=>$param['addlgt'],
                     'location'=>str_replace(PHP_EOL, '', $param['location']),
-                    'address'=>$address
+                    'address'=>$address,
+                    'logo'=>$logo,
+
                 ]);
                 $data=[
                     'status'=>200,
@@ -88,7 +93,8 @@ class Yunyangtc extends Controller
                     'location'=>str_replace(PHP_EOL, '', $param['location']),
                     'default_status'=>0,
                     'create_time'=>time(),
-                    'address'=>$address
+                    'address'=>$address,
+                    'logo'=>$logo
                 ]);
                 $data=[
                     'status'=>200,
@@ -142,7 +148,7 @@ class Yunyangtc extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
-        $res=db('users_address')->order('id','desc')->page($param['page'],10)->where('user_id',$this->user->id)->where('istop',2);
+        $res=db('users_address')->order('id','desc')->page($param['page'],10)->where('user_id',$this->user->id)->where('istop',2)->select();
         //file_put_contents('get_default_address.txt',json_encode($res).PHP_EOL.json_encode($this->user).PHP_EOL,FILE_APPEND);
         return json(['status'=>200, 'data'=>$res, 'msg'=>'成功']);
     }
