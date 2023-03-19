@@ -69,8 +69,8 @@ class Common
         $version="V1.0";
         list($msec, $sec) = explode(' ', microtime());
         $timeStamp= (float)sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
-        $appid=config('site.shunfeng_appid');
-        $secret_key=config('site.shunfeng_secret_key');
+        $appid=config('site.shunfeng_appid')??"CCAVFR";
+        $secret_key=config('site.shunfeng_secret_key')??"a58c7859da198a762152a35107594182";
         $sign=md5($appid.$version.$timeStamp.$secret_key);
         $header=array('Content-Type: application/json; charset=utf-8',
             "sign:".$sign,

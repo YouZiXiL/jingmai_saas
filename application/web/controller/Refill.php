@@ -176,7 +176,7 @@ class Refill extends Controller
             return json(["errno"=>"400","errmsg"=>"请输入目标无效","data"=>""]);
         }
         else{
-            $order = db("refilllist")->where("product_id",$param["product_id"])->where("cate_id",$param["cateid"])->where("state",1)->find();//此处判定产品ID 只能充值一单 可换为：
+            $order = db("refilllist")->where("product_id",$param["product_id"])->where("cate_id",$param["cateid"])->where("state",0)->find();//此处判定产品ID 只能同时充值一单 可换为：
 
             if(!empty($order)){
                 return json(["errno"=>"400","errmsg"=>"该号码已经存在充值在途","data"=>""]);
