@@ -12,6 +12,7 @@ use think\Controller;
 use think\Exception;
 use think\Log;
 use think\Queue;
+use think\Request;
 use WeChatPay\Crypto\Rsa;
 use WeChatPay\Crypto\AesGcm;
 use WeChatPay\Formatter;
@@ -371,14 +372,15 @@ class Wxcallback extends Controller
                 ];
                 $up_data=[
                     'final_freight'=>$pamar['freight'],
-                    'comments'=>str_replace("null","",$pamar['comments'])
+                    'comments'=>str_replace("null","",$pamar['comments']),
+                    'final_weight'=>$pamar['calWeight']
                 ];
                 if(!empty($pamar['type'])){
                     $up_data['order_status']=$pamar['type'];
                 }
-                if ($orders['final_weight']==0){
-                    $up_data['final_weight']=$pamar['calWeight'];
-                }
+                // if ($orders['final_weight']==0){
+                //     $up_data['final_weight']=$pamar['calWeight'];
+                // }
                 //超轻处理
                 $weight=floor($orders['weight']-$pamar['calWeight']);
                 if ($weight>0&&$pamar['calWeight']!=0&&empty($orders['final_weight_time'])){
@@ -917,17 +919,27 @@ class Wxcallback extends Controller
             if ($orders['pay_status']!=0){
                 throw new Exception('重复回调');
             }
-            if ($orders['type']==1){
-                db('admin')->where('id',$orders['agent_id'])->setInc('agent_sms',$orders['num']);
+            switch ($orders['type']){
+                case 0:
+                    $field='agent_sms';
+                    break;
+                case 1:
+                    $field='yy_trance';
+                    break;
+                case 2:
+                    $field='agent_voice';
+                    break;
+                default:
+                    throw new Exception('没有指定类型');
             }
-            if ($orders['type']==2){
-                db('admin')->where('id',$orders['agent_id'])->setInc('yy_trance',$orders['num']);
-            }
+            db('admin')->where('id',$orders['agent_id'])->setInc($field,$orders['num']);
+
             db('agent_orders')->where('id',$orders['id'])->update([
                 'pay_status'=>1
             ]);
             exit('success');
         }catch (Exception $e){
+            Log::log($e->getMessage());
             exit('success');
         }
     }
