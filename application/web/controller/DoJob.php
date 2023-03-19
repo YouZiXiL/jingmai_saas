@@ -239,7 +239,8 @@ class DoJob
                     }
                     //处理退款完成 更改退款状态
                     $up_data['pay_status']=2;
-
+                    $up_data['overload_status']=0;
+                    $up_data['consume_status']=0;
                     //代理商增加余额  退款
                     //代理结算金额 代理运费+保价金+耗材+超重
                     $Dbcommon->set_agent_amount($row['agent_id'],'setInc',$row['agent_price'],1,'运单号：'.$row['waybill'].' 已取消并退款');
