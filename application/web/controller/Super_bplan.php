@@ -17,6 +17,7 @@ class Super_bplan extends \think\Controller
         ];
         $this->common= new Common();
     }
+    //上传图片
     public function uploadimage(){
         // 获取表单上传文件 例如上传了001.jpg
         $agent_id=$this->request->param('id');

@@ -456,6 +456,7 @@ class Wxcallback extends Controller
                         'freightHaocai' =>$pamar['freightHaocai'],
                         'order_id' => $orders['id'],
                     ];
+                    $rebatelistdata["state"]=2;
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
                 }
@@ -465,6 +466,7 @@ class Wxcallback extends Controller
                         'type'=>4,
                         'order_id' => $orders['id'],
                     ];
+                    $rebatelistdata["state"]=3;
                     $rebatelistdata["cancel_time"]=time();
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
@@ -473,10 +475,10 @@ class Wxcallback extends Controller
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'){
 
-                    //超级 B 分润 + 返佣（返佣用自定义比例 ）
+                    //超级 B 分润 + 返佣（返佣用自定义比例 ） 返佣表需添加字段：1、基本比例分润字段 2、达标比例分润字段
                     if(!empty($users["rootid"])){
 
-                        $superB=db("")->find($users["rootid"]);
+                        $superB=db("admin")->find($users["rootid"]);
                         if( $rebatelist->state !=2 && $rebatelist->state !=3){
                             if(!empty($rebatelist["invitercode"])){
                                 $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
@@ -556,27 +558,30 @@ class Wxcallback extends Controller
 
                                 $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
                             }
-                            $rebatelistdata["root_price"]=$agent_price+$orders["insured_price"];
+                            $rebatelistdata["root_price"]=$agent_price+$orders["insured_price"]+$orders["overload_price"]??0-$orders["tralight_price"]??0;
                         }
 
                     }
                     else{
-                        if( $rebatelist->state !=2 && $rebatelist->state !=3){
-                            if(!empty($rebatelist["invitercode"])){
-                                $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
-                                if(!empty($fauser)){
-                                    $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
-                                    $fauser->save();
-                                }
-                            }
-                            if(!empty($rebatelist["fainvitercode"])){
-                                $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-                                if(!empty($gruser)){
-                                    $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
-                                    $gruser->save();
-                                }
-                            }
-                            $rebatelistdata["state"]=3;
+                        if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
+//                            if(!empty($rebatelist["invitercode"])){
+//                                $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
+//                                if(!empty($fauser)){
+//                                    $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
+//                                    $fauser->save();
+//                                }
+//                            }
+//                            if(!empty($rebatelist["fainvitercode"])){
+//                                $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
+//                                if(!empty($gruser)){
+//                                    $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
+//                                    $gruser->save();
+//                                }
+//                            }
+                            $rebatelistdata["state"]=5;
+                        }
+                        if($rebatelist->state ==2){
+                            $rebatelistdata["state"]=4;
                         }
                     }
 
@@ -667,6 +672,13 @@ class Wxcallback extends Controller
                 'overload_status' =>2,
             ];
             db('orders')->where('out_overload_no',$inBodyResourceArray['out_trade_no'])->update($updata);//补缴超重成功
+            if(!empty($orders["haocai_freight"]) && $orders["consume_status"]==2){
+                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                if($rebatelist->state!=4){
+                    $rebatelist->state=1;
+                    $rebatelist->save();
+                }
+            }
             exit('success');
         }catch (\Exception $e){
             file_put_contents('wx_overload_pay.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
@@ -734,6 +746,16 @@ class Wxcallback extends Controller
                 'consume_status' =>2,
             ];
             db('orders')->where('out_haocai_no',$inBodyResourceArray['out_trade_no'])->update($updata);//补缴超重成功
+            $orders=db('orders')->where('out_haocai_no',$inBodyResourceArray['out_trade_no'])->find();
+            //耗材和超重 费用均需要结清
+            if(!empty($orders["overload_price"]) && $orders["overload_status"]==2){
+                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                // 已被判定为欠费异常单 则不再处理
+                if($rebatelist->state!=4){
+                    $rebatelist->state=1;
+                    $rebatelist->save();
+                }
+            }
             exit('success');
         }catch (\Exception $e){
             file_put_contents('wx_haocai_pay.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
@@ -849,6 +871,26 @@ class Wxcallback extends Controller
                 }
 
             }else{
+                $users=db('users')->where('id',$orders['user_id'])->find();
+
+                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                if(empty($rebatelist)){
+                    $rebatelist=new Rebatelist();
+                    $data=[
+                        "user_id"=>$orders["user_id"],
+                        "invitercode"=>$users["invitercode"],
+                        "fainvitercode"=>$users["fainvitercode"],
+                        "out_trade_no"=>$orders["out_trade_no"],
+                        "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
+                        "payinback"=>0,//补交费用 为负则表示超轻
+                        "state"=>0,
+                        "rebate_amount"=>0,
+                        "createtime"=>time(),
+                        "updatetime"=>time()
+                    ];
+                    !empty($users["rootid"]) && ($data["rootid"]=$users["rootid"]);
+                    $rebatelist->save($data);
+                }
 
                 //支付成功下单成功
                 $result=$data['result'];
@@ -2202,7 +2244,7 @@ class Wxcallback extends Controller
                             "invitercode"=>$users["invitercode"],
                             "fainvitercode"=>$users["fainvitercode"],
                             "out_trade_no"=>$orders["out_trade_no"],
-                            "final_price"=>$orders["final_price"],
+                            "final_price"=>$orders["final_price"]-$orders["insured_price"],
                             "payinback"=>0,
                             "state"=>1,
                             "rebate_amount"=>$orders["user_id"],
@@ -2233,46 +2275,51 @@ class Wxcallback extends Controller
                         ],'POST');
                     }
                     elseif ($params["data"]["status"]==5){
-                        if( $rebatelist->state !=2 && $rebatelist->state !=3){
-                            //超级 B 分润 +返佣（超级B 定义的返佣比例）
-                            if(!empty($users["rootid"])){
+                        if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
+//                            //超级 B 分润 +返佣（超级B 定义的返佣比例）
+//                            if(!empty($users["rootid"])){
+//
+//                                $superB=db("")->find($users["rootid"]);
+//
+//                                if(!empty($rebatelist["invitercode"])){
+//                                    $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
+//                                    if(!empty($fauser)){
+//                                        $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
+//                                    }
+//                                }
+//                                if(!empty($rebatelist["fainvitercode"])){
+//                                    $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
+//                                    if(!empty($gruser)){
+//                                        $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
+//                                    }
+//                                }
+//                            }
+//                            else{
+//                                if(!empty($rebatelist["invitercode"])){
+//                                    $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
+//                                    if(!empty($fauser)){
+//                                        $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
+//                                    }
+//                                }
+//                                if(!empty($rebatelist["fainvitercode"])){
+//                                    $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
+//                                    if(!empty($gruser)){
+//                                        $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
+//                                    }
+//                                }
+//                            }
 
-                                $superB=db("")->find($users["rootid"]);
 
-                                if(!empty($rebatelist["invitercode"])){
-                                    $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
-                                    if(!empty($fauser)){
-                                        $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
-                                    }
-                                }
-                                if(!empty($rebatelist["fainvitercode"])){
-                                    $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-                                    if(!empty($gruser)){
-                                        $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
-                                    }
-                                }
-                            }
-                            else{
-                                if(!empty($rebatelist["invitercode"])){
-                                    $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
-                                    if(!empty($fauser)){
-                                        $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
-                                    }
-                                }
-                                if(!empty($rebatelist["fainvitercode"])){
-                                    $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-                                    if(!empty($gruser)){
-                                        $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
-                                    }
-                                }
-                            }
-
-
-                            $rebatelistdata["state"]=3;
+                            $rebatelistdata["state"]=5;
+                        }
+                        if($rebatelist->state ==2){
+                            $rebatelistdata["state"]=4;
                         }
 
                     }
                     elseif ($params["data"]["status"]==6){
+                        $rebatelistdata["state"]=3;
+
                         $rebatelistdata["cancel_time"]=time();
                     }
 

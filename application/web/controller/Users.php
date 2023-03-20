@@ -939,6 +939,12 @@ class Users extends Controller
 
     }
 
+    //海报列表
+    public function getposterlist(){
+//        $agent_id=$this->request->param("id");
+        $posters= db("agent_poster")->where("agent_id",$this->user->agent_id)->where("state",1)->select();
+        return json(['status'=>200,'data'=>$posters,'msg'=>"Success"]);
+    }
     private function getinvitecode($length=3){
 
         $rootstr="ABCDEFGHJKLMNPQRSTUVWXYZAAYYACCAHAKA";
