@@ -79,6 +79,10 @@ class Login extends Controller
                         $user_info["invitercode"]=$param["invitercode"];
                         $user_info["fainvitercode"]=$pauser["invitercode"];
                     }
+                    //超级B 身份核验
+                    if(!empty($pauser->rootid)){
+                        $user_info["rootid"]=$pauser["rootid"];
+                    }
                 }
                 $s=$user->save($user_info);
                 $user_id=$user->id;

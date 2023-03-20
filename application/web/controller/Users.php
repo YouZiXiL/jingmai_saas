@@ -333,7 +333,7 @@ class Users extends Controller
                 if(!file_exists($target)){
                     mkdir($target);
                 }
-                $picName=$this->common->getinvitecode(5).$currentuser->myinvitecode."png";
+                $picName=$this->common->getinvitecode(5).$currentuser->myinvitecode.".png";
                 $picpath=$target.DS.$picName;
                 file_put_contents($picpath,$url);
 

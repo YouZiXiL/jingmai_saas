@@ -137,7 +137,7 @@ class Refill extends Controller
                 return json(["errno"=>"400","errmsg"=>"请输入有效参数","data"=>""]);
             }
 
-            $insertid = db("refill_product")->insert(["type"=>$param["producttype"],"content"=>json_encode($tempdata),"createtime"=>time()]);
+            $insertid = db("refill_product")->insertGetId(["type"=>$param["producttype"],"content"=>json_encode($tempdata),"createtime"=>time()]);
 
             $returndata["selectid"]=$insertid;
             $returndata["data"]=$tempdata;
