@@ -131,7 +131,7 @@ class Yunyang extends Controller
      */
     function get_default_address(): Json
     {
-        $res=db('users_address')->where('user_id',$this->user->id)->where('default_status',1)->find();
+        $res=db('users_address')->where('user_id',$this->user->id)->where('type',"<>",2)->where('default_status',1)->find();
         //file_put_contents('get_default_address.txt',json_encode($res).PHP_EOL.json_encode($this->user).PHP_EOL,FILE_APPEND);
         return json(['status'=>200, 'data'=>$res, 'msg'=>'成功']);
     }
@@ -145,7 +145,7 @@ class Yunyang extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
-        $db=db('users_address')->order('id','desc')->page($param['page'],10)->where('user_id',$this->user->id);
+        $db=db('users_address')->order('id','desc')->page($param['page'],10)->where('type',"<>",2)->where('user_id',$this->user->id);
         if (!empty($param['search_field'])){
             $res=$db->where('name|mobile',$param['search_field'])->select();
         }else{
