@@ -358,7 +358,7 @@ class Wxcallback extends Controller
                         "invitercode"=>$users["invitercode"],
                         "fainvitercode"=>$users["fainvitercode"],
                         "out_trade_no"=>$orders["out_trade_no"],
-                        "final_price"=>$orders["final_price"],
+                        "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
                         "payinback"=>0,
                         "state"=>1,
                         "rebate_amount"=>$orders["user_id"],
@@ -558,7 +558,7 @@ class Wxcallback extends Controller
 
                                 $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
                             }
-                            $rebatelistdata["root_price"]=$agent_price+$orders["insured_price"]+$orders["overload_price"]??0-$orders["tralight_price"]??0;
+                            $rebatelistdata["root_price"]=$agent_price+$orders["overload_price"]??0-$orders["tralight_price"]??0;
                         }
 
                     }
@@ -602,6 +602,18 @@ class Wxcallback extends Controller
                         'lang'=>'zh_CN'
                     ],'POST');
                 }
+                if(!empty($users["rootid"])){
+                    $superB=db("admin")->find($users["rootid"]);
+                    $rebatelistdata["imm_rebate"]=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
+                    $rebatelistdata["mid_rebate"]=($rebatelist->final_price+$rebatelist->payinback)*($superB["midd_rate"]??0)/100;
+                    //需重新计算 超级B链上的成本价（达标成本价 、默认成本价）
+//                    $rebatelistdata["root_vip_rebate"]=
+                }
+                else{
+                    $rebatelistdata["imm_rebate"]=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
+                    $rebatelistdata["mid_rebate"]=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["midd_rate"]??0)/100;
+                }
+
                 $rebatelist->save($rebatelistdata);
             }
             return json(['code'=>1, 'message'=>'推送成功']);
