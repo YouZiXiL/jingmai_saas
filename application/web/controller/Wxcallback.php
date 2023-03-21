@@ -1383,6 +1383,7 @@ class Wxcallback extends Controller
 
             exit('success');
         }catch (\Exception $e){
+            Log::error('接收回调失败'.PHP_EOL.$e->getMessage());
             exit('fail');
         }
     }
@@ -1704,7 +1705,7 @@ class Wxcallback extends Controller
             $isopenrecharge=config('site.openrecharge')??1;
             $data=[
                 'code'=>0,
-                "order_number"=>"ZCZ".get_uniqid(),//自充值订单 由管理员手动充值
+                "order_number"=>"ZCZ".$Common->get_uniqid(),//自充值订单 由管理员手动充值
                 ];
             if($isopenrecharge==1){
 
