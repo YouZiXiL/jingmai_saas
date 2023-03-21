@@ -137,7 +137,7 @@ class Refill extends Controller
                 return json(["errno"=>"400","errmsg"=>"请输入有效参数","data"=>""]);
             }
 
-            $insertid = db("refill_product")->insert(["type"=>$param["producttype"],"content"=>json_encode($tempdata),"createtime"=>time()]);
+            $insertid = db("refill_product")->insertGetId(["type"=>$param["producttype"],"content"=>json_encode($tempdata),"createtime"=>time()]);
 
             $returndata["selectid"]=$insertid;
             $returndata["data"]=$tempdata;
@@ -573,7 +573,7 @@ class Refill extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
-        $order=db('refilllist')->where('pay_status','<>',0)->field('id,out_trade_num,mobile,amount,final_price,area,ytype,state,createtime')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10);
+        $order=db('refilllist')->where('pay_status','<>',0)->field('id,out_trade_num,mobile,amount,final_price,area,ytype,state,createtime')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10)->select();
 
         //file_put_contents('query_order.txt',json_encode($res).PHP_EOL,FILE_APPEND);
         return json(['status'=>200,'data'=>$order,'msg'=>'成功']);
