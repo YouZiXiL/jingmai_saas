@@ -73,7 +73,6 @@ class DoJob
                 ],'POST');
                 db('orders')->where('id',$orders['id'])->update([
                     'final_weight_time'=>time(),
-                    'out_overload_no'=>'CZ'.$common->get_uniqid(),
                 ]);
             }
 
@@ -85,7 +84,6 @@ class DoJob
                 $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'运单号：'.$orders['waybill'].' 耗材扣除金额：'.$data['freightHaocai'].'元');
                 db('orders')->where('id',$orders['id'])->update([
                     'consume_time'=>time(),
-                    'out_haocai_no'=>'HC'.$common->get_uniqid(),
                     'consume_status'=>1
                 ]);
             }else{
@@ -241,6 +239,7 @@ class DoJob
                     $up_data['pay_status']=2;
                     $up_data['overload_status']=0;
                     $up_data['consume_status']=0;
+                    $up_data['order_status']='已取消';
                     //代理商增加余额  退款
                     //代理结算金额 代理运费+保价金+耗材+超重
                     $Dbcommon->set_agent_amount($row['agent_id'],'setInc',$row['agent_price'],1,'运单号：'.$row['waybill'].' 已取消并退款');

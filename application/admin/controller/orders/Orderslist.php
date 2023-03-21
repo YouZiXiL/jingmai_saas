@@ -249,7 +249,7 @@ class Orderslist extends Backend
             $data=$common->yunyang_api('AFTER_SALE',$content);
 
             if ($data['code']!=1){
-                $this->error($data['result']);
+                $this->error($data['message']);
             }
         }
 
