@@ -58,13 +58,13 @@ class Refill extends Controller
         if(empty($param["producttype"])){
             return json(["errno"=>"400","errmsg"=>"请输入有效参数","data"=>""]);
         }
-        if(empty($param["type"] || empty($param["cate_id"]))){
-//            return json(["errno"=>"400","errmsg"=>"目标类型无效","data"=>""]);
-        }
-        else{
-            $data["type"]=$param["type"];
-            $data["cate_id"]=$param["cate_id"];
-        }
+//        if(empty($param["type"] || empty($param["cate_id"]))){
+////            return json(["errno"=>"400","errmsg"=>"目标类型无效","data"=>""]);
+//        }
+//        else{
+//            $data["type"]=$param["type"];
+//            $data["cate_id"]=$param["cate_id"];
+//        }
         $content=[
             "userid"=>$this->common->userid,
             "sign"=>$this->common->getsign($data)
