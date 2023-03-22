@@ -177,6 +177,7 @@ class Shunfeng extends Controller
             'insert_id'=>$param['insert_id'],
             'out_trade_no'=>$out_trade_no,
             'freight'=>$check_channel_intellect['channelFee'],//渠道价格
+            'serviceCharge'=>$check_channel_intellect['serviceCharge'],//服务费
             'channel_id'=>$check_channel_intellect['type'],
             'tag_type'=>$info['channel_tag'],
             'admin_shouzhong'=>0,

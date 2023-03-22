@@ -509,6 +509,8 @@ class Yunyang extends Controller
                 $couponinfo->save();
                 //表示该笔订单使用了优惠券
                 $data["couponid"]=$param["couponid"];
+                $data["couponpapermoney"]=$couponinfo->money;
+                $data["aftercoupon"]=$check_channel_intellect['final_price']-$couponmoney;
             }
             $inset=db('orders')->insert($data);
             if (!$inset){
