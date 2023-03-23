@@ -237,7 +237,8 @@ class Users extends Controller
         $user_info= \app\web\model\Users::get($this->user->id);
         $rebate=new Rebatelist();
 
-        $userorders=$rebate->where("state","2")->where("cancel_time","null")->order("id","desc")->page($page,$this->page_rows)->where(function ($query) use($user_info){
+        $startday=date("Y-m");
+        $userorders=$rebate->whereBetween("updatetime",[strtotime($startday),strtotime(date("Y-m-t "."23:59:59"))])->where("cancel_time","null")->order("id","desc")->page($page,$this->page_rows)->where(function ($query) use($user_info){
             $query->where("invitercode",$user_info->myinvitecode)->whereOr("fainvitercode",$user_info->myinvitecode);
         })->select();
         if(!empty($userorders)){
@@ -245,21 +246,37 @@ class Users extends Controller
             {
                 if($userorder["invitercode"]==$user_info["myinvitecode"]){
                     $tag="直推收益";
-                    $rate=0.05;//从代理商配置数据库中获得
+                    $imm_rebate=$userorder["imm_rebate"];
+                    $mid_rebate=0;
                 }
                 else{
                     $tag="间推收益";
-                    $rate=0.01;//从代理商配置数据库中获得
+                    $imm_rebate=0;
+                    $mid_rebate=$userorder["mid_rebate"];
+                }
+                if($userorder["state"]==5){
+                    $state="已入账";
+                    $time=date("Y-m-d",$userorder["updatetime"]);
+                }
+                elseif ($userorder["state"]==4 || $userorder["state"]==3){
+                    $state="异常单";
+                    $time=date("Y-m-d",$userorder["updatetime"]);
+                }
+                else{
+                    $state="待签收";
+
+                    $time=date("Y-m-d",$userorder["createtime"]);
                 }
 
                 $item["id"]=$userorder["id"];
                 $item["user_id"]=$userorder["user_id"];
-                //用户总付费+超重费用-超轻费用
-                $item["final_price"]=($userorder["final_price"]+$userorder["payinback"])*$rate;
 
-                $item["final_rebate"]=number_format($item["final_price"],2);
+                $item["imm_rebate"]=$imm_rebate;
+                $item["mid_rebate"]=$mid_rebate;
+                $item["date"]=$time;
 
                 $item["tag"]=$tag;
+                $item["state"]=$state;
                 array_push($orders,$item);
 
             }
@@ -269,7 +286,75 @@ class Users extends Controller
         return \json($data);
     }
 
+    //获得每个周期 已到账收益 和 未到账收益
+    public function rebatainfo(){
 
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $startday=date("Y-m");
+        //1、获得用户
+        $user_info= \app\web\model\Users::get($this->user->id);
+        $rebate=new Rebatelist();
+
+        $startday=date("Y-m");
+        $userorders=$rebate->whereBetween("updatetime",[strtotime($startday),strtotime(date("Y-m-t "."23:59:59"))])->where("cancel_time","null")->order("id","desc")->where(function ($query) use($user_info){
+            $query->where("invitercode",$user_info->myinvitecode)->whereOr("fainvitercode",$user_info->myinvitecode);
+        })->select();
+        $orders=[];
+        $yidaozhang=0;
+        $weidao=0;
+        if(!empty($userorders)){
+            foreach ($userorders as $userorder)
+            {
+                if($userorder["invitercode"]=="VLN5572"){
+                    $tag="直推收益";
+                    $imm_rebate=$userorder["imm_rebate"];
+                    $mid_rebate=0;
+                }
+                elseif($userorder["fainvitercode"]=="VLN5572"){
+                    $tag="间推收益";
+                    $imm_rebate=0;
+                    $mid_rebate=$userorder["mid_rebate"];
+                }
+                if($userorder["state"]==5){
+                    $state="已入账";
+                    $time=date("Y-m-d",$userorder["updatetime"]);
+                    $yidaozhang+=$mid_rebate;
+                    $yidaozhang+=$imm_rebate;
+                }
+                elseif ($userorder["state"]==4 || $userorder["state"]==3){
+                    $state="异常单";
+                    $time=date("Y-m-d",$userorder["updatetime"]);
+                }
+                else{
+                    $state="待签收";
+                    $weidao+=$mid_rebate;
+                    $weidao+=$imm_rebate;
+                    $time=date("Y-m-d",$userorder["createtime"]);
+                }
+
+                $item["id"]=$userorder["id"];
+                $item["user_id"]=$userorder["user_id"];
+
+                $item["imm_rebate"]=$imm_rebate;
+                $item["mid_rebate"]=$mid_rebate;
+                $item["date"]=$time;
+
+
+                $item["tag"]=$tag;
+                $item["state"]=$state;
+                array_push($orders,$item);
+            }
+        }
+        $orders["down"]=$yidaozhang;
+        $orders["doing"]=$weidao;
+        $data["data"]=$orders;
+
+        return json($data);
+    }
     //获取邀请码以及邀请二维码
     public function rebate_code(){
         $data=[
@@ -454,6 +539,12 @@ class Users extends Controller
 
         //1、获取用户余额
         $userinfo= \app\web\model\Users::get($this->user->id);
+        $agentinfo= \app\web\model\Admin::get($this->user->agent_id);
+        $userday=$agentinfo->user_cashoutdate??26;
+        if(date("d")<$userday){
+            $data["msg"]="本月 ".$userday." 号开始提现";
+            return json($data);
+        }
         //2、获取商家提现手续费率
         $rate=0.08;//应该从控制台设置获得
 
