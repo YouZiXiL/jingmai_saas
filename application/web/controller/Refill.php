@@ -339,6 +339,93 @@ class Refill extends Controller
         }
     }
 
+    public function getproduct_df(){
+        $param=$this->request->param();
+        $currentapi="index/product";
+        $data=[];
+//        if(empty($param["producttype"])){
+//            return json(["status"=>"400","msg"=>"请输入有效参数","data"=>""]);
+//        }
+//        if(empty($param["type"] || empty($param["cate_id"]))){
+////            return json(["errno"=>"400","errmsg"=>"目标类型无效","data"=>""]);
+//        }
+//        else{
+//            $data["type"]=$param["type"];
+//            $data["cate_id"]=$param["cate_id"];
+//        }
+
+        $content=[
+            "userid"=>$this->common->userid,
+            "sign"=>$this->common->getsign($data)
+        ];
+        $content+=$data;
+
+        $allproduct=$this->common->httpRequest($this->baseapi.$currentapi,$content,"POST");
+        $tempdata=[];
+        $datas=json_decode($allproduct,true);
+        if(empty($datas["errno"])){
+            $agent_fee=$agent["agent_elec"]??1;//公司给代理商 每100元涨价费用
+            $user_fee=$agent["agent_elec_ratio"]??0;//代理商给用户 每100元涨价费用
+            foreach ($datas["data"] as $pro){
+
+                if($pro["type"]==3){
+
+//                    if(!empty($param["province"])){
+//                        if(mb_substr($pro['cate'],0,2)=="移动")
+//                    }
+                    $returnproduct=[];
+                    foreach ($pro["products"] as $subproduct){
+                        if(!empty($param["province"])){
+
+                            if(count(explode($param["province"],$subproduct["forbid_pro"]))>1){
+
+                            }
+                            else{
+                                if(count(explode("专线",$subproduct["desc"]))>1){
+                                    if(count(explode($param["province"],$subproduct["desc"]))>1){
+                                        $price=$subproduct["price"];
+                                        $num=ceil($price/100);
+                                        $subproduct["agent_price"]=$price+$agent_fee*$num;
+                                        $subproduct["final_price"]=$price+$agent_fee*$num+$user_fee*$num;
+                                        array_push($returnproduct,$subproduct);
+                                    }
+                                }
+                                else{
+                                    $price=$subproduct["price"];
+                                    $num=ceil($price/100);
+                                    $subproduct["agent_price"]=$price+$agent_fee*$num;
+                                    $subproduct["final_price"]=$price+$agent_fee*$num+$user_fee*$num;
+                                    array_push($returnproduct,$subproduct);
+                                }
+
+                            }
+                        }
+                        else{
+                            $price=$subproduct["price"];
+                            $num=ceil($price/100);
+                            $subproduct["agent_price"]=$price+$agent_fee*$num;
+                            $subproduct["final_price"]=$price+$agent_fee*$num+$user_fee*$num;
+                            array_push($returnproduct,$subproduct);
+                        }
+
+                    }
+
+                    $pro["products"]=$returnproduct;
+                    if(!empty($pro["products"]))
+                    array_push($tempdata,$pro);
+                }
+            }
+
+            $insertid = db("refill_product")->insertGetId(["type"=>2,"content"=>json_encode($tempdata),"createtime"=>time()]);
+
+            $returndata["selectid"]=$insertid;
+            $returndata["data"]=$tempdata;
+
+            return \json(["status"=>"200","msg"=>"","data"=>$returndata]);
+        }else{
+            return json(["status"=>"400","msg"=>"获取产品类型错误","data"=>$datas]);
+        }
+    }
     //话费 充值
     public function recharge_hf(){
         $param=$this->request->param();
@@ -410,6 +497,7 @@ class Refill extends Controller
                         "type"=>1,
                         "createtime"=>time()
                     ];
+                    !empty($param["des"]) && $oderdata["des"]=$param["des"];
                 }
             }
         }
@@ -483,7 +571,7 @@ class Refill extends Controller
     //电费 充值
     public function recharge_df(){
         $param=$this->request->param();
-        if( empty($param["product_id"]) || empty($param["mobile"]) ||empty($param["amount"])||empty($param["cateid"]) ||empty($param["area"])||empty($param["ytype"])||empty($param["id_card_no"]) ||empty($param["city"])){
+        if( empty($param["product_id"]) || empty($param["mobile"]) ||empty($param["amount"])||empty($param["cateid"]) ||empty($param["area"])||empty($param["city"])){
             return json(["errno"=>"400","errmsg"=>"请输入有效参数","data"=>""]);
         }
         $select = db("refill_product")->find($param["selectid"]);
@@ -549,15 +637,19 @@ class Refill extends Controller
                     "state"=>0,
                     "refill_product"=>$param["selectid"],
                     "area"=>$param["area"],
-                    "ytype"=>$param["ytype"],
-                    "id_card_no"=>$param["id_card_no"],
+//                    "ytype"=>$param["ytype"]??0,
+//                    "id_card_no"=>$param["id_card_no"]??0,
                     "city"=>$param["city"],
                     "type"=>2,
                     "createtime"=>time()
                 ];
+                !empty($param["des"]) && $oderdata["des"]=$param["des"];
             }
         }
-
+        $inset=db('refilllist')->insert($oderdata);
+            if (!$inset){
+                throw new Exception('插入数据失败');
+            }
         $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
         $json=[
             'mchid'        => $agent_info['wx_mchid'],
@@ -605,10 +697,10 @@ class Refill extends Controller
                 'pay_template'=>$template['pay_template'],
             ];
 
-            $inset=db('refilllist')->insert($oderdata);
-            if (!$inset){
-                throw new Exception('插入数据失败');
-            }
+//            $inset=db('refilllist')->insert($oderdata);
+//            if (!$inset){
+//                throw new Exception('插入数据失败');
+//            }
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         } catch (\Exception $e) {
 
@@ -768,7 +860,7 @@ class Refill extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
-        $order=db('refilllist')->where('pay_status','<>',0)->field('id,out_trade_num,mobile,amount,final_price,area,ytype,state,createtime')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10)->select();
+        $order=db('refilllist')->where('pay_status','<>',0)->field('id,out_trade_num,mobile,amount,final_price,area,ytype,state,createtime,type,des')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10)->select();
 
         //file_put_contents('query_order.txt',json_encode($res).PHP_EOL,FILE_APPEND);
         return json(['status'=>200,'data'=>$order,'msg'=>'成功']);
