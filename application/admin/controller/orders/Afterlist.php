@@ -85,7 +85,8 @@ class Afterlist extends Backend
     }
 
     function caozuo($ids=null){
-        
+        $Dbcommon= new Dbcommom();
+        $common=new Common();
         $row = $this->model->get($ids);
         $remark='如有异议，可重新提交反馈申请！';
         if (!$row) {
@@ -170,11 +171,10 @@ class Afterlist extends Backend
                 if ($orders['pay_status']!=1){
                     throw new Exception('此订单已取消');
                 }
-                $Dbcommon= new Dbcommom();
-                $commom=new Common();
+
                 //下单退款
-                $out_refund_no=$commom->get_uniqid();//下单退款订单号
-                $wx_pay=$commom->wx_pay($orders['wx_mchid'],$orders['wx_mchcertificateserial']);
+                $out_refund_no=$common->get_uniqid();//下单退款订单号
+                $wx_pay=$common->wx_pay($orders['wx_mchid'],$orders['wx_mchcertificateserial']);
                 $wx_pay
                     ->chain('v3/refund/domestic/refunds')
                     ->post(['json' => [
@@ -191,8 +191,8 @@ class Afterlist extends Backend
 
                 //超重退款
                 if($orders['overload_status']==2&&$orders['wx_out_overload_no']){
-                    $out_overload_refund_no=$commom->get_uniqid();//超重退款订单号
-                    $wx_pay=$commom->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
+                    $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
+                    $wx_pay=$common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
                     $wx_pay
                         ->chain('v3/refund/domestic/refunds')
                         ->post(['json' => [
@@ -212,8 +212,8 @@ class Afterlist extends Backend
 
                 //耗材退款
                 if ($orders['consume_status']==2&&$orders['wx_out_haocai_no']){
-                    $out_haocai_refund_no=$commom->get_uniqid();//耗材退款订单号
-                    $wx_pay=$commom->wx_pay($orders['hc_mchid'],$orders['hc_mchcertificateserial']);
+                    $out_haocai_refund_no=$common->get_uniqid();//耗材退款订单号
+                    $wx_pay=$common->wx_pay($orders['hc_mchid'],$orders['hc_mchcertificateserial']);
                     $wx_pay
                         ->chain('v3/refund/domestic/refunds')
                         ->post(['json' => [
@@ -242,30 +242,59 @@ class Afterlist extends Backend
             }
             //超重核重处理
             if ($row['salf_type']==1&&$params['cope_status']==1){
-               
+
+
                 $orders=$orders->get(['id'=>$row['order_id']]);
 
-                if ($orders['overload_status']!=1){
+                if ($orders['overload_status']==0){
                     throw new Exception('此订单没有超重');
                 }
 
                 if (empty($params['cal_weight'])||$params['cal_weight']<$orders['weight']){
                     throw new Exception('更改重量填写错误');
                 }
-                $overload_weight=$params['cal_weight']-$orders['weight'];//超出重量
-                $users_overload_amt=bcmul(ceil($overload_weight),$orders['users_xuzhong'],2);//用户补缴金额
-                $agent_overload_amt=bcmul(ceil($overload_weight),$orders['agent_xuzhong'],2);//代理补缴金额
-                if($orders['agent_overload_price']<=$agent_overload_amt){
-                    throw new Exception('计算错误');
+
+                if($params['cal_weight']==$orders['weight']){
+                    if($orders['overload_status']==2){
+
+                        $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
+
+                        $up_data['out_overload_refund_no']=$out_overload_refund_no;
+                    }
+                    $up_data['overload_status']=0;
+                    $users_overload_amt=0;
+                    $agent_overload_amt=0;
+                    $dec_agent_overload_price=$orders['agent_overload_price'];
+                }else{
+                    $overload_weight=$params['cal_weight']-$orders['weight'];//超出重量
+                    $users_overload_amt=bcmul(ceil($overload_weight),$orders['users_xuzhong'],2);//用户补缴金额
+                    $agent_overload_amt=bcmul(ceil($overload_weight),$orders['agent_xuzhong'],2);//代理补缴金额
+                    if($orders['agent_overload_price']<=$agent_overload_amt){
+                        throw new Exception('计算错误');
+                    }
+                    if ($orders['overload_status']==2) {
+                        $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
+                        $wx_pay=$common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
+                        $wx_pay
+                            ->chain('v3/refund/domestic/refunds')
+                            ->post(['json' => [
+                                'transaction_id' => $orders['wx_out_overload_no'],
+                                'out_refund_no'=>$out_overload_refund_no,
+                                'reason'=>'超重退款',
+                                'amount'       => [
+                                    'refund'   => (int)bcmul($orders['overload_price']-$users_overload_amt,100),
+                                    'total'    =>(int)bcmul($orders['overload_price'],100),
+                                    'currency' => 'CNY'
+                                ],
+                            ]]);
+                        $up_data['out_overload_refund_no']=$out_overload_refund_no;
+                    }
+                    $dec_agent_overload_price=bcsub($orders['agent_overload_price'],$agent_overload_amt,2);
                 }
+
                 $up_data['overload_price']=$users_overload_amt;//用户新超重金额
                 $up_data['agent_overload_price']=$agent_overload_amt;//代理商新超重金额
                 $up_data['final_weight']=$params['cal_weight'];
-                if($params['cal_weight']==$orders['weight']){
-                     $up_data['overload_status']=0;
-                }
-                $Dbcommon= new Dbcommom();
-                $dec_agent_overload_price=bcsub($orders['agent_overload_price'],$agent_overload_amt,2);
                 $orders->setDec('agent_price',$dec_agent_overload_price);//代理商结算金额-相差超重金额
                 $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$dec_agent_overload_price,1,'运单号：'.$orders['waybill'].' 核重退回金额：'.$dec_agent_overload_price.'元');
                 $orders->allowField(true)->save($up_data);
