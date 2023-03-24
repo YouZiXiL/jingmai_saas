@@ -4,6 +4,7 @@ namespace app\web\controller;
 
 use app\web\aes\WxBizMsgCrypt;
 
+use app\web\model\Admin;
 use app\web\model\Agent_couponlist;
 use app\web\model\AgentCouponmanager;
 use app\web\model\Couponlist;
@@ -365,7 +366,116 @@ class Wxcallback extends Controller
                         "createtime"=>time(),
                         "updatetime"=>time()
                     ];
-                    !empty($users["rootid"]) && ($data["rootid"]=$users["rootid"]);
+                    if(!empty($users["rootid"]) ){
+                        $data["rootid"]=$users["rootid"];
+                        $superB=db("admin")->find($users["rootid"]);
+                        //计算 超级B 价格
+                        if ($orders['tag_type']=='德邦'||$orders['tag_type']=='德邦重货'){
+
+                            $agent_price=$orders['freight']+$orders['freight']*$superB['agent_db_ratio']/100;// 超级B 达标价格
+                            $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_db_ratio']/100;//超级B 默认价格
+                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                            $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$superB['agent_db_ratio']/100;//代理商首重
+                            $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_db_ratio']/100;//代理商续重
+
+                        }elseif ($orders['tag_type']=='京东'){
+                            $agent_price=$orders['freight']+$orders['freight']*$superB['agent_jd_ratio']/100;//代理商价格
+                            $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_jd_ratio']/100;//代理商价格
+
+                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                            $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$superB['agent_jd_ratio']/100;//代理商首重
+                            $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_jd_ratio']/100;//代理商续重
+
+                        }elseif ($orders['tag_type']=='圆通'){
+
+                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                            $weight=$orders['weight']-1;//续重重量
+
+                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+                        }elseif ($orders['tag_type']=='申通'){
+                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                            $weight=$orders['weight']-1;//续重重量
+                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+                        }elseif ($orders['tag_type']=='极兔'){
+                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                            $weight=$orders['weight']-1;//续重重量
+                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+
+                        }elseif ($orders['tag_type']=='中通'){
+                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                            $weight=$orders['weight']-1;//续重重量
+                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+                        }elseif ($orders['tag_type']=='韵达'){
+
+                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                            $weight=$orders['weight']-1;//续重重量
+
+                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+                        }
+                        $data["root_price"]=number_format($agent_price,2);
+                        $data["root_defaultprice"]=number_format($agent_default_price,2);
+
+                        $data["imm_rebate"]=number_format(($data["final_price"])*($superB["imm_rate"]??0)/100,2);
+                        $data["mid_rebate"]=number_format(($data["final_price"])*($superB["midd_rate"]??0)/100,2);
+
+                        $data["root_vip_rebate"]=number_format($data["final_price"]-$data["root_price"]-$data["imm_rebate"]-$data["mid_rebate"],2);
+                        $data["root_default_rebate"]=number_format($data["final_price"]-$agent_default_price-$data["imm_rebate"]-$data["mid_rebate"],2);
+                    }
+                    else{
+
+                        $data["root_price"]=0;
+                        $data["root_defaultprice"]=0;
+
+                        $data["imm_rebate"]=number_format(($data["final_price"])*($agent_info["imm_rate"]??0)/100,2);
+                        $data["mid_rebate"]=number_format(($data["final_price"])*($agent_info["midd_rate"]??0)/100,2);
+
+                        $data["root_vip_rebate"]=0;
+                        $data["root_default_rebate"]=0;
+                    }
+
+                }
                     $rebatelist->save($data);
                 }
                 $rebatelistdata=[
@@ -386,6 +496,7 @@ class Wxcallback extends Controller
                 $weight=floor($orders['weight']-$pamar['calWeight']);
                 if ($weight>0&&$pamar['calWeight']!=0&&empty($orders['final_weight_time'])){
 
+
                     $tralight_weight=$weight;//超轻重量
                     if ($orders['tag_type']=='顺丰'){
                         $tralight_amt=$orders['freight']-$pamar['freight'];//超轻金额
@@ -397,9 +508,26 @@ class Wxcallback extends Controller
                         $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                         $users_tralight_amt=$tralight_weight*$up_data['users_xuzhong'];//代理商给用户退款金额
                         $agent_tralight_amt=$tralight_weight*$up_data['agent_xuzhong'];//平台给代理商退余额
+
+                        if(!empty($users["rootid"])){
+                            $superB=db("admin")->find($users["rootid"]);
+
+                            $agent_default_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_default_sf_ratio']/100;//超级B 默认续重价格
+                            $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_sf_ratio']/100;//超级B 达标续重价格
+
+
+                            $root_tralight_amt=$tralight_weight*$agent_xuzhong;
+                            $root_default_tralight_amt=$tralight_weight*$agent_default_xuzhong;
+                        }
+
                     }else{
                         $users_tralight_amt=$tralight_weight*$orders['users_xuzhong'];//代理商给用户退款金额
                         $agent_tralight_amt=$tralight_weight*$orders['agent_xuzhong'];//平台给代理商退余额
+                        if(!empty($users["rootid"])){
+                            $superB=db("admin")->find($users["rootid"]);
+                            $root_tralight_amt=$tralight_weight*($superB['agent_xuzhong']/$agent_info['agent_xuzhong'])*$orders['agent_xuzhong'];
+                            $root_default_tralight_amt=$tralight_weight*($superB['agent_default_xuzhong']/$agent_info['agent_xuzhong'])*$orders['agent_xuzhong'];
+                        }
                     }
 
                     $up_data['tralight_status']=1;
@@ -407,6 +535,21 @@ class Wxcallback extends Controller
                     $up_data['tralight_price']=$users_tralight_amt;
                     $up_data['agent_tralight_price']=$agent_tralight_amt;
                     $rebatelistdata["payinback"]=-$up_data['tralight_price'];
+
+                    if(!empty($users["rootid"])){
+                        $rebatelistdata["root_price"]=number_format($rebatelist->root_price-$root_tralight_amt,2);
+                        $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice-$root_default_tralight_amt,2);
+
+                        $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($superB["imm_rate"]??0)/100,2);
+                        $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($superB["midd_rate"]??0)/100,2);
+
+                        $rebatelistdata["root_vip_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_price"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                        $rebatelistdata["root_default_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_defaultprice"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                    }
+                    else{
+                        $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["imm_rate"]??0)/100,2);
+                        $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["midd_rate"]??0)/100,2);
+                    }
 
                 }
 
@@ -425,7 +568,25 @@ class Wxcallback extends Controller
                         $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                         $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
                         $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
+
+                        if(!empty($users["rootid"])){
+                            $superB=db("admin")->find($users["rootid"]);
+
+                            $agent_default_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_default_sf_ratio']/100;//
+                            $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_sf_ratio']/100;//
+
+
+                            $root_overload_amt=$overload_weight*$agent_xuzhong;
+                            $root_default_overload_amt=$overload_weight*$agent_default_xuzhong;
+                        }
+
                     }else{
+                        if(!empty($users["rootid"])){
+                            $superB=db("admin")->find($users["rootid"]);
+
+                            $root_overload_amt=$overload_weight*($superB['agent_xuzhong']/$agent_info['agent_xuzhong'])*$orders['agent_xuzhong'];
+                            $root_default_overload_amt=$overload_weight*($superB['agent_default_xuzhong']/$agent_info['agent_xuzhong'])*$orders['agent_xuzhong'];
+                        }
                         $users_overload_amt=bcmul($overload_weight,$orders['users_xuzhong'],2);//用户补缴金额
                         $agent_overload_amt=bcmul($overload_weight,$orders['agent_xuzhong'],2);//代理补缴金额
                     }
@@ -444,7 +605,20 @@ class Wxcallback extends Controller
                     $rebatelistdata["payinback"]=$up_data['overload_price'];
 
                     $rebatelistdata["state"]=2;
+                    if(!empty($users["rootid"])){
+                        $rebatelistdata["root_price"]=number_format($rebatelist->root_price+$root_overload_amt,2);
+                        $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice+$root_default_overload_amt,2);
 
+                        $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$rebatelistdata["payinback"])*($superB["imm_rate"]??0)/100,2);
+                        $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$rebatelistdata["payinback"])*($superB["midd_rate"]??0)/100,2);
+
+                        $rebatelistdata["root_vip_rebate"]=number_format($rebatelist["final_price"]-$rebatelistdata["root_defaultprice"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                        $rebatelistdata["root_default_rebate"]=number_format($rebatelist["final_price"]-$agent_default_price-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                    }
+                    else{
+                        $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["imm_rate"]??0)/100,2);
+                        $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
+                    }
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
                 }
@@ -475,117 +649,45 @@ class Wxcallback extends Controller
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'){
 
+                    if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
+                        if(!empty($rebatelist["invitercode"])){
+                            $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
+
+                            if(!empty($fauser)){
+                                $fauser->money+=$rebatelist->imm_rebate??0;
+                                $fauser->save();
+                                $rebatelistdata["isimmstate"]=1;
+                            }
+                        }
+                        if(!empty($rebatelist["fainvitercode"])){
+                            $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
+                            if(!empty($gruser)){
+                                $gruser->money+=$rebatelist->mid_rebate??0;
+                                $gruser->save();
+                                $rebatelistdata["ismidstate"]=1;
+
+                            }
+                        }
+                        $rebatelistdata["state"]=5;
+                    }
+                    if($rebatelist->state ==2){
+                        $rebatelistdata["state"]=4;
+                    }
                     //超级 B 分润 + 返佣（返佣用自定义比例 ） 返佣表需添加字段：1、基本比例分润字段 2、达标比例分润字段
                     if(!empty($users["rootid"])){
 
-                        $superB=db("admin")->find($users["rootid"]);
-                        if( $rebatelist->state !=2 && $rebatelist->state !=3){
-                            if(!empty($rebatelist["invitercode"])){
-                                $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
-                                if(!empty($fauser)){
-                                    $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
-                                    $fauser->save();
-                                }
+                        if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4) {
+
+                            $superB=Admin::get($users["rootid"]);
+                            if (!empty($superB)){
+                                $superB->defaltamoount+=$rebatelist->root_default_rebate;
+                                $superB->vipamoount+=$rebatelist->root_vip_rebate;
+                                $superB->save();
+                                $rebatelistdata["isrootstate"]=1;
                             }
-                            if(!empty($rebatelist["fainvitercode"])){
-                                $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-                                if(!empty($gruser)){
-                                    $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
-                                    $gruser->save();
-                                }
-                            }
-                            $rebatelistdata["state"]=3;
 
-                            //计算 超级B 价格
-                            if ($orders['tag_type']=='德邦'||$orders['tag_type']=='德邦重货'){
-
-                                $agent_price=$orders['freight']+$orders['freight']*$superB['agent_db_ratio']/100;//代理商价格
-                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                                $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$superB['agent_db_ratio']/100;//代理商首重
-                                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_db_ratio']/100;//代理商续重
-
-                            }elseif ($orders['tag_type']=='京东'){
-                                $agent_price=$orders['freight']+$orders['freight']*$superB['agent_jd_ratio']/100;//代理商价格
-
-                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                                $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$superB['agent_jd_ratio']/100;//代理商首重
-                                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_jd_ratio']/100;//代理商续重
-
-                            }elseif ($orders['tag_type']=='圆通'){
-
-                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                                $weight=$orders['weight']-1;//续重重量
-
-                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                            }elseif ($orders['tag_type']=='申通'){
-                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                                $weight=$orders['weight']-1;//续重重量
-                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                            }elseif ($orders['tag_type']=='极兔'){
-                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                                $weight=$orders['weight']-1;//续重重量
-                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                            }elseif ($orders['tag_type']=='中通'){
-                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                                $weight=$orders['weight']-1;//续重重量
-                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                            }elseif ($orders['tag_type']=='韵达'){
-
-                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                                $weight=$orders['weight']-1;//续重重量
-
-                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                            }
-                            $rebatelistdata["root_price"]=$agent_price+$orders["overload_price"]??0-$orders["tralight_price"]??0;
-                        }
-
-                    }
-                    else{
-                        if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
-//                            if(!empty($rebatelist["invitercode"])){
-//                                $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
-//                                if(!empty($fauser)){
-//                                    $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
-//                                    $fauser->save();
-//                                }
-//                            }
-//                            if(!empty($rebatelist["fainvitercode"])){
-//                                $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-//                                if(!empty($gruser)){
-//                                    $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
-//                                    $gruser->save();
-//                                }
-//                            }
-                            $rebatelistdata["state"]=5;
-                        }
-                        if($rebatelist->state ==2){
-                            $rebatelistdata["state"]=4;
                         }
                     }
-
-
 
                     $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                         'touser'=>$users['open_id'],  //接收者openid
@@ -602,20 +704,10 @@ class Wxcallback extends Controller
                         'lang'=>'zh_CN'
                     ],'POST');
                 }
-                if(!empty($users["rootid"])){
-                    $superB=db("admin")->find($users["rootid"]);
-                    $rebatelistdata["imm_rebate"]=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
-                    $rebatelistdata["mid_rebate"]=($rebatelist->final_price+$rebatelist->payinback)*($superB["midd_rate"]??0)/100;
-                    //需重新计算 超级B链上的成本价（达标成本价 、默认成本价）
-//                    $rebatelistdata["root_vip_rebate"]=
-                }
-                else{
-                    $rebatelistdata["imm_rebate"]=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
-                    $rebatelistdata["mid_rebate"]=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["midd_rate"]??0)/100;
-                }
+
 
                 $rebatelist->save($rebatelistdata);
-            }
+
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
             return json(['code'=>1, 'message'=>'推送成功']);
@@ -2244,32 +2336,59 @@ class Wxcallback extends Controller
                 $users=db('users')->where('id',$orders['user_id'])->find();
                 $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
 
+                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                if(empty($rebatelist)){
+                    $rebatelist=new Rebatelist();
+                    $data=[
+                        "user_id"=>$users["id"],
+                        "invitercode"=>$users["invitercode"],
+                        "fainvitercode"=>$users["fainvitercode"],
+                        "out_trade_no"=>$orders["out_trade_no"],
+                        "final_price"=>$orders["final_price"]-$orders["insured_price"],
+                        "payinback"=>0,
+                        "state"=>1,
+                        "rebate_amount"=>$orders["user_id"],
+                        "createtime"=>time(),
+                        "updatetime"=>time()
+                    ];
+                    if(!empty($users["rootid"])){
+                        $data["rootid"]=$users["rootid"];
+                        $superB=db("admin")->find($users["rootid"]);
+                        $agent_price=$orders["originalFee"] *( $data['final_price']/$orders["originalFee"]+$superB["agent_sf_ratio"]/100);
+                        $agent_default_price=$orders["originalFee"] *( $data['final_price']/$orders["originalFee"]+$superB["agent_default_sf_ratio"]/100);
+                        $data["root_price"]=number_format($agent_price,2);
+                        $data["root_defaultprice"]=number_format($agent_default_price,2);
+
+                        $data["imm_rebate"]=number_format(($data["final_price"])*($superB["imm_rate"]??0)/100,2);
+                        $data["mid_rebate"]=number_format(($data["final_price"])*($superB["midd_rate"]??0)/100,2);
+
+                        $data["root_vip_rebate"]=number_format($data["final_price"]-$data["root_price"]-$data["imm_rebate"]-$data["mid_rebate"],2);
+                        $data["root_default_rebate"]=number_format($data["final_price"]-$agent_default_price-$data["imm_rebate"]-$data["mid_rebate"],2);
+                    }
+                    else{
+                        $data["root_price"]=0;
+                        $data["root_defaultprice"]=0;
+
+                        $data["imm_rebate"]=number_format(($data["final_price"])*($agent_info["imm_rate"]??0)/100,2);
+                        $data["mid_rebate"]=number_format(($data["final_price"])*($agent_info["midd_rate"]??0)/100,2);
+
+                        $data["root_vip_rebate"]=0;
+                        $data["root_default_rebate"]=0;
+
+                    }
+
+
+                    $rebatelist->save($data);
+                }
+                $rebatelistdata=[
+                    "updatetime"=>time()
+                ];
                 $updatedata=[];
                 if($params["pushType"]==1){
                     $updatedata=[
                         "order_status"=>$params["data"]["status"]."-".$params["data"]["desc"]
                     ];
-                    $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
-                    if(empty($rebatelist)){
-                        $rebatelist=new Rebatelist();
-                        $data=[
-                            "user_id"=>$users["id"],
-                            "invitercode"=>$users["invitercode"],
-                            "fainvitercode"=>$users["fainvitercode"],
-                            "out_trade_no"=>$orders["out_trade_no"],
-                            "final_price"=>$orders["final_price"]-$orders["insured_price"],
-                            "payinback"=>0,
-                            "state"=>1,
-                            "rebate_amount"=>$orders["user_id"],
-                            "createtime"=>time(),
-                            "updatetime"=>time()
-                        ];
-                        !empty($users["rootid"]) && ($data["rootid"]=$users["rootid"]);
-                        $rebatelist->save($data);
-                    }
-                    $rebatelistdata=[
-                        "updatetime"=>time()
-                    ];
+
                     if($params["data"]["status"]==1){
                         //发送小程序订阅消息(运单状态)
                         $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
@@ -2289,41 +2408,43 @@ class Wxcallback extends Controller
                     }
                     elseif ($params["data"]["status"]==5){
                         if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
-//                            //超级 B 分润 +返佣（超级B 定义的返佣比例）
-//                            if(!empty($users["rootid"])){
-//
-//                                $superB=db("")->find($users["rootid"]);
-//
-//                                if(!empty($rebatelist["invitercode"])){
-//                                    $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
-//                                    if(!empty($fauser)){
-//                                        $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
-//                                    }
-//                                }
-//                                if(!empty($rebatelist["fainvitercode"])){
-//                                    $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-//                                    if(!empty($gruser)){
-//                                        $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($superB["imm_rate"]??0)/100;
-//                                    }
-//                                }
-//                            }
-//                            else{
-//                                if(!empty($rebatelist["invitercode"])){
-//                                    $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
-//                                    if(!empty($fauser)){
-//                                        $fauser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
-//                                    }
-//                                }
-//                                if(!empty($rebatelist["fainvitercode"])){
-//                                    $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-//                                    if(!empty($gruser)){
-//                                        $gruser->money+=($rebatelist->final_price+$rebatelist->payinback)*($agent_info["imm_rate"]??0)/100;
-//                                    }
-//                                }
-//                            }
+                            if(empty($rebatelist->isimmstate))
+                            if(!empty($rebatelist["invitercode"])){
+                                $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
 
+                                if(!empty($fauser)){
+                                    $fauser->money+=$rebatelist->imm_rebate??0;
+                                    $fauser->save();
+                                    $rebatelistdata["isimmstate"]=1;
+                                }
+                            }
+                            if(empty($rebatelist->ismidstate))
+                                if(!empty($rebatelist["fainvitercode"])){
+                                $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
+                                if(!empty($gruser)){
+                                    $gruser->money+=$rebatelist->mid_rebate??0;
+                                    $gruser->save();
+                                    $rebatelistdata["ismidstate"]=1;
+
+                                }
+                            }
 
                             $rebatelistdata["state"]=5;
+                            //超级 B 分润 + 返佣（返佣用自定义比例 ） 返佣表需添加字段：1、基本比例分润字段 2、达标比例分润字段 默认金额 达标时金额
+                            if(!empty($users["rootid"])){
+
+                                if(empty($rebatelist->isrootstate))
+                                if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4) {
+                                    $superB=Admin::get($users["rootid"]);
+                                    if (!empty($superB)){
+                                        $superB->defaltamoount+=$rebatelist->root_default_rebate;
+                                        $superB->vipamoount+=$rebatelist->root_vip_rebate;
+                                        $superB->save();
+                                        $rebatelistdata["isrootstate"]=1;
+                                    }
+
+                                }
+                            }
                         }
                         if($rebatelist->state ==2){
                             $rebatelistdata["state"]=4;
@@ -2336,7 +2457,8 @@ class Wxcallback extends Controller
                         $rebatelistdata["cancel_time"]=time();
                     }
 
-                }elseif ($params["pushType"]==2){
+                }
+                elseif ($params["pushType"]==2){
 
 
                     $up_data=[
@@ -2370,10 +2492,10 @@ class Wxcallback extends Controller
 
                         $tralight_weight=$weight;//超轻重量
 
-                        $weightprice=$orders["freight"]-$orders["insured_price"]??0-($pamar["totalFee"]-$haocai);
+                        $weightprice=$orders["final_price"]-($pamar["totalFee"]-$haocai);
 
                         if($weightprice>0){
-                            $dicount=number_format($pamar['totalFee']/$params['originalFee'],2);
+                            $dicount=number_format($orders["freight"]/$orders['originalFee'],2);
 
                             $up_data['tralight_status']=1;
                             $up_data['final_weight_time']=time();
@@ -2381,6 +2503,24 @@ class Wxcallback extends Controller
                             $up_data['agent_tralight_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100),2);
 
                             $rebatelistdata["payinback"]=-$up_data['tralight_price'];
+
+                            if(!empty($users["rootid"])){
+                                $root_tralight_amt=$tralight_weight*($dicount+$agent_info["agent_sf_ratio"]/100);
+                                $root_default_tralight_amt=$tralight_weight*($dicount+$agent_info["agent_default_sf_ratio"]/100);
+
+                                $rebatelistdata["root_price"]=number_format($rebatelist->root_price-$root_tralight_amt,2);
+                                $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice-$root_default_tralight_amt,2);
+
+                                $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($superB["imm_rate"]??0)/100,2);
+                                $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($superB["midd_rate"]??0)/100,2);
+
+                                $rebatelistdata["root_vip_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_price"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                                $rebatelistdata["root_default_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_defaultprice"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                            }
+                            else{
+                                $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["imm_rate"]??0)/100,2);
+                                $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["midd_rate"]??0)/100,2);
+                            }
 
                         }
 
@@ -2392,9 +2532,9 @@ class Wxcallback extends Controller
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($pamar['calWeight']-$orders['weight']);//超出重量
 
-                        $weightprice=$pamar["totalFee"]-$haocai-$orders["freight"];
+                        $weightprice=$pamar["totalFee"]-$haocai-$orders["final_price"];
 
-                        $dicount=number_format($pamar['totalFee']/$params['originalFee'],2);
+                        $dicount=number_format($orders["freight"]/$orders['originalFee'],2);
 
 
                         $up_data['overload_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);//用户超重金额
@@ -2409,6 +2549,26 @@ class Wxcallback extends Controller
                             'cal_weight'=>$overload_weight .'kg',
                             'users_overload_amt'=>$up_data['agent_overload_price'].'元'
                         ];
+
+                        if(!empty($users["rootid"])){
+                            $root_tralight_amt=$weightprice*($dicount+$agent_info["agent_sf_ratio"]/100);
+                            $root_default_tralight_amt=$weightprice*($dicount+$agent_info["agent_default_sf_ratio"]/100);
+
+                            $rebatelistdata["root_price"]=number_format($rebatelist->root_price+$root_tralight_amt,2);
+                            $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice+$root_default_tralight_amt,2);
+
+                            $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($superB["imm_rate"]??0)/100,2);
+                            $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($superB["midd_rate"]??0)/100,2);
+
+                            $rebatelistdata["root_vip_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_price"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                            $rebatelistdata["root_default_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_defaultprice"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                        }
+                        else{
+                            $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["imm_rate"]??0)/100,2);
+                            $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
+                        }
+
+
                         $rebatelistdata["payinback"]=$up_data['overload_price'];
 
                         $rebatelistdata["state"]=2;
