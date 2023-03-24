@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\web\model\AgentPoster;
+use app\web\model\Cashserviceinfo;
 use app\web\model\Rebatelist;
 use think\Exception;
 // 功能主要服务于 Super B 控制台使用的时候可用 可不用
@@ -194,6 +195,13 @@ class Super_bplan extends \think\Controller
         $orders["doing_count"]=$doing_count;//待运单签收数量
         $orders["exception_count"]=$exception_count;//异常数量
 
+        if($orders["state"]){
+            $agentinfo-> is_target_down=2;
+        }
+        else{
+            $agentinfo-> is_target_down=1;
+        }
+
         $data["data"]=$orders;
         return \json($data);
     }
@@ -246,5 +254,104 @@ class Super_bplan extends \think\Controller
         }
 
         return json($data);
+    }
+
+    //提现(提交 真实姓名 支付宝账号等信息)
+    public function cashservice(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $params=$this->request->param();
+        if(empty($params["id"])){
+            $data["status"]=400;
+
+            $data["msg"]="请输入 id 参数";
+            return json($data);
+        }
+        //1、获取用户余额
+        $agentinfo= \app\web\model\Admin::get($params["id"]);
+        $userday=$agentinfo->user_cashoutdate??26;
+        if(date("d")<$userday){
+            $data["msg"]="本月 ".$userday." 号开始提现";
+            return json($data);
+        }
+        //2、获取商家提现手续费率
+        $rate=0.08;//应该从控制台设置获得
+
+        if($agentinfo->is_target_down){
+            $cashserviceinfo=new Cashserviceinfo();
+
+            $cashlist=$cashserviceinfo->field("createtime")->where(["user_id"=>$params["id"]])->order("id","desc")->find();
+
+
+        }
+        else{
+
+        }
+
+        $balance=$agentinfo->ratemoney;
+
+
+        if($agentinfo->ratemoney<$params["money"]){
+            $data["status"]=400;
+            $data["msg"]="提交信息有误";
+        }
+        else{
+            if($rate!=$params["servicerate"]){
+                $data["status"]=400;
+
+                $data["msg"]="提交信息有误XX2";
+            }
+            else{
+                $cashservice=new Cashserviceinfo();
+                $cashservice->user_id=$params["id"];
+                $cashservice->balance=$balance;
+                $cashservice->cashout=$params["money"];
+                $cashservice->servicerate=$rate;
+                $cashservice->actualamount=number_format($params["money"]-$params["money"]*$rate,2);
+                $cashservice->realname=$params["realname"];
+                $cashservice->aliid=$params["alinum"];
+                $cashservice->state=1;
+                $cashservice->type=2;
+                $cashservice->createtime=time();
+                $cashservice->updatetime=time();
+
+                $cashservice->save();
+
+                $agentinfo->ratemoney-=$params["money"];
+                $agentinfo->save();
+            }
+        }
+        $data["data"]=$params;
+
+        return \json($data);
+    }
+    //提现记录
+    public function cashoutlist(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+
+        $params=$this->request->param();
+        $page=$params["page"]??1;
+        if(empty($params["id"])){
+            $data["status"]=400;
+
+            $data["msg"]="请输入 id 参数";
+            return json($data);
+        }
+        $cashserviceinfo=new Cashserviceinfo();
+        $cashlist=$cashserviceinfo->field("balance,cashout,servicerate,actualamount,realname,aliid,state,createtime")->where(["user_id"=>$params["id"]])->where("type",2)->order("id","desc")->page($page,$this->page_rows)->select();
+
+
+
+        $data["data"]=$cashlist;
+
+
+        return \json($data);
     }
 }

@@ -37,12 +37,13 @@ class Users extends Controller
             }
             $this->user = (object)$session;
             //将代理商信息缓存避免每次查询admin数据库
-            $agent = cache($this->user->app_id);
+            $agent = "";
+            //$agent = cache($this->user->app_id);
             if (empty($agent)){
                 //admin 补充表结构 合并后需用 admin
-                $agent=db("admin")->where('agent_id',$this->user->agent_id)->find();
+                $agent=db("admin")->where('id',$this->user->agent_id)->find();
 
-                cache($this->user->app_id,$agent,3600*24*25);
+                //cache($this->user->app_id,$agent,3600*24*25);
             }
             $this->admin=$agent;
             $this->common= new Common();
@@ -85,7 +86,11 @@ class Users extends Controller
             'data'=>"",
             'msg'=>'Success'
         ];
-        $agentrule=Agent_rule::get(["agent_id"=>$this->user->agent_id,"state"=>1]);
+        $param=$this->request->param();
+        if(empty($param["type"])){
+            $param["type"]=1;
+        }
+        $agentrule=Agent_rule::get(["agent_id"=>$this->user->agent_id,"type"=>$param["type"],"state"=>1]);
 
         $data["data"]=$agentrule;
 
@@ -569,6 +574,7 @@ class Users extends Controller
                 $cashservice->realname=$params["realname"];
                 $cashservice->aliid=$params["alinum"];
                 $cashservice->state=1;
+                $cashservice->type=1;
                 $cashservice->createtime=time();
                 $cashservice->updatetime=time();
 
@@ -592,7 +598,7 @@ class Users extends Controller
         $params=$this->request->param();
         $page=$params["page"]??1;
         $cashserviceinfo=new Cashserviceinfo();
-        $cashlist=$cashserviceinfo->field("balance,cashout,servicerate,actualamount,realname,aliid,state,createtime")->where(["user_id"=>$this->user->id])->order("id","desc")->page($page,$this->page_rows)->select();
+        $cashlist=$cashserviceinfo->field("balance,cashout,servicerate,actualamount,realname,aliid,state,createtime")->where(["user_id"=>$this->user->id])->where("type",'<>',2)->order("id","desc")->page($page,$this->page_rows)->select();
 
 
 
