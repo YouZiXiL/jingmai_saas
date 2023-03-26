@@ -205,7 +205,7 @@ class Orderslist extends Backend
 
         //超重反馈
         if ($params['salf_type']==1){
-            $weight=(int)($row['final_weight']-$row['weight']);
+            $weight=ceil($row['final_weight']-$row['weight']);
 
             if ($weight<=0){
                 $this->error(__('此订单不能反馈超重'));
@@ -249,7 +249,7 @@ class Orderslist extends Backend
             $data=$common->yunyang_api('AFTER_SALE',$content);
 
             if ($data['code']!=1){
-                $this->error($data['result']);
+                $this->error($data['message']);
             }
         }
 

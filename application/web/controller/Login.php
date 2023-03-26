@@ -159,7 +159,7 @@ class Login extends Controller
         }
         //file_put_contents('get_config.txt',$param['app_id'].PHP_EOL,FILE_APPEND);
         $agent_id=db('agent_auth')->where('app_id',$param['app_id'])->value('agent_id');
-        $config=db('admin')->where('id',$agent_id)->field('zizhu,zhonghuo,coupon,wx_guanzhu,qywx_id,kf_url,wx_title,ordtips,ordtips_title,ordtips_cnt,zhongguo_tips,button_txt,order_tips,bujiao_tips,banner,add_tips,share_tips,share_pic')->find();
+        $config=db('admin')->where('id',$agent_id)->field('zizhu,zhonghuo,coupon,wx_guanzhu,qywx_id,kf_url,wx_title,ordtips,ordtips_title,ordtips_cnt,zhongguo_tips,button_txt,order_tips,bujiao_tips,banner,add_tips,share_tips,share_pic,wx_map_key')->find();
         $config['banner']=explode('|', $config['banner']);
         return json(['status'=>200,'data'=>$config,'msg'=>'成功']);
     }

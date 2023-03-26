@@ -791,14 +791,15 @@ class Yunyang extends Controller
         $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
 
         $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+        $out_overload_no='CZ'.$this->common->get_uniqid();
         try {
             $resp = $wx_pay
                 ->chain('v3/pay/transactions/jsapi')
                 ->post(['json' => [
                     'mchid'        => $agent_info['wx_mchid'],
-                    'out_trade_no' => $order['out_overload_no'],
+                    'out_trade_no' => $out_overload_no,
                     'appid'        => $this->user->app_id,
-                    'description'  => '超重补缴-'.$order['out_overload_no'],
+                    'description'  => '超重补缴-'.$out_overload_no,
                     'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_overload_pay',
                     'amount'       => [
                         'total'    => (int)bcmul($order['overload_price'],100),
@@ -827,7 +828,8 @@ class Yunyang extends Controller
             ), 'signType' => 'RSA'];
             db('orders')->where('id',$id)->update([
                 'cz_mchid'=>$agent_info['wx_mchid'],
-                'cz_mchcertificateserial'=>$agent_info['wx_mchcertificateserial']
+                'cz_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+                'out_overload_no'=>$out_overload_no
             ]);
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         } catch (Exception $e) {
@@ -902,14 +904,16 @@ class Yunyang extends Controller
         $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
 
         $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+        $out_haocai_no='HC'.$this->common->get_uniqid();
+
         try {
             $resp = $wx_pay
                 ->chain('v3/pay/transactions/jsapi')
                 ->post(['json' => [
                     'mchid'        => $agent_info['wx_mchid'],
-                    'out_trade_no' => $order['out_haocai_no'],
+                    'out_trade_no' => $out_haocai_no,
                     'appid'        => $this->user->app_id,
-                    'description'  => '耗材补缴-'.$order['out_haocai_no'],
+                    'description'  => '耗材补缴-'.$out_haocai_no,
                     'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_haocai_pay',
                     'amount'       => [
                         'total'    => (int)bcmul($order['haocai_freight'],100),
@@ -938,7 +942,8 @@ class Yunyang extends Controller
             ), 'signType' => 'RSA'];
             db('orders')->where('id',$id)->update([
                 'hc_mchid'=>$agent_info['wx_mchid'],
-                'hc_mchcertificateserial'=>$agent_info['wx_mchcertificateserial']
+                'hc_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+                'out_haocai_no'=>$out_haocai_no
             ]);
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         } catch (\Exception $e) {
