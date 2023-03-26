@@ -237,9 +237,9 @@ class Yunyangtc extends Controller
 //                    continue;
 //                }
                 $price=$v["fee"];
-                $agent_tc=$agent_info["agent_tc"]??0.1;//公司上浮百分比 默认为0.1
+                $agent_tc=($agent_info["agent_tc"]??10)/100;//公司上浮百分比 默认为0.1
                 $agent_price=$price+$price*$agent_tc;
-                $agent_tc_ratio=$agent_info["agent_tc_ratio"]??0;//代理商上浮百分比 默认为0
+                $agent_tc_ratio=($agent_info["agent_tc_ratio"]??0)/100;//代理商上浮百分比 默认为0
                 $users_price=$agent_price+$agent_price*$agent_tc_ratio;
 
                 $finalPrice=sprintf("%.2f",$users_price);//用户拿到的价格=云洋价格+公司为代理商上浮价格+代理商为用户上浮价格;

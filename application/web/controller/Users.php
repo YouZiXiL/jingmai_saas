@@ -65,20 +65,110 @@ class Users extends Controller
         $user_detail["nickname"]=$user_info->nick_name;
         $user_detail["avatar"]=$user_info->avatar;
         $user_detail["money"]=number_format($user_info->money,2);
-        $user_detail["service_rate"]=$agent_info->service_rate??0.08;//从商家服务表中获得 商家可自定义比例 建议8%
+        $user_detail["service_rate"]=number_format(($agent_info->service_rate??8)/100,2);//从商家服务表中获得 商家可自定义比例 建议8%
+
         if(!empty($user_info->myinvitecode))
             $user_detail["invitecode"]=$user_info->myinvitecode;
 
         if($user_info->uservip==0){
             $user_detail["level"]="普通会员";
         }
-
+        else{
+            if($user_info->vipvaliddate<time()){
+                $user_detail["level"]="普通会员";
+            }
+            else{
+                $user_detail["level"]="Plus会员";
+            }
+        }
 
         $user_detail["couponnum"]=$user_info->getcouponlist()->where("state",1)->count();
 
         $data["data"]=$user_detail;
         return \json($data);
     }
+    //用户返佣详情
+    public function user_rebate_info(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        //1、获得用户
+        $user_info= \app\web\model\Users::get($this->user->id);
+        $agent_info=Admin::get($this->user->agent_id);
+
+        $user_detail["money"]=number_format($user_info->money,2);
+        $user_detail["nickname"]=$user_info->nick_name;
+
+
+        $user_detail["service_rate"]=number_format(($agent_info->service_rate??8)/100,2);//从商家服务表中获得 商家可自定义比例 建议8%
+
+//        if(!empty($user_info->myinvitecode))
+//            $user_detail["invitecode"]=$user_info->myinvitecode;
+
+        if($user_info->uservip==0){
+            $user_detail["level"]="普通会员";
+        }
+        else{
+            if($user_info->vipvaliddate<time()){
+                $user_detail["level"]="普通会员";
+            }
+            else{
+                $user_detail["level"]="Plus会员";
+            }
+        }
+        $subusers=db("users")->where("invitercode|fainvitercode","=",$user_info->myinvitecode)->count();
+        $cashout=db("cashserviceinfo")->where("user_id",$this->user->id)->where("state","<>",3)->sum("cashout");
+        $user_detail["users"]=$subusers;
+        $user_detail["cashout"]=$cashout;
+        $user_detail["allmoney"]=floatval($user_detail["money"])+floatval($cashout);
+        $user_detail["realname"]=$user_info->realname??"";
+        $user_detail["alinum"]=$user_info->alipayid??"";
+
+        $data["data"]=$user_detail;
+        return \json($data);
+    }
+    //指定年 月查询
+    public function user_rebate_select(){
+
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $param=$this->request->param();
+        if(empty($param["year"]) ||empty($param["month"])){
+            $data["msg"]="请输入有效信息";
+            return json($data);
+        }
+        $year=$param["year"];
+        $month=$param["month"];
+        $targetdate=$year."-".$month;
+
+        $startdate= strtotime("first day of {$targetdate}");
+        $enddate= strtotime("{$targetdate} +1 month -1 day");
+
+        $targettoday=$year."-".$month."-".date("d");
+
+        $starttoday= strtotime($targettoday);
+        $endtoday= strtotime("{$targetdate} +1 day");
+
+
+        //1、获得用户
+        $user_info= \app\web\model\Users::get($this->user->id);
+
+        $subusers=db("users")->where("invitercode|fainvitercode","=",$user_info->myinvitecode)->where("create_time",'between',[$startdate,$enddate])->count();
+        $todayusers=db("users")->where("invitercode|fainvitercode","=",$user_info->myinvitecode)->where("create_time",'between',[$starttoday,$endtoday])->count();
+
+        $datadetail["today"]=$todayusers;
+        $datadetail["month"]=$subusers;
+
+        $data["data"]=$datadetail;
+
+        return json($data);
+    }
+
     //返利规则
     public function rebate_rule(){
         $data=[
@@ -533,6 +623,32 @@ class Users extends Controller
     }
 
 
+    //设置(真实姓名 支付宝账号等信息)
+    public function setalinum(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $params=$this->request->param();
+
+        if(empty($params["realname"]) ||empty($params["alinum"])){
+            $data["msg"]="设置信息有误";
+            $data["status"]=400;
+            return json($data);
+        }
+        //1、获取用户余额
+        $userinfo= \app\web\model\Users::get($this->user->id);
+
+        $userinfo->realname=$params["realname"];
+        $userinfo->alipayid=$params["alinum"];
+        $userinfo->save();
+
+        $data["data"]=$params;
+
+        return \json($data);
+    }
+
     //提现(提交 真实姓名 支付宝账号等信息)
     public function cashservice(){
         $data=[
@@ -551,12 +667,13 @@ class Users extends Controller
             return json($data);
         }
         //2、获取商家提现手续费率
-        $rate=0.08;//应该从控制台设置获得
+        $rate=number_format(($agentinfo->service_rate??8)/100,2);//应该从控制台设置获得
 
         $balance=$userinfo->money;
         if($userinfo->money<$params["money"]){
             $data["status"]=400;
-            $data["msg"]="提交信息有误";
+            $data["msg"]="余额不足";
+            return \json($data);
         }
         else{
             if($rate!=$params["servicerate"]){
@@ -570,7 +687,7 @@ class Users extends Controller
                 $cashservice->balance=$balance;
                 $cashservice->cashout=$params["money"];
                 $cashservice->servicerate=$rate;
-                $cashservice->actualamount=number_format($params["money"]-$params["money"]*$rate,2);
+                $cashservice->actualamount=bcsub($params["money"],$params["money"]*$rate,2);
                 $cashservice->realname=$params["realname"];
                 $cashservice->aliid=$params["alinum"];
                 $cashservice->state=1;
@@ -581,6 +698,8 @@ class Users extends Controller
                 $cashservice->save();
 
                 $userinfo->money-=$params["money"];
+                $userinfo->realname=$params["realname"];
+                $userinfo->alipayid=$params["alinum"];
                 $userinfo->save();
             }
         }
@@ -730,7 +849,7 @@ class Users extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
         }
 
-        if ($coupon_info['gain_way']==4){
+        if ($coupon_info['gain_way']==3){
 
         }
         else{
@@ -759,7 +878,7 @@ class Users extends Controller
             'description'  => '优惠券-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_couponorder_pay',//购买优惠券成功回调
             'amount'       => [
-                'total'    =>(int)bcmul($coupon_info[price],100),
+                'total'    =>(int)bcmul($coupon_info['price'],100),
                 'currency' => 'CNY'
             ],
             'payer'        => [
@@ -816,6 +935,16 @@ class Users extends Controller
     public function couponbymoney_fast(){
         $param=$this->request->param();
 
+        if(empty($param["coupon_id"])){
+            return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
+        }
+        $user_info= \app\web\model\Users::get($this->user->id);
+
+        if($user_info->uservip==0){
+            return json(['status'=>400,'data'=>'','msg'=>'您尚未开通plus会员']);
+
+        }
+
         $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
 
 
@@ -829,12 +958,14 @@ class Users extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
         }
 
-        $coupon_info=db('agent_couponmanager')->where('id',$param["coupon_id"])->find();
+//        $coupon_info=db('agent_couponmanager')->find($param["coupon_id"]);
+        $coupon_info=AgentCouponmanager::get($param["coupon_id"]);
+        echo $coupon_info->getLastSql();
         if(empty($coupon_info)){
             return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
         }
         //超值购
-        if($coupon_info['gain_way']!=3){
+        if($coupon_info['gain_way']!=4){
             return json(['status'=>400,'data'=>'','msg'=>'请重新刷新活动']);
         }
         else{
@@ -865,7 +996,7 @@ class Users extends Controller
             'description'  => '优惠券-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_couponordermf_pay',//购买优惠券成功回调
             'amount'       => [
-                'total'    =>(int)bcmul($coupon_info[price],100),
+                'total'    =>(int)bcmul($coupon_info['price'],100),
                 'currency' => 'CNY'
             ],
             'payer'        => [
@@ -964,7 +1095,7 @@ class Users extends Controller
             'description'  => '优惠券-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_viporder_pay',//购买优惠券成功回调
             'amount'       => [
-                'total'    =>(int)bcmul($vip_info[price],100),
+                'total'    =>(int)bcmul($vip_info['price'],100),
                 'currency' => 'CNY'
             ],
             'payer'        => [

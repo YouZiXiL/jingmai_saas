@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\web\model\Admin;
 use app\web\model\AgentPoster;
 use app\web\model\Cashserviceinfo;
 use app\web\model\Rebatelist;
@@ -256,6 +257,7 @@ class Super_bplan extends \think\Controller
         return json($data);
     }
 
+    //超级B提现默认未扣手续费 需要提供发票 否则将扣手续费
     //提现(提交 真实姓名 支付宝账号等信息)
     public function cashservice(){
         $data=[
@@ -277,19 +279,10 @@ class Super_bplan extends \think\Controller
             $data["msg"]="本月 ".$userday." 号开始提现";
             return json($data);
         }
-        //2、获取商家提现手续费率
-        $rate=0.08;//应该从控制台设置获得
+//        //2、获取商家提现手续费率
+//        $rate=($agentinfo->user_cashoutdate??8)/100;//应该从控制台设置获得
+//
 
-        if($agentinfo->is_target_down){
-            $cashserviceinfo=new Cashserviceinfo();
-
-            $cashlist=$cashserviceinfo->field("createtime")->where(["user_id"=>$params["id"]])->order("id","desc")->find();
-
-
-        }
-        else{
-
-        }
 
         $balance=$agentinfo->ratemoney;
 
@@ -299,30 +292,23 @@ class Super_bplan extends \think\Controller
             $data["msg"]="提交信息有误";
         }
         else{
-            if($rate!=$params["servicerate"]){
-                $data["status"]=400;
+            $cashservice=new Cashserviceinfo();
+            $cashservice->user_id=$params["id"];
+            $cashservice->balance=$balance;
+            $cashservice->cashout=$params["money"];
+            $cashservice->servicerate=0;
+            $cashservice->actualamount=floatval(number_format($params["money"]-$params["money"]*0,2));
+            $cashservice->realname=$params["realname"];
+            $cashservice->aliid=$params["alinum"];
+            $cashservice->state=1;
+            $cashservice->type=2;
+            $cashservice->createtime=time();
+            $cashservice->updatetime=time();
 
-                $data["msg"]="提交信息有误XX2";
-            }
-            else{
-                $cashservice=new Cashserviceinfo();
-                $cashservice->user_id=$params["id"];
-                $cashservice->balance=$balance;
-                $cashservice->cashout=$params["money"];
-                $cashservice->servicerate=$rate;
-                $cashservice->actualamount=number_format($params["money"]-$params["money"]*$rate,2);
-                $cashservice->realname=$params["realname"];
-                $cashservice->aliid=$params["alinum"];
-                $cashservice->state=1;
-                $cashservice->type=2;
-                $cashservice->createtime=time();
-                $cashservice->updatetime=time();
+            $cashservice->save();
 
-                $cashservice->save();
-
-                $agentinfo->ratemoney-=$params["money"];
-                $agentinfo->save();
-            }
+            $agentinfo->ratemoney-=$params["money"];
+            $agentinfo->save();
         }
         $data["data"]=$params;
 
@@ -353,5 +339,26 @@ class Super_bplan extends \think\Controller
 
 
         return \json($data);
+    }
+    //定时任务
+    //计算超级B 的分润金额
+    public function agent_ratemoney(){
+
+        //控制台调用时需 指定的超级B类型
+        $agents=Admin::all("id","类型");
+
+        foreach ($agents as $agent ){
+//            if($agent->)
+            $agentorders=db("rebatelist")->where("rootid",$agent->id)->where("state","<>","3")->count();
+            if($agentorders>$agent->target_orders_count){
+                $agent->ratemoney+=$agent->vipamoount;
+            }
+            else{
+                $agent->ratemoney+=$agent->defaltamoount;
+            }
+            $agent->defaltamoount=0;
+            $agent->vipamoount=0;
+            $agent->save();
+        }
     }
 }
