@@ -636,9 +636,9 @@ class Users extends Controller
         //1、获得用户
         $user_info= \app\web\model\Users::get($this->user->id);
         if($type==1)
-        $scorelist=$user_info->getcouponlist()->where("state",$type)->order("id","desc")->page($page,6)->select();
+        $scorelist=$user_info->getcouponlist()->where("state",$type)->order("id","desc")->select();//->page($page,6)->select();
         else
-        $scorelist=$user_info->getcouponlist()->where("state",$type)->where("createtime","between",[strtotime($startdate),time()])->order("id","desc")->page($page,6)->select();
+        $scorelist=$user_info->getcouponlist()->where("state",$type)->where("createtime","between",[strtotime($startdate),time()])->order("id","desc")->select();//->page($page,6)->select();
         $data["data"]=$scorelist;
 
         return \json($data);
