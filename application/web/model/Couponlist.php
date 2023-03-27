@@ -35,4 +35,11 @@ class Couponlist extends Model
         }
         return $value;;
     }
+    public function getvAliddateendAttr($value)
+    {
+        if(empty($value)){
+            return "长期";
+        }
+        return date("Y-m-d",$value);;
+    }
 }

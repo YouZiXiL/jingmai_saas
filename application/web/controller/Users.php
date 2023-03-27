@@ -81,8 +81,24 @@ class Users extends Controller
                 $user_detail["level"]="Plus会员";
             }
         }
+        $couponlist=$user_info->getcouponlist()->where("state",1)->select();
+        $updatedata=[];
 
-        $user_detail["couponnum"]=$user_info->getcouponlist()->where("state",1)->count();
+        foreach ($couponlist as $item){
+            if(strtotime($item['validdateend'])<time()){
+
+                $updata=[
+                    'id'=>$item["id"],
+                    'state'=>3
+                ];
+                array_push($updatedata,$updata);
+            }
+        }
+
+        $coupon=new Couponlist();
+        $coupon->isUpdate()->saveAll($updatedata);
+
+        $user_detail["couponnum"]=count($couponlist)-count($updatedata);//$user_info->getcouponlist()->where("state",1)->count();
 
         $data["data"]=$user_detail;
         return \json($data);
@@ -478,7 +494,7 @@ class Users extends Controller
         if(!empty($currentuser->myinvitecode) && $currentuser->myinvitecode<>'0'){
             $invitedata=[
                 "mycode"=>$currentuser->myinvitecode,
-                "url"=>$currentuser->posterpath//小程序码链接
+                "url"=>urldecode($currentuser->posterpath)//小程序码链接
             ];
             $data["data"]=$invitedata;
             //返回值：邀请码 以及带参小程序码
@@ -511,17 +527,17 @@ class Users extends Controller
                 $midpath=DS."assets".DS."img".DS.\date("Y").DS.\date("m");
                 $target=$basepath.$midpath;
                 if(!file_exists($target)){
-                    mkdir($target);
+                    mkdir($target,0777,true);
                 }
                 $picName=$this->common->getinvitecode(5).$currentuser->myinvitecode.".png";
                 $picpath=$target.DS.$picName;
                 file_put_contents($picpath,$url);
 
-                $currentuser->posterpath=$this->request->domain().$midpath.DS.$picName;
+                $currentuser->posterpath=urlencode($this->request->domain().$midpath.DS.$picName);
                 $currentuser->save();
                 $invitedata=[
                     "mycode"=>$currentuser->myinvitecode,
-                    "url"=>$currentuser->posterpath//小程序码链接
+                    "url"=>urldecode($currentuser->posterpath)//小程序码链接
                 ];
             }
             else{
@@ -612,10 +628,17 @@ class Users extends Controller
         ];
         $params=$this->request->param();
         $page=$params["page"]??1;
+        $type=$params["type"]??1;
+        $startdate=date("Y-m-d",strtotime("-1 month"));
+        $enddate=time();
 
+        return $enddate;
         //1、获得用户
         $user_info= \app\web\model\Users::get($this->user->id);
-        $scorelist=$user_info->getcouponlist()->order("id","desc")->page($page,6)->select();
+        if($type==1)
+        $scorelist=$user_info->getcouponlist()->where("state",$type)->order("id","desc")->page($page,6)->select();
+        else
+        $scorelist=$user_info->getcouponlist()->where("state",$type)->where("createtime","between",[strtotime($startdate),time()])->order("id","desc")->page($page,6)->select();
         $data["data"]=$scorelist;
 
         return \json($data);
