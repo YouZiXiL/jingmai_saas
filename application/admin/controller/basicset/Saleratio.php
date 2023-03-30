@@ -47,7 +47,7 @@ class Saleratio extends Backend
      */
     public function index()
     {
-        $row=$this->model->where('id',$this->auth->id)->field('users_shouzhong,users_xuzhong,users_shouzhong_ratio')->find();
+        $row=$this->model->where('id',$this->auth->id)->field('users_shouzhong,users_xuzhong,users_shouzhong_ratio,agent_water,agent_elec,agent_gas,agent_credit')->find();
         if (!$row) {
             $this->error(__('No Results were found'));
         }
