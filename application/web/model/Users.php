@@ -23,7 +23,7 @@ class Users extends Model
         return $this->hasMany("Rebatelist","user_id","id")->field("id,user_id,out_trade_no,final_price,payinback,state,updatetime,rebate_amount,cancel_time");
     }
     public function getcouponlist(){
-        return $this->hasMany("Couponlist","user_id","id")->field("id,gain_way,money,type,scene,uselimits,state,validdate,validdateend");
+        return $this->hasMany("Couponlist","user_id","id")->field("id,gain_way,money,type,scene,uselimits,state,validdate,validdateend,name");
     }
 
     public function getscorelist(){

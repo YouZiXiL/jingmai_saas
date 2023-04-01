@@ -25,8 +25,11 @@ class Users extends Controller
     protected $admin;
 
     protected $common;
+
+    protected $checkinscores;
     public function _initialize()
     {
+        $this->checkinscores=[1,2,2,3,3,3,5];
 
         try {
             $phpsessid=$this->request->header('phpsessid')??$this->request->header('PHPSESSID');
@@ -76,6 +79,8 @@ class Users extends Controller
         else{
             if($user_info->vipvaliddate<time()){
                 $user_detail["level"]="普通会员";
+                $user_info->uservip=0;
+                $user_info->save();
             }
             else{
                 $user_detail["level"]="Plus会员";
@@ -216,7 +221,7 @@ class Users extends Controller
         //此处从控制台获取 代理商设置状态 是否允许签到
         if($this->admin["is_opencheckin"]){
 
-            $checkin=Checkin::get(["user_id"=>$this->user->id])->find();
+            $checkin=Checkin::get(["user_id"=>$this->user->id]);
 
             if(empty($checkin)){
                 $checkin=new Checkin();
@@ -229,9 +234,9 @@ class Users extends Controller
 
                 $userscore=new UserScoreLog();
                 $userscore->user_id=$this->user->id;
-                $userscore->score=$this->admin["checkin_sigleprize"];
+                $userscore->score=$this->checkinscores[0];
                 $userscore->before=$userinfo["score"];
-                $userscore->after=$this->admin["checkin_sigleprize"]+$userinfo["score"];
+                $userscore->after=$this->checkinscores[0]+$userinfo["score"];
                 $userscore->memo="签到";
                 $userscore->createtime=time();
                 $userscore->save();
@@ -244,7 +249,7 @@ class Users extends Controller
                 //判断是否已签到
                 if(!strcmp(date('Y-m-d'),date("Y-m-d",$checkin["checktime"]))){
 
-                    $data['msg']="每天只需签到一次";
+                    $data['msg']="每天只需签到一次".date("Y-m-d");
 
                 }
                 else{
@@ -253,39 +258,50 @@ class Users extends Controller
 
                         $checkin->checktime=time();
                         $checkin->checkdays+=1;
+                        if($checkin->maxcheckdays<$checkin->checkdays)
                         $checkin->maxcheckdays+=1;
 
-                        $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
-
-                        //判断是否周期自定义 默认为7天
-                        $cycledays=7;
-                        if(!empty($this->admin["checkin_cycledays"])){
-                            $cycledays=$this->admin["checkin_cycledays"];
-                        }
-
-                        if($checkin->maxcheckdays==$cycledays){
-                            $checkin->checkdays=0;
-                            $checkin->maxcheckdays=0;
-                            $data['msg']="签到成功 积分+".$this->admin["checkin_conti_prize"];
-                        }
+//                        $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
+//
+//                        //判断是否周期自定义 默认为7天
+//                        $cycledays=7;
+//                        if(!empty($this->admin["checkin_cycledays"])){
+//                            $cycledays=$this->admin["checkin_cycledays"];
+//                        }
+//
+//                        if($checkin->maxcheckdays==$cycledays){
+//                            $checkin->checkdays=0;
+//                            $checkin->maxcheckdays=0;
+//                            $data['msg']="签到成功 积分+".$this->admin["checkin_conti_prize"];
+//                        }
                     }
                     else{
                         $checkin->checkdays=1;
-                        $checkin->maxcheckdays=1;
-                        $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
+                        //$checkin->maxcheckdays=1;
+                      //  $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
                     }
-                    $checkin->checktime=time();
-                    $checkin->save();
+                    $data['msg']="签到成功 积分+".$this->checkinscores[$checkin->checkdays-1];//$this->admin["checkin_sigleprize"];
+
                     $userscore=new UserScoreLog();
                     $userscore->user_id=$this->user->id;
-                    $userscore->score=$this->admin["checkin_sigleprize"];
+                    $userscore->score=$this->checkinscores[$checkin->checkdays-1];
                     $userscore->before=$userinfo["score"];
-                    $userscore->after=$this->admin["checkin_sigleprize"]+$userinfo["score"];
+                    $userscore->after=$this->checkinscores[$checkin->checkdays-1]+$userinfo["score"];
                     $userscore->memo="签到";
+                    if($checkin->checkdays==7)
+                    {
+                        $userscore->isfullcheckin=1;
+                        $checkin->checkdays=0;
+                    }
+
+
                     $userscore->createtime=time();
                     $userscore->save();
+                    $checkin->checktime=time();
+                    $checkin->save();
                     $userinfo["score"]=$userscore->after;
                     $userinfo->save();
+
 
                 }
 
@@ -293,7 +309,7 @@ class Users extends Controller
         }
         else{
             $data=[
-                'status'=>200,
+                'status'=>400,
                 'data'=>"",
                 'msg'=>'签到异常0X001'
             ];
@@ -316,10 +332,16 @@ class Users extends Controller
 
         $startday=date("Y-m-d",strtotime("-6 day"));
         $today=date("Y-m-d",strtotime("+1 day"));
-        $list = UserScoreLog::where(['user_id'=>$this->user->id,'memo'=>'签到'])->whereTime("createtime",'between',[strtotime($startday),strtotime($today)])->select();
+        $list = UserScoreLog::where(['user_id'=>$this->user->id,'memo'=>'签到'])->whereTime("createtime",'between',[strtotime($startday),strtotime($today)])->order("id","desc")->select();
 
+
+        $isfull=false;
         foreach ($list as $item){
             $datelist[$item["createtime"]]=1;
+            if($item->isfullcheckin && strcmp(date("Y-m-d"),$item->createtime)){
+                $isfull=true;
+            }
+            if($isfull)  $datelist[$item["createtime"]]=0;
         }
         if(empty($param["realdata"])){
             $data['data']=$datelist;
@@ -504,6 +526,71 @@ class Users extends Controller
             $currentuser->myinvitecode=$this->getinvitecode().substr($currentuser->mobile,-4);
             $currentuser->save();
         }
+
+//        //公众号id
+//        $publicid=db("agent_auth")->where("agent_id",$currentuser->agent_id)->where("auth_type",1)->find();
+//        if(empty($publicid)){
+//            $data["status"]=400;
+//            $data["msg"]="商家尚未配置公众号";
+//            return json($data);
+//        }
+//        else{
+//                   //获取公众号二维码
+//            $url = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=".$this->common->get_authorizer_access_token($publicid["app_id"]);
+//            $content=[
+//            "expire_seconds"=>2592000,
+//            "action_name"=>"QR_STR_SCENE",
+//            "action_info"=>[
+//                "scene"=>[
+//                "scene_str"=>$currentuser->agent_id."-".$currentuser->myinvitecode
+//            ]]
+//            ];
+//            if(!empty($currentuser->coderlimit) && date("Y-m-d",$currentuser->coderlimit)=="2099-12-31")
+//            {
+//                $content=[
+//                    "action_name"=>"QR_LIMIT_STR_SCENE",
+//                    "action_info"=>[
+//                        "scene"=>[
+//                            "scene_str"=>$currentuser->agent_id."-".$currentuser->rootid."-".$currentuser->myinvitecode
+//                        ]]
+//                ];
+//            }
+//
+//            $url=$this->common->httpRequest($url,$content,"POST");
+//            try {
+//                $result = json_decode($url,true);
+//
+//                $currentuser->posterpath=urlencode("https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=".urlencode($result["ticket"]));
+//
+//                $basepath=ROOT_PATH."public";
+//                //此处以年月为分割目录
+//                $midpath=DS."assets".DS."img".DS.\date("Y").DS.\date("m");
+//                $target=$basepath.$midpath;
+//                if(!file_exists($target)){
+//                    mkdir($target,0777,true);
+//                }
+//                $picName=$this->common->getinvitecode(5).$currentuser->myinvitecode.".png";
+//                $picpath=$target.DS.$picName;
+//                file_put_contents($picpath,file_get_contents(urldecode( $currentuser->posterpath)));
+//                $currentuser->posterpath = urlencode($this->request->domain().$midpath.DS.$picName);
+//
+//                if(!empty($result["expire_seconds"]))
+//                $currentuser->coderlimit=time()+$result["expire_seconds"];
+//                $currentuser->save();
+//
+//
+//                $invitedata=[
+//                    "mycode"=>$currentuser->myinvitecode,
+//                    "url"=>urldecode($currentuser->posterpath)//小程序码链接
+//                ];
+//                $invitedata["test"]=$result;
+//            }
+//            catch (Exception $exception){
+//                file_put_contents('xiochengxucode.txt',$exception->getMessage().PHP_EOL.$url.PHP_EOL,FILE_APPEND);
+//            }
+//
+//        }
+
         //获取小程序码
         $url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=".$this->common->get_authorizer_access_token($params["app_id"]);
 
@@ -815,6 +902,7 @@ class Users extends Controller
                     $item["gain_way"]=$coupon_manager["gain_way"];
                     $item["money"]=$coupon_manager["money"];
                     $item["type"]=$coupon_manager["type"];
+                    $item["name"]=$coupon_manager["name"];
                     $item["scene"]=$coupon_manager["scene"];
                     $item["uselimits"]=$coupon_manager["uselimits"];
                     $item["state"]=1;
@@ -822,6 +910,7 @@ class Users extends Controller
                     $item["validdateend"]=strtotime(date("Y-m-d "."23:59:59",strtotime("+".$coupon_manager["limitsday"]."day")));
                     $item["createtime"]=time();
                     $item["updatetime"]=time();
+
                     array_push($couponlistdata,$item);
 
                     $itemag=$item;

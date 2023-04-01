@@ -793,7 +793,6 @@ class Wxcallback extends Controller
     /**
      * 耗材支付回调
      */
-
     function wx_haocai_pay(){
         $inWechatpaySignature = $this->request->header('Wechatpay-Signature');// 请根据实际情况获取
         $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');// 请根据实际情况获取
@@ -1480,9 +1479,14 @@ class Wxcallback extends Controller
                     'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                     'pay_status'=>1,
                 ];
-
+                if(!empty($orders["couponid"])){
+                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                    $couponinfo->state=2;
+                    $couponinfo->save();
+                }
                 $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
             }
+
             db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($updata);
 
             exit('success');
@@ -2494,7 +2498,11 @@ class Wxcallback extends Controller
                     'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                     'pay_status'=>1,
                 ];
-
+                if(!empty($orders["couponid"])){
+                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                    $couponinfo->state=2;
+                    $couponinfo->save();
+                }
                 $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
             }
             db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($updata);
@@ -2885,6 +2893,7 @@ class Wxcallback extends Controller
             $item["money"]=$coupon_manager["money"];
             $item["type"]=$coupon_manager["type"];
             $item["scene"]=$coupon_manager["scene"];
+            $item["name"]=$coupon_manager["name"];
             $item["uselimits"]=$coupon_manager["uselimits"];
             $item["state"]=1;
             $item["validdate"]=strtotime(date("Y-m-d"));
@@ -2930,6 +2939,7 @@ class Wxcallback extends Controller
                 $item["gain_way"]=$coupon_manager["gain_way"];
                 $item["money"]=$coupon_manager["money"];
                 $item["type"]=$coupon_manager["type"];
+                $item["name"]=$coupon_manager["name"];
                 $item["scene"]=$coupon_manager["scene"];
                 $item["uselimits"]=$coupon_manager["uselimits"];
                 $item["state"]=1;
