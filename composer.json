@@ -33,7 +33,8 @@
         "txthinking/mailer": "^2.0",
         "ext-mcrypt": "*",
         "wechatpay/wechatpay": "^1.4",
-        "endroid/qr-code": "^4.6"
+        "endroid/qr-code": "^4.6",
+        "alipaysdk/easysdk": "^2.0"
     },
     "config": {
         "preferred-install": "dist",
@@ -42,10 +43,14 @@
             "easywechat-composer/easywechat-composer": true
         }
     },
-    "repositories": [
-        {
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://mirrors.aliyun.com/composer"
+        },
+        "0": {
             "type": "git",
             "url": "https://gitee.com/fastadminnet/framework.git"
         }
-    ]
+    }
 }

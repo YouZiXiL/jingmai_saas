@@ -49,4 +49,8 @@ return array(
     'DASPRiD\\Enum\\' => array($vendorDir . '/dasprid/enum/src'),
     'Complex\\' => array($vendorDir . '/markbaker/complex/classes/src'),
     'BaconQrCode\\' => array($vendorDir . '/bacon/bacon-qr-code/src'),
+    'Alipay\\EasySDK\\' => array($vendorDir . '/alipaysdk/easysdk/php/src'),
+    'AlibabaCloud\\Tea\\FileForm\\' => array($vendorDir . '/alibabacloud/tea-fileform/src'),
+    'AlibabaCloud\\Tea\\' => array($vendorDir . '/alibabacloud/tea/src'),
+    'Adbar\\' => array($vendorDir . '/adbario/php-dot-notation/src'),
 );

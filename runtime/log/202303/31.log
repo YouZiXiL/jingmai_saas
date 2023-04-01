@@ -1,0 +1,615 @@
+---------------------------------------------------------------
+[2023-03-31T07:55:45+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/dashboard?ref=addtabs
+[运行时间：0.531529s] [吞吐率：1.88req/s] [内存消耗：4,313.95kb] [文件加载：141]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.003861s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.018124s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.003315s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000066s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'dashboard',
+    2 => NULL,
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'PHPSESSID=21eg3fnceik54g1elg5855es7t; think_var=zh-cn; keeplogin=11%7C86400%7C1680166330%7C5663d81fb0dc5fb59145a3d7b2435102',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'upgrade-insecure-requests' => '1',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+  'ref' => 'addtabs',
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.006415s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ DB ] INIT mysql
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.001427s ]
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.027307s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_group_access` [ RunTime:0.039629s ]
+[ sql ] [ SQL ] SELECT `aga`.`uid`,`aga`.`group_id`,`ag`.`id`,`ag`.`pid`,`ag`.`name`,`ag`.`rules` FROM `fa_auth_group_access` `aga` LEFT JOIN `fa_auth_group` `ag` ON `aga`.`group_id`=`ag`.`id` WHERE  (  aga.uid='11' and ag.status='normal' ) [ RunTime:0.008727s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_rule` [ RunTime:0.006563s ]
+[ sql ] [ SQL ] SELECT `id`,`pid`,`condition`,`icon`,`name`,`title`,`ismenu` FROM `fa_auth_rule` WHERE  `status` = 'normal'  AND `id` IN (7,13,23,24,25,26,27,28,29,30,40,41,181,216,222,229,237,243,249,255,257,262,263,264,265,269,274,281,282,287,288,290,293,295,315,317,319,320,321,322,337,343,2,1,8,9,5,180,179,215,214,221,228,227,236,235,242,248,254,261,260,268,267,289,336,342) [ RunTime:0.001340s ]
+---------------------------------------------------------------
+[2023-03-31T07:55:46+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/index/index
+[运行时间：0.219208s] [吞吐率：4.56req/s] [内存消耗：4,648.80kb] [文件加载：149]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000031s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.006351s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001439s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000033s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'index',
+    2 => 'index',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'PHPSESSID=21eg3fnceik54g1elg5855es7t; think_var=zh-cn; keeplogin=11%7C86400%7C1680166330%7C5663d81fb0dc5fb59145a3d7b2435102',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'upgrade-insecure-requests' => '1',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.002653s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/index.php
+[ info ] [ RUN ] app\admin\controller\Index->index[ /www/wwwroot/jiyu/jingmai_saas/application/admin/controller/Index.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ VIEW ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/index/index.html [ array (
+  0 => 'breadcrumb',
+  1 => 'site',
+  2 => 'config',
+  3 => 'auth',
+  4 => 'admin',
+  5 => 'menulist',
+  6 => 'navlist',
+  7 => 'fixedmenu',
+  8 => 'referermenu',
+  9 => 'title',
+) ]
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.001246s ]
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.002341s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_group_access` [ RunTime:0.007122s ]
+[ sql ] [ SQL ] SELECT `aga`.`uid`,`aga`.`group_id`,`ag`.`id`,`ag`.`pid`,`ag`.`name`,`ag`.`rules` FROM `fa_auth_group_access` `aga` LEFT JOIN `fa_auth_group` `ag` ON `aga`.`group_id`=`ag`.`id` WHERE  (  aga.uid='11' and ag.status='normal' ) [ RunTime:0.001055s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_rule` [ RunTime:0.001898s ]
+[ sql ] [ SQL ] SELECT `id`,`pid`,`condition`,`icon`,`name`,`title`,`ismenu` FROM `fa_auth_rule` WHERE  `status` = 'normal'  AND `id` IN (7,13,23,24,25,26,27,28,29,30,40,41,181,216,222,229,237,243,249,255,257,262,263,264,265,269,274,281,282,287,288,290,293,295,315,317,319,320,321,322,337,343,2,1,8,9,5,180,179,215,214,221,228,227,236,235,242,248,254,261,260,268,267,289,336,342) [ RunTime:0.001491s ]
+[ sql ] [ SQL ] SELECT `name`,`pid` FROM `fa_auth_rule` WHERE  `status` = 'normal'  AND `ismenu` = 0  AND `name` LIKE '%/index' [ RunTime:0.001520s ]
+---------------------------------------------------------------
+[2023-03-31T07:55:46+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/dashboard?addtabs=1
+[运行时间：0.284968s] [吞吐率：3.51req/s] [内存消耗：4,668.72kb] [文件加载：143]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000027s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.008396s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001660s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000027s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'dashboard',
+    2 => NULL,
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'PHPSESSID=21eg3fnceik54g1elg5855es7t; think_var=zh-cn; keeplogin=11%7C86400%7C1680166330%7C5663d81fb0dc5fb59145a3d7b2435102',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'upgrade-insecure-requests' => '1',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+  'addtabs' => '1',
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.002677s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ DB ] INIT mysql
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/dashboard.php
+[ info ] [ RUN ] app\admin\controller\Dashboard->index[ /www/wwwroot/jiyu/jingmai_saas/application/admin/controller/Dashboard.php ]
+[ info ] [ VIEW ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/dashboard/index.html [ array (
+  0 => 'breadcrumb',
+  1 => 'site',
+  2 => 'config',
+  3 => 'auth',
+  4 => 'admin',
+  5 => 'row',
+) ]
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.000531s ]
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.000816s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_group_access` [ RunTime:0.002113s ]
+[ sql ] [ SQL ] SELECT `aga`.`uid`,`aga`.`group_id`,`ag`.`id`,`ag`.`pid`,`ag`.`name`,`ag`.`rules` FROM `fa_auth_group_access` `aga` LEFT JOIN `fa_auth_group` `ag` ON `aga`.`group_id`=`ag`.`id` WHERE  (  aga.uid='11' and ag.status='normal' ) [ RunTime:0.000831s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_rule` [ RunTime:0.001921s ]
+[ sql ] [ SQL ] SELECT `id`,`pid`,`condition`,`icon`,`name`,`title`,`ismenu` FROM `fa_auth_rule` WHERE  `status` = 'normal'  AND `id` IN (7,13,23,24,25,26,27,28,29,30,40,41,181,216,222,229,237,243,249,255,257,262,263,264,265,269,274,281,282,287,288,290,293,295,315,317,319,320,321,322,337,343,2,1,8,9,5,180,179,215,214,221,228,227,236,235,242,248,254,261,260,268,267,289,336,342) [ RunTime:0.001104s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_orders` [ RunTime:0.003718s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '圆通'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.004527s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '圆通'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000463s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '韵达'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000425s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '韵达'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000386s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '极兔'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000713s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '极兔'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000459s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '申通'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000369s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '申通'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000338s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '中通'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000362s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '中通'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000305s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '顺丰'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000453s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '顺丰'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000293s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  ( `tag_type` = '德邦' or `tag_type` = '德邦重货' )  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000470s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  ( `tag_type` = '德邦' or `tag_type` = '德邦重货' )  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000307s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '京东'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000723s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '京东'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000313s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000842s ]
+[ sql ] [ SQL ] SELECT SUM(agent_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000511s ]
+[ sql ] [ SQL ] SELECT SUM(final_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000321s ]
+[ sql ] [ SQL ] SELECT SUM(overload_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1'  AND `overload_status` = '2' LIMIT 1 [ RunTime:0.000453s ]
+[ sql ] [ SQL ] SELECT SUM(haocai_freight) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1'  AND `consume_status` = '2' LIMIT 1 [ RunTime:0.000336s ]
+[ sql ] [ SQL ] SELECT SUM(tralight_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1'  AND `tralight_status` = '2' LIMIT 1 [ RunTime:0.000682s ]
+[ sql ] [ SQL ] SELECT SUM(agent_tralight_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1'  AND `tralight_status` = '2' LIMIT 1 [ RunTime:0.000653s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_users` [ RunTime:0.002047s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_users` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400 LIMIT 1 [ RunTime:0.000948s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `overload_status` = '1' LIMIT 1 [ RunTime:0.000530s ]
+[ sql ] [ SQL ] SELECT SUM(agent_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000317s ]
+[ sql ] [ SQL ] SELECT SUM(final_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000313s ]
+[ sql ] [ SQL ] SELECT SUM(overload_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1'  AND `overload_status` = '2' LIMIT 1 [ RunTime:0.000320s ]
+[ sql ] [ SQL ] SELECT SUM(haocai_freight) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1'  AND `consume_status` = '2' LIMIT 1 [ RunTime:0.000316s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000304s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000304s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '2' LIMIT 1 [ RunTime:0.000301s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `overload_status` <> '0' LIMIT 1 [ RunTime:0.000301s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `overload_status` = '1' LIMIT 1 [ RunTime:0.000298s ]
+[ sql ] [ SQL ] SELECT SUM(agent_price) AS tp_sum FROM `fa_orders` WHERE  `pay_status` = '1' LIMIT 1 [ RunTime:0.000472s ]
+[ sql ] [ SQL ] SELECT SUM(final_price) AS tp_sum FROM `fa_orders` WHERE  `pay_status` = '1' LIMIT 1 [ RunTime:0.000500s ]
+[ sql ] [ SQL ] SELECT SUM(overload_price) AS tp_sum FROM `fa_orders` WHERE  `pay_status` = '1'  AND `overload_status` = '2' LIMIT 1 [ RunTime:0.000327s ]
+[ sql ] [ SQL ] SELECT SUM(haocai_freight) AS tp_sum FROM `fa_orders` WHERE  `pay_status` = '1'  AND `consume_status` = '2' LIMIT 1 [ RunTime:0.000301s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `pay_status` <> '0' LIMIT 1 [ RunTime:0.000281s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `pay_status` = '1' LIMIT 1 [ RunTime:0.000335s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `pay_status` = '2' LIMIT 1 [ RunTime:0.001687s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `overload_status` <> '0' LIMIT 1 [ RunTime:0.000923s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `overload_status` = '1' LIMIT 1 [ RunTime:0.001512s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_users` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400 LIMIT 1 [ RunTime:0.000383s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_users` LIMIT 1 [ RunTime:0.001297s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.003598s ]
+[ sql ] [ SQL ] SELECT SUM(amount) AS tp_sum FROM `fa_admin` LIMIT 1 [ RunTime:0.003945s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1679673600 AND 1679759999  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000611s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1679760000 AND 1679846399  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000634s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1679846400 AND 1679932799  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000776s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1679932800 AND 1680019199  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000895s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680019200 AND 1680105599  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000953s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680105600 AND 1680191999  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000345s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278399  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000305s ]
+---------------------------------------------------------------
+[2023-03-31T07:55:50+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/ajax/lang?callback=define&controllername=index&lang=zh-cn&v=1680220545&v=1680220545
+[运行时间：0.132177s] [吞吐率：7.57req/s] [内存消耗：3,583.26kb] [文件加载：138]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000030s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.008597s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001516s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000031s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'ajax',
+    2 => 'lang',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'PHPSESSID=21eg3fnceik54g1elg5855es7t; think_var=zh-cn; keeplogin=11%7C86400%7C1680166330%7C5663d81fb0dc5fb59145a3d7b2435102',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => '*/*',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+  'callback' => 'define',
+  'controllername' => 'index',
+  'lang' => 'zh-cn',
+  'v' => '1680220545',
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.003285s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/ajax.php
+[ info ] [ RUN ] app\admin\controller\Ajax->lang[ /www/wwwroot/jiyu/jingmai_saas/application/admin/controller/Ajax.php ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/index.php
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.001349s ]
+[ info ] [ LOG ] INIT File
+---------------------------------------------------------------
+[2023-03-31T07:55:52+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/ajax/lang?callback=define&controllername=dashboard&lang=zh-cn&v=1680220546&v=1680220546
+[运行时间：0.144542s] [吞吐率：6.92req/s] [内存消耗：3,580.94kb] [文件加载：138]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000038s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.007161s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.003219s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000037s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'ajax',
+    2 => 'lang',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'PHPSESSID=21eg3fnceik54g1elg5855es7t; think_var=zh-cn; keeplogin=11%7C86400%7C1680166330%7C5663d81fb0dc5fb59145a3d7b2435102',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => '*/*',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+  'callback' => 'define',
+  'controllername' => 'dashboard',
+  'lang' => 'zh-cn',
+  'v' => '1680220546',
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.009358s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/ajax.php
+[ info ] [ RUN ] app\admin\controller\Ajax->lang[ /www/wwwroot/jiyu/jingmai_saas/application/admin/controller/Ajax.php ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/dashboard.php
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.000517s ]
+[ info ] [ LOG ] INIT File
+---------------------------------------------------------------
+[2023-03-31T10:28:06+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/index/index
+[运行时间：0.464113s] [吞吐率：2.15req/s] [内存消耗：4,648.74kb] [文件加载：149]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000031s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.017946s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.006251s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000040s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'index',
+    2 => 'index',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'PHPSESSID=21eg3fnceik54g1elg5855es7t; think_var=zh-cn; keeplogin=11%7C86400%7C1680166330%7C5663d81fb0dc5fb59145a3d7b2435102',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'upgrade-insecure-requests' => '1',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.005117s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/index.php
+[ info ] [ RUN ] app\admin\controller\Index->index[ /www/wwwroot/jiyu/jingmai_saas/application/admin/controller/Index.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ VIEW ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/index/index.html [ array (
+  0 => 'breadcrumb',
+  1 => 'site',
+  2 => 'config',
+  3 => 'auth',
+  4 => 'admin',
+  5 => 'menulist',
+  6 => 'navlist',
+  7 => 'fixedmenu',
+  8 => 'referermenu',
+  9 => 'title',
+) ]
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.001453s ]
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.030528s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_group_access` [ RunTime:0.023549s ]
+[ sql ] [ SQL ] SELECT `aga`.`uid`,`aga`.`group_id`,`ag`.`id`,`ag`.`pid`,`ag`.`name`,`ag`.`rules` FROM `fa_auth_group_access` `aga` LEFT JOIN `fa_auth_group` `ag` ON `aga`.`group_id`=`ag`.`id` WHERE  (  aga.uid='11' and ag.status='normal' ) [ RunTime:0.005772s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_rule` [ RunTime:0.003595s ]
+[ sql ] [ SQL ] SELECT `id`,`pid`,`condition`,`icon`,`name`,`title`,`ismenu` FROM `fa_auth_rule` WHERE  `status` = 'normal'  AND `id` IN (7,13,23,24,25,26,27,28,29,30,40,41,181,216,222,229,237,243,249,255,257,262,263,264,265,269,274,281,282,287,288,290,293,295,315,317,319,320,321,322,337,343,2,1,8,9,5,180,179,215,214,221,228,227,236,235,242,248,254,261,260,268,267,289,336,342) [ RunTime:0.001808s ]
+[ sql ] [ SQL ] SELECT `name`,`pid` FROM `fa_auth_rule` WHERE  `status` = 'normal'  AND `ismenu` = 0  AND `name` LIKE '%/index' [ RunTime:0.001079s ]
+---------------------------------------------------------------
+[2023-03-31T10:28:07+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/dashboard?addtabs=1
+[运行时间：0.312731s] [吞吐率：3.20req/s] [内存消耗：4,668.72kb] [文件加载：143]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000082s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.010780s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.003083s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000044s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'dashboard',
+    2 => NULL,
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'PHPSESSID=21eg3fnceik54g1elg5855es7t; think_var=zh-cn; keeplogin=11%7C86400%7C1680166330%7C5663d81fb0dc5fb59145a3d7b2435102',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'upgrade-insecure-requests' => '1',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+  'addtabs' => '1',
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.003593s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ DB ] INIT mysql
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/dashboard.php
+[ info ] [ RUN ] app\admin\controller\Dashboard->index[ /www/wwwroot/jiyu/jingmai_saas/application/admin/controller/Dashboard.php ]
+[ info ] [ VIEW ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/dashboard/index.html [ array (
+  0 => 'breadcrumb',
+  1 => 'site',
+  2 => 'config',
+  3 => 'auth',
+  4 => 'admin',
+  5 => 'row',
+) ]
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.000589s ]
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.004361s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_group_access` [ RunTime:0.003001s ]
+[ sql ] [ SQL ] SELECT `aga`.`uid`,`aga`.`group_id`,`ag`.`id`,`ag`.`pid`,`ag`.`name`,`ag`.`rules` FROM `fa_auth_group_access` `aga` LEFT JOIN `fa_auth_group` `ag` ON `aga`.`group_id`=`ag`.`id` WHERE  (  aga.uid='11' and ag.status='normal' ) [ RunTime:0.001083s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_auth_rule` [ RunTime:0.002197s ]
+[ sql ] [ SQL ] SELECT `id`,`pid`,`condition`,`icon`,`name`,`title`,`ismenu` FROM `fa_auth_rule` WHERE  `status` = 'normal'  AND `id` IN (7,13,23,24,25,26,27,28,29,30,40,41,181,216,222,229,237,243,249,255,257,262,263,264,265,269,274,281,282,287,288,290,293,295,315,317,319,320,321,322,337,343,2,1,8,9,5,180,179,215,214,221,228,227,236,235,242,248,254,261,260,268,267,289,336,342) [ RunTime:0.001697s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_orders` [ RunTime:0.004852s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '圆通'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.001445s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '圆通'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000563s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '韵达'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000776s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '韵达'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000959s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '极兔'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.001284s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '极兔'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000475s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '申通'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000847s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '申通'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000420s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '中通'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000343s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '中通'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000461s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '顺丰'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000398s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '顺丰'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000329s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  ( `tag_type` = '德邦' or `tag_type` = '德邦重货' )  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000384s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  ( `tag_type` = '德邦' or `tag_type` = '德邦重货' )  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000433s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '京东'  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000311s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `tag_type` = '京东'  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000349s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000999s ]
+[ sql ] [ SQL ] SELECT SUM(agent_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000525s ]
+[ sql ] [ SQL ] SELECT SUM(final_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000530s ]
+[ sql ] [ SQL ] SELECT SUM(overload_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1'  AND `overload_status` = '2' LIMIT 1 [ RunTime:0.000556s ]
+[ sql ] [ SQL ] SELECT SUM(haocai_freight) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1'  AND `consume_status` = '2' LIMIT 1 [ RunTime:0.000950s ]
+[ sql ] [ SQL ] SELECT SUM(tralight_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1'  AND `tralight_status` = '2' LIMIT 1 [ RunTime:0.000444s ]
+[ sql ] [ SQL ] SELECT SUM(agent_tralight_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `pay_status` = '1'  AND `tralight_status` = '2' LIMIT 1 [ RunTime:0.000402s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_users` [ RunTime:0.002587s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_users` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400 LIMIT 1 [ RunTime:0.000742s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `overload_status` = '1' LIMIT 1 [ RunTime:0.000580s ]
+[ sql ] [ SQL ] SELECT SUM(agent_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000500s ]
+[ sql ] [ SQL ] SELECT SUM(final_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000316s ]
+[ sql ] [ SQL ] SELECT SUM(overload_price) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1'  AND `overload_status` = '2' LIMIT 1 [ RunTime:0.000314s ]
+[ sql ] [ SQL ] SELECT SUM(haocai_freight) AS tp_sum FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1'  AND `consume_status` = '2' LIMIT 1 [ RunTime:0.000392s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000846s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '1' LIMIT 1 [ RunTime:0.000390s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `pay_status` = '2' LIMIT 1 [ RunTime:0.000358s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400  AND `overload_status` <> '0' LIMIT 1 [ RunTime:0.000320s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278400  AND `overload_status` = '1' LIMIT 1 [ RunTime:0.000302s ]
+[ sql ] [ SQL ] SELECT SUM(agent_price) AS tp_sum FROM `fa_orders` WHERE  `pay_status` = '1' LIMIT 1 [ RunTime:0.000412s ]
+[ sql ] [ SQL ] SELECT SUM(final_price) AS tp_sum FROM `fa_orders` WHERE  `pay_status` = '1' LIMIT 1 [ RunTime:0.000640s ]
+[ sql ] [ SQL ] SELECT SUM(overload_price) AS tp_sum FROM `fa_orders` WHERE  `pay_status` = '1'  AND `overload_status` = '2' LIMIT 1 [ RunTime:0.000524s ]
+[ sql ] [ SQL ] SELECT SUM(haocai_freight) AS tp_sum FROM `fa_orders` WHERE  `pay_status` = '1'  AND `consume_status` = '2' LIMIT 1 [ RunTime:0.000293s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `pay_status` <> '0' LIMIT 1 [ RunTime:0.000275s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `pay_status` = '1' LIMIT 1 [ RunTime:0.000677s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `pay_status` = '2' LIMIT 1 [ RunTime:0.000620s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `overload_status` <> '0' LIMIT 1 [ RunTime:0.000370s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `overload_status` = '1' LIMIT 1 [ RunTime:0.000333s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_users` WHERE  `create_time` BETWEEN 1677600000 AND 1680278400 LIMIT 1 [ RunTime:0.000289s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_users` LIMIT 1 [ RunTime:0.003048s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.003589s ]
+[ sql ] [ SQL ] SELECT SUM(amount) AS tp_sum FROM `fa_admin` LIMIT 1 [ RunTime:0.000670s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1679673600 AND 1679759999  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000449s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1679760000 AND 1679846399  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000316s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1679846400 AND 1679932799  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000301s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1679932800 AND 1680019199  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000694s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680019200 AND 1680105599  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000307s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680105600 AND 1680191999  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000460s ]
+[ sql ] [ SQL ] SELECT COUNT(*) AS tp_count FROM `fa_orders` WHERE  `create_time` BETWEEN 1680192000 AND 1680278399  AND `pay_status` <> '0' LIMIT 1 [ RunTime:0.000295s ]
+---------------------------------------------------------------
+[2023-03-31T10:28:07+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/ajax/lang?callback=define&controllername=index&lang=zh-cn&v=1680229686&v=1680229686
+[运行时间：0.178232s] [吞吐率：5.61req/s] [内存消耗：3,583.26kb] [文件加载：138]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000077s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.006733s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001603s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000037s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'ajax',
+    2 => 'lang',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'PHPSESSID=21eg3fnceik54g1elg5855es7t; think_var=zh-cn; keeplogin=11%7C86400%7C1680166330%7C5663d81fb0dc5fb59145a3d7b2435102',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => '*/*',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+  'callback' => 'define',
+  'controllername' => 'index',
+  'lang' => 'zh-cn',
+  'v' => '1680229686',
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.003468s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/ajax.php
+[ info ] [ RUN ] app\admin\controller\Ajax->lang[ /www/wwwroot/jiyu/jingmai_saas/application/admin/controller/Ajax.php ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/index.php
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.000652s ]
+[ info ] [ LOG ] INIT File
+---------------------------------------------------------------
+[2023-03-31T10:28:08+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/ajax/lang?callback=define&controllername=dashboard&lang=zh-cn&v=1680229686&v=1680229686
+[运行时间：0.225362s] [吞吐率：4.44req/s] [内存消耗：3,580.94kb] [文件加载：138]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000037s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.011334s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.005556s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000033s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'ajax',
+    2 => 'lang',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'PHPSESSID=21eg3fnceik54g1elg5855es7t; think_var=zh-cn; keeplogin=11%7C86400%7C1680166330%7C5663d81fb0dc5fb59145a3d7b2435102',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => '*/*',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+  'callback' => 'define',
+  'controllername' => 'dashboard',
+  'lang' => 'zh-cn',
+  'v' => '1680229686',
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.005975s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/ajax.php
+[ info ] [ RUN ] app\admin\controller\Ajax->lang[ /www/wwwroot/jiyu/jingmai_saas/application/admin/controller/Ajax.php ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/dashboard.php
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.001296s ]
+[ info ] [ LOG ] INIT File

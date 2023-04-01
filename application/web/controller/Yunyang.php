@@ -3,7 +3,7 @@
 namespace app\web\controller;
 
 
-use app\common\exception\UploadException;
+use app\common\exception\ApiException;
 use app\common\library\Upload;
 use app\web\model\Couponlist;
 use think\Controller;

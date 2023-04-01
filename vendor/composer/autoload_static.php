@@ -9,14 +9,15 @@ class ComposerStaticInit73f9e72fede2c36621e52f7b610bbb65
     public static $files = array (
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
-        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         '25072dd6e2470089de65ae7bf11d3109' => __DIR__ . '/..' . '/symfony/polyfill-php72/bootstrap.php',
         'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
-        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
+        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         'c964ee0ededf28c96ebd9db5099ef910' => __DIR__ . '/..' . '/guzzlehttp/promises/src/functions_include.php',
         'a0edc8309cc5e1d60e3047b5df6b7052' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/functions_include.php',
+        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
+        'd767e4fc2dc52fe66584ab8c6684783e' => __DIR__ . '/..' . '/adbario/php-dot-notation/src/helpers.php',
         '0d59ee240a4cd96ddbb4ff164fccea4d' => __DIR__ . '/..' . '/symfony/polyfill-php73/bootstrap.php',
         'abede361264e2ae69ec1eee813a101af' => __DIR__ . '/..' . '/markbaker/complex/classes/src/functions/abs.php',
         '21a5860fbef5be28db5ddfbc3cca67c4' => __DIR__ . '/..' . '/markbaker/complex/classes/src/functions/acos.php',
@@ -163,6 +164,13 @@ class ComposerStaticInit73f9e72fede2c36621e52f7b610bbb65
         'B' => 
         array (
             'BaconQrCode\\' => 12,
+        ),
+        'A' => 
+        array (
+            'Alipay\\EasySDK\\' => 15,
+            'AlibabaCloud\\Tea\\FileForm\\' => 26,
+            'AlibabaCloud\\Tea\\' => 17,
+            'Adbar\\' => 6,
         ),
     );
 
@@ -340,6 +348,22 @@ class ComposerStaticInit73f9e72fede2c36621e52f7b610bbb65
         'BaconQrCode\\' => 
         array (
             0 => __DIR__ . '/..' . '/bacon/bacon-qr-code/src',
+        ),
+        'Alipay\\EasySDK\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alipaysdk/easysdk/php/src',
+        ),
+        'AlibabaCloud\\Tea\\FileForm\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alibabacloud/tea-fileform/src',
+        ),
+        'AlibabaCloud\\Tea\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/alibabacloud/tea/src',
+        ),
+        'Adbar\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/adbario/php-dot-notation/src',
         ),
     );
 

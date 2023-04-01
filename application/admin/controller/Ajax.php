@@ -3,7 +3,7 @@
 namespace app\admin\controller;
 
 use app\common\controller\Backend;
-use app\common\exception\UploadException;
+use app\common\exception\ApiException;
 use app\common\library\Upload;
 use fast\Random;
 use think\addons\Service;
@@ -77,7 +77,7 @@ class Ajax extends Backend
                 try {
                     $upload = new Upload();
                     $attachment = $upload->merge($chunkid, $chunkcount, $filename);
-                } catch (UploadException $e) {
+                } catch (ApiException $e) {
                     $this->error($e->getMessage());
                 }
                 $this->success(__('Uploaded successful'), '', ['url' => $attachment->url, 'fullurl' => cdnurl($attachment->url, true)]);
@@ -86,7 +86,7 @@ class Ajax extends Backend
                 try {
                     $upload = new Upload();
                     $upload->clean($chunkid);
-                } catch (UploadException $e) {
+                } catch (ApiException $e) {
                     $this->error($e->getMessage());
                 }
                 $this->success();
@@ -97,7 +97,7 @@ class Ajax extends Backend
                 try {
                     $upload = new Upload($file);
                     $upload->chunk($chunkid, $chunkindex, $chunkcount);
-                } catch (UploadException $e) {
+                } catch (ApiException $e) {
                     $this->error($e->getMessage());
                 }
                 $this->success();
@@ -109,7 +109,7 @@ class Ajax extends Backend
             try {
                 $upload = new Upload($file);
                 $attachment = $upload->upload();
-            } catch (UploadException $e) {
+            } catch (ApiException $e) {
                 $this->error($e->getMessage());
             }
 
