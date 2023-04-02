@@ -201,8 +201,42 @@ class Users extends Controller
         if(empty($param["type"])){
             $param["type"]=1;
         }
-        $agentrule=Agent_rule::get(["agent_id"=>$this->user->agent_id,"type"=>$param["type"],"state"=>1]);
+//        $agentrule=Agent_rule::get(["agent_id"=>$this->user->agent_id,"type"=>$param["type"],"state"=>1]);
+        $agentrule=[];
+        if($param["type"]==1){
+            $agent=Admin::get($this->user->agent_id);
 
+            $agentrule=[
+                "title"=>"返佣规则",
+                "content"=>$agent["agent_rebate"]??"测试规则"
+            ];
+        }elseif ($param["type"]==2){
+            $item1=[
+                "title"=>"移动充值协议",
+                "content"=>config("'site.ch_yidong'")
+            ];
+            $item2=[
+                "title"=>"联通充值协议",
+                "content"=>config("'site.ch_yidong'")
+            ];
+            $item3=[
+                "title"=>"电信充值协议",
+                "content"=>config("'site.ch_yidong'")
+            ];
+            $item4=[
+                "title"=>"国网充值规则",
+                "content"=>config("'site.ch_guowang'")??"国网充值 概不退费"
+            ];
+            $item5=[
+                "title"=>"南网充值规则",
+                "content"=>config("'site.ch_nanwang'")??"南网充值 不要退费"
+            ];
+            array_push($agentrule,$item1);
+            array_push($agentrule,$item2);
+            array_push($agentrule,$item3);
+            array_push($agentrule,$item4);
+            array_push($agentrule,$item5);
+        }
         $data["data"]=$agentrule;
 
         return \json($data);
@@ -794,6 +828,10 @@ class Users extends Controller
             else{
                 $cashservice=new Cashserviceinfo();
                 $cashservice->user_id=$userinfo->id;
+                if(empty($userinfo->rootid))
+                $cashservice->agent_id=$userinfo->agent_id;
+                else
+                    $cashservice->agent_id=$userinfo->rootid;
                 $cashservice->balance=$balance;
                 $cashservice->cashout=$params["money"];
                 $cashservice->servicerate=$rate;
@@ -1282,7 +1320,26 @@ class Users extends Controller
     //海报列表
     public function getposterlist(){
 //        $agent_id=$this->request->param("id");
-        $posters= db("agent_poster")->where("agent_id",$this->user->agent_id)->where("state",1)->select();
+      //  $posters= db("agent_poster")->where("agent_id",$this->user->agent_id)->where("state",1)->select();
+
+        $user=\app\web\model\Users::get($this->user->id);
+        if(empty($user->rootid)){
+            $agent=Admin::get($this->user->agent_id);
+        }
+        else{
+            $agent=Admin::get($user->rootid);
+            if(empty($agent->agent_poster)){
+                $agent=Admin::get($this->user->agent_id);
+            }
+
+
+        }
+        $posters=[
+            [
+                "url"=>$agent->agent_poster
+            ]
+        ];
+
         return json(['status'=>200,'data'=>$posters,'msg'=>"Success"]);
     }
     private function getinvitecode($length=3){
