@@ -1,0 +1,806 @@
+<?php if (!defined('THINK_PATH')) exit(); /*a:4:{s:84:"/www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/dashboard/index.html";i:1680070912;s:73:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/layout/default.html";i:1680070912;s:70:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/meta.html";i:1680070912;s:72:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/script.html";i:1680070912;}*/ ?>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+<title><?php echo (isset($title) && ($title !== '')?$title:''); ?></title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="renderer" content="webkit">
+<meta name="referrer" content="never">
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="shortcut icon" href="/assets/img/favicon.ico" />
+<!-- Loading Bootstrap -->
+<link href="/assets/css/backend<?php echo \think\Config::get('app_debug')?'':'.min'; ?>.css?v=<?php echo \think\Config::get('site.version'); ?>" rel="stylesheet">
+
+<?php if(\think\Config::get('fastadmin.adminskin')): ?>
+<link href="/assets/css/skins/<?php echo \think\Config::get('fastadmin.adminskin'); ?>.css?v=<?php echo \think\Config::get('site.version'); ?>" rel="stylesheet">
+<?php endif; ?>
+
+<!-- HTML5 shim, for IE6-8 support of HTML5 elements. All other JS at the end of file. -->
+<!--[if lt IE 9]>
+  <script src="/assets/js/html5shiv.js"></script>
+  <script src="/assets/js/respond.min.js"></script>
+<![endif]-->
+<script type="text/javascript">
+    var require = {
+        config:  <?php echo json_encode($config); ?>
+    };
+</script>
+
+    </head>
+
+    <body class="inside-header inside-aside <?php echo defined('IS_DIALOG') && IS_DIALOG ? 'is-dialog' : ''; ?>">
+        <div id="main" role="main">
+            <div class="tab-content tab-addtabs">
+                <div id="content">
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                            <section class="content-header hide">
+                                <h1>
+                                    <?php echo __('Dashboard'); ?>
+                                    <small><?php echo __('Control panel'); ?></small>
+                                </h1>
+                            </section>
+                            <?php if(!IS_DIALOG && !\think\Config::get('fastadmin.multiplenav') && \think\Config::get('fastadmin.breadcrumb')): ?>
+                            <!-- RIBBON -->
+                            <div id="ribbon">
+                                <ol class="breadcrumb pull-left">
+                                    <?php if($auth->check('dashboard')): ?>
+                                    <li><a href="dashboard" class="addtabsit"><i class="fa fa-dashboard"></i> <?php echo __('Dashboard'); ?></a></li>
+                                    <?php endif; ?>
+                                </ol>
+                                <ol class="breadcrumb pull-right">
+                                    <?php foreach($breadcrumb as $vo): ?>
+                                    <li><a href="javascript:;" data-url="<?php echo $vo['url']; ?>"><?php echo $vo['title']; ?></a></li>
+                                    <?php endforeach; ?>
+                                </ol>
+                            </div>
+                            <!-- END RIBBON -->
+                            <?php endif; ?>
+                            <div class="content">
+                                <!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>数据中心</title>
+    <script type="text/javascript" src="https://unpkg.com/@antv/g2plot@latest/dist/g2plot.min.js"></script>
+</head>
+<body style="margin: 24px;">
+<div class="rate-container">
+    <div class="top-view">
+        <div class="title">功能导航</div>
+    </div>
+    <div class="btn-box">
+        <div class="menu-btn openview" >
+            <div>账号充值</div>
+        </div>
+        <div class="menu-btn authlist">
+            <div>授权管理</div>
+        </div>
+        <div class="menu-btn assetslist">
+            <div>资金明细</div>
+        </div>
+        <div class="menu-btn orderslist">
+            <div>订单管理</div>
+        </div>
+        <div class="menu-btn jijian">
+            <div>寄件提交</div>
+        </div>
+        <div class="menu-btn fankui">
+            <div>建议反馈</div>
+        </div>
+    </div>
+</div>
+<div class="tip-container">
+    <div class="item">
+        <div class="card">
+            <div class="card-title">余额</div>
+            <div class="card-content"><?php echo $row['amount']; ?>元</div>
+        </div>
+    </div>
+    <div class="item">
+        <div class="card">
+            <div class="card-title">今日有效订单</div>
+            <div class="card-content"><?php echo $row['today_add_order']; ?></div>
+        </div>
+    </div>
+    <div class="item">
+        <div class="card">
+            <div class="card-title">今日利润</div>
+            <div class="card-content"><?php echo $row['today_profits']; ?>元</div>
+        </div>
+    </div>
+    <div class="item">
+        <div class="card">
+            <div class="card-title">今日营业额</div>
+            <div class="card-content"><?php echo $row['today_final_price']; ?>元</div>
+        </div>
+    </div>
+    <div class="item">
+        <div class="card">
+            <div class="card-title">今日结算额</div>
+            <div class="card-content"><?php echo $row['today_agent_price']; ?>元</div>
+        </div>
+    </div>
+    <div class="item">
+        <div class="card">
+            <div class="card-title">今日新增会员</div>
+            <div class="card-content"><?php echo $row['today_users']; ?></div>
+        </div>
+    </div>
+    <div class="item">
+        <div class="card">
+            <div class="card-title">今日推送</div>
+            <div class="card-content"><?php echo $row['todao_overload']; ?></div>
+        </div>
+    </div>
+</div>
+<div class="msg-container">
+    <div class="msg-item">
+        <div class="card">
+            <div class="card-title">本月预估利润（元）</div>
+            <div class="card-content">
+                <?php echo $row['month_profits']; ?>元
+                <div class="card-tips">本月订单数 <?php echo $row['month_order']; ?></div>
+            </div>
+        </div>
+        <div class="msg-card">
+            <div class="msg-title">取消订单率</div>
+            <div class="msg-content"><?php echo $row['month_refund']; ?>%</div>
+        </div>
+        <div class="msg-card">
+            <div class="msg-title">超重订单率</div>
+            <div class="msg-content"><?php echo $row['month_overload']; ?>%</div>
+        </div>
+        <div class="msg-card">
+            <div class="msg-title">未处理超重订单率</div>
+            <div class="msg-content"><?php echo $row['month_overload_wait']; ?>%</div>
+        </div>
+    </div>
+    <div class="msg-item">
+        <div class="card">
+            <div class="card-title">总预估利润（元）</div>
+            <div class="card-content">
+                <?php echo $row['total_profits']; ?>元
+                <div class="card-tips">总订单数 <?php echo $row['total_order']; ?></div>
+            </div>
+        </div>
+        <div class="msg-card">
+            <div class="msg-title">取消订单率</div>
+            <div class="msg-content"><?php echo $row['total_refund']; ?>%</div>
+        </div>
+        <div class="msg-card">
+            <div class="msg-title">超重订单率</div>
+            <div class="msg-content"><?php echo $row['total_overload']; ?>%</div>
+        </div>
+        <div class="msg-card">
+            <div class="msg-title">未处理超重订单率</div>
+            <div class="msg-content"><?php echo $row['total_overload_wait']; ?>%</div>
+        </div>
+    </div>
+    <div class="msg-item2">
+        <div class="card2">
+            <div class="card-title">本月交易额</div>
+            <div class="card-content2"><?php echo $row['month_final_price']; ?></div>
+            <div style="padding: 0 24px;">
+                <img src="https://gw.alipayobjects.com/zos/alicdn/zevpN7Nv_/xiaozhexiantu.svg" alt="" width="100%">
+            </div>
+            <div class="card-title">本月结算额</div>
+            <div class="card-content2"><?php echo $row['month_agent_price']; ?></div>
+        </div>
+        <div class="card2">
+            <div class="card-title">总交易额</div>
+            <div class="card-content2"><?php echo $row['total_final_price']; ?></div>
+            <div style="padding: 0 24px;">
+                <img src="https://gw.alipayobjects.com/zos/alicdn/zevpN7Nv_/xiaozhexiantu.svg" alt="" width="100%">
+            </div>
+            <div class="card-title">总结算额</div>
+            <div class="card-content2"><?php echo $row['total_agent_price']; ?></div>
+        </div>
+        <div class="card2">
+            <div class="card-title">本月新增会员</div>
+            <div class="card-content2"><?php echo $row['month_add_users']; ?></div>
+            <div style="padding: 0 24px;">
+                <img src="https://gw.alipayobjects.com/zos/alicdn/zevpN7Nv_/xiaozhexiantu.svg" alt="" width="100%">
+            </div>
+            <div class="card-title">总会员数</div>
+            <div class="card-content2"><?php echo $row['total_add_users']; ?></div>
+        </div>
+    </div>
+</div>
+<div class="rate-container">
+    <div class="top-view">
+        <div class="title">快递成功率</div>
+        <form role="form">
+        <div class="form-group">
+            <input id="c-createtime" type="text" class="form-control datetimerange data-time-picker" placeholder="指定日期" />
+        </div>
+        </form>
+    </div>
+    <div class="rate-box">
+        <div id = "yt"></div>
+        <div id = "yd"></div>
+        <div id = "jt"></div>
+        <div id = "st"></div>
+        <div id = "zt"></div>
+        <div id = "sf"></div>
+        <div id = "db"></div>
+        <div id = "jd"></div>
+    </div>
+</div>
+<div class="chart-container">
+    <div style="padding-right: 12px;min-width: 50%;">
+        <div class="chart-box">
+            <div id = "areaChart"></div>
+        </div>
+    </div>
+
+    <div style="padding-left: 12px;min-width: 50%;">
+        <div class="chart-box">
+            <div id = "pie-chart"></div>
+        </div>
+    </div>
+
+</div>
+<!-- 弹窗 -->
+<div class="mask closeview" id="mask"></div>
+<div class="model-container" id="model-container">
+    <div class="model-view">
+        <div class="model-title">
+            账户余额充值
+            <img src="/assets/img/close.png" id="close-icon" class="closeview" alt="">
+        </div>
+        <div class="line"></div>
+        <div class="model-content">
+            <div class="warning" id="warning">
+                <img src="/assets/img/warning.png" id="warning-icon" alt="">
+                <div style="margin-left: 10px;">账户充值默认扣除微信官方收取的千分之六手续费，请知悉！</div>
+                <img src="/assets/img/close.png" id="close-icon2" class="closeviewa" alt="">
+            </div>
+            <div class="type">
+                <div style="margin-bottom: 10px;">充值渠道</div>
+                <div class="type-container">
+                    <div class="type-item" tabindex="2" onclick="choosePayType(1)">
+                        <img src="/assets/img/zfb.png" alt="" style="width: 65px;height: 65px;">
+                        <span>支付宝</span>
+                        <div class="icon" id="icon1" tabindex="1"></div>
+                    </div>
+                    <div class="type-item" tabindex="1" style="margin-left: 20px;padding-left: 10px;" onclick="choosePayType(2)">
+                        <img src="/assets/img/wx.png" alt="" class="img">
+                        <span style="margin-left: 10px;">微信</span>
+                        <div class="icon" id="icon2" tabindex="2"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="type">
+                <div style="margin-bottom: 10px;">充值金额</div>
+                <div style="display: flex;">
+                    <div class="inp-box">
+                        <span style="color: rgba(0,0,0,.85);font-size: 14px;">￥</span>
+                        <input step="1" type="number" value="100" class="amount" style="border: 0;outline: 0;">
+                    </div>
+                    <div class="btnss">确认充值</div>
+                </div>
+            </div>
+            <div style="border: 0px solid;width: 180px;height: 180px;position: absolute;right: 50px;bottom: 30px;">
+                <img src="" id = "ewm" alt="">
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+
+
+    const { RingProgress } = G2Plot;
+    // 快递成功率
+    var kdDate = {"yt": <?php echo $row['yt']; ?>,"yd":<?php echo $row['yd']; ?>,"jt":<?php echo $row['jt']; ?>,"st":<?php echo $row['st']; ?>,"zt":<?php echo $row['zt']; ?>,"sf":<?php echo $row['sf']; ?>,"db":<?php echo $row['db']; ?>,"jd":<?php echo $row['jd']; ?>}
+    const yt = new RingProgress('yt', {
+        height: 100,
+        width: 100,
+        autoFit: false,
+        percent: kdDate['yt'],
+        color: ['#0ddfb3', '#E8EDF3'],
+        statistic: {
+            title: {
+                formatter: () => '圆通'
+            },
+        },
+    });
+    const yd = new RingProgress('yd', {
+        height: 100,
+        width: 100,
+        autoFit: false,
+        percent: kdDate['yd'],
+        color: ['#0ddfb3', '#E8EDF3'],
+        statistic: {
+            title: {
+                formatter: () => '韵达'
+            },
+        },
+    });
+    const jt = new RingProgress('jt', {
+        height: 100,
+        width: 100,
+        autoFit: false,
+        percent: kdDate['jt'],
+        color: ['#0ddfb3', '#E8EDF3'],
+        statistic: {
+            title: {
+                formatter: () => '极兔'
+            },
+        },
+    });
+    const st = new RingProgress('st', {
+        height: 100,
+        width: 100,
+        autoFit: false,
+        percent: kdDate['st'],
+        color: ['#0ddfb3', '#E8EDF3'],
+        statistic: {
+            title: {
+                formatter: () => '申通'
+            },
+        },
+    });
+    const zt = new RingProgress('zt', {
+        height: 100,
+        width: 100,
+        autoFit: false,
+        percent: kdDate['zt'],
+        color: ['#0ddfb3', '#E8EDF3'],
+        statistic: {
+            title: {
+                formatter: () => '中通'
+            },
+        },
+    });
+    const sf = new RingProgress('sf', {
+        height: 100,
+        width: 100,
+        autoFit: false,
+        percent: kdDate['sf'],
+        color: ['#0ddfb3', '#E8EDF3'],
+        statistic: {
+            title: {
+                formatter: () => '顺丰'
+            },
+        },
+    });
+    const db = new RingProgress('db', {
+        height: 100,
+        width: 100,
+        autoFit: false,
+        percent: kdDate['db'],
+        color: ['#0ddfb3', '#E8EDF3'],
+        statistic: {
+            title: {
+                formatter: () => '德邦'
+            },
+        },
+    });
+    const jd = new RingProgress('jd', {
+        height: 100,
+        width: 100,
+        autoFit: false,
+        percent: kdDate['jd'],
+        color: ['#0ddfb3', '#E8EDF3'],
+        statistic: {
+            title: {
+                formatter: () => '京东'
+            },
+        },
+    });
+    yt.render();
+    yd.render();
+    jt.render();
+    st.render();
+    zt.render();
+    sf.render();
+    db.render();
+    jd.render();
+
+    const { Area,Pie } = G2Plot;
+    // 统计图表
+    var data1 = [
+        {
+            "Date": '<?php echo $row['days_one']; ?>',
+            "订单数量": <?php echo $row['one_num']; ?>
+        },
+        {
+            "Date": '<?php echo $row['days_two']; ?>',
+            "订单数量": <?php echo $row['two_num']; ?>
+        },
+        {
+            "Date": '<?php echo $row['days_three']; ?>',
+            "订单数量": <?php echo $row['three_num']; ?>
+        },
+        {
+            "Date": '<?php echo $row['days_four']; ?>',
+            "订单数量": <?php echo $row['four_num']; ?>
+        },
+        {
+            "Date": '<?php echo $row['days_five']; ?>',
+            "订单数量": <?php echo $row['five_num']; ?>
+        },{
+            "Date": '<?php echo $row['days_six']; ?>',
+            "订单数量": <?php echo $row['six_num']; ?>
+        },
+        {
+            "Date": '<?php echo $row['days_seven']; ?>',
+            "订单数量": <?php echo $row['seven_num']; ?>
+        }
+        ];
+    const areaChart = new Area("areaChart", {
+        data: data1,
+        xField: 'Date',
+        yField: '订单数量',
+        title: {
+            visible: true,
+            text: '七日订单趋势'
+        },
+        areaStyle: () => {
+            return {
+                fill: 'l(270) 0:#ffffff 0.5:#7ec2f3 1:#1890ff',
+            };
+        },
+    });
+    areaChart.render();
+
+    var data2 = [
+        { type: '圆通', value: <?php echo $row['yt_success']; ?> },
+        { type: '申通', value: <?php echo $row['yd_success']; ?> },
+        { type: '京东', value: <?php echo $row['jd_success']; ?> },
+        { type: '德邦', value: <?php echo $row['db_success']; ?> },
+        { type: '顺丰', value: <?php echo $row['sf_success']; ?> },
+        { type: '韵达', value: <?php echo $row['yd_success']; ?> },
+        { type: '极兔', value: <?php echo $row['jt_success']; ?> },
+        { type: '中通', value: <?php echo $row['zt_success']; ?> }
+    ];
+
+    const pie = new Pie("pie-chart",{
+        padding: 16,
+        // appendPadding: 10,
+        data: data2,
+        angleField: 'value',
+        colorField: 'type',
+        title: {
+            visible: true,
+            text: 'g2plot分类饼图'
+        },
+        // 标签类型（标注方式）
+        label: {
+            type: 'outer',
+        },
+        // 图形（半径）比列
+        radius: 0.8,
+        position: 'bottom'
+        // 元素悬浮效果
+        // interactions: [{ type: 'element-active' }],
+    })
+
+    pie.render();
+    // 选择支付类型
+    function choosePayType(e){
+        var id = e
+        var icons = document.getElementsByClassName( "icon" )
+        var type_items = document.getElementsByClassName( "type-item" )
+        for( var i = 0; i< icons.length; i++ ){
+            let tabIndex = icons[i].attributes.tabindex.value
+
+            if( tabIndex == id ){
+                // console.log( tabIndex )
+                icons[i].style.display = "inline"
+                type_items[i].style.border = "1px solid #5cabff"
+            }else{
+                icons[i].style.display = "none"
+                type_items[i].style.border = "1px solid #d9d9d9"
+            }
+        }
+    }
+</script>
+<style>
+    body{
+        background-color: #eff2f5;
+    }
+    .tip-container{
+        display: flex;
+        flex-flow: row wrap;
+        margin-left: -12px;
+        margin-right: -12px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        width: 100%; // 横向滚动条
+        /* overflow: hidden; */
+    }
+    .msg-container{
+        display: flex;
+        flex-flow: row wrap;
+        margin-left: -12px;
+        margin-right: 12px;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+        align-items: flex-start;
+    }
+    .item{
+        /* display: flex; */
+        flex: 1;
+        padding: 0 12px;
+        max-width: 50%;
+        border-radius: 2px;
+    }
+    .msg-item{
+        flex: 1;
+        padding: 0 12px;
+        border-radius: 2px;
+
+    }
+    .msg-item2{
+        background-color: #fff;
+        padding: 10px 0;
+        display: flex;
+        max-width: 620px;
+    }
+    .msg-card{
+        display: flex;
+        justify-content: space-between;
+        background-color: #fff;
+        padding: 10px 24px;
+    }
+    .card{
+        height: 100%;
+        border: 1px solid rgba(0,0,0,.06);
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+    }
+    .card2{
+        /* border: 1px solid #fff; */
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+    }
+    .card-title{
+        padding: 16px 24px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: rgba(0,0,0,.85);
+        font-weight: 500;
+        font-size: 16px;
+    }
+    .card-content{
+        padding: 24px;
+        color: rgba(0,0,0,.85);
+        font-size: 24px;
+        font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+        font-variant: tabular-nums;
+    }
+    .card-content2{
+        padding: 10px 24px;
+    }
+    .card-tips{
+        font-size: 14px;
+        font-variant: tabular-nums;
+    }
+    .rate-container{
+        width: 100%;
+        background-color: #fff;
+        border-radius: 2px;
+    }
+    .top-view{
+        padding: 16px 24px 0px;
+        align-items: center;
+        color: rgba(0, 0, 0, 0.85);
+        font-weight: 500;
+        font-size: 16px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .rate-box{
+        padding: 24px;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .btn-box{
+        padding: 24px;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        flex-flow: row wrap;
+    }
+    .chart-container{
+        border-radius: 2px;
+        display: flex;
+        width: 100%;
+    }
+    .chart-box{
+        flex: 1;
+        background-color: #fff;
+        padding: 16px 24px;
+    }
+    .menu-btn{
+        flex: 1;
+        border: 1px solid rgba(0,0,0,.06);
+        padding: 24px;
+        margin-bottom: 8px;
+        border-radius: 2px;
+        box-sizing: border-box;
+        /* width: 100%; */
+        max-width: 50%;
+        margin-left: 4px;
+        margin-right: 4px;
+    }
+    .menu-btn:hover{
+        box-shadow: 0px 5px 5px #888888;
+        border-top: 0;
+    }
+    .menu-container{
+        display: flex;
+        background-color:#fff;
+    }
+    .menu{
+        margin: 100px auto;
+        width: 200px;
+        height: 100px;
+        line-height: 100px;
+        background-color: #fff;
+        text-align: center;
+        border-radius: 5px;
+    }
+    .menu:hover{
+        box-shadow: 0px 5px 5px #888888;
+    }
+    .mask{
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-color: rgba(0,0,0,.45);
+        display: none;
+    }
+    .model-container{
+        position: fixed;
+        top: 100px;
+        right: 0;
+        left: 0;
+        /* bottom: 0; */
+        width: 700px;
+        margin: auto;
+        display: none;
+    }
+    .model-view{
+        position: relative;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 2px;
+        /* box-shadow: 0 3px 6px -4px rgb(0 0 0 / 12%); */
+    }
+    .model-title{
+        padding: 16px 24px;
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 22px;
+        position: relative;
+    }
+    .model-content{
+        padding: 24px;
+    }
+    .warning{
+        padding: 8px 15px;
+        background-color: #fffbe6;
+        border: 1px solid #ffe58f;
+        font-size: 14px;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .icon{
+        width: 14px;
+        height: 14px;
+    }
+    .type{
+        margin-top: 20px;
+    }
+    .type-container{
+        display: flex;
+        align-items: center;
+    }
+    .img{
+        width: 48px;
+        height: 48px;
+    }
+    .type-item{
+        width: 150px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        border: 1px solid #d9d9d9;
+        border-radius: 2px;
+        cursor: pointer;
+        position: relative;
+    }
+    .icon{
+        width: 0;
+        height: 0;
+        border-top: 10px solid #5cabff;
+        border-left: 10px solid transparent;
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        display: none;
+    }
+    div:focus{
+        border: 1px solid #5cabff;
+    }
+    div:focus .icon{
+        display: inline;
+    }
+    .type-item:hover{
+        border: 1px solid #5cabff;
+    }
+    .inp-box{
+        border: 1px solid #d9d9d9;
+        border-radius: 2px;
+        padding-left: 11px;
+        display: flex;
+        align-items: center;
+    }
+    .inp-box:hover{
+        border: 1px solid #5cabff;
+    }
+    .btnss{
+        width: 88px;
+        height: 32px;
+        line-height: 32px;
+        margin-left: 20px;
+        background-color: rgb(51, 144, 255);
+        /* background-color: #5cabff; */
+        color: #fff;
+        font-size: 14px;
+        text-align: center;
+        border-radius: 2px;
+        box-shadow: 0 2px 0 rgb(0 0 0 / 5%);
+        cursor: pointer;
+    }
+    .btn:hover{
+        background-color: #5cabff;
+    }
+    #close-icon{
+        width: 1em;
+        height: 1em;
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        cursor: pointer;
+    }
+    #close-icon2{
+        width: 1em;
+        height: 1em;
+        position: absolute;
+        right: 16px;
+        top: 12px;
+        cursor: pointer;
+    }
+    #warning-icon{
+        width: 1em;
+        height: 1em;
+        cursor: pointer;
+    }
+    .line{
+        border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+</style>
+</html>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="/assets/js/require<?php echo \think\Config::get('app_debug')?'':'.min'; ?>.js" data-main="/assets/js/require-backend<?php echo \think\Config::get('app_debug')?'':'.min'; ?>.js?v=<?php echo htmlentities($site['version']); ?>"></script>
+    </body>
+</html>

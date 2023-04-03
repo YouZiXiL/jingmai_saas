@@ -2,13 +2,16 @@
 
 namespace app\web\controller;
 
+use app\web\library\ali\AliConfig;
 use app\web\library\BaseException;
 use app\web\model\Users;
 use think\Controller;
+use think\Exception;
 use think\exception\DbException;
 use think\Log;
 use think\Request;
 use think\response\Json;
+use Alipay\EasySDK\Kernel\Factory;
 
 class Login extends Controller
 {
@@ -51,7 +54,7 @@ class Login extends Controller
             //  存储登录态
             $_3rd_session=$this->common->get_uniqid();
 
-            $user  = new Users;
+            $user = new Users;
             $agent_id=db('agent_auth')->where('app_id',$param['app_id'])->value('agent_id');
             if (empty($agent_id)){
                 return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
@@ -123,6 +126,53 @@ class Login extends Controller
 
             return json($data);
 
+    }
+
+    /**
+     * ali登录
+     */
+    function aLi(){
+        try {
+            $result = AliConfig::options(input('appid'))->base()->oauth()->getToken(input('code'));
+            $openid = $result->userId;
+            $accessToken = $result->accessToken;
+            // TODO 其他逻辑
+            // 模拟代理商id
+            $agent_id = 23;
+            $time = time();
+            $token = $this->common->get_uniqid();
+            $user = Users::where('open_id', $openid)->find();
+            $record = ['agent_id' => $agent_id, 'token' => $token, 'login_time' => $time];
+            if (empty($user)){
+                $record['nick_name'] = "张三丰";
+                $record['open_id'] = $openid;
+                $record['mobile'] = $openid;
+                $record['create_time'] = $time;
+                $record['open_id'] = $openid;
+                $user = Users::create($record);
+            }else{
+                $record['id'] = $user->id;
+                $record['mobile'] = $openid;
+                Users::update($record);
+            }
+            $data=['status'=>200,'data'=>$token,'msg'=>'登录成功'];
+            $session=[
+                'id' => $user->id,
+                'agent_id'=>$agent_id,
+                'app_id' => input('appid'),
+                'open_id'=> $openid,
+                'session_key'=>$accessToken
+            ];
+            cache($token,$session,3600*24*25);
+            return json($data);
+        } catch (\Exception $e) {
+            Log::error(['登录异常' => $e->getMessage()]);
+            $data=[
+                'status'=>400,
+                'msg'=>'登录异常'
+            ];
+            return json($data);
+        }
     }
 
 
