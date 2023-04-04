@@ -4,6 +4,7 @@ namespace app\web\controller;
 
 use app\web\library\ali\AliConfig;
 use app\web\library\BaseException;
+use app\web\model\AgentAuth;
 use app\web\model\Users;
 use think\Controller;
 use think\Exception;
@@ -132,7 +133,6 @@ class Login extends Controller
      * ali登录
      */
     function aLi(){
-
         try {
             $result = AliConfig::options(input('appid'))->base()->oauth()->getToken(input('code'));
             $openid = $result->userId;
@@ -142,12 +142,13 @@ class Login extends Controller
             $phoneData = json_decode($phoneData);
             $mobile = $phoneData->mobile;
 
-            // TODO 其他逻辑
-            // 模拟代理商id
-            $agent_id = 23;
+            $agent_id = AgentAuth::where('app_id', input('appid'))->value('agent_id');
+            if (empty($agent_id)){
+                return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+            }
             $time = time();
             $token = $this->common->get_uniqid();
-            $user = Users::where('open_id', $openid)->find();
+            $user = Users::where(['open_id' => $openid, 'agent_id'=>$agent_id])->find();
             $record = ['agent_id' => $agent_id, 'token' => $token, 'login_time' => $time];
             if (empty($user)){
                 $record['nick_name'] = "张三丰";
@@ -172,7 +173,7 @@ class Login extends Controller
             cache($token,$session,3600*24*25);
             return json($data);
         } catch (\Exception $e) {
-            Log::error(['登录异常' => $e->getMessage()]);
+            Log::error(['登录异常' => $e->getTrace()]);
             $data=[
                 'status'=>400,
                 'msg'=>'登录异常'

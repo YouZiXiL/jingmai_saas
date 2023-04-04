@@ -526,6 +526,14 @@ class Yunyang extends Controller
         }
     }
 
+    /**
+     * 支付宝下单
+     */
+    function createOrderByAli(): Json
+    {
+        return \json(input());
+    }
+
 
     /**
      * 订单查询列表
