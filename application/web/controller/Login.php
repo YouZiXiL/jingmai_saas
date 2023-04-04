@@ -132,10 +132,16 @@ class Login extends Controller
      * ali登录
      */
     function aLi(){
+
         try {
             $result = AliConfig::options(input('appid'))->base()->oauth()->getToken(input('code'));
             $openid = $result->userId;
             $accessToken = $result->accessToken;
+
+            $phoneData = AliConfig::options(input('appid'))->util()->aes()->decrypt(input('response'));
+            $phoneData = json_decode($phoneData);
+            $mobile = $phoneData->mobile;
+
             // TODO 其他逻辑
             // 模拟代理商id
             $agent_id = 23;
@@ -146,13 +152,13 @@ class Login extends Controller
             if (empty($user)){
                 $record['nick_name'] = "张三丰";
                 $record['open_id'] = $openid;
-                $record['mobile'] = $openid;
+                $record['mobile'] = $mobile;
                 $record['create_time'] = $time;
                 $record['open_id'] = $openid;
                 $user = Users::create($record);
             }else{
                 $record['id'] = $user->id;
-                $record['mobile'] = $openid;
+                $record['mobile'] = $mobile;
                 Users::update($record);
             }
             $data=['status'=>200,'data'=>$token,'msg'=>'登录成功'];

@@ -1,0 +1,78 @@
+---------------------------------------------------------------
+[2023-04-03T00:05:44+08:00] 192.168.33.1 GET tp.jingmai.test/web/login/get_config?app_id=2021003182686889
+[运行时间：1.408233s] [吞吐率：0.71req/s] [内存消耗：3,718.18kb] [文件加载：135]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000078s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.042313s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.026795s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000087s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'login',
+    2 => 'get_config',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'accept-encoding' => 'gzip, deflate',
+  'host' => 'tp.jingmai.test',
+  'connection' => 'keep-alive',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/homepage/homepage',
+  'accept-charset' => 'utf-8',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+  'app_id' => '2021003182686889',
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.016140s ]
+[ info ] [ RUN ] app\web\controller\Login->get_config[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.004472s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_agent_auth` [ RunTime:0.009950s ]
+[ sql ] [ SQL ] SELECT `agent_id` FROM `fa_agent_auth` WHERE  `app_id` = '2021003182686889' LIMIT 1 [ RunTime:0.000665s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.004402s ]
+[ sql ] [ SQL ] SELECT `zizhu`,`zhonghuo`,`coupon`,`wx_guanzhu`,`qywx_id`,`kf_url`,`wx_title`,`ordtips`,`ordtips_title`,`ordtips_cnt`,`zhongguo_tips`,`button_txt`,`order_tips`,`bujiao_tips`,`banner`,`add_tips`,`share_tips`,`share_pic`,`wx_map_key` FROM `fa_admin` WHERE  `id` IS NULL LIMIT 1 [ RunTime:0.005533s ]
+[ error ] [8]Trying to access array offset on value of type null[/www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php:217]
+---------------------------------------------------------------
+[2023-04-03T00:05:44+08:00] 192.168.33.1 GET tp.jingmai.test/web/login/msg_list
+[运行时间：1.408236s] [吞吐率：0.71req/s] [内存消耗：3,710.73kb] [文件加载：133]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000423s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.035583s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.034676s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000111s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'login',
+    2 => 'msg_list',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'accept-encoding' => 'gzip, deflate',
+  'host' => 'tp.jingmai.test',
+  'connection' => 'keep-alive',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/homepage/homepage',
+  'accept-charset' => 'utf-8',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.015382s ]
+[ info ] [ RUN ] app\web\controller\Login->msg_list[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.010281s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_orders` [ RunTime:0.003858s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_orders` WHERE  `pay_status` = '1' ORDER BY `id` DESC LIMIT 10 [ RunTime:0.002103s ]
