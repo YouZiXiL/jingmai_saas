@@ -1,0 +1,419 @@
+---------------------------------------------------------------
+[2023-04-06T08:38:23+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/login/get_config?app_id=2021003182686889
+[运行时间：0.374565s] [吞吐率：2.67req/s] [内存消耗：3,683.96kb] [文件加载：134]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000715s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.022762s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.006273s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000046s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'login',
+    2 => 'get_config',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/homepage/homepage',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+  'app_id' => '2021003182686889',
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.005822s ]
+[ info ] [ RUN ] app\web\controller\Login->get_config[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.011516s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_agent_auth` [ RunTime:0.014698s ]
+[ sql ] [ SQL ] SELECT `agent_id` FROM `fa_agent_auth` WHERE  `app_id` = '2021003182686889' LIMIT 1 [ RunTime:0.004193s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.007996s ]
+[ sql ] [ SQL ] SELECT `zizhu`,`zhonghuo`,`coupon`,`wx_guanzhu`,`qywx_id`,`kf_url`,`wx_title`,`ordtips`,`ordtips_title`,`ordtips_cnt`,`zhongguo_tips`,`button_txt`,`order_tips`,`bujiao_tips`,`banner`,`add_tips`,`share_tips`,`share_pic`,`wx_map_key` FROM `fa_admin` WHERE  `id` = 23 LIMIT 1 [ RunTime:0.005012s ]
+---------------------------------------------------------------
+[2023-04-06T08:38:23+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/login/msg_list
+[运行时间：0.430364s] [吞吐率：2.32req/s] [内存消耗：3,732.10kb] [文件加载：134]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000258s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.022874s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.006286s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000057s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'login',
+    2 => 'msg_list',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/homepage/homepage',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.008989s ]
+[ info ] [ RUN ] app\web\controller\Login->msg_list[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.012480s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_orders` [ RunTime:0.016207s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_orders` WHERE  `pay_status` = '1' ORDER BY `id` DESC LIMIT 10 [ RunTime:0.001478s ]
+---------------------------------------------------------------
+[2023-04-06T08:38:24+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/login/ali?appid=2021003182686889&avatar=&code=541e709d32064b2b83be50de5f8cNE75&nick_name=13723232122
+[运行时间：1.602411s] [吞吐率：0.62req/s] [内存消耗：5,231.55kb] [文件加载：190]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000181s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.018887s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.007835s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000046s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'login',
+    2 => 'ali',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/homepage/homepage',
+  'content-type' => 'application/json',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+  'appid' => '2021003182686889',
+  'avatar' => '',
+  'code' => '541e709d32064b2b83be50de5f8cNE75',
+  'nick_name' => '13723232122',
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.007981s ]
+[ info ] [ RUN ] app\web\controller\Login->aLi[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.000892s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_agent_auth` [ RunTime:0.003838s ]
+[ sql ] [ SQL ] SELECT `agent_id` FROM `fa_agent_auth` WHERE  `app_id` = '2021003182686889' LIMIT 1 [ RunTime:0.001603s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_users` [ RunTime:0.002103s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users` WHERE  `open_id` = '2088802593608751'  AND `agent_id` = 23 LIMIT 1 [ RunTime:0.000910s ]
+[ sql ] [ SQL ] UPDATE `fa_users`  SET `agent_id`=23,`token`='1680741504531309854',`login_time`=1680741504  WHERE  `id` = 59 [ RunTime:0.012621s ]
+---------------------------------------------------------------
+[2023-04-06T08:38:48+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/login/get_config?app_id=2021003182686889
+[运行时间：0.175014s] [吞吐率：5.71req/s] [内存消耗：3,683.97kb] [文件加载：134]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000247s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.010284s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.002410s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000049s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'login',
+    2 => 'get_config',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/homepage/homepage',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+  'app_id' => '2021003182686889',
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.002943s ]
+[ info ] [ RUN ] app\web\controller\Login->get_config[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.000714s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_agent_auth` [ RunTime:0.002574s ]
+[ sql ] [ SQL ] SELECT `agent_id` FROM `fa_agent_auth` WHERE  `app_id` = '2021003182686889' LIMIT 1 [ RunTime:0.000499s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.002542s ]
+[ sql ] [ SQL ] SELECT `zizhu`,`zhonghuo`,`coupon`,`wx_guanzhu`,`qywx_id`,`kf_url`,`wx_title`,`ordtips`,`ordtips_title`,`ordtips_cnt`,`zhongguo_tips`,`button_txt`,`order_tips`,`bujiao_tips`,`banner`,`add_tips`,`share_tips`,`share_pic`,`wx_map_key` FROM `fa_admin` WHERE  `id` = 23 LIMIT 1 [ RunTime:0.001208s ]
+---------------------------------------------------------------
+[2023-04-06T08:38:49+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/yunyang/get_default_address
+[运行时间：0.124011s] [吞吐率：8.06req/s] [内存消耗：3,849.79kb] [文件加载：134]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000029s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.006865s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001477s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000041s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'yunyang',
+    2 => 'get_default_address',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/delivrey/delivrey/delivery?__appxPageId=1&__id__=1',
+  'phpsessid' => '1680741504531309854',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.002437s ]
+[ info ] [ RUN ] app\web\controller\Yunyang->get_default_address[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Yunyang.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.001286s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_users_address` [ RunTime:0.004667s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `user_id` = 59  AND `type` <> '2'  AND `default_status` = '1' LIMIT 1 [ RunTime:0.000718s ]
+---------------------------------------------------------------
+[2023-04-06T08:38:51+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/yunyang/address_list
+[运行时间：0.108762s] [吞吐率：9.19req/s] [内存消耗：3,850.24kb] [文件加载：134]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000030s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.006834s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001231s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000044s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'yunyang',
+    2 => 'address_list',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/address/addrList/addrList?__appxPageId=2&__id__=2',
+  'phpsessid' => '1680741504531309854',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.002288s ]
+[ info ] [ RUN ] app\web\controller\Yunyang->address_list[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Yunyang.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.002178s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_users_address` [ RunTime:0.004240s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `type` <> '2'  AND `user_id` = 59 ORDER BY `id` DESC LIMIT 0,10 [ RunTime:0.000641s ]
+---------------------------------------------------------------
+[2023-04-06T08:38:53+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/yunyang/address_list
+[运行时间：0.132433s] [吞吐率：7.55req/s] [内存消耗：3,850.24kb] [文件加载：134]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000035s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.009395s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001410s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000040s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'yunyang',
+    2 => 'address_list',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/address/addrList/addrList?__appxPageId=3&__id__=3',
+  'phpsessid' => '1680741504531309854',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.002408s ]
+[ info ] [ RUN ] app\web\controller\Yunyang->address_list[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Yunyang.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.000519s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_users_address` [ RunTime:0.002320s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `type` <> '2'  AND `user_id` = 59 ORDER BY `id` DESC LIMIT 0,10 [ RunTime:0.000571s ]
+---------------------------------------------------------------
+[2023-04-06T08:39:02+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/yunyang/check_channel_intellect?channel_tag=%E6%99%BA%E8%83%BD&jijian_id=113&package_count=1&shoujian_id=113&weight=1
+[运行时间：0.444065s] [吞吐率：2.25req/s] [内存消耗：3,919.23kb] [文件加载：135]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000029s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.006906s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001262s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000033s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'yunyang',
+    2 => 'check_channel_intellect',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/delivrey/delivrey/delivery?__appxPageId=1&__id__=1',
+  'phpsessid' => '1680741504531309854',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+  'channel_tag' => '智能',
+  'jijian_id' => '113',
+  'package_count' => '1',
+  'shoujian_id' => '113',
+  'weight' => '1',
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.001946s ]
+[ info ] [ RUN ] app\web\controller\Yunyang->check_channel_intellect[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Yunyang.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.000511s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_orders` [ RunTime:0.003140s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_orders` WHERE  `user_id` = 59  AND `agent_id` = 23  AND `pay_status` = '1'  AND ( `overload_status` = '1' OR `consume_status` = '1' ) LIMIT 1 [ RunTime:0.000791s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_users_address` [ RunTime:0.001081s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `id` = 113 LIMIT 1 [ RunTime:0.000388s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `id` = 113 LIMIT 1 [ RunTime:0.000292s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.001951s ]
+[ sql ] [ SQL ] SELECT `agent_shouzhong`,`agent_xuzhong`,`agent_db_ratio`,`agent_sf_ratio`,`agent_jd_ratio`,`users_shouzhong`,`users_xuzhong`,`users_shouzhong_ratio`,`qudao_close` FROM `fa_admin` WHERE  `id` = 23 LIMIT 1 [ RunTime:0.000465s ]
+---------------------------------------------------------------
+[2023-04-06T08:39:11+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/yunyang/check_channel_intellect?channel_tag=%E6%99%BA%E8%83%BD&jijian_id=113&package_count=1&shoujian_id=113&weight=1
+[运行时间：0.361815s] [吞吐率：2.76req/s] [内存消耗：3,919.23kb] [文件加载：135]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000026s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.009293s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001363s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000038s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'yunyang',
+    2 => 'check_channel_intellect',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/delivrey/delivrey/delivery?__appxPageId=1&__id__=1',
+  'phpsessid' => '1680741504531309854',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+  'channel_tag' => '智能',
+  'jijian_id' => '113',
+  'package_count' => '1',
+  'shoujian_id' => '113',
+  'weight' => '1',
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.002100s ]
+[ info ] [ RUN ] app\web\controller\Yunyang->check_channel_intellect[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Yunyang.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.000833s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_orders` [ RunTime:0.006247s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_orders` WHERE  `user_id` = 59  AND `agent_id` = 23  AND `pay_status` = '1'  AND ( `overload_status` = '1' OR `consume_status` = '1' ) LIMIT 1 [ RunTime:0.001023s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_users_address` [ RunTime:0.001171s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `id` = 113 LIMIT 1 [ RunTime:0.000408s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `id` = 113 LIMIT 1 [ RunTime:0.000295s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.001912s ]
+[ sql ] [ SQL ] SELECT `agent_shouzhong`,`agent_xuzhong`,`agent_db_ratio`,`agent_sf_ratio`,`agent_jd_ratio`,`users_shouzhong`,`users_xuzhong`,`users_shouzhong_ratio`,`qudao_close` FROM `fa_admin` WHERE  `id` = 23 LIMIT 1 [ RunTime:0.000469s ]
+---------------------------------------------------------------
+[2023-04-06T08:39:15+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/web/yunyang/check_channel_intellect?channel_tag=%E6%99%BA%E8%83%BD&jijian_id=113&package_count=1&shoujian_id=113&weight=1
+[运行时间：0.399224s] [吞吐率：2.50req/s] [内存消耗：3,919.23kb] [文件加载：135]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000027s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.007478s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001705s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000063s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'yunyang',
+    2 => 'check_channel_intellect',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '223.90.135.157',
+  'referer' => 'https://2021003182686889.hybrid.alipay-eco.com/2021003182686889/dev/index.html#pages/delivrey/delivrey/delivery?__appxPageId=1&__id__=1',
+  'phpsessid' => '1680741504531309854',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'accept-encoding' => 'gzip, deflate',
+  'accept-charset' => 'utf-8',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 ChannelId(0) LyraVM Nebula  AlipayDefined(nt:WIFI,ws:360|0|3.0) AliApp(AP/10.2.60) AlipayClient/10.2.60 Language/zh-Hans AlipayIDE',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+  'channel_tag' => '智能',
+  'jijian_id' => '113',
+  'package_count' => '1',
+  'shoujian_id' => '113',
+  'weight' => '1',
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.002233s ]
+[ info ] [ RUN ] app\web\controller\Yunyang->check_channel_intellect[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Yunyang.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.000673s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_orders` [ RunTime:0.002866s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_orders` WHERE  `user_id` = 59  AND `agent_id` = 23  AND `pay_status` = '1'  AND ( `overload_status` = '1' OR `consume_status` = '1' ) LIMIT 1 [ RunTime:0.001960s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_users_address` [ RunTime:0.002476s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `id` = 113 LIMIT 1 [ RunTime:0.000610s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `id` = 113 LIMIT 1 [ RunTime:0.000307s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.002342s ]
+[ sql ] [ SQL ] SELECT `agent_shouzhong`,`agent_xuzhong`,`agent_db_ratio`,`agent_sf_ratio`,`agent_jd_ratio`,`users_shouzhong`,`users_xuzhong`,`users_shouzhong_ratio`,`qudao_close` FROM `fa_admin` WHERE  `id` = 23 LIMIT 1 [ RunTime:0.000465s ]

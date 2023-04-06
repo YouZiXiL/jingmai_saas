@@ -7,6 +7,7 @@ use app\web\library\BaseException;
 use app\web\model\AgentAuth;
 use app\web\model\Users;
 use think\Controller;
+use think\Env;
 use think\Exception;
 use think\exception\DbException;
 use think\Log;
@@ -119,12 +120,10 @@ class Login extends Controller
                     'session_key'=>$json_obj["session_key"]
                 ];
                 cache($_3rd_session,$session,3600*24*25);
-
             }else{
                 $data=['status'=>400,'data'=>'','msg'=>'登录失败'];
             }
             //存储用户信息
-
             return json($data);
 
     }
@@ -133,25 +132,27 @@ class Login extends Controller
      * ali登录
      */
     function aLi(){
+
         try {
-            $result = AliConfig::options(input('appid'))->base()->oauth()->getToken(input('code'));
+            $ali = AliConfig::options(input('appid'));
+            $result = $ali->base()->oauth()->getToken(input('code'));
             $openid = $result->userId;
             $accessToken = $result->accessToken;
 
-            $phoneData = AliConfig::options(input('appid'))->util()->aes()->decrypt(input('response'));
-            $phoneData = json_decode($phoneData);
-            $mobile = $phoneData->mobile;
 
             $agent_id = AgentAuth::where('app_id', input('appid'))->value('agent_id');
-            if (empty($agent_id)){
-                return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
-            }
+            if (empty($agent_id))  return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+
             $time = time();
             $token = $this->common->get_uniqid();
             $user = Users::where(['open_id' => $openid, 'agent_id'=>$agent_id])->find();
             $record = ['agent_id' => $agent_id, 'token' => $token, 'login_time' => $time];
             if (empty($user)){
-                $record['nick_name'] = "张三丰";
+                $phoneData = $ali->util()->aes()->decrypt(input('response'));
+                $phoneData = json_decode($phoneData);
+                $mobile = $phoneData->mobile;
+
+                $record['nick_name'] = $mobile;
                 $record['open_id'] = $openid;
                 $record['mobile'] = $mobile;
                 $record['create_time'] = $time;
@@ -159,7 +160,9 @@ class Login extends Controller
                 $user = Users::create($record);
             }else{
                 $record['id'] = $user->id;
-                $record['mobile'] = $mobile;
+                $record['login_time'] = $time;
+                $record['agent_id'] = $agent_id;
+
                 Users::update($record);
             }
             $data=['status'=>200,'data'=>$token,'msg'=>'登录成功'];
@@ -173,7 +176,7 @@ class Login extends Controller
             cache($token,$session,3600*24*25);
             return json($data);
         } catch (\Exception $e) {
-            Log::error(['登录异常' => $e->getTrace()]);
+            Log::error(['登录异常' => $e->getMessage(),'追踪'=>$e->getTraceAsString()]);
             $data=[
                 'status'=>400,
                 'msg'=>'登录异常'
