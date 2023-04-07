@@ -651,7 +651,7 @@ class Yunyang extends Controller
                 ->create(
                     '快递下单-'.$out_trade_no,
                     $out_trade_no,
-                    0.01,//$check_channel_intellect['final_price'],
+                    $check_channel_intellect['final_price'],
                     $this->user->open_id
                 );
             if($result->code !== "10000"){
