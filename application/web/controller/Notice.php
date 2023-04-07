@@ -86,13 +86,16 @@ class Notice extends Controller
             $data=$Common->yunyang_api('ADD_BILL_INTELLECT',$content);
             if ($data['code']!=1){
                 Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
-                $out_refund_no=$Common->get_uniqid();//下单退款订单号
                 //支付成功下单失败  执行退款操作
                 try {
-                    $alipay->refund($out_refund_no, input('buyer_pay_amount'));
+                    $refund = $alipay->refund(input('out_trade_no'), input('buyer_pay_amount'));
+                    if($refund->code != 10000){
+                        Log::error('支付宝退款失败：' . $refund->httpBody);
+                    }
                 } catch (\Exception $e) {
                     Log::error(['支付宝退款失败' => $e->getMessage(), '追踪'=>$e->getTraceAsString()]);
                 }
+                $out_refund_no=$Common->get_uniqid();//下单退款订单号
                 $update=[
                     'pay_status'=>2,
                     'yy_fail_reason'=>$data['message'],
