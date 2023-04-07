@@ -417,3 +417,42 @@
 [ sql ] [ SQL ] SELECT * FROM `fa_users_address` WHERE  `id` = 113 LIMIT 1 [ RunTime:0.000307s ]
 [ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.002342s ]
 [ sql ] [ SQL ] SELECT `agent_shouzhong`,`agent_xuzhong`,`agent_db_ratio`,`agent_sf_ratio`,`agent_jd_ratio`,`users_shouzhong`,`users_xuzhong`,`users_shouzhong_ratio`,`qudao_close` FROM `fa_admin` WHERE  `id` = 23 LIMIT 1 [ RunTime:0.000465s ]
+---------------------------------------------------------------
+[2023-04-06T22:04:39+08:00] 127.0.0.1 GET jingmai.lurenx.cn:8088/
+[运行时间：0.293182s] [吞吐率：3.41req/s] [内存消耗：3,178.14kb] [文件加载：137]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.001169s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.013517s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.002705s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000029s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => '',
+    1 => NULL,
+    2 => NULL,
+  ),
+)
+[ info ] [ HEADER ] array (
+  'x-forwarded-for' => '23.251.41.71',
+  'accept-encoding' => 'gzip',
+  'accept' => '*/*',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_1_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/16D57 MicroMessenger/7.0.3(0x17000321) NetType/WIFI Language/zh_CN',
+  'host' => 'jingmai.lurenx.cn:8088',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/index/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.005318s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/index/lang/zh-cn/index.php
+[ info ] [ RUN ] app\index\controller\Index->index[ /www/wwwroot/jiyu/jingmai_saas/application/index/controller/Index.php ]
+[ info ] [ VIEW ] /www/wwwroot/jiyu/jingmai_saas/public/../application/index/view/index/index.html [ array (
+  0 => 'user',
+  1 => 'site',
+  2 => 'config',
+) ]
+[ info ] [ LOG ] INIT File

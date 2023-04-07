@@ -4,13 +4,25 @@ namespace app\web\library\ali;
 
 use Alipay\EasySDK\Kernel\Factory;
 use Alipay\EasySDK\Kernel\Config;
-use think\Env;
 
 class AliConfig
 {
+    public static $merchantCertPath;
+    public static $alipayCertPath;
+    public static $alipayRootCertPath;
+    public static $util;
+
     public static function options($APPID): Factory
     {
+        self::init();
         return Factory::setOptions(self::getOptions($APPID));
+    }
+    private static function init(){
+        $basePath = root_path();
+        self::$merchantCertPath = $basePath.'extend/alipay/appCertPublicKey_2021003182686889.crt';
+        self::$alipayCertPath = $basePath .'extend/alipay/alipayCertPublicKey_RSA2.crt';
+        self::$alipayRootCertPath = $basePath.'extend/alipay/alipayRootCert.crt';
+        self::$util = new Util();
     }
     private static function getOptions($APPID): Config
     {
@@ -26,7 +38,7 @@ class AliConfig
         // 支付宝根证书文件路径
         $options->alipayRootCertPath = root_path().'extend/alipay/alipayRootCert.crt';
         // 应用公钥证书
-        $options->merchantCertPath = root_path().'extend/alipay/appCertPublicKey_2021003182686889.crt';;
+        $options->merchantCertPath = root_path().'extend/alipay/appCertPublicKey_2021003182686889.crt';
 
         //注：如果采用非证书模式，则无需赋值上面的三个证书路径，改为赋值如下的支付宝公钥字符串即可
         // $options->alipayPublicKey = '<-- 请填写您的支付宝公钥，例如：MIIBIjANBg... -->';

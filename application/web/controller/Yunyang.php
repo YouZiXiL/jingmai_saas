@@ -606,6 +606,7 @@ class Yunyang extends Controller
             'insured_price'=>$check_channel_intellect['freightInsured'],//保价费用
             'comments'=>'无',
             'wx_mchid'=>$sellerId,
+            // 'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
             'final_freight'=>0,//云洋最终运费
             'pay_status'=>0,
             'order_status'=>'派单中',
@@ -658,18 +659,13 @@ class Yunyang extends Controller
                 throw new Exception('支付宝下单失败'. $result->httpBody);
             }
 
-            $outTradeNo = $result->outTradeNo;
             $tradeNo = $result->tradeNo;
-            return json(['status'=>200,'data'=>$tradeNo,'msg'=>'成功']);
+            $data['wx_out_trade_no'] = $tradeNo;
             $inset=db('orders')->insert($data);
             if (!$inset){
                 throw new Exception('插入数据失败');
             }
-            $params = [
-                'appId'     => $this->user->app_id,
-                'package'   =>'prepay_id=',
-            ];
-            return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
+            return json(['status'=>200,'data'=>$tradeNo,'msg'=>'成功']);
         } catch (\Exception $e) {
             Log::error(['支付宝下单失败'=>$e->getMessage(),'追踪'=>$e->getTraceAsString()]);
             return \json(['code'=>400, 'msg'=>'支付宝下单失败']);
