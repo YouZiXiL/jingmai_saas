@@ -84,9 +84,6 @@ class Orderslist extends Backend
             ->with([
                 'usersinfo'=>function($query){
                 $query->WithField('mobile');
-            },
-                'wxauthinfo'=>function($query){
-                $query->where('auth_type',2)->WithField('name');
             }])
             ->order($sort, $order)
             ->paginate($limit);

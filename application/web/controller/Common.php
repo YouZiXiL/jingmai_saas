@@ -209,6 +209,7 @@ class Common
     function get_authorizer_access_token($app_id){
         $time=time()-6600;
         $kaifang_appid=config('site.kaifang_appid');
+
         $access_token=db('access_token')->where('app_id',$app_id)->order('id','desc')->find();
         if (empty($access_token['access_token'])||$time>$access_token['create_time']){
             $refresh_token=db('agent_auth')->where('app_id',$app_id)->value('refresh_token');

@@ -287,11 +287,11 @@ class Wxcallback extends Controller
             $data['pay_template']=$bukuan['template_id'];
 
         }
-        $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->find();
+        $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('app_id',$authorization_info['authorizer_appid'])->find();
 
 
         if ($agent_auth){
-            db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->update($data);
+            db('agent_auth')->where('agent_id',$parm['agent_id'])->where('app_id',$authorization_info['authorizer_appid'])->update($data);
         }else{
             if ($parm['auth_type']==2){
                 $data['xcx_audit']=0;

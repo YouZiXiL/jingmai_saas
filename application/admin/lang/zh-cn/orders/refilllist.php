@@ -26,6 +26,7 @@ return [
     'State 1'           => '充值成功',
     'State 2'           => '充值失败',
     'State 3'           => '部分成功',
+    'State 8'           => '待充值',
     'Pay_status'      => '支付状态',
     'Pay_status 0'    => '未支付',
     'Pay_status 1'    => '已支付',

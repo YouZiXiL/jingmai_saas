@@ -3,6 +3,7 @@
 namespace app\admin\controller\orders;
 
 use app\common\controller\Backend;
+use app\web\controller\Common;
 
 /**
  * 
@@ -33,6 +34,19 @@ class Refilllist extends Backend
      * 因此在当前控制器中可不用编写增删改查的代码,除非需要自己控制这部分逻辑
      * 需要将application/admin/library/traits/Backend.php中对应的方法复制到当前控制器,然后进行修改
      */
+
+    /**
+     * 充值
+     * @return void
+     */
+    function recharge($ids = null){
+        $row = $this->model->get(['id'=>$ids]);
+        if (!$row) {
+            $this->error(__('No Results were found'));
+        }
+        $row->save(['state'=>1]);
+        $this->success('充值成功');
+    }
 
 
 }

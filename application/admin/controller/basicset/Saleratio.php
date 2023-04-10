@@ -50,7 +50,7 @@ class Saleratio extends Backend
     {
 
         $row=$this->model->where('id',$this->auth->id)->field('users_shouzhong,users_xuzhong,users_shouzhong_ratio,agent_water,
-        agent_elec,agent_gas,agent_credit,sf_users_ratio,agent_tc_ratio,imm_rate,midd_rate,service_rate,user_cashoutdate')->find();
+        agent_elec,agent_gas,agent_credit,sf_users_ratio,agent_tc_ratio,imm_rate,midd_rate,service_rate,user_cashoutdate,vipprice,couponcount')->find();
         if (!$row) {
             $this->error(__('No Results were found'));
         }

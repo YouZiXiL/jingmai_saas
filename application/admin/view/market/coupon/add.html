@@ -15,11 +15,12 @@
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Gain_way')}:</label>
         <div class="col-xs-12 col-sm-8">
-                        
-            <select  id="c-gain_way" class="form-control selectpicker" name="row[gain_way]">
-                    <option value="1" {in name="1" value=""}selected{/in}>满减</option>
-            </select>
 
+            <select  id="c-gain_way" class="form-control selectpicker" name="row[gain_way]">
+                {foreach name="gainWayList" item="vo"}
+                <option value="{$key}" {in name="key" value=""}selected{/in}>{$vo}</option>
+                {/foreach}
+            </select>
         </div>
     </div>
     <div class="form-group">

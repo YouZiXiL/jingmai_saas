@@ -87,7 +87,19 @@
         </div>
     </div>
 
+    <div class="form-group {:$auth->check('basicset/saleratio/vipprice')?'':'hide'}">
+        <label for="vipprice" class="control-label col-xs-12 col-sm-2">会员价格:</label>
+        <div class="col-xs-12 col-sm-2">
+            <input type="number" min="0" class="form-control" id="vipprice" name="row[vipprice]" autocomplete="off" value="{$row.vipprice}"  />
+        </div>
+    </div>
 
+    <div class="form-group {:$auth->check('basicset/saleratio/couponcount')?'':'hide'}">
+        <label for="couponcount" class="control-label col-xs-12 col-sm-2">福利秒杀最大库存:</label>
+        <div class="col-xs-12 col-sm-2">
+            <input type="number" min="0" class="form-control" id="couponcount" name="row[couponcount]" autocomplete="off" value="{$row.couponcount}"  />
+        </div>
+    </div>
 
     <div class="form-group layer-footer">
         <label class="control-label col-xs-12 col-sm-2"></label>
