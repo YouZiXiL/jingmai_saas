@@ -66,6 +66,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     $('#c-agent_gas').css('display','');
                     $('#c-agent_water').css('display','');
                     $('#c-agent_tc').css('display','');
+                    $('#c-sf_agent_ratio').css('display','');
                 }else {
                     $('#c-agent_shouzhong').css('display','none');
                     $('#c-agent_xuzhong').css('display','none');
@@ -78,6 +79,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     $('#c-agent_gas').css('display','none');
                     $('#c-agent_water').css('display','none');
                     $('#c-agent_tc').css('display','none');
+                    $('#c-sf_agent_ratio').css('display','none');
                 }
             }
             switchSelect();
