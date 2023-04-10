@@ -8,10 +8,6 @@ use think\Model;
 class Orders extends Model
 {
 
-    
-
-    
-
     // 表名
     protected $name = 'agent_orders';
     

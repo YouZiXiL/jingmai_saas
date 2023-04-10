@@ -79,7 +79,7 @@ class Common
             "appid:".$appid
             );
 
-        $res=$this->sfhttpRequest($url,$content ,'POST',$content);
+        $res=$this->sfhttpRequest($url,$content ,'POST',$header);
 
         return json_decode($res,true);
 

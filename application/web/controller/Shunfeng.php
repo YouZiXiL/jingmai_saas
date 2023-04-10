@@ -38,6 +38,9 @@ class Shunfeng extends Controller
 
         try {
             $param=$this->request->param();
+            if(empty($param['weight']) ||empty($param['jijian_id']) || empty($param['shoujian_id']) ){
+                return json(['status'=>400,'data'=>[],'msg'=>'参数错误']);
+            }
             if($param['weight']<=0){
                 throw new Exception('参数错误');
             }
@@ -230,15 +233,15 @@ class Shunfeng extends Controller
         !empty($check_channel_intellect['vloum_width']) &&($data['vloum_width'] = $check_channel_intellect['vloum_width']);
         !empty($check_channel_intellect['vloum_height']) &&($data['vloum_height'] = $check_channel_intellect['vloum_height']);
         $couponmoney=0;
-//        if(!empty($param["couponid"])){
-//            $couponinfo=Couponlist::get(["id"=>$param["couponid"],"state"=>1]);
-//            if($check_channel_intellect['final_price']<$couponinfo["uselimits"]){
-//                return json(['status'=>400,'data'=>'','msg'=>'优惠券信息错误']);
-//            }
-//            else{
-//                $couponmoney=$couponinfo["money"];
-//            }
-//        }
+        if(!empty($param["couponid"])){
+            $couponinfo=Couponlist::get(["id"=>$param["couponid"],"state"=>1]);
+            if($check_channel_intellect['final_price']<$couponinfo["uselimits"]){
+                return json(['status'=>400,'data'=>'','msg'=>'优惠券信息错误']);
+            }
+            else{
+                $couponmoney=$couponinfo["money"];
+            }
+        }
         $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
         $json=[
             'mchid'        => $agent_info['wx_mchid'],
@@ -286,10 +289,12 @@ class Shunfeng extends Controller
                 'pay_template'=>$template['pay_template'],
             ];
             if(!empty($couponinfo)){
-                $couponinfo["state"]=2;
-                $couponinfo->save();
+//                $couponinfo["state"]=2;
+//                $couponinfo->save();
                 //表示该笔订单使用了优惠券
                 $data["couponid"]=$param["couponid"];
+                $data["couponpapermoney"]=$couponinfo->money;
+                $data["aftercoupon"]=$check_channel_intellect['final_price']-$couponmoney;
             }
             $inset=db('orders')->insert($data);
             if (!$inset){
@@ -336,13 +341,13 @@ class Shunfeng extends Controller
         }
         db('orders')->where('id',$id)->where('user_id',$this->user->id)->update(['cancel_time'=>time()]);
         // 退还优惠券
-//        if(!empty($row["couponid"])){
-//            $coupon=Couponlist::get($row["couponid"]);
-//            if(!empty($coupon)){
-//                $coupon["state"]=1;
-//                $coupon->save();
-//            }
-//        }
+        if(!empty($row["couponid"])){
+            $coupon=Couponlist::get($row["couponid"]);
+            if(!empty($coupon)){
+                $coupon["state"]=1;
+                $coupon->save();
+            }
+        }
         if (!empty($agent_info['wx_im_bot'])&&$row['weight']>=3){
             $this->common->wxim_bot($agent_info['wx_im_bot'],$row);
         }

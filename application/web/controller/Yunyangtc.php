@@ -237,9 +237,9 @@ class Yunyangtc extends Controller
 //                    continue;
 //                }
                 $price=$v["fee"];
-                $agent_tc=$agent_info["agent_tc"]??0.1;//公司上浮百分比 默认为0.1
+                $agent_tc=($agent_info["agent_tc"]??10)/100;//公司上浮百分比 默认为0.1
                 $agent_price=$price+$price*$agent_tc;
-                $agent_tc_ratio=$agent_info["agent_tc_ratio"]??0;//代理商上浮百分比 默认为0
+                $agent_tc_ratio=($agent_info["agent_tc_ratio"]??0)/100;//代理商上浮百分比 默认为0
                 $users_price=$agent_price+$agent_price*$agent_tc_ratio;
 
                 $finalPrice=sprintf("%.2f",$users_price);//用户拿到的价格=云洋价格+公司为代理商上浮价格+代理商为用户上浮价格;
@@ -255,6 +255,8 @@ class Yunyangtc extends Controller
                 $v['shoujian_id']=$param['shoujian_id'];//收件id
                 $v['weight']=$param['weight'];//重量
                 $v['waybill']=$data['message'];//商户订单号
+                $v['sender_logo']=$jijian_address['logo'];//商户订单号
+                $v['receive_logo']=$shoujian_address['logo'];//商户订单号
 
                 !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价费用
                 $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>"同城",'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
@@ -368,7 +370,9 @@ class Yunyangtc extends Controller
 //            'package_count'=>$check_channel_intellect['package_count'],
             'item_name'=>$param['item_name'],
             'create_time'=>time(),
-            'waybill'=>$check_channel_intellect['waybill']
+            'waybill'=>$check_channel_intellect['waybill'],
+            'sender_logo'=>$check_channel_intellect['sender_logo'],
+            'receive_logo'=>$check_channel_intellect['receive_logo']
         ];
         !empty($param['bill_remark']) &&($data['bill_remark'] = $param['bill_remark']);
         !empty($check_channel_intellect['insured']) &&($data['insured'] = $check_channel_intellect['insured']);
@@ -463,7 +467,7 @@ class Yunyangtc extends Controller
         $content=[
             'shopbill'=>$row['shopbill']
         ];
-        $res=$this->common->yunyang_api('CANCEL',$content);
+        $res=$this->common->yunyangtc_api('CANCEL',$content);
         if ($res['code']!=1){
             return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
         }
@@ -486,7 +490,7 @@ class Yunyangtc extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
-        $order=db('orders')->where("channel_tag","同城")->where('pay_status','<>',0)->field('id,waybill,sender_province,receive_province,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10);
+        $order=db('orders')->where("channel_tag","同城")->where('pay_status','<>',0)->field('id,waybill,sender_province,sender_mobile,receiver_mobile,receive_province,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status,sender_logo,receive_logo,create_time')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10);
         if (!empty($param['search_field'])){
             $res=$order->where('receiver_mobile|sender_mobile|waybill|receiver',$param['search_field'])->select();
         }elseif(!empty($param['no_pay'])){
@@ -510,7 +514,7 @@ class Yunyangtc extends Controller
         if (empty($param['id'])){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
-        $order=db('orders')->field('id,waybill,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,receive_address,comments,item_pic,overload_status,pay_status,consume_status')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
+        $order=db('orders')->field('id,waybill,item_name,final_price,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,receive_address,comments,item_pic,overload_status,pay_status,consume_status,,sender_logo,receive_logo,create_time')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
         if(empty($order)){
             return json(['status'=>400,'data'=>'','msg'=>'此订单不存在']);
         }
@@ -520,7 +524,28 @@ class Yunyangtc extends Controller
 
     }
 
-
-
+    //骑手查询
+    function sender_query(){
+        $param=$this->request->param();
+        if(empty($param['id'])){
+            return json(['status'=>400,'data'=>[],'msg'=>'参数错误']);
+        }
+        $order=db('orders')->field('id,shopbill,waybill,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,receive_address,comments,item_pic,overload_status,pay_status,consume_status')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
+        if(empty($order)){
+            return json(['status'=>400,'data'=>[],'msg'=>'订单信息错误']);
+        }
+        if ($order['pay_status']!=1){
+            return json(['status' => 400, 'data' => '', 'msg' => '此单已取消']);
+        }
+        $content=[
+            "waybill"=>$order['waybill'],
+            "shopbill"=>$order['shopbill'],
+        ];
+        $data=$this->common->yunyangtc_api('QUERY_TRANCE',$content);
+        if ($data['code']!=1){
+            throw new Exception('订单信息错误');
+        }
+        return json(['status'=>200,'data'=>$data,'msg'=>'成功']);
+    }
 
 }

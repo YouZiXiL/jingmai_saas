@@ -512,3 +512,10 @@ EOT;
         return $icon;
     }
 }
+
+// 项目根目录
+if(!function_exists('root_path')){
+    function root_path(){
+        return substr(__DIR__, 0, strpos(__DIR__, 'application'));
+    }
+}

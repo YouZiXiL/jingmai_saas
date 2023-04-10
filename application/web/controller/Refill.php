@@ -572,7 +572,7 @@ class Refill extends Controller
     public function recharge_df(){
         $param=$this->request->param();
         if( empty($param["product_id"]) || empty($param["mobile"]) ||empty($param["amount"])||empty($param["cateid"]) ||empty($param["area"])||empty($param["city"])){
-            return json(["errno"=>"400","errmsg"=>"请输入有效参数","data"=>""]);
+            return json(["status"=>400,"msg"=>"请输入有效参数","data"=>""]);
         }
         $select = db("refill_product")->find($param["selectid"]);
         $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
@@ -593,13 +593,13 @@ class Refill extends Controller
 
 
         if(empty($select)){
-            return json(["errno"=>"400","errmsg"=>"请输入目标无效","data"=>""]);
+            return json(["status"=>400,"msg"=>"请输入目标无效","data"=>""]);
         }
         else{
             $order = db("refilllist")->where("product_id",$param["product_id"])->where("cate_id",$param["cateid"])->where("state",1)->find();//此处判定产品ID 只能充值一单 可换为：
 
             if(!empty($order)){
-                return json(["errno"=>"400","errmsg"=>"该号码已经存在充值在途","data"=>""]);
+                return json(["status"=>"400","msg"=>"该号码已经存在充值在途","data"=>""]);
             }
 
             $productinfo=[];
@@ -617,7 +617,7 @@ class Refill extends Controller
                 }
             }
             if(empty($productinfo)){
-                return json(["errno"=>"400","errmsg"=>"参数错误","data"=>""]);
+                return json(["status"=>"400","msg"=>"参数错误","data"=>""]);
             }
             else{
                 $out_trade_no = 'HF'.$this->common->get_uniqid();
@@ -716,7 +716,7 @@ class Refill extends Controller
     public function recharge_rqf(){
         $param=$this->request->param();
         if( empty($param["product_id"]) || empty($param["mobile"]) ||empty($param["amount"])||empty($param["cateid"])){
-            return json(["errno"=>"400","errmsg"=>"请输入有效参数","data"=>""]);
+            return json(["status"=>400,"msg"=>"请输入有效参数","data"=>""]);
         }
         $select = db("refill_product")->find($param["selectid"]);
         $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
@@ -737,13 +737,13 @@ class Refill extends Controller
 
 
         if(empty($select)){
-            return json(["errno"=>"400","errmsg"=>"请输入目标无效","data"=>""]);
+            return json(["status"=>400,"msg"=>"请输入目标无效","data"=>""]);
         }
         else{
             $order = db("refilllist")->where("product_id",$param["product_id"])->where("cate_id",$param["cateid"])->where("state",1)->find();//此处判定产品ID 只能充值一单 可换为：
 
             if(!empty($order)){
-                return json(["errno"=>"400","errmsg"=>"该号码已经存在充值在途","data"=>""]);
+                return json(["status"=>"400","msg"=>"该号码已经存在充值在途","data"=>""]);
             }
 
             $productinfo=[];
@@ -761,7 +761,7 @@ class Refill extends Controller
                 }
             }
             if(empty($productinfo)){
-                return json(["errno"=>"400","errmsg"=>"参数错误","data"=>""]);
+                return json(["status"=>"400","msg"=>"参数错误","data"=>""]);
             }
             else{
                 $out_trade_no = 'HF'.$this->common->get_uniqid();

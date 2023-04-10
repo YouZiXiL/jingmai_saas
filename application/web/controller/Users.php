@@ -25,8 +25,11 @@ class Users extends Controller
     protected $admin;
 
     protected $common;
+
+    protected $checkinscores;
     public function _initialize()
     {
+        $this->checkinscores=[1,2,2,3,3,3,5];
 
         try {
             $phpsessid=$this->request->header('phpsessid')??$this->request->header('PHPSESSID');
@@ -37,12 +40,13 @@ class Users extends Controller
             }
             $this->user = (object)$session;
             //将代理商信息缓存避免每次查询admin数据库
-            $agent = cache($this->user->app_id);
+            $agent = "";
+            //$agent = cache($this->user->app_id);
             if (empty($agent)){
                 //admin 补充表结构 合并后需用 admin
-                $agent=db("admin")->where('agent_id',$this->user->agent_id)->find();
+                $agent=db("admin")->where('id',$this->user->agent_id)->find();
 
-                cache($this->user->app_id,$agent,3600*24*25);
+                //cache($this->user->app_id,$agent,3600*24*25);
             }
             $this->admin=$agent;
             $this->common= new Common();
@@ -64,20 +68,128 @@ class Users extends Controller
         $user_detail["nickname"]=$user_info->nick_name;
         $user_detail["avatar"]=$user_info->avatar;
         $user_detail["money"]=number_format($user_info->money,2);
-        $user_detail["service_rate"]=$agent_info->service_rate??0.08;//从商家服务表中获得 商家可自定义比例 建议8%
+        $user_detail["service_rate"]=number_format(($agent_info->service_rate??8)/100,2);//从商家服务表中获得 商家可自定义比例 建议8%
+
         if(!empty($user_info->myinvitecode))
             $user_detail["invitecode"]=$user_info->myinvitecode;
 
         if($user_info->uservip==0){
             $user_detail["level"]="普通会员";
         }
+        else{
+            if($user_info->vipvaliddate<time()){
+                $user_detail["level"]="普通会员";
+                $user_info->uservip=0;
+                $user_info->save();
+            }
+            else{
+                $user_detail["level"]="Plus会员";
+            }
+        }
+        $couponlist=$user_info->getcouponlist()->where("state",1)->select();
+        $updatedata=[];
 
+        foreach ($couponlist as $item){
+            if(strtotime($item['validdateend'])<time()){
 
-        $user_detail["couponnum"]=$user_info->getcouponlist()->where("state",1)->count();
+                $updata=[
+                    'id'=>$item["id"],
+                    'state'=>3
+                ];
+                array_push($updatedata,$updata);
+            }
+        }
+
+        $coupon=new Couponlist();
+        $coupon->isUpdate()->saveAll($updatedata);
+
+        $user_detail["couponnum"]=count($couponlist)-count($updatedata);//$user_info->getcouponlist()->where("state",1)->count();
 
         $data["data"]=$user_detail;
         return \json($data);
     }
+    //用户返佣详情
+    public function user_rebate_info(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        //1、获得用户
+        $user_info= \app\web\model\Users::get($this->user->id);
+        $agent_info=Admin::get($this->user->agent_id);
+
+        $user_detail["money"]=number_format($user_info->money,2);
+        $user_detail["nickname"]=$user_info->nick_name;
+
+
+        $user_detail["service_rate"]=number_format(($agent_info->service_rate??8)/100,2);//从商家服务表中获得 商家可自定义比例 建议8%
+
+//        if(!empty($user_info->myinvitecode))
+//            $user_detail["invitecode"]=$user_info->myinvitecode;
+
+        if($user_info->uservip==0){
+            $user_detail["level"]="普通会员";
+        }
+        else{
+            if($user_info->vipvaliddate<time()){
+                $user_detail["level"]="普通会员";
+            }
+            else{
+                $user_detail["level"]="Plus会员";
+            }
+        }
+        $subusers=db("users")->where("invitercode|fainvitercode","=",$user_info->myinvitecode)->count();
+        $cashout=db("cashserviceinfo")->where("user_id",$this->user->id)->where("state","<>",3)->sum("cashout");
+        $user_detail["users"]=$subusers;
+        $user_detail["cashout"]=$cashout;
+        $user_detail["allmoney"]=floatval($user_detail["money"])+floatval($cashout);
+        $user_detail["realname"]=$user_info->realname??"";
+        $user_detail["alinum"]=$user_info->alipayid??"";
+
+        $data["data"]=$user_detail;
+        return \json($data);
+    }
+    //指定年 月查询
+    public function user_rebate_select(){
+
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $param=$this->request->param();
+        if(empty($param["year"]) ||empty($param["month"])){
+            $data["msg"]="请输入有效信息";
+            return json($data);
+        }
+        $year=$param["year"];
+        $month=$param["month"];
+        $targetdate=$year."-".$month;
+
+        $startdate= strtotime("first day of {$targetdate}");
+        $enddate= strtotime("{$targetdate} +1 month -1 day");
+
+        $targettoday=$year."-".$month."-".date("d");
+
+        $starttoday= strtotime($targettoday);
+        $endtoday= strtotime("{$targetdate} +1 day");
+
+
+        //1、获得用户
+        $user_info= \app\web\model\Users::get($this->user->id);
+
+        $subusers=db("users")->where("invitercode|fainvitercode","=",$user_info->myinvitecode)->where("create_time",'between',[$startdate,$enddate])->count();
+        $todayusers=db("users")->where("invitercode|fainvitercode","=",$user_info->myinvitecode)->where("create_time",'between',[$starttoday,$endtoday])->count();
+
+        $datadetail["today"]=$todayusers;
+        $datadetail["month"]=$subusers;
+
+        $data["data"]=$datadetail;
+
+        return json($data);
+    }
+
     //返利规则
     public function rebate_rule(){
         $data=[
@@ -85,8 +197,46 @@ class Users extends Controller
             'data'=>"",
             'msg'=>'Success'
         ];
-        $agentrule=Agent_rule::get(["agent_id"=>$this->user->agent_id,"state"=>1]);
+        $param=$this->request->param();
+        if(empty($param["type"])){
+            $param["type"]=1;
+        }
+//        $agentrule=Agent_rule::get(["agent_id"=>$this->user->agent_id,"type"=>$param["type"],"state"=>1]);
+        $agentrule=[];
+        if($param["type"]==1){
+            $agent=Admin::get($this->user->agent_id);
 
+            $agentrule=[
+                "title"=>"返佣规则",
+                "content"=>$agent["agent_rebate"]??"测试规则"
+            ];
+        }elseif ($param["type"]==2){
+            $item1=[
+                "title"=>"移动充值协议",
+                "content"=>config("'site.ch_yidong'")
+            ];
+            $item2=[
+                "title"=>"联通充值协议",
+                "content"=>config("'site.ch_yidong'")
+            ];
+            $item3=[
+                "title"=>"电信充值协议",
+                "content"=>config("'site.ch_yidong'")
+            ];
+            $item4=[
+                "title"=>"国网充值规则",
+                "content"=>config("'site.ch_guowang'")??"国网充值 概不退费"
+            ];
+            $item5=[
+                "title"=>"南网充值规则",
+                "content"=>config("'site.ch_nanwang'")??"南网充值 不要退费"
+            ];
+            array_push($agentrule,$item1);
+            array_push($agentrule,$item2);
+            array_push($agentrule,$item3);
+            array_push($agentrule,$item4);
+            array_push($agentrule,$item5);
+        }
         $data["data"]=$agentrule;
 
         return \json($data);
@@ -105,7 +255,7 @@ class Users extends Controller
         //此处从控制台获取 代理商设置状态 是否允许签到
         if($this->admin["is_opencheckin"]){
 
-            $checkin=Checkin::get(["user_id"=>$this->user->id])->find();
+            $checkin=Checkin::get(["user_id"=>$this->user->id]);
 
             if(empty($checkin)){
                 $checkin=new Checkin();
@@ -118,9 +268,9 @@ class Users extends Controller
 
                 $userscore=new UserScoreLog();
                 $userscore->user_id=$this->user->id;
-                $userscore->score=$this->admin["checkin_sigleprize"];
+                $userscore->score=$this->checkinscores[0];
                 $userscore->before=$userinfo["score"];
-                $userscore->after=$this->admin["checkin_sigleprize"]+$userinfo["score"];
+                $userscore->after=$this->checkinscores[0]+$userinfo["score"];
                 $userscore->memo="签到";
                 $userscore->createtime=time();
                 $userscore->save();
@@ -133,7 +283,7 @@ class Users extends Controller
                 //判断是否已签到
                 if(!strcmp(date('Y-m-d'),date("Y-m-d",$checkin["checktime"]))){
 
-                    $data['msg']="每天只需签到一次";
+                    $data['msg']="每天只需签到一次".date("Y-m-d");
 
                 }
                 else{
@@ -142,39 +292,50 @@ class Users extends Controller
 
                         $checkin->checktime=time();
                         $checkin->checkdays+=1;
+                        if($checkin->maxcheckdays<$checkin->checkdays)
                         $checkin->maxcheckdays+=1;
 
-                        $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
-
-                        //判断是否周期自定义 默认为7天
-                        $cycledays=7;
-                        if(!empty($this->admin["checkin_cycledays"])){
-                            $cycledays=$this->admin["checkin_cycledays"];
-                        }
-
-                        if($checkin->maxcheckdays==$cycledays){
-                            $checkin->checkdays=0;
-                            $checkin->maxcheckdays=0;
-                            $data['msg']="签到成功 积分+".$this->admin["checkin_conti_prize"];
-                        }
+//                        $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
+//
+//                        //判断是否周期自定义 默认为7天
+//                        $cycledays=7;
+//                        if(!empty($this->admin["checkin_cycledays"])){
+//                            $cycledays=$this->admin["checkin_cycledays"];
+//                        }
+//
+//                        if($checkin->maxcheckdays==$cycledays){
+//                            $checkin->checkdays=0;
+//                            $checkin->maxcheckdays=0;
+//                            $data['msg']="签到成功 积分+".$this->admin["checkin_conti_prize"];
+//                        }
                     }
                     else{
                         $checkin->checkdays=1;
-                        $checkin->maxcheckdays=1;
-                        $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
+                        //$checkin->maxcheckdays=1;
+                      //  $data['msg']="签到成功 积分+".$this->admin["checkin_sigleprize"];
                     }
-                    $checkin->checktime=time();
-                    $checkin->save();
+                    $data['msg']="签到成功 积分+".$this->checkinscores[$checkin->checkdays-1];//$this->admin["checkin_sigleprize"];
+
                     $userscore=new UserScoreLog();
                     $userscore->user_id=$this->user->id;
-                    $userscore->score=$this->admin["checkin_sigleprize"];
+                    $userscore->score=$this->checkinscores[$checkin->checkdays-1];
                     $userscore->before=$userinfo["score"];
-                    $userscore->after=$this->admin["checkin_sigleprize"]+$userinfo["score"];
+                    $userscore->after=$this->checkinscores[$checkin->checkdays-1]+$userinfo["score"];
                     $userscore->memo="签到";
+                    if($checkin->checkdays==7)
+                    {
+                        $userscore->isfullcheckin=1;
+                        $checkin->checkdays=0;
+                    }
+
+
                     $userscore->createtime=time();
                     $userscore->save();
+                    $checkin->checktime=time();
+                    $checkin->save();
                     $userinfo["score"]=$userscore->after;
                     $userinfo->save();
+
 
                 }
 
@@ -182,7 +343,7 @@ class Users extends Controller
         }
         else{
             $data=[
-                'status'=>200,
+                'status'=>400,
                 'data'=>"",
                 'msg'=>'签到异常0X001'
             ];
@@ -205,10 +366,16 @@ class Users extends Controller
 
         $startday=date("Y-m-d",strtotime("-6 day"));
         $today=date("Y-m-d",strtotime("+1 day"));
-        $list = UserScoreLog::where(['user_id'=>$this->user->id,'memo'=>'签到'])->whereTime("createtime",'between',[strtotime($startday),strtotime($today)])->select();
+        $list = UserScoreLog::where(['user_id'=>$this->user->id,'memo'=>'签到'])->whereTime("createtime",'between',[strtotime($startday),strtotime($today)])->order("id","desc")->select();
 
+
+        $isfull=false;
         foreach ($list as $item){
             $datelist[$item["createtime"]]=1;
+            if($item->isfullcheckin && strcmp(date("Y-m-d"),$item->createtime)){
+                $isfull=true;
+            }
+            if($isfull)  $datelist[$item["createtime"]]=0;
         }
         if(empty($param["realdata"])){
             $data['data']=$datelist;
@@ -383,7 +550,7 @@ class Users extends Controller
         if(!empty($currentuser->myinvitecode) && $currentuser->myinvitecode<>'0'){
             $invitedata=[
                 "mycode"=>$currentuser->myinvitecode,
-                "url"=>$currentuser->posterpath//小程序码链接
+                "url"=>urldecode($currentuser->posterpath)//小程序码链接
             ];
             $data["data"]=$invitedata;
             //返回值：邀请码 以及带参小程序码
@@ -393,6 +560,71 @@ class Users extends Controller
             $currentuser->myinvitecode=$this->getinvitecode().substr($currentuser->mobile,-4);
             $currentuser->save();
         }
+
+//        //公众号id
+//        $publicid=db("agent_auth")->where("agent_id",$currentuser->agent_id)->where("auth_type",1)->find();
+//        if(empty($publicid)){
+//            $data["status"]=400;
+//            $data["msg"]="商家尚未配置公众号";
+//            return json($data);
+//        }
+//        else{
+//                   //获取公众号二维码
+//            $url = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=".$this->common->get_authorizer_access_token($publicid["app_id"]);
+//            $content=[
+//            "expire_seconds"=>2592000,
+//            "action_name"=>"QR_STR_SCENE",
+//            "action_info"=>[
+//                "scene"=>[
+//                "scene_str"=>$currentuser->agent_id."-".$currentuser->myinvitecode
+//            ]]
+//            ];
+//            if(!empty($currentuser->coderlimit) && date("Y-m-d",$currentuser->coderlimit)=="2099-12-31")
+//            {
+//                $content=[
+//                    "action_name"=>"QR_LIMIT_STR_SCENE",
+//                    "action_info"=>[
+//                        "scene"=>[
+//                            "scene_str"=>$currentuser->agent_id."-".$currentuser->rootid."-".$currentuser->myinvitecode
+//                        ]]
+//                ];
+//            }
+//
+//            $url=$this->common->httpRequest($url,$content,"POST");
+//            try {
+//                $result = json_decode($url,true);
+//
+//                $currentuser->posterpath=urlencode("https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=".urlencode($result["ticket"]));
+//
+//                $basepath=ROOT_PATH."public";
+//                //此处以年月为分割目录
+//                $midpath=DS."assets".DS."img".DS.\date("Y").DS.\date("m");
+//                $target=$basepath.$midpath;
+//                if(!file_exists($target)){
+//                    mkdir($target,0777,true);
+//                }
+//                $picName=$this->common->getinvitecode(5).$currentuser->myinvitecode.".png";
+//                $picpath=$target.DS.$picName;
+//                file_put_contents($picpath,file_get_contents(urldecode( $currentuser->posterpath)));
+//                $currentuser->posterpath = urlencode($this->request->domain().$midpath.DS.$picName);
+//
+//                if(!empty($result["expire_seconds"]))
+//                $currentuser->coderlimit=time()+$result["expire_seconds"];
+//                $currentuser->save();
+//
+//
+//                $invitedata=[
+//                    "mycode"=>$currentuser->myinvitecode,
+//                    "url"=>urldecode($currentuser->posterpath)//小程序码链接
+//                ];
+//                $invitedata["test"]=$result;
+//            }
+//            catch (Exception $exception){
+//                file_put_contents('xiochengxucode.txt',$exception->getMessage().PHP_EOL.$url.PHP_EOL,FILE_APPEND);
+//            }
+//
+//        }
+
         //获取小程序码
         $url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=".$this->common->get_authorizer_access_token($params["app_id"]);
 
@@ -416,17 +648,17 @@ class Users extends Controller
                 $midpath=DS."assets".DS."img".DS.\date("Y").DS.\date("m");
                 $target=$basepath.$midpath;
                 if(!file_exists($target)){
-                    mkdir($target);
+                    mkdir($target,0777,true);
                 }
                 $picName=$this->common->getinvitecode(5).$currentuser->myinvitecode.".png";
                 $picpath=$target.DS.$picName;
                 file_put_contents($picpath,$url);
 
-                $currentuser->posterpath=$this->request->domain().$midpath.DS.$picName;
+                $currentuser->posterpath=urlencode($this->request->domain().$midpath.DS.$picName);
                 $currentuser->save();
                 $invitedata=[
                     "mycode"=>$currentuser->myinvitecode,
-                    "url"=>$currentuser->posterpath//小程序码链接
+                    "url"=>urldecode($currentuser->posterpath)//小程序码链接
                 ];
             }
             else{
@@ -517,16 +749,49 @@ class Users extends Controller
         ];
         $params=$this->request->param();
         $page=$params["page"]??1;
+        $type=$params["type"]??1;
+        $startdate=date("Y-m-d",strtotime("-1 month"));
+        $enddate=time();
 
+        return $enddate;
         //1、获得用户
         $user_info= \app\web\model\Users::get($this->user->id);
-        $scorelist=$user_info->getcouponlist()->order("id","desc")->page($page,6)->select();
+        if($type==1)
+        $scorelist=$user_info->getcouponlist()->where("state",$type)->order("id","desc")->select();//->page($page,6)->select();
+        else
+        $scorelist=$user_info->getcouponlist()->where("state",$type)->where("createtime","between",[strtotime($startdate),time()])->order("id","desc")->select();//->page($page,6)->select();
         $data["data"]=$scorelist;
 
         return \json($data);
 
     }
 
+
+    //设置(真实姓名 支付宝账号等信息)
+    public function setalinum(){
+        $data=[
+            'status'=>200,
+            'data'=>"",
+            'msg'=>'Success'
+        ];
+        $params=$this->request->param();
+
+        if(empty($params["realname"]) ||empty($params["alinum"])){
+            $data["msg"]="设置信息有误";
+            $data["status"]=400;
+            return json($data);
+        }
+        //1、获取用户余额
+        $userinfo= \app\web\model\Users::get($this->user->id);
+
+        $userinfo->realname=$params["realname"];
+        $userinfo->alipayid=$params["alinum"];
+        $userinfo->save();
+
+        $data["data"]=$params;
+
+        return \json($data);
+    }
 
     //提现(提交 真实姓名 支付宝账号等信息)
     public function cashservice(){
@@ -546,12 +811,13 @@ class Users extends Controller
             return json($data);
         }
         //2、获取商家提现手续费率
-        $rate=0.08;//应该从控制台设置获得
+        $rate=number_format(($agentinfo->service_rate??8)/100,2);//应该从控制台设置获得
 
         $balance=$userinfo->money;
         if($userinfo->money<$params["money"]){
             $data["status"]=400;
-            $data["msg"]="提交信息有误";
+            $data["msg"]="余额不足";
+            return \json($data);
         }
         else{
             if($rate!=$params["servicerate"]){
@@ -562,19 +828,26 @@ class Users extends Controller
             else{
                 $cashservice=new Cashserviceinfo();
                 $cashservice->user_id=$userinfo->id;
+                if(empty($userinfo->rootid))
+                $cashservice->agent_id=$userinfo->agent_id;
+                else
+                    $cashservice->agent_id=$userinfo->rootid;
                 $cashservice->balance=$balance;
                 $cashservice->cashout=$params["money"];
                 $cashservice->servicerate=$rate;
-                $cashservice->actualamount=number_format($params["money"]-$params["money"]*$rate,2);
+                $cashservice->actualamount=bcsub($params["money"],$params["money"]*$rate,2);
                 $cashservice->realname=$params["realname"];
                 $cashservice->aliid=$params["alinum"];
                 $cashservice->state=1;
+                $cashservice->type=1;
                 $cashservice->createtime=time();
                 $cashservice->updatetime=time();
 
                 $cashservice->save();
 
                 $userinfo->money-=$params["money"];
+                $userinfo->realname=$params["realname"];
+                $userinfo->alipayid=$params["alinum"];
                 $userinfo->save();
             }
         }
@@ -592,7 +865,7 @@ class Users extends Controller
         $params=$this->request->param();
         $page=$params["page"]??1;
         $cashserviceinfo=new Cashserviceinfo();
-        $cashlist=$cashserviceinfo->field("balance,cashout,servicerate,actualamount,realname,aliid,state,createtime")->where(["user_id"=>$this->user->id])->order("id","desc")->page($page,$this->page_rows)->select();
+        $cashlist=$cashserviceinfo->field("balance,cashout,servicerate,actualamount,realname,aliid,state,createtime")->where(["user_id"=>$this->user->id])->where("type",'<>',2)->order("id","desc")->page($page,$this->page_rows)->select();
 
 
 
@@ -667,6 +940,7 @@ class Users extends Controller
                     $item["gain_way"]=$coupon_manager["gain_way"];
                     $item["money"]=$coupon_manager["money"];
                     $item["type"]=$coupon_manager["type"];
+                    $item["name"]=$coupon_manager["name"];
                     $item["scene"]=$coupon_manager["scene"];
                     $item["uselimits"]=$coupon_manager["uselimits"];
                     $item["state"]=1;
@@ -674,6 +948,7 @@ class Users extends Controller
                     $item["validdateend"]=strtotime(date("Y-m-d "."23:59:59",strtotime("+".$coupon_manager["limitsday"]."day")));
                     $item["createtime"]=time();
                     $item["updatetime"]=time();
+
                     array_push($couponlistdata,$item);
 
                     $itemag=$item;
@@ -724,7 +999,7 @@ class Users extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
         }
 
-        if ($coupon_info['gain_way']==4){
+        if ($coupon_info['gain_way']==3){
 
         }
         else{
@@ -753,7 +1028,7 @@ class Users extends Controller
             'description'  => '优惠券-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_couponorder_pay',//购买优惠券成功回调
             'amount'       => [
-                'total'    =>(int)bcmul($coupon_info[price],100),
+                'total'    =>(int)bcmul($coupon_info['price'],100),
                 'currency' => 'CNY'
             ],
             'payer'        => [
@@ -810,6 +1085,16 @@ class Users extends Controller
     public function couponbymoney_fast(){
         $param=$this->request->param();
 
+        if(empty($param["coupon_id"])){
+            return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
+        }
+        $user_info= \app\web\model\Users::get($this->user->id);
+
+        if($user_info->uservip==0){
+            return json(['status'=>400,'data'=>'','msg'=>'您尚未开通plus会员']);
+
+        }
+
         $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
 
 
@@ -823,12 +1108,14 @@ class Users extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
         }
 
-        $coupon_info=db('agent_couponmanager')->where('id',$param["coupon_id"])->find();
+//        $coupon_info=db('agent_couponmanager')->find($param["coupon_id"]);
+        $coupon_info=AgentCouponmanager::get($param["coupon_id"]);
+        echo $coupon_info->getLastSql();
         if(empty($coupon_info)){
             return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
         }
         //超值购
-        if($coupon_info['gain_way']!=3){
+        if($coupon_info['gain_way']!=4){
             return json(['status'=>400,'data'=>'','msg'=>'请重新刷新活动']);
         }
         else{
@@ -859,7 +1146,7 @@ class Users extends Controller
             'description'  => '优惠券-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_couponordermf_pay',//购买优惠券成功回调
             'amount'       => [
-                'total'    =>(int)bcmul($coupon_info[price],100),
+                'total'    =>(int)bcmul($coupon_info['price'],100),
                 'currency' => 'CNY'
             ],
             'payer'        => [
@@ -958,7 +1245,7 @@ class Users extends Controller
             'description'  => '优惠券-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_viporder_pay',//购买优惠券成功回调
             'amount'       => [
-                'total'    =>(int)bcmul($vip_info[price],100),
+                'total'    =>(int)bcmul($vip_info['price'],100),
                 'currency' => 'CNY'
             ],
             'payer'        => [
@@ -1033,7 +1320,26 @@ class Users extends Controller
     //海报列表
     public function getposterlist(){
 //        $agent_id=$this->request->param("id");
-        $posters= db("agent_poster")->where("agent_id",$this->user->agent_id)->where("state",1)->select();
+      //  $posters= db("agent_poster")->where("agent_id",$this->user->agent_id)->where("state",1)->select();
+
+        $user=\app\web\model\Users::get($this->user->id);
+        if(empty($user->rootid)){
+            $agent=Admin::get($this->user->agent_id);
+        }
+        else{
+            $agent=Admin::get($user->rootid);
+            if(empty($agent->agent_poster)){
+                $agent=Admin::get($this->user->agent_id);
+            }
+
+
+        }
+        $posters=[
+            [
+                "url"=>$agent->agent_poster
+            ]
+        ];
+
         return json(['status'=>200,'data'=>$posters,'msg'=>"Success"]);
     }
     private function getinvitecode($length=3){
