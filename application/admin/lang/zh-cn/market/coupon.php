@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'Agent_id'           => '代理商id',
+    'Name'               => '优惠券名称',
+    'Gain_way'           => '获得方式',
+    'Gain_way 1'         => '赠送',
+    'Gain_way 2'         => '会员赠送',
+    'Gain_way 3'         => '超值购买',
+    'Gain_way 4'         => '秒杀购买',
+    'Gain_way 5'         => '积分兑换',
+    'Price'              => '用户购买价格',
+    'Money'              => '券面金额 根据定义类型来表示券面意义',
+    'Type'               => '券类型',
+    'Type 1'             => '其他券',
+    'Type 2'             => '额度券',
+    'Score'              => '积分兑换券所需积分',
+    'Scene'              => '使用场景',
+    'Scene 1'            => '满减',
+    'Scene 2'            => '无门槛',
+    'Uselimits'          => '满减时：额度',
+    'State'              => '状态',
+    'State 1'            => '有效',
+    'State 2'            => '已撤销',
+    'Validdate'          => '有效期起始',
+    'Validdateend'       => '有效期截至',
+    'Limitsday'          => '积分兑换有效期默认为30天',
+    'Conpon_group_count' => '一个组内几张券 一般是：1、2',
+    'Couponcount'        => '在一个活动周期内剩余多少张',
+    'Create_time'        => '创建时间',
+    'Updatetime'         => '更新时间',
+    'Deletetime'         => '删除时间'
+];

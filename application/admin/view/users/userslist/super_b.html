@@ -1,0 +1,149 @@
+<form id="super_b-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+  <div class="form-group">
+    <label for="username" class="control-label col-xs-12 col-sm-2">{:__('Username')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="text" class="form-control" id="username" name="row[username]" value="" data-rule="required;username" />
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="email" class="control-label col-xs-12 col-sm-2">{:__('Email')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="email" class="form-control" id="email" name="row[email]" value="" data-rule="required;email" />
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="mobile" class="control-label col-xs-12 col-sm-2">{:__('Mobile')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="text" class="form-control" id="mobile" name="row[mobile]" value="" data-rule="required;mobile" />
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="nickname" class="control-label col-xs-12 col-sm-2">{:__('Nickname')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="text" class="form-control" id="nickname" name="row[nickname]" autocomplete="off" value="" data-rule="required" />
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="password" class="control-label col-xs-12 col-sm-2">{:__('Password')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="password" class="form-control" id="password" name="row[password]" autocomplete="new-password" value="" data-rule="required;password" />
+    </div>
+  </div>
+
+  <div class="form-group"  id="c-agent_shouzhong">
+    <label for="agent_shouzhong" class="control-label col-xs-12 col-sm-2">首重价格￥</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_shouzhong" name="row[agent_shouzhong]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_xuzhong">
+    <label for="agent_xuzhong" class="control-label col-xs-12 col-sm-2">续重价格￥</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_xuzhong" name="row[agent_xuzhong]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_db_ratio">
+    <label for="agent_db_ratio" class="control-label col-xs-12 col-sm-2">德邦增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_db_ratio" name="row[agent_db_ratio]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_sf_ratio">
+    <label for="agent_sf_ratio" class="control-label col-xs-12 col-sm-2">顺丰增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_sf_ratio" name="row[agent_sf_ratio]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_jd_ratio">
+    <label for="agent_jd_ratio" class="control-label col-xs-12 col-sm-2">京东增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_jd_ratio" name="row[agent_jd_ratio]" autocomplete="off" value=""  />
+    </div>
+  </div>
+
+
+  <div class="form-group"  id="c-agent_default_shouzhong">
+    <label for="agent_default_shouzhong" class="control-label col-xs-12 col-sm-2">默认首重价格￥</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_default_shouzhong" name="row[agent_default_shouzhong]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_default_xuzhong">
+    <label for="agent_default_xuzhong" class="control-label col-xs-12 col-sm-2">默认续重价格￥</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_default_xuzhong" name="row[agent_default_xuzhong]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_default_db_ratio">
+    <label for="agent_default_db_ratio" class="control-label col-xs-12 col-sm-2">默认德邦增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_default_db_ratio" name="row[agent_default_db_ratio]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_default_sf_ratio">
+    <label for="agent_default_sf_ratio" class="control-label col-xs-12 col-sm-2">默认顺丰增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_default_sf_ratio" name="row[agent_default_sf_ratio]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_default_jd_ratio">
+    <label for="agent_default_jd_ratio" class="control-label col-xs-12 col-sm-2">默认京东增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_default_jd_ratio" name="row[agent_default_jd_ratio]" autocomplete="off" value=""  />
+    </div>
+  </div>
+
+  <div class="form-group"  id="c-agent_default_tc">
+    <label for="agent_default_tc" class="control-label col-xs-12 col-sm-2">默认同城增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_default_tc" name="row[agent_default_tc]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_default_credit">
+    <label for="agent_default_credit" class="control-label col-xs-12 col-sm-2">默认话费增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_default_credit" name="row[agent_default_credit]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_default_elec">
+    <label for="agent_default_elec" class="control-label col-xs-12 col-sm-2">默认电费增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_default_elec" name="row[agent_default_elec]" autocomplete="off" value=""  />
+    </div>
+  </div>
+
+  <div class="form-group"  id="c-agent_tc">
+    <label for="agent_tc" class="control-label col-xs-12 col-sm-2">同城增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_tc" name="row[agent_tc]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_credit">
+    <label for="agent_credit" class="control-label col-xs-12 col-sm-2">话费增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_credit" name="row[agent_credit]" autocomplete="off" value=""  />
+    </div>
+  </div>
+  <div class="form-group"  id="c-agent_elec">
+    <label for="agent_elec" class="control-label col-xs-12 col-sm-2">电费增加比例%</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="agent_elec" name="row[agent_elec]" autocomplete="off" value=""  />
+    </div>
+  </div>
+
+  <div class="form-group"  id="c-target_orders_count">
+    <label for="target_orders_count" class="control-label col-xs-12 col-sm-2">承诺目标订单数</label>
+    <div class="col-xs-12 col-sm-8">
+      <input type="number" class="form-control" id="target_orders_count" name="row[target_orders_count]" autocomplete="off" value=""  />
+    </div>
+  </div>
+
+  <div class="form-group layer-footer">
+    <label class="control-label col-xs-12 col-sm-2"></label>
+    <div class="col-xs-12 col-sm-8">
+      <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+      <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+    </div>
+  </div>
+</form>

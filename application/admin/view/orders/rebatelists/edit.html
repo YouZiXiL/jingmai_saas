@@ -1,0 +1,148 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('User_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-user_id" data-rule="required" data-source="user/user/index" data-field="nickname" class="form-control selectpage" name="row[user_id]" type="text" value="{$row.user_id|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Invitercode')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-invitercode" class="form-control" name="row[invitercode]" type="text" value="{$row.invitercode|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Fainvitercode')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-fainvitercode" class="form-control" name="row[fainvitercode]" type="text" value="{$row.fainvitercode|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Out_trade_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-out_trade_no" class="form-control" name="row[out_trade_no]" type="text" value="{$row.out_trade_no|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Final_price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-final_price" class="form-control" step="0.01" name="row[final_price]" type="number" value="{$row.final_price|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Root_price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-root_price" class="form-control" step="0.01" name="row[root_price]" type="number" value="{$row.root_price|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Root_defaultprice')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-root_defaultprice" class="form-control" step="0.01" name="row[root_defaultprice]" type="number" value="{$row.root_defaultprice|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Payinback')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-payinback" class="form-control" step="0.01" name="row[payinback]" type="number" value="{$row.payinback|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('State')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            
+            <div class="radio">
+            {foreach name="stateList" item="vo"}
+            <label for="row[state]-{$key}"><input id="row[state]-{$key}" name="row[state]" type="radio" value="{$key}" {in name="key" value="$row.state"}checked{/in} /> {$vo}</label> 
+            {/foreach}
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Rootid')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-rootid" class="form-control" name="row[rootid]" type="number" value="{$row.rootid|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Rebate_amount')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-rebate_amount" class="form-control" step="0.01" name="row[rebate_amount]" type="number" value="{$row.rebate_amount|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Imm_rebate')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-imm_rebate" class="form-control" step="0.01" name="row[imm_rebate]" type="number" value="{$row.imm_rebate|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Mid_rebate')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-mid_rebate" class="form-control" step="0.01" name="row[mid_rebate]" type="number" value="{$row.mid_rebate|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Root_vip_rebate')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-root_vip_rebate" class="form-control" step="0.01" name="row[root_vip_rebate]" type="number" value="{$row.root_vip_rebate|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Root_default_rebate')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-root_default_rebate" class="form-control" step="0.01" name="row[root_default_rebate]" type="number" value="{$row.root_default_rebate|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Cancel_time')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cancel_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[cancel_time]" type="text" value="{:$row.cancel_time?datetime($row.cancel_time):''}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Isimmstate')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            
+            <div class="radio">
+            {foreach name="isimmstateList" item="vo"}
+            <label for="row[isimmstate]-{$key}"><input id="row[isimmstate]-{$key}" name="row[isimmstate]" type="radio" value="{$key}" {in name="key" value="$row.isimmstate"}checked{/in} /> {$vo}</label> 
+            {/foreach}
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Ismidstate')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            
+            <div class="radio">
+            {foreach name="ismidstateList" item="vo"}
+            <label for="row[ismidstate]-{$key}"><input id="row[ismidstate]-{$key}" name="row[ismidstate]" type="radio" value="{$key}" {in name="key" value="$row.ismidstate"}checked{/in} /> {$vo}</label> 
+            {/foreach}
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Isrootstate')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            
+            <div class="radio">
+            {foreach name="isrootstateList" item="vo"}
+            <label for="row[isrootstate]-{$key}"><input id="row[isrootstate]-{$key}" name="row[isrootstate]" type="radio" value="{$key}" {in name="key" value="$row.isrootstate"}checked{/in} /> {$vo}</label> 
+            {/foreach}
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>

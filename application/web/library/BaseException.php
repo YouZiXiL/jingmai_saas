@@ -9,9 +9,9 @@ class BaseException extends Exception
         //默认返回码为200参数错误
         public $code = 200;
         //默认返回信息为参数错误
-        public $msg = '参数错误';
+        public string $msg = '参数错误';
         //默认返回通用错误码
-        public $errorCode = 400;
+        public int $errorCode = 400;
 
         //设计构造函数,方便某些异常类需要传入参数修改
         public function _initialize($params = [])

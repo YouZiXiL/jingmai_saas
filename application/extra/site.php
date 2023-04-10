@@ -1,22 +1,22 @@
 <?php
 
 return array (
-  'name' => '鲸喜物流',
+  'name' => '鲸喜物流测试',
   'beian' => '',
   'cdnurl' => '',
-  'version' => '1.0.51',
+  'version' => '1.0.12',
   'timezone' => 'Asia/Shanghai',
   'forbiddenip' => '',
-  'languages' =>
+  'languages' => 
   array (
     'backend' => 'zh-cn',
     'frontend' => 'zh-cn',
   ),
   'fixedpage' => 'dashboard',
-  'categorytype' =>
+  'categorytype' => 
   array (
   ),
-  'configgroup' =>
+  'configgroup' => 
   array (
     'admin_config' => '后台配置',
     'basic' => '基础配置',
@@ -30,7 +30,7 @@ return array (
   'mail_smtp_pass' => 'password',
   'mail_verify_type' => '2',
   'mail_from' => '10000@qq.com',
-  'attachmentcategory' =>
+  'attachmentcategory' => 
   array (
     'category1' => '分类一',
   ),
@@ -69,10 +69,10 @@ ASt4V0K4Pn6cd84Eq0qxH2BbSg==
   'wx_serial_no' => '5FA1D425A92B03D0403B48A34AE26735302415D2',
   'encoding_aeskey' => 'gDNK4hgQq91JDI1rQSbXyRalQnW2NQQ4dbv8oGfCC1m',
   'kaifang_token' => '8b27cd8753acdecaef92213070f1f9c1',
-  'kaifang_appid' => 'wxcad4590000569828',
-  'kaifang_appsecret' => 'e463fa12fcc38d03cad893407e6889e4',
-  'yy_appid' => 'F553A7BAA2F14B57922A96481B442D81',
-  'yy_secret_key' => 'd640e956-cc04-46da-ab24-221d03d42619',
+  'kaifang_appid' => 'wx29b33310b40315cb',
+  'kaifang_appsecret' => '494d74079fa3f24766e5be63f8e61ff5',
+  'yy_appid' => 'F3CAA400D0B5414EBAF22F31013E2C05',
+  'yy_secret_key' => '18a3a223-31b5-4b8e-b976-6ce262c974ac',
   'kuaidi100_userid' => '6e5ed77e88174a58be2da359758b7aae',
   'kuaidi100_secret' => 'befef7cacb6d4fb5971921e3b3118afd',
   'kuaidi100_customer' => '829C2CD115E3A4682E2989592853D049',
@@ -80,8 +80,7 @@ ASt4V0K4Pn6cd84Eq0qxH2BbSg==
   'api_space_token' => 'ypq3zfse6kt4l8dnh5ltscm4z8hazsfy',
   'kdzs_appkey' => '937CF7748D3A4B99BB9EB643F1EAA504',
   'kdzs_secret' => '041FD21A6B014580A0ACEA0E05E5019B',
-    'shunfeng_appid'=>'CCAVFR',
-    'shunfeng_secret_key'=>'a58c7859da198a762152a35107594182',
-    'openrecharge'=>'1',//1、关闭空中充值 2、开启空中充值 若使用此处配置 则不再使用数据库表中的字段
-  'site_url' => 'https://jingxi.bajiehuidi.com',
+  'ch_yidong' => '<p>你好</p><p>你在干嘛<br></p>',
+  'ch_liantong' => '2',
+  'ch_dianxin' => '3',
 );
