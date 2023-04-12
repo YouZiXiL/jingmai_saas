@@ -717,7 +717,11 @@ class Users extends Controller
             else{
 
 //                return \json($couponinfo);
-
+                if(time()>$couponinfo["validdateend"]){
+                    $data["msg"]="券码已失效";
+                    $data["status"]=400;
+                    return \json($data);
+                }
                 $usercoupon=new Couponlist();
                 $usercoupon->papercode=$couponinfo["papercode"];
                 $usercoupon->user_id=$this->user->id;
@@ -897,6 +901,14 @@ class Users extends Controller
         }
         $user_info= \app\web\model\Users::get($this->user->id);
         $coupon_manager=AgentCouponmanager::get($params["couponid"]);
+        $startdate=date("Y-m");
+        $enddate=date("Y-m-t "."23:59:59");
+        $userscore=UserScoreLog::where("user_id",$this->user->id)->whereTime("createtime",'between',[strtotime($startdate),strtotime($enddate)])->count();
+        if($userscore>0){
+            $data['msg']='本月已兑换';
+            $data['status']=400;
+            return \json($data);
+        }
         if( $user_info->score<$params["score"]){
             $data["msg"]="积分不足";
             $data["status"]=400;
@@ -1011,7 +1023,7 @@ class Users extends Controller
             'user_id'=>$this->user->id,
             'agent_id'=>$this->user->agent_id,
             'coupon_id'=>$param["coupon_id"],
-
+            'out_trade_no'=>$out_trade_no,
             'price'=>$coupon_info['price'],
             'wx_mchid'=>$agent_info['wx_mchid'],
             'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
@@ -1129,7 +1141,7 @@ class Users extends Controller
             'user_id'=>$this->user->id,
             'agent_id'=>$this->user->agent_id,
             'coupon_id'=>$param["coupon_id"],
-
+            'out_trade_no'=>$out_trade_no,
             'price'=>$coupon_info['price'],
             'wx_mchid'=>$agent_info['wx_mchid'],
             'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
@@ -1219,18 +1231,18 @@ class Users extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
         }
 
-        $vip_info=db('agent_vipmanager')->where('id',$param["vip_id"])->find();
-        if(empty($vip_info)){
-            return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
-        }
+//        $vip_info=db('agent_vipmanager')->where('id',$param["vip_id"])->find();
+//        if(empty($vip_info)){
+//            return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
+//        }
 
         $out_trade_no='HY'.$this->common->get_uniqid();
         $data=[
             'user_id'=>$this->user->id,
             'agent_id'=>$this->user->agent_id,
             'vip_id'=>$param["vip_id"],
-
-            'price'=>$vip_info['price'],
+            'out_trade_no'=>$out_trade_no,
+            'price'=>$agent_info['vipprice'],
             'wx_mchid'=>$agent_info['wx_mchid'],
             'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
             'pay_status'=>0,
@@ -1245,7 +1257,7 @@ class Users extends Controller
             'description'  => '优惠券-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_viporder_pay',//购买优惠券成功回调
             'amount'       => [
-                'total'    =>(int)bcmul($vip_info['price'],100),
+                'total'    =>(int)bcmul($agent_info['vipprice'],100),
                 'currency' => 'CNY'
             ],
             'payer'        => [
@@ -1311,7 +1323,20 @@ class Users extends Controller
     public function getagentviplist(){
 
 
-        $couponlist = db("agent_vipmanager")->where("agent_id",$this->user->agent_id)->where("state",1)->select();
+        $couponlist = [];//db("agent_vipmanager")->where("agent_id",$this->user->agent_id)->where("state",1)->select();
+        $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
+        $item=[
+            "id"=>1,
+            "agent_id"=>$this->user->agent_id,
+            "gain_way"=>1,
+            "price"=>$agent_info["vipprice"]??15,
+            "state"=>"1",
+            "validtype"=>1,
+            "createtime"=>1681269332,
+            "updatetime"=>1681269332
+        ];
+        array_push($couponlist,$item);
+
 
         return \json(['status'=>200,'data'=>$couponlist,'msg'=>'success']);
 

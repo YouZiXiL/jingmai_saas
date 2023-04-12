@@ -2917,7 +2917,7 @@ class Wxcallback extends Controller
             $item["uselimits"]=$coupon_manager["uselimits"];
             $item["state"]=1;
             $item["validdate"]=strtotime(date("Y-m-d"));
-            $item["validdateend"]=strtotime(date("Y-m-d "."23:59:59",strtotime("+".$coupon_manager["limitsday"]."day")));
+            $item["validdateend"]=strtotime("2099-12-31 23:59:59");
             $item["createtime"]=time();
             $item["updatetime"]=time();
             array_push($couponlistdata,$item);
