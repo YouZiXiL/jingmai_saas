@@ -1316,6 +1316,12 @@ class Users extends Controller
         $couponmanager = new AgentCouponmanager();
         $couponlist = $couponmanager->where("agent_id",$this->user->agent_id)->where("state",1)->where("couponcount",">",0)->select();
 
+        $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
+        if(count($couponlist)>0){
+            foreach ($couponlist as $coupon ){
+                $coupon['total']=$agent_info["couponcount"]??2000;
+            }
+        }
         return \json(['status'=>200,'data'=>$couponlist,'msg'=>'success']);
 
     }
