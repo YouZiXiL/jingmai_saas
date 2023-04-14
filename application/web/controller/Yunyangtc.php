@@ -78,7 +78,7 @@ class Yunyangtc extends Controller
                 ]);
                 $data=[
                     'status'=>200,
-                    'data'=>'',
+                    'data'=>['id'=>$param['id']],
                     'msg'=>'编辑成功'
                 ];
             }else{
@@ -204,6 +204,9 @@ class Yunyangtc extends Controller
             if (empty($jijian_address)||empty($shoujian_address)){
                 throw new Exception('收件或寄件信息错误');
             }
+            if ($jijian_address['city']!=$shoujian_address['city']){
+                return json(['status'=>400,'data'=>'','msg'=>"请选择同城地址"]);
+            }
             $content=[
                 "sender"=> $jijian_address['name'],
                 "senderMobile"=>$jijian_address['mobile'],
@@ -215,8 +218,8 @@ class Yunyangtc extends Controller
                 "weight"=>$param['weight'],
                 "senderLat"=>$jijian_address["lat"],
                 "senderLng"=>$jijian_address["lng"],
-                "receiveLat"=>$jijian_address["lat"],
-                "receiveLgt"=>$jijian_address["lng"],
+                "receiveLat"=>$shoujian_address["lat"],
+                "receiveLgt"=>$shoujian_address["lng"],
 
             ];
             !empty($param['insured']) &&($content['insured'] = $param['insured']);
@@ -464,6 +467,9 @@ class Yunyangtc extends Controller
         if ($row['pay_status']!=1){
             return json(['status'=>400,'data'=>'','msg'=>'此订单已取消']);
         }
+        if (!empty($row['cancel_time'])){
+            return json(['status'=>400,'data'=>'','msg'=>'订单处理中...']);
+        }
         $content=[
             'shopbill'=>$row['shopbill']
         ];
@@ -471,7 +477,7 @@ class Yunyangtc extends Controller
         if ($res['code']!=1){
             return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
         }
-        db('orders')->where('id',$id)->where('user_id',$this->user->id)->update(['cancel_time'=>time()]);
+        db('orders')->where('id',$id)->where('user_id',$this->user->id)->update(['cancel_time'=>time(),"order_status"=>"处理中"]);
         if (!empty($agent_info['wx_im_bot'])&&$row['weight']>=2){
             $this->common->wxim_bot($agent_info['wx_im_bot'],$row);
         }

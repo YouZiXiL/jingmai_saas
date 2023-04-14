@@ -9,6 +9,7 @@ use app\web\model\Agent_couponlist;
 use app\web\model\AgentCouponmanager;
 use app\web\model\Couponlist;
 use app\web\model\Rebatelist;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use think\Controller;
 use think\Exception;
 use think\Log;
@@ -370,7 +371,14 @@ class Wxcallback extends Controller
                         $data["rootid"]=$users["rootid"];
                         $superB=db("admin")->find($users["rootid"]);
                         //计算 超级B 价格
-                        if ($orders['tag_type']=='德邦'||$orders['tag_type']=='德邦重货'){
+                        if ($orders['tag_type']=='顺丰'){
+                            $agent_price=$orders['freight']+$orders['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
+                            $agent_default_price=$orders['freight']+$orders['freight']*$agent_info['agent_default_sf_ratio']/100;//代理商价格
+
+                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                        }
+                        elseif ($orders['tag_type']=='德邦'||$orders['tag_type']=='德邦重货'){
 
                             $agent_price=$orders['freight']+$orders['freight']*$superB['agent_db_ratio']/100;// 超级B 达标价格
                             $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_db_ratio']/100;//超级B 默认价格
@@ -1966,7 +1974,7 @@ class Wxcallback extends Controller
             if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
                 throw new Exception('未支付');
             }
-            $orders=db('refilllist')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            $orders=db('refilllist')->where('out_trade_num',$inBodyResourceArray['out_trade_no'])->find();
             if(!$orders){
                 throw new Exception('找不到指定订单');
             }
@@ -1986,14 +1994,14 @@ class Wxcallback extends Controller
             $isopenrecharge=config('site.openrecharge')??1;
             $users=db('users')->where('id',$orders['user_id'])->find();
 //            $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
-            $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+            $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_num']]);
             if(empty($rebatelist)){
                 $rebatelist=new Rebatelist();
                 $data=[
                     "user_id"=>$users["id"],
                     "invitercode"=>$users["invitercode"],
                     "fainvitercode"=>$users["fainvitercode"],
-                    "out_trade_no"=>$orders["out_trade_no"],
+                    "out_trade_no"=>$orders["out_trade_num"],
                     "final_price"=>$orders["final_price"],//保价费用不参与返佣和分润
                     "payinback"=>0,
                     "state"=>1,
@@ -2092,6 +2100,8 @@ class Wxcallback extends Controller
 
             exit('success');
         }catch (\Exception $e){
+            file_put_contents('wx_hforder_pay.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
+
             exit('fail');
         }
     }
@@ -2134,7 +2144,7 @@ class Wxcallback extends Controller
             if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
                 throw new Exception('未支付');
             }
-            $orders=db('refilllist')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            $orders=db('refilllist')->where('out_trade_num',$inBodyResourceArray['out_trade_no'])->find();
             if(!$orders){
                 throw new Exception('找不到指定订单');
             }
@@ -2157,14 +2167,14 @@ class Wxcallback extends Controller
             ];
 
             $users=db('users')->where('id',$orders['user_id'])->find();
-            $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+            $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_num']]);
             if(empty($rebatelist)){
                 $rebatelist=new Rebatelist();
                 $data=[
                     "user_id"=>$users["id"],
                     "invitercode"=>$users["invitercode"],
                     "fainvitercode"=>$users["fainvitercode"],
-                    "out_trade_no"=>$orders["out_trade_no"],
+                    "out_trade_no"=>$orders["out_trade_num"],
                     "final_price"=>$orders["final_price"],//保价费用不参与返佣和分润
                     "payinback"=>0,
                     "state"=>1,
@@ -2304,7 +2314,7 @@ class Wxcallback extends Controller
             if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
                 throw new Exception('未支付');
             }
-            $orders=db('refilllist')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            $orders=db('refilllist')->where('out_trade_num',$inBodyResourceArray['out_trade_no'])->find();
             if(!$orders){
                 throw new Exception('找不到指定订单');
             }
@@ -2451,7 +2461,7 @@ class Wxcallback extends Controller
                 "receiveName"=>$orders['receiver'],
                 "goods"=>$orders['item_name'],
                 "packageNum"=>$orders['package_count'],
-                'weight'=>$orders['weight'],
+                'weight'=>ceil($orders['weight']),
                 "payMethod"=>3,
                 "thirdOrderNo"=>$orders["out_trade_no"]
             ];
@@ -2595,6 +2605,7 @@ class Wxcallback extends Controller
         }
         else{
             try {
+
                 // 返回参数
                 $data=[
                     'thirdOrderNo'=>$params['thirdOrderNo'],
@@ -2634,8 +2645,8 @@ class Wxcallback extends Controller
                     if(!empty($users["rootid"])){
                         $data["rootid"]=$users["rootid"];
                         $superB=db("admin")->find($users["rootid"]);
-                        $agent_price=$orders["originalFee"] *( $data['final_price']/$orders["originalFee"]+$superB["agent_sf_ratio"]/100);
-                        $agent_default_price=$orders["originalFee"] *( $data['final_price']/$orders["originalFee"]+$superB["agent_default_sf_ratio"]/100);
+                        $agent_price=$orders["originalFee"] *( $data['final_price']/$orders["originalFee"]+$superB["sf_agent_ratio"]/100);
+                        $agent_default_price=$orders["originalFee"] *( $data['final_price']/$orders["originalFee"]+$superB["sf_agent_default_ratio"]/100);
                         $data["root_price"]=number_format($agent_price,2);
                         $data["root_defaultprice"]=number_format($agent_default_price,2);
 
@@ -2663,9 +2674,9 @@ class Wxcallback extends Controller
                 $rebatelistdata=[
                     "updatetime"=>time()
                 ];
-                $updatedata=[];
+                $up_data=[];
                 if($params["pushType"]==1){
-                    $updatedata=[
+                    $up_data=[
                         "order_status"=>$params["data"]["status"]."-".$params["data"]["desc"]
                     ];
 
@@ -2735,6 +2746,14 @@ class Wxcallback extends Controller
                         $rebatelistdata["state"]=3;
 
                         $rebatelistdata["cancel_time"]=time();
+                        $up_data['cancel_time']=time();
+
+                        $data = [
+                            'type'=>4,
+                            'order_id' => $orders['id'],
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
                     }
 
                 }
@@ -2779,14 +2798,14 @@ class Wxcallback extends Controller
 
                             $up_data['tralight_status']=1;
                             $up_data['final_weight_time']=time();
-                            $up_data['tralight_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
-                            $up_data['agent_tralight_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100),2);
+                            $up_data['tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
+                            $up_data['agent_tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);
 
                             $rebatelistdata["payinback"]=-$up_data['tralight_price'];
 
                             if(!empty($users["rootid"])){
-                                $root_tralight_amt=$tralight_weight*($dicount+$agent_info["agent_sf_ratio"]/100);
-                                $root_default_tralight_amt=$tralight_weight*($dicount+$agent_info["agent_default_sf_ratio"]/100);
+                                $root_tralight_amt=$tralight_weight*($dicount+$agent_info["sf_agent_ratio"]/100);
+                                $root_default_tralight_amt=$tralight_weight*($dicount+$agent_info["sf_agent_default_ratio"]/100);
 
                                 $rebatelistdata["root_price"]=number_format($rebatelist->root_price-$root_tralight_amt,2);
                                 $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice-$root_default_tralight_amt,2);
@@ -2817,8 +2836,8 @@ class Wxcallback extends Controller
                         $dicount=number_format($orders["freight"]/$orders['originalFee'],2);
 
 
-                        $up_data['overload_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);//用户超重金额
-                        $up_data['agent_overload_price']=number_format($weightprice*($dicount+$agent_info["agent_sf_ratio"]/100),2);//代理商超重金额
+                        $up_data['overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);//用户超重金额
+                        $up_data['agent_overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);//代理商超重金额
                         $data = [
                             'type'=>1,
                             'agent_overload_amt' =>$up_data['agent_overload_price'],
@@ -2831,8 +2850,8 @@ class Wxcallback extends Controller
                         ];
 
                         if(!empty($users["rootid"])){
-                            $root_tralight_amt=$weightprice*($dicount+$agent_info["agent_sf_ratio"]/100);
-                            $root_default_tralight_amt=$weightprice*($dicount+$agent_info["agent_default_sf_ratio"]/100);
+                            $root_tralight_amt=$weightprice*($dicount+$agent_info["sf_agent_ratio"]/100);
+                            $root_default_tralight_amt=$weightprice*($dicount+$agent_info["sf_agent_default_ratio"]/100);
 
                             $rebatelistdata["root_price"]=number_format($rebatelist->root_price+$root_tralight_amt,2);
                             $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice+$root_default_tralight_amt,2);
@@ -2862,10 +2881,11 @@ class Wxcallback extends Controller
                     $up_data['waybill']=$params["data"]['newWaybillNo'];
                 }
                 $rebatelist->save($rebatelistdata);
-                db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
+                db('orders')->where('waybill',$params['waybillNo'])->update($up_data);
                 exit("SUCCESS");
             }
             catch (Exception $exception){
+                file_put_contents('q_callback.txt',$exception->getMessage().PHP_EOL.json_encode($params).PHP_EOL,FILE_APPEND);
                 exit("fail");
             }
         }
@@ -2897,7 +2917,7 @@ class Wxcallback extends Controller
             $item["uselimits"]=$coupon_manager["uselimits"];
             $item["state"]=1;
             $item["validdate"]=strtotime(date("Y-m-d"));
-            $item["validdateend"]=strtotime(date("Y-m-d "."23:59:59",strtotime("+".$coupon_manager["limitsday"]."day")));
+            $item["validdateend"]=strtotime("2099-12-31 23:59:59");
             $item["createtime"]=time();
             $item["updatetime"]=time();
             array_push($couponlistdata,$item);
