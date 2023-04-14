@@ -237,6 +237,22 @@ class Users extends Controller
             array_push($agentrule,$item4);
             array_push($agentrule,$item5);
         }
+        elseif($param["type"]==3){
+            $agent=Admin::get($this->user->agent_id);
+
+            $agentrule=[
+                "title"=>"寄件服务协议",
+                "content"=>$agent["package_rule"]??"寄快递 找我 就便宜"
+            ];
+        }
+        elseif($param["type"]==4){
+            $agent=Admin::get($this->user->agent_id);
+
+            $agentrule=[
+                "title"=>"隐私服务协议",
+                "content"=>$agent["package_rule"]??"我们尊重你的隐私"
+            ];
+        }
         $data["data"]=$agentrule;
 
         return \json($data);
@@ -1095,6 +1111,15 @@ class Users extends Controller
 
     //秒杀购买优惠券
     public function couponbymoney_fast(){
+
+        $date=date("D");
+        if($date=='Wed'){
+            $hour=date("H");
+            if($hour<10){
+                return json(['status'=>400,'data'=>'','msg'=>'每周三10点开抢']);
+            }
+        }
+
         $param=$this->request->param();
 
         if(empty($param["coupon_id"])){

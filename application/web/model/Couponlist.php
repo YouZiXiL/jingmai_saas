@@ -3,6 +3,7 @@
 namespace app\web\model;
 
 use think\Model;
+use function GuzzleHttp\Psr7\str;
 
 class Couponlist extends Model
 {
@@ -15,6 +16,15 @@ class Couponlist extends Model
     {
         $data=["打折券","额度券"];
         return $data[$value-1];
+    }
+    public function getMoneyAttr($value)
+    {
+        $temp=strval($value);
+        if(str_ends_with($temp,".00")){
+            $temp=str_replace(".00","",$temp);
+        }
+        $value=floatval($temp);
+        return $value;
     }
     public function getSceneAttr($value)
     {
