@@ -35,7 +35,21 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'create_time', title: __('Create_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'login_time', title: __('Login_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'wxauthinfo.name', title: __('归属账号'), operate: false},
-                        {field: 'operate', title: __('Operate'), table: table,events: Table.api.events.operate, formatter: Table.api.formatter.operate}
+                        {field: 'score', title: __('Score'), operate: false},
+                        {field: 'uservip', title: __('Uservip'), operate: false,searchList: {"0":__('Uservip 0'),"2":__('Uservip 2')}, formatter: Table.api.formatter.normal},
+                        {field: 'operate', title: __('Operate'),buttons: [
+                                {
+                                    name: 'super',
+                                    title: __('成为超级B'),
+                                    text: __('成为超级B'),
+                                    classname: 'btn btn-xs btn-primary btn-dialog',
+                                    icon: 'fa fa-superpowers',
+                                    url: 'users/userslist/super',
+                                    visible: function (row) {
+                                        return row.rootid === 0;
+                                    }
+                                },
+                            ], table: table,events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
                 ]
             });
@@ -47,6 +61,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Controller.api.bindevent();
         },
         edit: function () {
+            Controller.api.bindevent();
+        },
+        super: function () {
             Controller.api.bindevent();
         },
         api: {

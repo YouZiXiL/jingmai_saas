@@ -60,7 +60,11 @@ class Admin extends Backend
 //        }
         $group=new AuthGroup();
         $result=collection($group->field('id,name')->select())->toArray();
+
         foreach ($result as $k => $v) {
+            if ($v['id']==1||$v['id']==11){
+                continue;
+            }
             $groupdata[$v['id']] = $v['name'];
         }
         $this->view->assign('groupdata', $groupdata);

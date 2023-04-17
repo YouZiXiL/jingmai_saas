@@ -1,0 +1,48 @@
+<form id="poster-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+
+
+  <div class="form-group {:$auth->check('market/poster/agent_poster')?'':'hide'}">
+    <label for="c-agent_poster" class="control-label col-xs-12 col-sm-2">海报配置:</label>
+    <div class="col-xs-12 col-sm-8">
+      <div class="input-group">
+        <input id="c-agent_poster" data-rule="" class="form-control" size="50" name="row[agent_poster]" type="text" value="{$row.agent_poster}">
+        <div class="input-group-addon no-border no-padding">
+          <span><button type="button" id="faupload-agent_poster" class="btn btn-danger faupload" data-input-id="c-agent_poster" data-mimetype="image/gif,image/jpeg,image/png,image/jpg,image/bmp" data-multiple="false" data-preview-id="p-agent_poster"><i class="fa fa-upload"></i> {:__('Upload')}</button></span>
+        </div>
+        <span class="msg-box n-right" for="c-agent_poster"></span>
+      </div>
+      <ul class="row list-inline faupload-preview" id="p-agent_poster"></ul>
+    </div>
+  </div>
+
+  <div class="form-group {:$auth->check('market/poster/ratemoney')?'':'hide'}">
+    <label for="ratemoney" class="control-label col-xs-12 col-sm-2">可提现余额:</label>
+    <div class="col-xs-12 col-sm-4 ">
+      <input type="text" readonly="readonly" class="form-control" id="ratemoney" autocomplete="off" value="{$row.ratemoney}"  />
+    </div>
+  </div>
+
+  <div class="form-group {:$auth->check('market/poster/defaltamoount')?'':'hide'}">
+    <label for="defaltamoount " class="control-label col-xs-12 col-sm-2">默认分润:</label>
+    <div class="col-xs-12 col-sm-4 ">
+      <input type="text" readonly="readonly" class="form-control" id="defaltamoount " autocomplete="off" value="{$row.defaltamoount }"  />
+    </div>
+  </div>
+
+  <div class="form-group {:$auth->check('market/poster/vipamoount')?'':'hide'}">
+    <label for="vipamoount" class="control-label col-xs-12 col-sm-2">达标后的分润:</label>
+    <div class="col-xs-12 col-sm-4 ">
+      <input type="text" readonly="readonly" class="form-control" id="vipamoount" autocomplete="off" value="{$row.vipamoount}"  />
+    </div>
+  </div>
+
+
+  <div class="form-group layer-footer">
+    <label class="control-label col-xs-12 col-sm-2"></label>
+    <div class="col-xs-12 col-sm-8">
+      <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+      <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+    </div>
+  </div>
+</form>

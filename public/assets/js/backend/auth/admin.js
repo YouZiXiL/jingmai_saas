@@ -52,7 +52,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Table.api.bindevent(table);
         },
         add: function () {
-            $(".selectpicker").change(function(){
+            function switchSelect(){
                 var selectpicker=$(".selectpicker").val();
                 if (selectpicker==='2'){
                     $('#c-agent_shouzhong').css('display','');
@@ -60,19 +60,39 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     $('#c-agent_db_ratio').css('display','');
                     $('#c-agent_sf_ratio').css('display','');
                     $('#c-agent_jd_ratio').css('display','');
+
+                    $('#c-agent_elec').css('display','');
+                    $('#c-agent_credit').css('display','');
+                    $('#c-agent_gas').css('display','');
+                    $('#c-agent_water').css('display','');
+                    $('#c-agent_tc').css('display','');
+                    $('#c-sf_agent_ratio').css('display','');
                 }else {
                     $('#c-agent_shouzhong').css('display','none');
                     $('#c-agent_xuzhong').css('display','none');
                     $('#c-agent_db_ratio').css('display','none');
                     $('#c-agent_sf_ratio').css('display','none');
                     $('#c-agent_jd_ratio').css('display','none');
+
+                    $('#c-agent_elec').css('display','none');
+                    $('#c-agent_credit').css('display','none');
+                    $('#c-agent_gas').css('display','none');
+                    $('#c-agent_water').css('display','none');
+                    $('#c-agent_tc').css('display','none');
+                    $('#c-sf_agent_ratio').css('display','none');
                 }
+            }
+            switchSelect();
+
+            $(".selectpicker").change(function(){
+                switchSelect();
             });
             Form.api.bindevent($("form[role=form]"));
         },
         edit: function () {
             Form.api.bindevent($("form[role=form]"));
-        }
+        },
+
     };
     return Controller;
 });

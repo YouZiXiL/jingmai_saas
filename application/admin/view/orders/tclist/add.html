@@ -1,0 +1,520 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('User_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-user_id" data-rule="required" data-source="user/user/index" data-field="nickname" class="form-control selectpage" name="row[user_id]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_id" data-rule="required" data-source="agent/index" class="form-control selectpage" name="row[agent_id]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Insert_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-insert_id" data-rule="required" data-source="insert/index" class="form-control selectpage" name="row[insert_id]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Channel_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-channel_id" data-rule="required" data-source="channel/index" class="form-control selectpage" name="row[channel_id]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Channel_tag')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-channel_tag" class="form-control" data-role="tagsinput" name="row[channel_tag]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Channel')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-channel" class="form-control" name="row[channel]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Tag_type')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-tag_type" class="form-control" name="row[tag_type]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Waybill')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-waybill" class="form-control" name="row[waybill]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Out_trade_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-out_trade_no" class="form-control" name="row[out_trade_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Shopbill')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-shopbill" class="form-control" name="row[shopbill]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Sender')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-sender" class="form-control" name="row[sender]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Sender_mobile')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-sender_mobile" class="form-control" name="row[sender_mobile]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Sender_province')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-sender_province" class="form-control" name="row[sender_province]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Sender_city')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class='control-relative'><input id="c-sender_city" class="form-control" data-toggle="city-picker" name="row[sender_city]" type="text"></div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Sender_county')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-sender_county" class="form-control" name="row[sender_county]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Sender_location')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-sender_location" class="form-control" name="row[sender_location]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Sender_address')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-sender_address" class="form-control" name="row[sender_address]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Receiver')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-receiver" class="form-control" name="row[receiver]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Receiver_mobile')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-receiver_mobile" class="form-control" name="row[receiver_mobile]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Receive_province')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-receive_province" class="form-control" name="row[receive_province]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Receive_city')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class='control-relative'><input id="c-receive_city" class="form-control" data-toggle="city-picker" name="row[receive_city]" type="text"></div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Receive_county')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-receive_county" class="form-control" name="row[receive_county]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Receive_location')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-receive_location" class="form-control" name="row[receive_location]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Receive_address')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-receive_address" class="form-control" name="row[receive_address]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Weight')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-weight" class="form-control" step="0.01" name="row[weight]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Package_count')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-package_count" class="form-control" name="row[package_count]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Item_name')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-item_name" class="form-control" name="row[item_name]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Insured')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-insured" class="form-control" name="row[insured]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Insured_price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-insured_price" class="form-control" step="0.01" name="row[insured_price]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Bill_remark')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-bill_remark" class="form-control" name="row[bill_remark]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Vloum_long')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-vloum_long" class="form-control" name="row[vloum_long]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Vloum_width')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-vloum_width" class="form-control" name="row[vloum_width]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Vloum_height')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-vloum_height" class="form-control" name="row[vloum_height]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Pay_status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            
+            <div class="radio">
+            {foreach name="payStatusList" item="vo"}
+            <label for="row[pay_status]-{$key}"><input id="row[pay_status]-{$key}" name="row[pay_status]" type="radio" value="{$key}" {in name="key" value="0"}checked{/in} /> {$vo}</label> 
+            {/foreach}
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Order_status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-order_status" class="form-control" name="row[order_status]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Overload_status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            
+            <div class="radio">
+            {foreach name="overloadStatusList" item="vo"}
+            <label for="row[overload_status]-{$key}"><input id="row[overload_status]-{$key}" name="row[overload_status]" type="radio" value="{$key}" {in name="key" value="0"}checked{/in} /> {$vo}</label> 
+            {/foreach}
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Consume_status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            
+            <div class="radio">
+            {foreach name="consumeStatusList" item="vo"}
+            <label for="row[consume_status]-{$key}"><input id="row[consume_status]-{$key}" name="row[consume_status]" type="radio" value="{$key}" {in name="key" value="0"}checked{/in} /> {$vo}</label> 
+            {/foreach}
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Tralight_status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            
+            <div class="radio">
+            {foreach name="tralightStatusList" item="vo"}
+            <label for="row[tralight_status]-{$key}"><input id="row[tralight_status]-{$key}" name="row[tralight_status]" type="radio" value="{$key}" {in name="key" value="0"}checked{/in} /> {$vo}</label> 
+            {/foreach}
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Final_price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-final_price" class="form-control" step="0.01" name="row[final_price]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Freight')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-freight" class="form-control" step="0.01" name="row[freight]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Final_freight')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-final_freight" class="form-control" step="0.01" name="row[final_freight]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Final_weight')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-final_weight" class="form-control" step="0.01" name="row[final_weight]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Haocai_freight')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-haocai_freight" class="form-control" step="0.01" name="row[haocai_freight]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Admin_shouzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-admin_shouzhong" class="form-control" step="0.01" name="row[admin_shouzhong]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Admin_xuzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-admin_xuzhong" class="form-control" step="0.01" name="row[admin_xuzhong]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_shouzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_shouzhong" class="form-control" step="0.01" name="row[agent_shouzhong]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_xuzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_xuzhong" class="form-control" step="0.01" name="row[agent_xuzhong]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Users_shouzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-users_shouzhong" class="form-control" step="0.01" name="row[users_shouzhong]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Users_xuzhong')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-users_xuzhong" class="form-control" step="0.01" name="row[users_xuzhong]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_price" class="form-control" step="0.01" name="row[agent_price]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Overload_price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-overload_price" class="form-control" step="0.01" name="row[overload_price]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_overload_price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_overload_price" class="form-control" step="0.01" name="row[agent_overload_price]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Tralight_price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-tralight_price" class="form-control" step="0.01" name="row[tralight_price]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Agent_tralight_price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-agent_tralight_price" class="form-control" step="0.01" name="row[agent_tralight_price]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Comments')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-comments" class="form-control" name="row[comments]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Item_pic')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-item_pic" class="form-control" name="row[item_pic]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_out_trade_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-wx_out_trade_no" class="form-control" name="row[wx_out_trade_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_mchid')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-wx_mchid" class="form-control" name="row[wx_mchid]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_mchcertificateserial')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-wx_mchcertificateserial" class="form-control" name="row[wx_mchcertificateserial]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Cz_mchid')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cz_mchid" class="form-control" name="row[cz_mchid]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Hc_mchid')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-hc_mchid" class="form-control" name="row[hc_mchid]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Cz_mchcertificateserial')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cz_mchcertificateserial" class="form-control" name="row[cz_mchcertificateserial]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Hc_mchcertificateserial')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-hc_mchcertificateserial" class="form-control" name="row[hc_mchcertificateserial]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Out_refund_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-out_refund_no" class="form-control" name="row[out_refund_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Out_overload_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-out_overload_no" class="form-control" name="row[out_overload_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_out_overload_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-wx_out_overload_no" class="form-control" name="row[wx_out_overload_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Out_overload_refund_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-out_overload_refund_no" class="form-control" name="row[out_overload_refund_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Out_haocai_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-out_haocai_no" class="form-control" name="row[out_haocai_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Wx_out_haocai_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-wx_out_haocai_no" class="form-control" name="row[wx_out_haocai_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Out_haocai_refund_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-out_haocai_refund_no" class="form-control" name="row[out_haocai_refund_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Out_tralight_no')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-out_tralight_no" class="form-control" name="row[out_tralight_no]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Yy_fail_reason')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-yy_fail_reason" class="form-control" name="row[yy_fail_reason]" type="text">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Final_weight_time')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-final_weight_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[final_weight_time]" type="text" value="{:date('Y-m-d H:i:s')}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Consume_time')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-consume_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[consume_time]" type="text" value="{:date('Y-m-d H:i:s')}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Cancel_time')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cancel_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[cancel_time]" type="text" value="{:date('Y-m-d H:i:s')}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Create_time')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-create_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[create_time]" type="text" value="{:date('Y-m-d H:i:s')}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Couponid')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-couponid" class="form-control" name="row[couponid]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Originalfee')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-originalFee" class="form-control" step="0.01" name="row[originalFee]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Servicecharge')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-serviceCharge" class="form-control" step="0.01" name="row[serviceCharge]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Couponpapermoney')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-couponpapermoney" class="form-control" step="0.01" name="row[couponpapermoney]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Aftercoupon')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-aftercoupon" class="form-control" step="0.01" name="row[aftercoupon]" type="number">
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>

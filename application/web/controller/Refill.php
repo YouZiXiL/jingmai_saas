@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\web\model\Refilllist;
 use think\Controller;
 use think\Exception;
 use think\exception\DbException;
@@ -559,7 +560,7 @@ class Refill extends Controller
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         } catch (\Exception $e) {
 
-            file_put_contents('create_order.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+            file_put_contents('createhf_order.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
 
             // 进行错误处理
             return json(['status'=>400,'data'=>'','msg'=>'商户号配置错误,请联系管理员']);
@@ -861,9 +862,16 @@ class Refill extends Controller
             $param['page']=1;
         }
         $order=db('refilllist')->where('pay_status','<>',0)->field('id,out_trade_num,mobile,amount,final_price,area,ytype,state,createtime,type,des')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10)->select();
-
+        $order=Refilllist::field('id,out_trade_num,mobile,amount,final_price,area,ytype,state,createtime,type,des')->where('user_id',$this->user->id)->where("pay_status","<>",0);
+        if (!empty($param['mobile'])){
+            $res=$order->where('mobile',$param['mobile'])->select();
+        }
+        else{
+            $res=$order->order('id','desc')->page($param['page'],10)->select();
+        }
         //file_put_contents('query_order.txt',json_encode($res).PHP_EOL,FILE_APPEND);
-        return json(['status'=>200,'data'=>$order,'msg'=>'成功']);
+        return json(['status'=>200,'data'=>$res,'msg'=>'成功']);
+
 
     }
 
@@ -878,10 +886,12 @@ class Refill extends Controller
         if (empty($param['id'])){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
-        $order=db('orders')->field('id,out_trade_num,amount,final_price,area,ytype,state,createtime')->order('id','desc')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
+        $order=Refilllist::field('id,mobile,out_trade_num,amount,final_price,area,ytype,state,createtime,type,des')->order('id','desc')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
+
         if(empty($order)){
             return json(['status'=>400,'data'=>'','msg'=>'此订单不存在']);
         }
+        if( $order['type']==1)
         $order['mobile']=substr_replace($order['mobile'],'****',3,4);
         return json(['status'=>200,'data'=>$order,'msg'=>'成功']);
 

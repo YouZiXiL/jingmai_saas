@@ -1,0 +1,36 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Cashout')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-cashout" class="form-control" step="0.01" name="row[cashout]" type="number">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Realname')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-realname" class="form-control" name="row[realname]" type="text">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Aliid')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-aliid" class="form-control" name="row[aliid]" type="text">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">{:__('Memo')}:</label>
+    <div class="col-xs-12 col-sm-8">
+      <input id="c-memo" class="form-control" name="row[memo]" type="text">
+    </div>
+  </div>
+  <div class="form-group layer-footer">
+    <label class="control-label col-xs-12 col-sm-2"></label>
+    <div class="col-xs-12 col-sm-8">
+      <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+      <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+    </div>
+  </div>
+</form>

@@ -4,6 +4,7 @@ namespace app\admin\controller\basicset;
 
 use app\common\controller\Backend;
 use think\Db;
+use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
 use think\exception\ValidateException;
@@ -47,7 +48,9 @@ class Saleratio extends Backend
      */
     public function index()
     {
-        $row=$this->model->where('id',$this->auth->id)->field('users_shouzhong,users_xuzhong,users_shouzhong_ratio')->find();
+
+        $row=$this->model->where('id',$this->auth->id)->field('users_shouzhong,users_xuzhong,users_shouzhong_ratio,agent_water,
+        agent_elec,agent_gas,agent_credit,sf_users_ratio,agent_tc_ratio,imm_rate,midd_rate,service_rate,user_cashoutdate')->find();
         if (!$row) {
             $this->error(__('No Results were found'));
         }
@@ -73,7 +76,12 @@ class Saleratio extends Backend
                 $validate = is_bool($this->modelValidate) ? ($this->modelSceneValidate ? $name . '.edit' : $name) : $this->modelValidate;
                 $row->validateFailException()->validate($validate);
             }
-            $result = $row->allowField(true)->save($params);
+            if (in_array(11,$this->auth->getGroupIds())) {
+                $row->allowField('imm_rate,midd_rate');
+            } else {
+                $row->allowField(true);
+            }
+            $result = $row->save($params);
             Db::commit();
         } catch (ValidateException|PDOException|Exception $e) {
             Db::rollback();

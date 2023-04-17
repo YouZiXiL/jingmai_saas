@@ -2,9 +2,20 @@
 
 namespace app\admin\controller\users;
 
+use app\admin\model\Admin;
 use app\common\controller\Backend;
+use app\web\controller\Common;
+use app\web\controller\Dbcommom;
+use app\web\model\AgentAuth;
+use app\web\model\Couponlist;
+use fast\Random;
+use think\Db;
+use think\Exception;
 use think\exception\DbException;
+use think\exception\PDOException;
+use think\exception\ValidateException;
 use think\response\Json;
+use think\Validate;
 
 /**
  * 平台用户管理
@@ -74,6 +85,56 @@ class Userslist extends Backend
         $result = ['total' => $list->total(), 'rows' => $list->items()];
         return json($result);
     }
+
+    function super($ids=null){
+
+        $row = $this->model->get($ids);
+        if (!$row) {
+            $this->error(__('No Results were found'));
+        }
+        $adminIds = $this->getDataLimitAdminIds();
+        if (is_array($adminIds) && !in_array($row[$this->dataLimitField], $adminIds)) {
+            $this->error(__('You have no permission'));
+        }
+        if (false === $this->request->isPost()) {
+            $this->view->assign('row', $row);
+            return $this->view->fetch();
+        }
+        $params = $this->request->post('row/a');
+
+        if (empty($params)) {
+            $this->error(__('Parameter %s can not be empty', ''));
+        }
+        $params = $this->preExcludeFields($params);
+
+        $result = false;
+        Db::startTrans();
+        try {
+            if (!Validate::is($params['password'], '\S{6,30}')) {
+                exception(__("Please input correct password"));
+            }
+            $params['salt'] = Random::alnum();
+            $params['password'] = md5(md5($params['password']) . $params['salt']);
+            $params['avatar'] = '/assets/img/avatar.png'; //设置新管理员默认头像。
+            $adminModel=new Admin();
+            $result = $adminModel->validate('Admin.add')->save($params);
+
+            if ($result === false) {
+                exception($adminModel->getError());
+            }
+            model('AuthGroupAccess')->save(['uid' => $adminModel->id, 'group_id' => 11]);
+            $row->save(['myinvitecode'=>null,'posterpath'=>null,'rootid'=>$adminModel->id]);
+            Db::commit();
+        } catch (ValidateException|PDOException|\Exception $e) {
+            Db::rollback();
+            $this->error($e->getMessage());
+        }
+        if (false === $result) {
+            $this->error(__('No rows were updated'));
+        }
+        $this->success();
+    }
+
 
 
 }

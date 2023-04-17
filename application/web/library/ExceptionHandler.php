@@ -33,6 +33,7 @@ class ExceptionHandler extends Handle
                 $this->msg = 'Unknown Error';
                 $this->errorCode = 400;
             }
+            dump(111);exit;
             //全局的记录日志
             $this->recordErrorLog($e);
         }

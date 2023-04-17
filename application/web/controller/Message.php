@@ -8,6 +8,7 @@ use app\web\library\wechat\OfficialAccount;
 
 class Message extends Controller
 {
+
     // 公众号消息处理
     public function index()
     {
@@ -16,7 +17,7 @@ class Message extends Controller
 
         $app->server->push(function ($message) {
             Log::info(['微信回调消息内容' => $message]);
-            return 'hello world';
+            return "hello world";
         });
         Log::info('微信回调22');
         $response = $app->server->serve();
