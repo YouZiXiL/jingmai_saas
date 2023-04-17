@@ -343,8 +343,6 @@ class Wxcallback extends Controller
             db('yy_callback')->insert($data);
 
             $orders=db('orders')->where('shopbill',$pamar['shopbill'])->find();
-            
-            
             if ($orders){
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
@@ -374,8 +372,8 @@ class Wxcallback extends Controller
                         $superB=db("admin")->find($users["rootid"]);
                         //计算 超级B 价格
                         if ($orders['tag_type']=='顺丰'){
-                            $agent_price=$orders['freight']+$orders['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
-                            $agent_default_price=$orders['freight']+$orders['freight']*$agent_info['agent_default_sf_ratio']/100;//代理商价格
+                            $agent_price=$orders['freight']+$orders['freight']*$superB['agent_sf_ratio']/100;//代理商价格
+                            $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_sf_ratio']/100;//代理商价格
 
                             $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
                             $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
@@ -487,9 +485,6 @@ class Wxcallback extends Controller
                     }
                  $rebatelist->save($data);
                 }
-                
-                   
-                   
 
                 $rebatelistdata=[
                     "updatetime"=>time()
@@ -1336,7 +1331,7 @@ class Wxcallback extends Controller
                     $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
                     if(empty($rebatelist)){
                         $rebatelist=new Rebatelist();
-                        $data=[
+                        $data_re=[
                             "user_id"=>$orders["user_id"],
                             "invitercode"=>$users["invitercode"],
                             "fainvitercode"=>$users["fainvitercode"],
@@ -1348,8 +1343,8 @@ class Wxcallback extends Controller
                             "createtime"=>time(),
                             "updatetime"=>time()
                         ];
-                        !empty($users["rootid"]) && ($data["rootid"]=$users["rootid"]);
-                        $rebatelist->save($data);
+                        !empty($users["rootid"]) && ($data_re["rootid"]=$users["rootid"]);
+                        $rebatelist->save($data_re);
                     }
 
                     //支付成功下单成功
