@@ -410,6 +410,7 @@ class Yunyang extends Controller
                 $v['freight']=$res['data']['amount']/100;
                 $v['send_start_time']=$time;
                 $v['send_end_time']=$sendEndTime;
+                $v['tagType']='德邦重货';
                 !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价金额
                 !empty($param['vloum_long']) &&($v['vloumLong'] = $param['vloum_long']);//货物长度
                 !empty($param['vloum_width']) &&($v['vloumWidth'] = $param['vloum_width']);//货物宽度
@@ -473,7 +474,9 @@ class Yunyang extends Controller
         if ($blacklist){
             return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
         }
+
         $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
+
         $out_trade_no='XD'.$this->common->get_uniqid();
         $data=[
             'send_start_time'=>$check_channel_intellect['send_start_time']??null,
@@ -485,7 +488,7 @@ class Yunyang extends Controller
             'insert_id'=>$param['insert_id'],
             'out_trade_no'=>$out_trade_no,
             'freight'=>$check_channel_intellect['freight'],
-            //'channel_id'=>$check_channel_intellect['channelId']?$check_channel_intellect['channelId']:0,
+            'channel_id'=>$check_channel_intellect['channelId']??0,
             'tag_type'=>$check_channel_intellect['tagType'],
             'admin_shouzhong'=>$check_channel_intellect['admin_shouzhong'],
             'admin_xuzhong'=>$check_channel_intellect['admin_xuzhong'],
@@ -530,6 +533,7 @@ class Yunyang extends Controller
             'item_name'=>$param['item_name'],
             'create_time'=>time()
         ];
+
         !empty($param['bill_remark']) &&($data['bill_remark'] = $param['bill_remark']);
         !empty($check_channel_intellect['insured']) &&($data['insured'] = $check_channel_intellect['insured']);
         !empty($check_channel_intellect['vloum_long']) &&($data['vloum_long'] = $check_channel_intellect['vloumLong']);
@@ -545,6 +549,7 @@ class Yunyang extends Controller
                 $couponmoney=$couponinfo["money"];
             }
         }
+
         $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
         $json=[
             'mchid'        => $agent_info['wx_mchid'],
