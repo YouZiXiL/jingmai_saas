@@ -147,7 +147,6 @@ class Login extends Controller
      */
     function aLi(): Json
     {
-        dd(\request()->domain());
         $appid = input('appid');
         $code = input('code');
         $response = input('response');
