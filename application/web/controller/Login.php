@@ -2,18 +2,31 @@
 
 namespace app\web\controller;
 
-use app\web\library\ali\AliConfig;
+use app\common\library\alipay\AliConfigB;
+use app\common\library\alipay\AliBase;
+use app\common\library\alipay\AliConfig;
+use app\common\library\alipay\AliOpen;
+use app\common\library\alipay\Alipay;
+use app\common\library\alipay\aop\request\AlipayOpenAuthAppAesSetRequest;
+use app\common\library\alipay\aop\request\AlipayOpenInviteOrderCreateRequest;
+use app\common\library\alipay\aop\request\AlipaySystemOauthTokenRequest;
+use app\common\library\alipay\aop\request\AlipayUserInfoShareRequest;
+use app\common\library\R;
 use app\web\library\BaseException;
 use app\web\model\AgentAuth;
 use app\web\model\Users;
+use app\web\library\ali\AliConfig as AliConfigC;
+use Exception;
+use think\Cache;
+use think\console\Input;
 use think\Controller;
-use think\Env;
-use think\Exception;
 use think\exception\DbException;
 use think\Log;
 use think\Request;
 use think\response\Json;
 use Alipay\EasySDK\Kernel\Factory;
+use function app\common\library\alipay\aop\decrypt;
+use function app\common\library\alipay\aop\stripPKSC7Padding;
 
 class Login extends Controller
 {
@@ -130,59 +143,117 @@ class Login extends Controller
 
     /**
      * ali登录
+     * @throws Exception
      */
-    function aLi(){
+    function aLi(): Json
+    {
+        dd(\request()->domain());
+        $appid = input('appid');
+        $code = input('code');
+        $response = input('response');
+        $agent_id = AgentAuth::where('app_id', input('appid'))->value('agent_id');
+        $agent_id = 23;
+        if (empty($agent_id))  return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
 
-        try {
-            $ali = AliConfig::options(input('appid'));
-            $result = $ali->base()->oauth()->getToken(input('code'));
-            $openid = $result->userId;
-            $accessToken = $result->accessToken;
+        $clientEsk = 'W15T4J+wA/JPnMaPTMypLw==';
+        $appAuthToken = '202304BB55a2563b199a42b285d4a81135561X16';
 
+        // 获取user_id, access_token;
+        $result = Alipay::start()->base()->getOauthToken($code, $appAuthToken);
+        $openid = $result->user_id;
+        $accessToken = $result->access_token;
+        $time = time();
+        $token = $this->common->get_uniqid();
+        $user = Users::where(['open_id' => $openid, 'agent_id'=>$agent_id])->find();
+        $record = ['agent_id' => $agent_id, 'token' => $token, 'login_time' => $time];
 
-            $agent_id = AgentAuth::where('app_id', input('appid'))->value('agent_id');
-            if (empty($agent_id))  return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+        if (empty($user)){
+            // 解密手机号
+            $op = AliConfigC::options($appid);
+            $phoneData = $op->util()->aes()->decrypt($response);
+            $phoneData = json_decode($phoneData);
+            $mobile = $phoneData->mobile;
 
-            $time = time();
-            $token = $this->common->get_uniqid();
-            $user = Users::where(['open_id' => $openid, 'agent_id'=>$agent_id])->find();
-            $record = ['agent_id' => $agent_id, 'token' => $token, 'login_time' => $time];
-            if (empty($user)){
-                $phoneData = $ali->util()->aes()->decrypt(input('response'));
-                $phoneData = json_decode($phoneData);
-                $mobile = $phoneData->mobile;
+            $record['nick_name'] = $mobile;
+            $record['open_id'] = $openid;
+            $record['mobile'] = $mobile;
+            $record['create_time'] = $time;
+            $user = Users::create($record);
+        }else{
+            $record['id'] = $user->id;
+            $record['login_time'] = $time;
+            $record['agent_id'] = $agent_id;
 
-                $record['nick_name'] = $mobile;
-                $record['open_id'] = $openid;
-                $record['mobile'] = $mobile;
-                $record['create_time'] = $time;
-                $record['open_id'] = $openid;
-                $user = Users::create($record);
-            }else{
-                $record['id'] = $user->id;
-                $record['login_time'] = $time;
-                $record['agent_id'] = $agent_id;
-
-                Users::update($record);
-            }
-            $data=['status'=>200,'data'=>$token,'msg'=>'登录成功'];
-            $session=[
-                'id' => $user->id,
-                'agent_id'=>$agent_id,
-                'app_id' => input('appid'),
-                'open_id'=> $openid,
-                'session_key'=>$accessToken
-            ];
-            cache($token,$session,3600*24*25);
-            return json($data);
-        } catch (\Exception $e) {
-            Log::error(['登录异常' => $e->getMessage(),'追踪'=>$e->getTraceAsString()]);
-            $data=[
-                'status'=>400,
-                'msg'=>'登录异常'
-            ];
-            return json($data);
+            Users::update($record);
         }
+        $data=['status'=>200,'data'=>$token,'msg'=>'登录成功'];
+        $session=[
+            'id' => $user->id,
+            'agent_id'=>$agent_id,
+            'app_id' => input('appid'),
+            'open_id'=> $openid,
+            'session_key'=>$accessToken
+        ];
+        cache($token,$session,3600*24*25);
+        return json($data);
+
+    }
+
+    /**
+     * app手机登录
+     */
+    function phone(): Json
+    {
+        if(!preg_match( '/^1[3-9]\d{9}$/', input('phone'))){
+            return R::error('请输有效手机号');
+        }
+        if(empty(input('code'))){
+            return R::error('请输入手机验证码');
+        }
+        if(input('code') !== Cache::store('redis')->get(input('phone'))){
+            return R::error('请输入正确的手机验证码');
+        }
+
+        $user = Users::where(['mobile' => input('phone')])->find();
+
+        $token = $this->common->get_uniqid();
+        $time = time();
+        $record = ['agent_id' => 0, 'token' => $token, 'login_time' => $time];
+
+        if (empty($user)){
+            $record['nick_name'] = input('phone');
+            $record['mobile'] = input('phone');
+            $record['open_id'] = input('phone');
+            $record['create_time'] = $time;
+            $user = Users::create($record);
+        }else{
+            $record['id'] = $user->id;
+            $record['login_time'] = $time;
+            Users::update($record);
+        }
+        $session=[
+            'id' => $user->id,
+        ];
+        cache($token,$session,3600*24*25);
+        return R::ok($token);
+    }
+
+    /**
+     * 获取手机验证码
+     * @throws Exception
+     */
+    function code(): Json
+    {
+        if(!preg_match( '/^1[3-9]\d{9}$/', input('phone'))){
+           return R::error('请输有效手机号');
+        }
+        $code = Cache::store('redis')->get(input('phone'));
+        if($code) return R::ok($code);
+        $code = str_pad(random_int(0000, 9999), 4, '0', STR_PAD_LEFT) ;
+        Cache::store('redis')->set(input('phone'),$code, 300);
+        // 发送短信
+        // AliSms::main();
+        return R::ok($code);
     }
 
 

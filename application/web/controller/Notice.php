@@ -2,12 +2,17 @@
 
 namespace app\web\controller;
 
-
 use app\admin\model\appinfo\Orders;
+use app\common\library\alipay\AliOpen;
+use app\common\library\alipay\Alipay;
+use app\common\library\alipay\aop\AopCertClient;
+use app\common\library\alipay\aop\AopClient;
+use app\common\library\alipay\aop\request\AlipayOpenAuthTokenAppRequest;
 use app\common\model\Order;
 use app\web\library\ali\AliConfig;
 use app\web\model\Admin;
 use app\web\model\AgentAssets;
+use app\web\model\AgentAuth;
 use app\web\model\Rebatelist;
 use think\Controller;
 use think\Exception;
@@ -21,7 +26,7 @@ use WeChatPay\Formatter;
 class Notice extends Controller
 {
     /**
-     * 显示资源列表
+     * 支付宝支付回调
      *
      * @return string
      */
@@ -151,6 +156,53 @@ class Notice extends Controller
             return $success;
     }
 
+
+    /**
+     * 支付第三方获取商户授权回调地址
+     * @throws \Exception
+     */
+    public function aliAppauth(){
+        Log::error(['支付第三方授权' => input()]);
+        /*
+         '支付第三方授权' =>
+          array (
+            'app_auth_code' => 'P660f271c5b724f3da528855a3da9416',
+            'app_id' => '2021003176656290',
+            'source' => 'alipay_app_auth',
+          ),
+         */
+        $code = input('app_auth_code');
+        $appid = input('app_id');
+        $aliOpen = Alipay::start()->open();
+        $authInfo = $aliOpen->getAuthToken($code);
+        Log::error(['授权成功app_auth_token：' => $authInfo->app_auth_token]);
+        $miniProgram = $aliOpen->getMiniBaseInfo($authInfo->app_auth_token);
+        $version = $aliOpen->getMiniVersionNow($authInfo->app_auth_token);
+        $agent_id = 23;
+        $data=[
+            'agent_id' => $agent_id,
+            'app_id'=>$authInfo->auth_app_id,
+            'name'=>$miniProgram->app_name,
+            'avatar'=>$miniProgram->app_logo,
+            'wx_auth'=>2,
+            'yuanshi_id'=>$authInfo->auth_app_id,
+            'body_name'=>'',
+            'refresh_token'=>$authInfo->app_refresh_token,
+            'auth_token'=>$authInfo->app_refresh_token,
+            'user_version'=>$version,
+            'auth_type'=>2
+        ];
+        $agentAuth=AgentAuth::where('app_id',$authInfo->auth_app_id)->find();
+        if ($agentAuth){
+            if($agentAuth->agent_id != $agent_id) exit('该app_id已被授权过');
+            $data['id'] = $agentAuth->id;
+            $agentAuth->save($data);
+        }else{
+            AgentAuth::create($data);
+        }
+
+        exit('授权成功');
+    }
 }
 
 /*

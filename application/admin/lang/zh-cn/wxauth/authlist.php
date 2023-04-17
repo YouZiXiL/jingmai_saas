@@ -8,6 +8,7 @@ return [
     'Wx_auth'    => '是否认证',
     'Wx_auth 0'  => '未认证',
     'Wx_auth 1'  => '微信认证',
+    'Wx_auth 2'  => '支付宝认证',
     'Yuanshi_id' => '原始ID',
     'Body_name'  => '主体名称',
     'Auth_type'  => '授权类型',

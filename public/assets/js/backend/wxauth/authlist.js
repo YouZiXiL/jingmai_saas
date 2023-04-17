@@ -41,6 +41,24 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                      return false;
                 });
             });
+            $(document).on('click', '.btn-auth-ali', function () {
+                Fast.api.ajax({
+                    url:"wxauth/authlist/auth_link?auth_type=3",
+                    loading:false,
+                },function (data) {
+                    // 创建img标签
+                    let img = document.createElement('img');
+                    img.setAttribute( 'src', 'data:image/png' +
+                        ';base64,' + data
+                    );
+                    Layer.msg(img.outerHTML,{closeBtn: 1,time:0});
+                    return false;
+                },function (data, ret){
+
+                    Layer.msg(ret.msg);
+                    return false;
+                });
+            });
 
             // 初始化表格参数配置
             Table.api.init({
@@ -72,7 +90,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'name', title: __('Name'), operate: 'LIKE'},
                         {field: 'avatar', title: __('Avatar'),events: Table.api.events.image, formatter: Table.api.formatter.image},
                         {field: 'app_id', title: __('App_id'), operate: 'LIKE'},
-                        {field: 'wx_auth', title: __('Wx_auth'), searchList: {"0":__('Wx_auth 0'),"1":__('Wx_auth 1')}, formatter: Table.api.formatter.normal},
+                        {field: 'wx_auth', title: __('Wx_auth'), searchList: {"0":__('Wx_auth 0'),"1":__('Wx_auth 1'),"2":__('Wx_auth 2')}, formatter: Table.api.formatter.normal},
                         {field: 'yuanshi_id', title: __('Yuanshi_id')},
                         {field: 'body_name', title: __('Body_name'), operate: 'LIKE'},
                         {field: 'user_version', title: __('User_version'),formatter: function (value,row,index) {

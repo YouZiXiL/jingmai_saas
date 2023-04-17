@@ -11,7 +11,8 @@
                         <a href="javascript:;" class="btn btn-success btn-edit btn-disabled disabled {:$auth->check('wxauth/authlist/edit')?'':'hide'}" title="{:__('Edit')}" ><i class="fa fa-pencil"></i> {:__('Edit')}</a>
                         <a href="javascript:;" class="btn btn-danger btn-del btn-disabled disabled {:$auth->check('wxauth/authlist/del')?'':'hide'}" title="{:__('Delete')}" ><i class="fa fa-trash"></i> {:__('Delete')}</a>
                         <a href="javascript:;" class="btn btn-success btn-shouquan_gongzhonghao  {:$auth->check('wxauth/authlist/auth_link')?'':'hide'}" title="授权公众号" ><i class=""></i>授权公众号</a>
-                        <a href="javascript:;" class="btn btn-success btn-shouquan_xiaochengxu  {:$auth->check('wxauth/authlist/auth_link')?'':'hide'}" title="授权小程序" ><i class=""></i>授权小程序</a>
+                        <a href="javascript:;" class="btn btn-success btn-shouquan_xiaochengxu  {:$auth->check('wxauth/authlist/auth_link')?'':'hide'}" title="授权微信小程序" ><i class=""></i>授权微信小程序</a>
+                        <a href="javascript:;" class="btn btn-info btn-auth-ali  {:$auth->check('wxauth/authlist/auth_link')?'':'hide'}" title="授权支付宝小程序" ><i class=""></i>授权支付宝小程序</a>
                         <div class="dropdown btn-group {:$auth->check('wxauth/authlist/multi')?'':'hide'}">
                             <a class="btn btn-primary btn-more dropdown-toggle btn-disabled disabled" data-toggle="dropdown"><i class="fa fa-cog"></i> {:__('More')}</a>
                             <ul class="dropdown-menu text-left" role="menu">

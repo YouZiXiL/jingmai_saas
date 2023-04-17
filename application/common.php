@@ -515,7 +515,16 @@ EOT;
 
 // 项目根目录
 if(!function_exists('root_path')){
-    function root_path(){
-        return substr(__DIR__, 0, strpos(__DIR__, 'application'));
+    function root_path($path = ''): string
+    {
+        return substr(__DIR__, 0, strpos(__DIR__, 'application')) . $path;
+    }
+}
+
+// 调试
+if(!function_exists('dd')){
+    function dd($content)
+    {
+        print_r($content);exit;
     }
 }
