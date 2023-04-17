@@ -34,7 +34,9 @@
         "ext-mcrypt": "*",
         "wechatpay/wechatpay": "^1.4",
         "endroid/qr-code": "^4.6",
-        "alipaysdk/easysdk": "^2.0"
+        "alipaysdk/easysdk": "^2.0",
+        "firebase/php-jwt": "^6.4",
+        "alibabacloud/dysmsapi-20170525": "^2.0"
     },
     "config": {
         "preferred-install": "dist",

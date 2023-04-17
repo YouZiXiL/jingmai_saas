@@ -862,7 +862,7 @@ class Refill extends Controller
             $param['page']=1;
         }
         $order=db('refilllist')->where('pay_status','<>',0)->field('id,out_trade_num,mobile,amount,final_price,area,ytype,state,createtime,type,des')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10)->select();
-        $order=Refilllist::field('id,out_trade_num,mobile,amount,final_price,area,ytype,state,createtime,type,des')->where('user_id',$this->user->id);
+        $order=Refilllist::field('id,out_trade_num,mobile,amount,final_price,area,ytype,state,createtime,type,des')->where('user_id',$this->user->id)->where("pay_status","<>",0);
         if (!empty($param['mobile'])){
             $res=$order->where('mobile',$param['mobile'])->select();
         }

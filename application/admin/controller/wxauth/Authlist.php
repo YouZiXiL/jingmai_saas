@@ -2,23 +2,14 @@
 
 namespace app\admin\controller\wxauth;
 
-
-
 use app\admin\model\Admin;
 use app\admin\model\cdk\Cdklist;
 use app\common\controller\Backend;
-use app\common\library\alipay\aop\AopCertClient;
-use app\common\library\alipay\aop\request\AlipayOpenAppApiQueryRequest;
-use app\common\library\alipay\aop\request\AlipayOpenAuthAppauthInviteCreateRequest;
-use app\common\library\alipay\aop\request\AlipayOpenMiniPrivacySystemfieldQueryRequest;
 use app\web\controller\Common;
-use app\common\library\ali\AliConfig;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
-use think\Exception;
 use think\exception\DbException;
-use think\Log;
 use think\Response;
 use think\response\Json;
 
@@ -174,6 +165,48 @@ class Authlist extends Backend
      * @throws Exception|\Exception
      */
     public function auth_ali($data){
+//        $agentAuth=AgentAuth::where('app_id','2021003182686889')->find();
+        $redirectUri = request()->domain() . "/web/notice/aliappauth"; // 授权后的回调地址
+        $appTypes = ["TINYAPP","BASEAPP","MOBILEAPP","WEBAPP","PUBLICAPP"]; // 可选值：APP、SERVICE，表示获取的授权令牌可用于哪种类型的应用
+        $isvAppId = "2021003176656290"; // 可选项，如果开发者是 ISV 应用，则需要传入 ISV 应用的 AppID
+        $state = $this->auth->id; // 可选项，可用于传递额外的参数或标识符
+
+        // 构造授权链接参数
+        // 创建参数数组
+        $params = array(
+            "platformCode" => "O",
+            "taskType" => "INTERFACE_AUTH",
+            "agentOpParam" => array(
+                "redirectUri" => $redirectUri,
+                "appTypes" => $appTypes,
+                "isvAppId" => $isvAppId,
+                "state" => $state
+            )
+        );
+
+
+        $biz_data_str = urlencode(json_encode($params));
+
+        // PC端授权链接：
+//        $url = "https://b.alipay.com/page/message/tasksDetail?bizData=" . $biz_data_str;
+//        exit($url);
+
+        // 二维码授权链接
+        $auth_url = "alipays://platformapi/startapp?appId=2021003130652097&page=pages%2Fauthorize%2Findex%3FbizData%3D{$biz_data_str}";
+        $writer=new PngWriter();
+        $qrCode = QrCode::create($auth_url);
+        $qrCode->setSize(250);
+        $qrCode->setMargin(-10);
+        $result=$writer->write($qrCode);
+        $this->success('成功','',base64_encode($result->getString()));
+    }
+
+    /**
+     * 支付宝小程序授权
+     * @param $data
+     * @throws Exception|\Exception
+     */
+    public function auth_ali($data){
 
         $app_id = "2021003176656290"; // 应用的AppID
         $redirectUri = "https://admin.bajiehuidi.com/web/notice/aliappauth"; // 授权后的回调地址
@@ -240,7 +273,7 @@ class Authlist extends Backend
         // $res=$common->httpRequest('https://api.weixin.qq.com/wxa/get_qrcode?access_token='.$xcx_access_token);
         // return Response::create($res,'',200,['Content-Type' =>'image/jpeg']);
         $res=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/component/setprivacysetting?access_token='.$xcx_access_token,[
-            'setting_list'=>[['privacy_key'=>'Album','privacy_text'=>'订单详情上传图片'],['privacy_key'=>'PhoneNumber','privacy_text'=>'推送提醒']],
+            'setting_list'=>[['privacy_key'=>'Album','privacy_text'=>'订单详情上传图片'],['privacy_key'=>'PhoneNumber','privacy_text'=>'推送提醒'],['privacy_key'=>'AlbumWriteOnly','privacy_text'=>'海报保存']],
             'owner_setting'=>['contact_email'=>'1037124449@qq.com','notice_method'=>'通过弹窗提醒用户'],
 
         ],'POST');

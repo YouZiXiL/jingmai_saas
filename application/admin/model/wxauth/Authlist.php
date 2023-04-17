@@ -33,7 +33,7 @@ class Authlist extends Model
     
     public function getWxAuthList()
     {
-        return ['未认证' => __('未认证'), '微信认证' => __('微信认证')];
+        return ['未认证' => __('未认证'), '微信认证' => __('微信认证'), '支付宝认证' => __('支付宝认证')];
     }
 
     public function getAuthTypeList()
