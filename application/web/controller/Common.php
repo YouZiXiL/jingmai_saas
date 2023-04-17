@@ -67,7 +67,7 @@ class Common
         $time=$timeStamp;
         $nonceStr=$this->get_uniqid();
         $psecret='2edbc05b02ce2cac0c235082ee400ac3';
-        $params=$content;
+        $params=json_encode($content);
         $sign=hash_hmac('md5', $psecret . "nonceStr" . $nonceStr . "params" . $params . "pid" . $pid . "time" . $time . $psecret, $psecret);
         $data=[
             'pid'=>$pid,
@@ -129,7 +129,6 @@ class Common
     //http请求
     //$data  数组
     function httpRequest($url, $data='', $method='GET',$header=['Content-Type: application/json; charset=utf-8']){
-
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
@@ -144,18 +143,15 @@ class Common
                     curl_setopt($curl, CURLOPT_POSTFIELDS,'{}' );
                 }else{
                     $data=json_encode($data,JSON_UNESCAPED_UNICODE);
-
                     curl_setopt($curl, CURLOPT_POSTFIELDS,$data );
                 }
             }else{
-
-                curl_setopt($curl, CURLOPT_POSTFIELDS,http_build_query($data));
+                curl_setopt($curl, CURLOPT_POSTFIELDS,http_build_query($data) );
             }
             curl_setopt($curl, CURLOPT_POST, 1);
         }
         curl_setopt($curl, CURLOPT_TIMEOUT, 30);
         curl_setopt($curl, CURLOPT_HTTPHEADER,$header);
-        halt($header);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         $result = curl_exec($curl);
         curl_close($curl);
@@ -233,7 +229,6 @@ class Common
     function get_authorizer_access_token($app_id){
         $time=time()-6600;
         $kaifang_appid=config('site.kaifang_appid');
-
         $access_token=db('access_token')->where('app_id',$app_id)->order('id','desc')->find();
         if (empty($access_token['access_token'])||$time>$access_token['create_time']){
             $refresh_token=db('agent_auth')->where('app_id',$app_id)->value('refresh_token');

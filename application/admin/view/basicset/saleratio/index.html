@@ -19,9 +19,15 @@
         </div>
     </div>
     <div class="form-group {:$auth->check('basicset/saleratio/sf_users_ratio')?'':'hide'}">
-        <label for="sf_users_ratio" class="control-label col-xs-12 col-sm-2">顺风增加比例%</label>
+        <label for="sf_users_ratio" class="control-label col-xs-12 col-sm-2">顺风增加比例%(顺丰特惠)</label>
         <div class="col-xs-12 col-sm-2">
             <input type="number" min="0" class="form-control" id="sf_users_ratio" name="row[sf_users_ratio]" autocomplete="off" value="{$row.sf_users_ratio}"  />
+        </div>
+    </div>
+    <div class="form-group {:$auth->check('basicset/saleratio/db_users_ratio')?'':'hide'}">
+        <label for="db_users_ratio" class="control-label col-xs-12 col-sm-2">德邦增加比例%(寄重货)</label>
+        <div class="col-xs-12 col-sm-2">
+            <input type="number" min="0" class="form-control" id="db_users_ratio" name="row[db_users_ratio]" autocomplete="off" value="{$row.db_users_ratio}"  />
         </div>
     </div>
     <div class="form-group {:$auth->check('basicset/saleratio/agent_tc_ratio')?'':'hide'}">

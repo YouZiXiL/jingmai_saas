@@ -143,13 +143,27 @@ class Orderslist extends Backend
         if ($row['pay_status']!=1){
             $this->error(__('此订单已取消'));
         }
-        $content=[
-            'shopbill'=>$row['shopbill']
-        ];
-        $res=$common->yunyang_api('CANCEL',$content);
-        if ($res['code']!=1){
-            $this->error($res['message']);
+        if ($row['channel_tag']=='重货'){
+            $content=[
+                'expressCode'=>'DBKD',
+                'orderId'=>$row['out_trade_no'],
+                'reason'=>'不要了'
+            ];
+            $res=$common->fhd_api('cancelExpressOrder',$content);
+            $res=json_decode($res,true);
+            if (!$res['data']['result']){
+                $this->error('取消失败');
+            }
+        }else{
+            $content=[
+                'shopbill'=>$row['shopbill']
+            ];
+            $res=$common->yunyang_api('CANCEL',$content);
+            if ($res['code']!=1){
+                $this->error($res['message']);
+            }
         }
+
         $row->allowField(true)->save(['cancel_time'=>time()]);
         $this->success('取消成功');
 
