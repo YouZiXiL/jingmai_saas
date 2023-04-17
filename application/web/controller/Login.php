@@ -32,7 +32,44 @@ class Login extends Controller
      * @throws BaseException
      */
     function index(){
-
+        $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
+        dump($sendEndTime);exit;
+        //DBKD
+        $content=[
+            'expressCode'=>'DBKD',
+            'orderInfo'=>[
+                'orderId'=>$this->common->get_uniqid(),
+                'sendStartTime'=>'2023-4-15 13:30:00',
+                'sendEndTime'=>'2023-4-15 17:30:00',
+                'sender'=>[
+                    'name'=>'张永明',
+                    'mobile'=>'13781176252',
+                    'address'=>[
+                        'province'=>'江苏省',
+                        'city'=>'南京市',
+                        'district'=>'雨花台区',
+                        'detail'=>'西善桥街道 梅欣创业园13号王记渔具',
+                    ],
+                ],
+                'receiver'=>[
+                    'name'=>'张永明',
+                    'mobile'=>'13781176252',
+                    'address'=>[
+                        'province'=>'江西省',
+                        'city'=>'九江市',
+                        'district'=>'共青城市',
+                        'detail'=>'茶山街道火炬一路青年创业基地内一栋红鼎仓库（原邮政大楼）',
+                    ],
+                ],
+            ],
+            'packageInfo'=>[
+                'weight'=>1000,
+                'volume'=>'0',
+            ],
+        ];
+        $res=$this->common->fhd_api('predictExpressOrder',json_encode($content));
+        $res=json_decode($res,true);
+        return json($res);
     }
     /**
      * 登陆

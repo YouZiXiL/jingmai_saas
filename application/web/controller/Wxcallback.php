@@ -288,11 +288,11 @@ class Wxcallback extends Controller
             $data['pay_template']=$bukuan['template_id'];
 
         }
-        $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('app_id',$authorization_info['authorizer_appid'])->find();
+        $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->find();
 
 
         if ($agent_auth){
-            db('agent_auth')->where('agent_id',$parm['agent_id'])->where('app_id',$authorization_info['authorizer_appid'])->update($data);
+            db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->update($data);
         }else{
             if ($parm['auth_type']==2){
                 $data['xcx_audit']=0;
@@ -920,100 +920,205 @@ class Wxcallback extends Controller
             if(!$orders){
                 throw new Exception('找不到指定订单');
             }
-            //如果订单未支付  调用云洋下单接口
+
             if ($orders['pay_status']!=0){
                 throw new Exception('重复回调');
             }
-
+            //如果订单未支付调用云洋下单接口
             $Common=new Common();
             $Dbcommmon= new Dbcommom();
-            $content=[
-                'channelId'=> $orders['channel_id'],
-                'channelTag'=>$orders['channel_tag'],
-                'sender'=> $orders['sender'],
-                'senderMobile'=>$orders['sender_mobile'],
-                'senderProvince'=>$orders['sender_province'],
-                'senderCity'=>$orders['sender_city'],
-                'senderCounty'=>$orders['sender_county'],
-                'senderLocation'=>$orders['sender_location'],
-                'senderAddress'=>$orders['sender_address'],
-                'receiver'=>$orders['receiver'],
-                'receiverMobile'=>$orders['receiver_mobile'],
-                'receiveProvince'=>$orders['receive_province'],
-                'receiveCity'=>$orders['receive_city'],
-                'receiveCounty'=>$orders['receive_county'],
-                'receiveLocation'=>$orders['receive_location'],
-                'receiveAddress'=>$orders['receive_address'],
-                'weight'=>$orders['weight'],
-                'packageCount'=>$orders['package_count'],
-                'itemName'=>$orders['item_name']
-            ];
-            !empty($orders['insured']) &&($content['insured'] = $orders['insured']);
-            !empty($orders['vloum_long']) &&($content['vloumLong'] = $orders['vloum_long']);
-            !empty($orders['vloum_width']) &&($content['vloumWidth'] = $orders['vloum_width']);
-            !empty($orders['vloum_height']) &&($content['vloumHeight'] = $orders['vloum_height']);
-            !empty($orders['bill_remark']) &&($content['billRemark'] = $orders['bill_remark']);
-            $data=$Common->yunyang_api('ADD_BILL_INTELLECT',$content);
-            if ($data['code']!=1){
-                Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
-                $out_refund_no=$Common->get_uniqid();//下单退款订单号
-                //支付成功下单失败  执行退款操作
-                $updata=[
-                    'pay_status'=>2,
-                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                    'yy_fail_reason'=>$data['message'],
-                    'order_status'=>'下单失败咨询客服',
-                    'out_refund_no'=>$out_refund_no,
+            if($orders['channel_tag']=='重货'){
+                $content=[
+                    'expressCode'=>'DBKD',
+                    'orderInfo'=>[
+                        'orderId'=>$orders['out_trade_no'],
+                        'sendStartTime'=>$orders['send_start_time'],
+                        'sendEndTime'=>$orders['send_end_time'],
+                        'sender'=>[
+                            'name'=>$orders['sender'],
+                            'mobile'=>$orders['sender_mobile'],
+                            'address'=>[
+                                'province'=>$orders['sender_province'],
+                                'city'=>$orders['sender_city'],
+                                'district'=>$orders['sender_county'],
+                                'detail'=>$orders['sender_location'],
+                            ]
+                        ],
+                        'receiver'=>[
+                            'name'=>$orders['receiver'],
+                            'mobile'=>$orders['receiver_mobile'],
+                            'address'=>[
+                                'province'=>$orders['receive_province'],
+                                'city'=>$orders['receive_city'],
+                                'district'=>$orders['receive_county'],
+                                'detail'=>$orders['receive_location'],
+                            ]
+                        ],
+                    ],
+                    'packageInfo'=>[
+                        'weight'=>$orders['weight']*1000,
+                        'volume'=>'0',
+                    ],
+                    'serviceInfoList'=>[
+                        [
+                            'code'=>'INSURE','value'=>$orders['insured']*100,
+                        ]
+                    ]
+
                 ];
 
-                $data = [
-                    'type'=>3,
-                    'order_id'=>$orders['id'],
-                    'out_refund_no' => $out_refund_no,
-                    'reason'=>$data['message'],
-                ];
-
-                // 将该任务推送到消息队列，等待对应的消费者去执行
-                Queue::push(DoJob::class, $data,'way_type');
-
-                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
-                    //推送企业微信消息
-                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
-                }
-
-            }else{
-                $users=db('users')->where('id',$orders['user_id'])->find();
-
-                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
-                if(empty($rebatelist)){
-                    $rebatelist=new Rebatelist();
-                    $data=[
-                        "user_id"=>$orders["user_id"],
-                        "invitercode"=>$users["invitercode"],
-                        "fainvitercode"=>$users["fainvitercode"],
-                        "out_trade_no"=>$orders["out_trade_no"],
-                        "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
-                        "payinback"=>0,//补交费用 为负则表示超轻
-                        "state"=>0,
-                        "rebate_amount"=>0,
-                        "createtime"=>time(),
-                        "updatetime"=>time()
+                $res=$Common->fhd_api('createExpressOrder',json_encode($content));
+                $res=json_decode($res,true);
+                if ($res['rcode']!=0){
+                    $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                    //支付成功下单失败  执行退款操作
+                    $updata=[
+                        'pay_status'=>2,
+                        'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        'yy_fail_reason'=>$res['errorMsg'],
+                        'order_status'=>'下单失败咨询客服',
+                        'out_refund_no'=>$out_refund_no,
                     ];
-                    !empty($users["rootid"]) && ($data["rootid"]=$users["rootid"]);
-                    $rebatelist->save($data);
+
+                    $data = [
+                        'type'=>3,
+                        'order_id'=>$orders['id'],
+                        'out_refund_no' => $out_refund_no,
+                        'reason'=>$res['errorMsg'],
+                    ];
+
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
+
+                    if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                        //推送企业微信消息
+                        $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                    }
+                }else{
+                    $users=db('users')->where('id',$orders['user_id'])->find();
+
+                    $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                    if(empty($rebatelist)){
+                        $rebatelist=new Rebatelist();
+                        $data=[
+                            "user_id"=>$orders["user_id"],
+                            "invitercode"=>$users["invitercode"],
+                            "fainvitercode"=>$users["fainvitercode"],
+                            "out_trade_no"=>$orders["out_trade_no"],
+                            "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
+                            "payinback"=>0,//补交费用 为负则表示超轻
+                            "state"=>0,
+                            "rebate_amount"=>0,
+                            "createtime"=>time(),
+                            "updatetime"=>time()
+                        ];
+                        !empty($users["rootid"]) && ($data["rootid"]=$users["rootid"]);
+                        $rebatelist->save($data);
+                    }
+
+                    //支付成功下单成功
+
+                    $updata=[
+                        'waybill'=>$res['data']['waybillCode'],
+                        'shopbill'=>null,
+                        'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        'pay_status'=>1,
+                    ];
+
+                    $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$res['data']['waybillCode'].' 下单支付成功');
                 }
-
-                //支付成功下单成功
-                $result=$data['result'];
-                $updata=[
-                    'waybill'=>$result['waybill'],
-                    'shopbill'=>$result['shopbill'],
-                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                    'pay_status'=>1,
+            }else{
+                $content=[
+                    'channelId'=> $orders['channel_id'],
+                    'channelTag'=>$orders['channel_tag'],
+                    'sender'=> $orders['sender'],
+                    'senderMobile'=>$orders['sender_mobile'],
+                    'senderProvince'=>$orders['sender_province'],
+                    'senderCity'=>$orders['sender_city'],
+                    'senderCounty'=>$orders['sender_county'],
+                    'senderLocation'=>$orders['sender_location'],
+                    'senderAddress'=>$orders['sender_address'],
+                    'receiver'=>$orders['receiver'],
+                    'receiverMobile'=>$orders['receiver_mobile'],
+                    'receiveProvince'=>$orders['receive_province'],
+                    'receiveCity'=>$orders['receive_city'],
+                    'receiveCounty'=>$orders['receive_county'],
+                    'receiveLocation'=>$orders['receive_location'],
+                    'receiveAddress'=>$orders['receive_address'],
+                    'weight'=>$orders['weight'],
+                    'packageCount'=>$orders['package_count'],
+                    'itemName'=>$orders['item_name']
                 ];
+                !empty($orders['insured']) &&($content['insured'] = $orders['insured']);
+                !empty($orders['vloum_long']) &&($content['vloumLong'] = $orders['vloum_long']);
+                !empty($orders['vloum_width']) &&($content['vloumWidth'] = $orders['vloum_width']);
+                !empty($orders['vloum_height']) &&($content['vloumHeight'] = $orders['vloum_height']);
+                !empty($orders['bill_remark']) &&($content['billRemark'] = $orders['bill_remark']);
+                $data=$Common->yunyang_api('ADD_BILL_INTELLECT',$content);
 
-                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
+                if ($data['code']!=1){
+                    Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
+                    $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                    //支付成功下单失败  执行退款操作
+                    $updata=[
+                        'pay_status'=>2,
+                        'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        'yy_fail_reason'=>$data['message'],
+                        'order_status'=>'下单失败咨询客服',
+                        'out_refund_no'=>$out_refund_no,
+                    ];
+
+                    $data = [
+                        'type'=>3,
+                        'order_id'=>$orders['id'],
+                        'out_refund_no' => $out_refund_no,
+                        'reason'=>$data['message'],
+                    ];
+
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
+
+                    if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                        //推送企业微信消息
+                        $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                    }
+
+                }else{
+                    $users=db('users')->where('id',$orders['user_id'])->find();
+
+                    $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                    if(empty($rebatelist)){
+                        $rebatelist=new Rebatelist();
+                        $data=[
+                            "user_id"=>$orders["user_id"],
+                            "invitercode"=>$users["invitercode"],
+                            "fainvitercode"=>$users["fainvitercode"],
+                            "out_trade_no"=>$orders["out_trade_no"],
+                            "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
+                            "payinback"=>0,//补交费用 为负则表示超轻
+                            "state"=>0,
+                            "rebate_amount"=>0,
+                            "createtime"=>time(),
+                            "updatetime"=>time()
+                        ];
+                        !empty($users["rootid"]) && ($data["rootid"]=$users["rootid"]);
+                        $rebatelist->save($data);
+                    }
+
+                    //支付成功下单成功
+                    $result=$data['result'];
+                    $updata=[
+                        'waybill'=>$result['waybill'],
+                        'shopbill'=>$result['shopbill'],
+                        'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        'pay_status'=>1,
+                    ];
+
+                    $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
+                }
             }
+
+
             db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($updata);
 
             exit('success');

@@ -6,13 +6,12 @@ use app\admin\model\users\Blacklist;
 use app\admin\model\users\Userslist;
 use app\common\controller\Backend;
 use app\web\controller\Common;
-use app\web\controller\DoJob;
+use app\web\model\Users;
 use think\Db;
 use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
 use think\exception\ValidateException;
-use think\Queue;
 use think\response\Json;
 
 /**
@@ -399,22 +398,37 @@ class Orderslist extends Backend
      * 拉黑用户
      */
     function blacklist($ids=null,$remark=null){
+        $data=[];
         $row = $this->model->get(['id'=>$ids]);
         if (!$row) {
             $this->error(__('No Results were found'));
         }
         $Blacklist=new Blacklist();
         $blacklistinfo=$Blacklist->get(['mobile'=>$row['sender_mobile']]);
-        if ($blacklistinfo){
-            $this->error('该寄件人已在黑名单');
+        $UsersInfo=new Userslist();
+        $UsersInfo=$UsersInfo->get(['id'=>$row['user_id']]);
+        $blackUserinfo=$Blacklist->get(['mobile'=>$UsersInfo['mobile']]);
+
+
+        if (!$blacklistinfo){
+            $data[]= [
+                    'agent_id'=>$row['agent_id'],
+                    'mobile'=>$row['sender_mobile'],
+                    'name'=>$row['sender'],
+                    'remark'=>$remark,
+                    'create_time'=>time()
+                ];
         }
-        $Blacklist->save([
-            'agent_id'=>$row['agent_id'],
-            'mobile'=>$row['sender_mobile'],
-            'name'=>$row['sender'],
-            'remark'=>$remark,
-            'create_time'=>time()
-        ]);
+        if (!$blackUserinfo){
+            $data[]= [
+                'agent_id'=>$row['agent_id'],
+                'mobile'=>$UsersInfo['mobile'],
+                'name'=>$row['sender'],
+                'remark'=>$remark,
+                'create_time'=>time()
+            ];
+        }
+        $Blacklist->saveAll($data);
         $this->success('成功');
 
 
