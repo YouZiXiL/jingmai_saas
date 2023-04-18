@@ -121,7 +121,8 @@ class AliBase
      * @return mixed
      * @throws Exception
      */
-    public function refund($outTradeNo, $refundAmount, $appAuthToken = null){
+    public function refund($outTradeNo, $refundAmount, $appAuthToken = null)
+    {
         $object = new stdClass();
         $object->refund_amount = $refundAmount;
         $object->out_trade_no = $outTradeNo;
