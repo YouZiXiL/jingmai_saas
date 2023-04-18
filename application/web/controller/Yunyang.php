@@ -798,8 +798,7 @@ class Yunyang extends Controller
             'agent_price'=>$check_channel_intellect['agent_price'],
             'insured_price'=>$check_channel_intellect['freightInsured'],//保价费用
             'comments'=>'无',
-            'wx_mchid'=> '',
-            // 'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+            'pay_type'=> '2',
             'final_freight'=>0,//云洋最终运费
             'pay_status'=>0,
             'order_status'=>'派单中',
