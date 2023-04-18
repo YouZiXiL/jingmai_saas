@@ -631,8 +631,13 @@ class Yunyang extends Controller
         if(empty(input('insert_id'))||empty(input('item_name'))){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
-        $agent_info = Admin::where('id', $this->user->agent_id)->find();
-
+        $agent_info = Admin::field('id,status,agent_expire_time,amount')
+            ->with(['agentAuth'=>function($query){
+                    $query->field('agent_id,app_id,auth_token')
+                    ->where('app_id', input('appid'));
+                }])
+            ->where('id', $this->user->agent_id)
+            ->find();
         if ($agent_info['status']=='hidden'){
             return json(['status'=>400,'data'=>'','msg'=>'该商户已禁止使用']);
         }
@@ -642,8 +647,9 @@ class Yunyang extends Controller
 //        if (empty($agent_info['wx_mchid'])||empty($agent_info['wx_mchcertificateserial'])){
 //            return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
 //        }
-
-
+        if(empty($agent_info->agent_auth)){
+            return json(['status'=>400,'data'=>'','msg'=>'小程序没有被授权']);
+        }
 
         if ($agent_info['amount']<=200){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
@@ -741,10 +747,12 @@ class Yunyang extends Controller
 
         $object = new stdClass();
         $object->out_trade_no = $out_trade_no;
-        $object->total_amount =  $check_channel_intellect['final_price'];
+        $object->total_amount = 0.01;//$check_channel_intellect['final_price'];
         $object->subject = '快递下单-'.$out_trade_no;
         $object->buyer_id = $this->user->open_id;
-        $result = Alipay::start()->base()->create($object, $agent_info->auth_token);
+        $object->body = $agent_info->agent_auth[0]->auth_token;
+
+        $result = Alipay::start()->base()->create($object, $agent_info->agent_auth[0]->auth_token);
 
         $tradeNo = $result->trade_no;
         $data['wx_out_trade_no'] = $tradeNo;
@@ -903,7 +911,6 @@ class Yunyang extends Controller
      */
     function order_cancel(): Json
     {
-
         $id=$this->request->param('id');
         if (empty($id)){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
@@ -913,6 +920,7 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'请联系管理员取消订单']);
         }
         $row=db('orders')->where('id',$id)->where('user_id',$this->user->id)->find();
+
         if ($row['pay_status']!=1){
             return json(['status'=>400,'data'=>'','msg'=>'此订单已取消']);
         }

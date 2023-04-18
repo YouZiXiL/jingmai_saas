@@ -313,6 +313,7 @@ class Wxcallback extends Controller
      */
     function way_type(){
         $pamar=$this->request->param();
+        Log::error(['云洋回调way_type' => input()]);
         try {
             if (empty($pamar)){
                 throw new Exception('传来的数据为空');
@@ -730,6 +731,7 @@ class Wxcallback extends Controller
      * 云洋订单回调
      */
     function fhd_callback(){
+        Log::error(['云洋订单回调fhd_callback' => input()]);
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
         $result=$pamar['message'];

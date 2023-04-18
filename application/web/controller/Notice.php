@@ -25,33 +25,31 @@ class Notice extends Controller
      */
     public function ali(): string
     {
-        $success = "success";
-        $fail = "fail";
+        $signal = "success";
         Log::info(['阿里支付回调' => input()]);
         $alipay = AliConfig::options(input('app_id'))->payment()->common();
 
         $verifySign= $alipay->verifyNotify(input());
-        Log::info(['验签结果' => $verifySign]);
         if (!$verifySign){
             Log::error("支付宝验签失败");
-            return $fail;
+            return $signal;
         }
 
         if (input('trade_status') !== 'TRADE_SUCCESS'){
             Log::info('支付宝支付失败');
-            return $fail;
+            return $signal;
         }
 
         $orderModel = Order::where('out_trade_no',input('out_trade_no'))->find();
         if(!$orderModel){
             Log::error("支付订单未找到：" . json_encode(input()));
-            return $fail;
+            return $signal;
         }
         $orders = $orderModel->toArray();
         // 订单非未支付状态
         if ($orders['pay_status']!=0){
             Log::error("重复回调：" . json_encode(input()));
-            return $fail;
+            return $signal;
         }
 
             $Common=new Common();
@@ -83,27 +81,19 @@ class Notice extends Controller
             !empty($orders['vloum_height']) &&($content['vloumHeight'] = $orders['vloum_height']);
             !empty($orders['bill_remark']) &&($content['billRemark'] = $orders['bill_remark']);
 
-            // 测试退款
-            sleep(5);
-            $ref = Alipay::start()->base()->refund(input('out_trade_no'), input('buyer_pay_amount'));
-            Log::error(['退款详情' => $ref]);
-
-            return $fail;
-
             Log::error('云洋下单结果查询0000000');
             $data=$Common->yunyang_api('ADD_BILL_INTELLECT',$content);
             Log::error(['云洋下单结果查询：' => $data]);
             if ($data['code']!=1){
                 Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
+                if($orderModel->pay_status == 2) return $signal;
                 //支付成功下单失败  执行退款操作
-                try {
-                    $refund = $alipay->refund(input('out_trade_no'), input('buyer_pay_amount'));
-                    if($refund->code != 10000){
-                        Log::error('支付宝退款失败：' . $refund->httpBody);
-                    }
-                } catch (\Exception $e) {
-                    Log::error(['支付宝退款失败' => $e->getMessage(), '追踪'=>$e->getTraceAsString()]);
-                }
+                $refund = Alipay::start()->base()->refund(
+                    input('out_trade_no'),
+                    input('buyer_pay_amount'),
+                    input('body')
+                );
+                if(!$refund) return $signal; // 退款失败
                 $out_refund_no=$Common->get_uniqid();//下单退款订单号
                 $update=[
                     'pay_status'=>2,
@@ -157,7 +147,7 @@ class Notice extends Controller
             }
 
             $orderModel->save($update);
-            return $success;
+            return $signal;
     }
 
 
