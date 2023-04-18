@@ -121,14 +121,14 @@ class AliBase
      * @return mixed
      * @throws Exception
      */
-    public function refund($outTradeNo, $refundAmount, $appAuthToken = null){
+    public function refund($outTradeNo, $refundAmount, $appAuthToken = null)
+    {
         $object = new stdClass();
         $object->refund_amount = $refundAmount;
-        $object->out_request_no = $outTradeNo;
+        $object->out_trade_no = $outTradeNo;
         $json = json_encode($object);
         $request = new AlipayTradeRefundRequest();
         $request->setBizContent($json);
-
         try {
             $result = $this->aop->execute($request, null, $appAuthToken);
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
@@ -137,11 +137,11 @@ class AliBase
                 return $result->$responseNode;
             } else {
                 Log::error( ["支付宝退款失败：" => $result] );
-                throw new Exception('支付宝退款失败');
+                return false;
             }
         } catch (Exception $e) {
             Log::error( "支付宝退款失败：".$e->getMessage()."追踪：".$e->getTraceAsString() );
-            throw new Exception('支付宝退款失败');
+            return false;
         }
     }
 }

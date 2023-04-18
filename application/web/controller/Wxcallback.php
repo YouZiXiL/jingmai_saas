@@ -2,10 +2,12 @@
 
 namespace app\web\controller;
 
+use app\common\library\alipay\Alipay;
 use app\web\aes\WxBizMsgCrypt;
 
 use app\web\model\Admin;
 use app\web\model\Agent_couponlist;
+use app\web\model\AgentAuth;
 use app\web\model\AgentCouponmanager;
 use app\web\model\Couponlist;
 use app\web\model\Rebatelist;
@@ -313,6 +315,7 @@ class Wxcallback extends Controller
      */
     function way_type(){
         $pamar=$this->request->param();
+        Log::error(['云洋回调way_type' => input()]);
         try {
             if (empty($pamar)){
                 throw new Exception('传来的数据为空');
@@ -347,143 +350,168 @@ class Wxcallback extends Controller
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
                 }
-                $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
-                $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
-                $users=db('users')->where('id',$orders['user_id'])->find();
-                $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
-
-                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
-                if(empty($rebatelist)){
-                    $rebatelist=new Rebatelist();
-                    $data=[
-                        "user_id"=>$users["id"],
-                        "invitercode"=>$users["invitercode"],
-                        "fainvitercode"=>$users["fainvitercode"],
-                        "out_trade_no"=>$orders["out_trade_no"],
-                        "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
-                        "payinback"=>0,
-                        "state"=>1,
-                        "rebate_amount"=>$orders["user_id"],
-                        "createtime"=>time(),
-                        "updatetime"=>time()
-                    ];
-                    if(!empty($users["rootid"]) ){
-                        $data["rootid"]=$users["rootid"];
-                        $superB=db("admin")->find($users["rootid"]);
-                        //计算 超级B 价格
-                        if ($orders['tag_type']=='顺丰'){
-                            $agent_price=$orders['freight']+$orders['freight']*$superB['agent_sf_ratio']/100;//代理商价格
-                            $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_sf_ratio']/100;//代理商价格
-
-                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                        }
-                        elseif ($orders['tag_type']=='德邦'||$orders['tag_type']=='德邦重货'){
-
-                            $agent_price=$orders['freight']+$orders['freight']*$superB['agent_db_ratio']/100;// 超级B 达标价格
-                            $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_db_ratio']/100;//超级B 默认价格
-                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                            $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$superB['agent_db_ratio']/100;//代理商首重
-                            $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_db_ratio']/100;//代理商续重
-
-                        }elseif ($orders['tag_type']=='京东'){
-                            $agent_price=$orders['freight']+$orders['freight']*$superB['agent_jd_ratio']/100;//代理商价格
-                            $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_jd_ratio']/100;//代理商价格
-
-                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                            $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$superB['agent_jd_ratio']/100;//代理商首重
-                            $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_jd_ratio']/100;//代理商续重
-
-                        }elseif ($orders['tag_type']=='圆通'){
-
-                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                            $weight=$orders['weight']-1;//续重重量
-
-                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-
-                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
-                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
-                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
-                        }elseif ($orders['tag_type']=='申通'){
-                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                            $weight=$orders['weight']-1;//续重重量
-                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-
-                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
-                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
-                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
-                        }elseif ($orders['tag_type']=='极兔'){
-                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                            $weight=$orders['weight']-1;//续重重量
-                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-
-                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
-                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
-                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
-
-                        }elseif ($orders['tag_type']=='中通'){
-                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                            $weight=$orders['weight']-1;//续重重量
-                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-
-                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
-                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
-                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
-                        }elseif ($orders['tag_type']=='韵达'){
-
-
-                            $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
-                            $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
-                            $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
-                            $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
-
-                            $weight=$orders['weight']-1;//续重重量
-
-                            $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-
-                            $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
-                            $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
-                            $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
-                        }
-                        $data["root_price"]=number_format($agent_price,2);
-                        $data["root_defaultprice"]=number_format($agent_default_price,2);
-
-                        $data["imm_rebate"]=number_format(($data["final_price"])*($superB["imm_rate"]??0)/100,2);
-                        $data["mid_rebate"]=number_format(($data["final_price"])*($superB["midd_rate"]??0)/100,2);
-
-                        $data["root_vip_rebate"]=number_format($data["final_price"]-$data["root_price"]-$data["imm_rebate"]-$data["mid_rebate"],2);
-                        $data["root_default_rebate"]=number_format($data["final_price"]-$agent_default_price-$data["imm_rebate"]-$data["mid_rebate"],2);
+                if($orders['pay_type'] == '2'){
+                    // 支付宝支付
+                    $agent_auth_xcx = AgentAuth::where('agent_id',$orders['agent_id'])
+                        ->where('app_id',$orders['wx_mchid'])
+                        ->find();
+                    Log::error(['云洋回调---agent_auth' => $agent_auth_xcx]);
+                    // 退款给用户
+                    $refund = Alipay::start()->base()->refund($orders['out_trade_no'],$orders['final_price'],$agent_auth_xcx['auth_token']);
+                    if($refund){
+                        $out_refund_no=$common->get_uniqid();//下单退款订单号
+                        $update=[
+                            'pay_status'=>2,
+                            'yy_fail_reason'=>$data['message'],
+                            'order_status'=>'下单失败咨询客服',
+                            'out_refund_no'=>$out_refund_no,
+                        ];
+                        $orders->save(['pay_status' => 2]);
                     }
-                    else{
 
-                        $data["root_price"]=0;
-                        $data["root_defaultprice"]=0;
 
-                        $data["imm_rebate"]=number_format(($data["final_price"])*($agent_info["imm_rate"]??0)/100,2);
-                        $data["mid_rebate"]=number_format(($data["final_price"])*($agent_info["midd_rate"]??0)/100,2);
+                }else{
+                    // 微信支付
+                    $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+                    $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+                    $users=db('users')->where('id',$orders['user_id'])->find();
+                    $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
 
-                        $data["root_vip_rebate"]=0;
-                        $data["root_default_rebate"]=0;
-                    }
-                 $rebatelist->save($data);
+                    $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                    if(empty($rebatelist)){
+                        $rebatelist=new Rebatelist();
+                        $data=[
+                            "user_id"=>$users["id"],
+                            "invitercode"=>$users["invitercode"],
+                            "fainvitercode"=>$users["fainvitercode"],
+                            "out_trade_no"=>$orders["out_trade_no"],
+                            "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
+                            "payinback"=>0,
+                            "state"=>1,
+                            "rebate_amount"=>$orders["user_id"],
+                            "createtime"=>time(),
+                            "updatetime"=>time()
+                        ];
+                        if(!empty($users["rootid"]) ){
+                            $data["rootid"]=$users["rootid"];
+                            $superB=db("admin")->find($users["rootid"]);
+                            //计算 超级B 价格
+                            if ($orders['tag_type']=='顺丰'){
+                                $agent_price=$orders['freight']+$orders['freight']*$superB['agent_sf_ratio']/100;//代理商价格
+                                $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_sf_ratio']/100;//代理商价格
+
+                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                            }
+                            elseif ($orders['tag_type']=='德邦'||$orders['tag_type']=='德邦重货'){
+
+                                $agent_price=$orders['freight']+$orders['freight']*$superB['agent_db_ratio']/100;// 超级B 达标价格
+                                $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_db_ratio']/100;//超级B 默认价格
+                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                                $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$superB['agent_db_ratio']/100;//代理商首重
+                                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_db_ratio']/100;//代理商续重
+
+                            }elseif ($orders['tag_type']=='京东'){
+                                $agent_price=$orders['freight']+$orders['freight']*$superB['agent_jd_ratio']/100;//代理商价格
+                                $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_jd_ratio']/100;//代理商价格
+
+                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                                $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$superB['agent_jd_ratio']/100;//代理商首重
+                                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_jd_ratio']/100;//代理商续重
+
+                            }elseif ($orders['tag_type']=='圆通'){
+
+                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                                $weight=$orders['weight']-1;//续重重量
+
+                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                                $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                                $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                                $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+                            }elseif ($orders['tag_type']=='申通'){
+                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                                $weight=$orders['weight']-1;//续重重量
+                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                                $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                                $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                                $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+                            }elseif ($orders['tag_type']=='极兔'){
+                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                                $weight=$orders['weight']-1;//续重重量
+                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                                $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                                $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                                $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+
+                            }elseif ($orders['tag_type']=='中通'){
+                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                                $weight=$orders['weight']-1;//续重重量
+                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                                $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                                $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                                $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+                            }elseif ($orders['tag_type']=='韵达'){
+
+
+                                $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
+                                $admin_xuzhong=$orders['admin_xuzhong'];//平台续重
+                                $agent_shouzhong=$admin_shouzhong+$superB['agent_shouzhong'];//代理商首重价格
+                                $agent_xuzhong=$admin_xuzhong+$superB['agent_xuzhong'];//代理商续重价格
+
+                                $weight=$orders['weight']-1;//续重重量
+
+                                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+
+                                $agent_default_shouzhong=$admin_shouzhong+$superB['agent_default_shouzhong'];//代理商首重价格
+                                $agent_default_xuzhong=$admin_xuzhong+$superB['agent_default_xuzhong'];//代理商续重价格
+                                $agent_default_price=$agent_default_shouzhong+$agent_default_xuzhong*$weight;//超级B 默认结算金额
+                            }
+                            $data["root_price"]=number_format($agent_price,2);
+                            $data["root_defaultprice"]=number_format($agent_default_price,2);
+
+                            $data["imm_rebate"]=number_format(($data["final_price"])*($superB["imm_rate"]??0)/100,2);
+                            $data["mid_rebate"]=number_format(($data["final_price"])*($superB["midd_rate"]??0)/100,2);
+
+                            $data["root_vip_rebate"]=number_format($data["final_price"]-$data["root_price"]-$data["imm_rebate"]-$data["mid_rebate"],2);
+                            $data["root_default_rebate"]=number_format($data["final_price"]-$agent_default_price-$data["imm_rebate"]-$data["mid_rebate"],2);
+                        }
+                        else{
+
+                            $data["root_price"]=0;
+                            $data["root_defaultprice"]=0;
+
+                            $data["imm_rebate"]=number_format(($data["final_price"])*($agent_info["imm_rate"]??0)/100,2);
+                            $data["mid_rebate"]=number_format(($data["final_price"])*($agent_info["midd_rate"]??0)/100,2);
+
+                            $data["root_vip_rebate"]=0;
+                            $data["root_default_rebate"]=0;
+                        }
+                        $rebatelist->save($data);
+                }
+
+
                 }
 
                 $rebatelistdata=[
@@ -730,6 +758,7 @@ class Wxcallback extends Controller
      * 云洋订单回调
      */
     function fhd_callback(){
+        Log::error(['云洋订单回调fhd_callback' => input()]);
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
         $result=$pamar['message'];
