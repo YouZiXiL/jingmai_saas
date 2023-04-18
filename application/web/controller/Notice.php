@@ -55,7 +55,7 @@ class Notice extends Controller
         }
 
         // 订单正在支付
-        if ($orders['pay_status'] == 6 && $orders['pay_status'] != 1){
+        if ($orders['pay_status'] == 6){
             Log::error("订单正在支付重复回调：" . json_encode(input()));
             return $signal;
         }else{
