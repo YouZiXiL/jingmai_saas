@@ -61,7 +61,7 @@ class Tclist extends Backend
         [$where, $sort, $order, $offset, $limit] = $this->buildparams();
 
         if (in_array(2,$this->auth->getGroupIds())) {
-            $list = $this->model->where("orderslist.agent_id", $this->auth->id);
+            $list = $this->model->where("tclist.agent_id", $this->auth->id);
         } else {
             $list = $this->model;
         }
@@ -72,9 +72,6 @@ class Tclist extends Backend
             ->with([
                 'usersinfo'=>function($query){
                     $query->WithField('mobile');
-                },
-                'wxauthinfo'=>function($query){
-                    $query->where('auth_type',2)->WithField('name');
                 }])
             ->order($sort, $order)
             ->paginate($limit);

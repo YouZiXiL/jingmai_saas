@@ -54,90 +54,90 @@ class Login extends Controller
      */
     public function get_openid(): Json
     {
-            $param=$this->request->param();
-            if (empty($param['app_id'])||trim($param['code'])=='null'){
-                Log::error(json_encode($param));
-                return json(['status'=>400,'data'=>'','msg'=>'请重新登录']);
-            }
-            $url = "https://api.weixin.qq.com/sns/component/jscode2session?component_access_token=" .$this->common->get_component_access_token().'&appid='. $param['app_id'] . "&component_appid=" . config('site.kaifang_appid') . "&js_code=" . $param['code'] . "&grant_type=authorization_code";
-            $url=$this->common->httpRequest($url);
+        $param=$this->request->param();
+        if (empty($param['app_id'])||trim($param['code'])=='null'){
+            Log::error(json_encode($param));
+            return json(['status'=>400,'data'=>'','msg'=>'请重新登录']);
+        }
+        $url = "https://api.weixin.qq.com/sns/component/jscode2session?component_access_token=" .$this->common->get_component_access_token().'&appid='. $param['app_id'] . "&component_appid=" . config('site.kaifang_appid') . "&js_code=" . $param['code'] . "&grant_type=authorization_code";
+        $url=$this->common->httpRequest($url);
 
-            $json_obj=json_decode($url,true);
-            if (empty($json_obj['openid'])){
-                return json(['status'=>400,'data'=>'','msg'=>$json_obj['errmsg']]);
-            }
-            //  存储登录态
-            $_3rd_session=$this->common->get_uniqid();
+        $json_obj=json_decode($url,true);
+        if (empty($json_obj['openid'])){
+            return json(['status'=>400,'data'=>'','msg'=>$json_obj['errmsg']]);
+        }
+        //  存储登录态
+        $_3rd_session=$this->common->get_uniqid();
 
-            $user = new Users;
-            $agent_id=db('agent_auth')->where('app_id',$param['app_id'])->value('agent_id');
-            if (empty($agent_id)){
-                return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
-            }
-            $user_info=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
-            $time=time();
-            if(empty($user_info)){
-                if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
-                    $mobile=$this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
-                    if (!$mobile){
-                        return json(['status'=>400,'data'=>'','msg'=>'信息解密失败']);
-                    }
-                    $user_info['mobile']=$mobile['phoneNumber'];
+        $user = new Users;
+        $agent_id=db('agent_auth')->where('app_id',$param['app_id'])->value('agent_id');
+        if (empty($agent_id)){
+            return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+        }
+        $user_info=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
+        $time=time();
+        if(empty($user_info)){
+            if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
+                $mobile=$this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
+                if (!$mobile){
+                    return json(['status'=>400,'data'=>'','msg'=>'信息解密失败']);
                 }
-
-                $user_info['open_id']=$json_obj['openid'];
-                $user_info['create_time']=$time;
-                $user_info['login_time']=$time;
-                $user_info['agent_id']=$agent_id;
-                $user_info['token']=$_3rd_session;
-                //如果携带邀请码登录
-                if(!empty($param["invitercode"])){
-                    $pauser=$user->get(["myinvitecode"=>$param["invitercode"]]);
-                    if(!empty($pauser)){
-                        $user_info["invitercode"]=$param["invitercode"];
-                        $user_info["fainvitercode"]=$pauser["invitercode"];
-                    }
-                    //超级B 身份核验
-                    if(!empty($pauser->rootid)){
-                        $user_info["rootid"]=$pauser["rootid"];
-                    }
-                }
-                $s=$user->save($user_info);
-                $user_id=$user->id;
-
-            } else {
-                $data=[
-                    'login_time' => $time,
-                    'agent_id'   => $agent_id,
-                    'token'      => $_3rd_session,
-                ];
-                if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
-                    $mobile=$this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
-                    if (!$mobile){
-                        return json(['status'=>400,'data'=>'','msg'=>'信息解密失败']);
-                    }
-                    $data['mobile']=$mobile['phoneNumber'];
-                }
-                $s=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
-                $user_id=$user_info->id;
-
+                $user_info['mobile']=$mobile['phoneNumber'];
             }
 
-            if ($s){
-                $data=['status'=>200,'data'=>$_3rd_session,'msg'=>'登录成功'];
-                $session=[
-                    'id' =>$user_id,
-                    'agent_id'=>$agent_id,
-                    'app_id' =>$param['app_id'],
-                    'open_id'=>$json_obj["openid"],
-                    'session_key'=>$json_obj["session_key"]
-                ];
-                cache($_3rd_session,$session,3600*24*25);
-            }else{
-                $data=['status'=>400,'data'=>'','msg'=>'登录失败'];
+            $user_info['open_id']=$json_obj['openid'];
+            $user_info['create_time']=$time;
+            $user_info['login_time']=$time;
+            $user_info['agent_id']=$agent_id;
+            $user_info['token']=$_3rd_session;
+            //如果携带邀请码登录
+            if(!empty($param["invitercode"])){
+                $pauser=$user->get(["myinvitecode"=>$param["invitercode"]]);
+                if(!empty($pauser)){
+                    $user_info["invitercode"]=$param["invitercode"];
+                    $user_info["fainvitercode"]=$pauser["invitercode"];
+                }
+                //超级B 身份核验
+                if(!empty($pauser->rootid)){
+                    $user_info["rootid"]=$pauser["rootid"];
+                }
             }
-            //存储用户信息
-            return json($data);
+            $s=$user->save($user_info);
+            $user_id=$user->id;
+
+        } else {
+            $data=[
+                'login_time' => $time,
+                'agent_id'   => $agent_id,
+                'token'      => $_3rd_session,
+            ];
+            if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
+                $mobile=$this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
+                if (!$mobile){
+                    return json(['status'=>400,'data'=>'','msg'=>'信息解密失败']);
+                }
+                $data['mobile']=$mobile['phoneNumber'];
+            }
+            $s=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
+            $user_id=$user_info->id;
+
+        }
+
+        if ($s){
+            $data=['status'=>200,'data'=>$_3rd_session,'msg'=>'登录成功'];
+            $session=[
+                'id' =>$user_id,
+                'agent_id'=>$agent_id,
+                'app_id' =>$param['app_id'],
+                'open_id'=>$json_obj["openid"],
+                'session_key'=>$json_obj["session_key"]
+            ];
+            cache($_3rd_session,$session,3600*24*25);
+        }else{
+            $data=['status'=>400,'data'=>'','msg'=>'登录失败'];
+        }
+        //存储用户信息
+        return json($data);
 
     }
 
@@ -243,7 +243,7 @@ class Login extends Controller
     function code(): Json
     {
         if(!preg_match( '/^1[3-9]\d{9}$/', input('phone'))){
-           return R::error('请输有效手机号');
+            return R::error('请输有效手机号');
         }
         $code = Cache::store('redis')->get(input('phone'));
         if($code) return R::ok($code);

@@ -101,6 +101,9 @@ class DoJob
         }elseif ($data['type']==3){
 
                 $orders=db('orders')->where('id',$data['order_id'])->find();
+
+                $refoundAmount=$orders['aftercoupon']??$orders['final_price'];
+
                 // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
                 $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$orders['wx_mchid'].'.pem');
                 $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
@@ -125,13 +128,15 @@ class DoJob
                     'out_refund_no'=>$data['out_refund_no'],
                     'reason'=>$data['reason'],
                     'amount'       => [
-                        'refund'   => (int)bcmul($orders['final_price'],100),
-                        'total'    =>(int)bcmul($orders['final_price'],100),
+                        'refund'   => (int)bcmul($refoundAmount,100),
+                        'total'    =>(int)bcmul($refoundAmount,100),
                         'currency' => 'CNY'
                     ],
                 ]]);
         }elseif ($data['type']==4){
                 $row=db('orders')->where('id',$data['order_id'])->find();
+                $refoundAmount=$row['aftercoupon']??$row['final_price'];
+
                 if ($row['pay_status']!=2){
                     // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
                     $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$row['wx_mchid'].'.pem');
@@ -159,8 +164,8 @@ class DoJob
                             'out_refund_no'=>$out_refund_no,
                             'reason'=>'自助取消',
                             'amount'       => [
-                                'refund'   => (int)bcmul($row['final_price'],100),
-                                'total'    =>(int)bcmul($row['final_price'],100),
+                                'refund'   => (int)bcmul($refoundAmount,100),
+                                'total'    =>(int)bcmul($refoundAmount,100),
                                 'currency' => 'CNY'
                             ],
                         ]]);

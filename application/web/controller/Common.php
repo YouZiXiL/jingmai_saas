@@ -60,6 +60,26 @@ class Common
 
     }
 
+    function fhd_api($serviceCode,$content){
+        $pid=13513;
+        list($msec, $sec) = explode(' ', microtime());
+        $timeStamp= (float)sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
+        $time=$timeStamp;
+        $nonceStr=$this->get_uniqid();
+        $psecret='2edbc05b02ce2cac0c235082ee400ac3';
+        $params=json_encode($content);
+        $sign=hash_hmac('md5', $psecret . "nonceStr" . $nonceStr . "params" . $params . "pid" . $pid . "time" . $time . $psecret, $psecret);
+        $data=[
+            'pid'=>$pid,
+            'time'=>$time,
+            'nonceStr'=>$nonceStr,
+            'params'=>$params,
+            'sign'=>$sign
+        ];
+
+        return $this->httpRequest('https://openapi.fhd001.com/express/'.$serviceCode,$data ,'POST',['Content-Type = application/x-www-form-urlencoded; charset=utf-8']);
+    }
+
     /**
      * 顺丰接口
      * @string $serviceCode

@@ -250,7 +250,7 @@ class Users extends Controller
 
             $agentrule=[
                 "title"=>"隐私服务协议",
-                "content"=>$agent["package_rule"]??"我们尊重你的隐私"
+                "content"=>$agent["privacy_rule"]??"我们尊重你的隐私"
             ];
         }
         $data["data"]=$agentrule;
@@ -905,7 +905,7 @@ class Users extends Controller
         $data=[
             'status'=>200,
             'data'=>"",
-            'msg'=>'兑换成功 积分 -100'
+            'msg'=>'兑换成功'
         ];
 
 

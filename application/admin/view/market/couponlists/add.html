@@ -9,7 +9,7 @@
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Gain_way')}:</label>
         <div class="col-xs-12 col-sm-8">
-                        
+
             <select  id="c-gain_way" class="form-control selectpicker" name="row[gain_way]">
                     <option value="1" {in name="1" value="1"}selected{/in}>赠送</option>
             </select>
@@ -49,14 +49,17 @@
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Scene')}:</label>
         <div class="col-xs-12 col-sm-8">
-                        
+
+
             <select  id="c-scene" class="form-control selectpicker" name="row[scene]">
-                    <option value="1" {in name="1" value=""}selected{/in}>满减</option>
+                {foreach name="sceneList" item="vo"}
+                <option value="{$key}" {in name="key" value=""}selected{/in}>{$vo}</option>
+                {/foreach}
             </select>
 
         </div>
     </div>
-    <div class="form-group">
+    <div class="form-group" style="display: none" id="uselimits">
         <label class="control-label col-xs-12 col-sm-2">{:__('Uselimits')}:</label>
         <div class="col-xs-12 col-sm-8">
             <input id="c-uselimits" class="form-control" name="row[uselimits]" type="number" min="0">
@@ -87,12 +90,12 @@
 
         </div>
     </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Limitdate')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-limitdate" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[limitdate]" type="text" >
-        </div>
-    </div>
+<!--    <div class="form-group">-->
+<!--        <label class="control-label col-xs-12 col-sm-2">{:__('Limitdate')}:</label>-->
+<!--        <div class="col-xs-12 col-sm-8">-->
+<!--            <input id="c-limitdate" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[limitdate]" type="text" >-->
+<!--        </div>-->
+<!--    </div>-->
     <div class="form-group layer-footer">
         <label class="control-label col-xs-12 col-sm-2"></label>
         <div class="col-xs-12 col-sm-8">

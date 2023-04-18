@@ -2,24 +2,14 @@
 
 namespace app\admin\controller\wxauth;
 
-
-
 use app\admin\model\Admin;
 use app\admin\model\cdk\Cdklist;
 use app\common\controller\Backend;
-use app\common\library\alipay\aop\AopCertClient;
-use app\common\library\alipay\aop\request\AlipayOpenAppApiQueryRequest;
-use app\common\library\alipay\aop\request\AlipayOpenAuthAppauthInviteCreateRequest;
-use app\common\library\alipay\aop\request\AlipayOpenMiniPrivacySystemfieldQueryRequest;
 use app\web\controller\Common;
-use app\common\library\ali\AliConfig;
-use app\web\model\AgentAuth;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
-use think\Exception;
 use think\exception\DbException;
-use think\Log;
 use think\Response;
 use think\response\Json;
 
