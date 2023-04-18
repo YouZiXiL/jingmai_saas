@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\common\library\alipay\Alipay;
+use app\common\model\Order;
 use app\web\aes\WxBizMsgCrypt;
 
 use app\web\model\Admin;
@@ -315,12 +316,15 @@ class Wxcallback extends Controller
      */
     function way_type(){
         $pamar=$this->request->param();
-        Log::error(['云洋回调way_type' => input()]);
+        Log::error(['云洋回调---way_type' => input()]);
         try {
+            Log::error('云洋回调---1111');
             if (empty($pamar)){
                 throw new Exception('传来的数据为空');
             }
+            Log::error('云洋回调---2222');
             $common= new Common();
+            Log::error('云洋回调---3333');
             $data=[
                 'waybill'=>$pamar['waybill'],
                 'shopbill'=>$pamar['shopbill'],
@@ -343,10 +347,16 @@ class Wxcallback extends Controller
                 'total_price'=>$pamar['totalPrice']??'',
                 'create_time'=>time(),
             ];
+            Log::error('云洋回调---4444');
             db('yy_callback')->insert($data);
+            Log::error('云洋回调---5555');
+            $orderModel = Order::where('shopbill',$pamar['shopbill'])->find();
 
-            $orders=db('orders')->where('shopbill',$pamar['shopbill'])->find();
-            if ($orders){
+            if ($orderModel){
+                $orders = $orderModel->toArray();
+                Log::error(['云洋回调---订单状态' => $orders]);
+                Log::error('云洋回调---6666');
+
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
                 }
@@ -355,21 +365,26 @@ class Wxcallback extends Controller
                     $agent_auth_xcx = AgentAuth::where('agent_id',$orders['agent_id'])
                         ->where('app_id',$orders['wx_mchid'])
                         ->find();
-                    Log::error(['云洋回调---agent_auth' => $agent_auth_xcx]);
+                    Log::error(['云洋回调---agent_auth' => $agent_auth_xcx->toArray()]);
                     // 退款给用户
-                    $refund = Alipay::start()->base()->refund($orders['out_trade_no'],$orders['final_price'],$agent_auth_xcx['auth_token']);
+                    $refund = Alipay::start()->base()->refund($orders['out_trade_no'],0.01/*$orders['final_price']*/,$agent_auth_xcx['auth_token']);
                     if($refund){
                         $out_refund_no=$common->get_uniqid();//下单退款订单号
                         $update=[
                             'pay_status'=>2,
-                            'yy_fail_reason'=>$data['message'],
-                            'order_status'=>'下单失败咨询客服',
+                            'order_status'=>'已取消',
                             'out_refund_no'=>$out_refund_no,
                         ];
-                        $orders->save(['pay_status' => 2]);
+                        Log::error('云洋回调--退款成功');
+                    }else{
+                        $update=[
+                            'pay_status'=>4,
+                            'order_status'=>'取消成功未退款'
+                        ];
+                        Log::error('云洋回调--退款失败');
                     }
-
-
+                    $orderModel->save($update);
+                    return json(['code'=>1, 'message'=>'ok']);
                 }else{
                     // 微信支付
                     $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
@@ -509,9 +524,7 @@ class Wxcallback extends Controller
                             $data["root_default_rebate"]=0;
                         }
                         $rebatelist->save($data);
-                }
-
-
+                    }
                 }
 
                 $rebatelistdata=[
@@ -758,7 +771,7 @@ class Wxcallback extends Controller
      * 云洋订单回调
      */
     function fhd_callback(){
-        Log::error(['云洋订单回调fhd_callback' => input()]);
+        Log::error(['云洋回调---fhd_callback' => input()]);
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
         $result=$pamar['message'];

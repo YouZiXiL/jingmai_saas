@@ -45,11 +45,21 @@ class Notice extends Controller
             Log::error("支付订单未找到：" . json_encode(input()));
             return $signal;
         }
+
         $orders = $orderModel->toArray();
+        Log::error(['订单状态' => $orders]);
         // 订单非未支付状态
         if ($orders['pay_status']!=0){
             Log::error("重复回调：" . json_encode(input()));
             return $signal;
+        }
+
+        // 订单正在支付
+        if ($orders['pay_status'] == 6 && $orders['pay_status'] != 1){
+            Log::error("订单正在支付重复回调：" . json_encode(input()));
+            return $signal;
+        }else{
+            $orderModel->save(['pay_status' => 6]);
         }
 
             $Common=new Common();

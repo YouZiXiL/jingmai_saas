@@ -7,3 +7,7 @@ alter table fa_agent_auth
 
 alter table fa_orders
     add pay_type enum('1', '2') default '1' null comment '支付类型 1微信 2支付宝';
+
+
+alter table fa_orders
+    modify pay_status enum('0', '1', '2', '3', '4', '5', '6') null comment '支付状态 0未支付 1支付成功 2已退款 3支付成功未下单 4取消成功未退款 5退款中 6支付中' ;
