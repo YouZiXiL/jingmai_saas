@@ -1295,6 +1295,9 @@ class Wxcallback extends Controller
                     'serviceInfoList'=>[
                         [
                             'code'=>'INSURE','value'=>$orders['insured']*100,
+                        ],
+                        [
+                            'code'=>'TRANSPORT_TYPE','value'=>$orders['db_type'],
                         ]
                     ]
 
