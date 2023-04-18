@@ -420,6 +420,7 @@ class Yunyang extends Controller
                 $v['send_start_time']=$time;
                 $v['send_end_time']=$sendEndTime;
                 $v['tagType']='德邦重货';
+                $v['db_type']='JZQY_LONG';
                 !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价金额
                 !empty($param['vloum_long']) &&($v['vloumLong'] = $param['vloum_long']);//货物长度
                 !empty($param['vloum_width']) &&($v['vloumWidth'] = $param['vloum_width']);//货物宽度
@@ -504,6 +505,7 @@ class Yunyang extends Controller
                 $v['send_start_time']=$time;
                 $v['send_end_time']=$sendEndTime;
                 $v['tagType']='德邦重货';
+                $v['db_type']='JZKH';
                 !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价金额
                 !empty($param['vloum_long']) &&($v['vloumLong'] = $param['vloum_long']);//货物长度
                 !empty($param['vloum_width']) &&($v['vloumWidth'] = $param['vloum_width']);//货物宽度
@@ -573,6 +575,7 @@ class Yunyang extends Controller
 
         $out_trade_no='XD'.$this->common->get_uniqid();
         $data=[
+            'db_type'=>$check_channel_intellect['db_type']??null,
             'send_start_time'=>$check_channel_intellect['send_start_time']??null,
             'send_end_time'=>$check_channel_intellect['send_end_time']??null,
             'user_id'=>$this->user->id,
