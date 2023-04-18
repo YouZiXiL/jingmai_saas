@@ -56,7 +56,7 @@ class AliOpen
                 throw new Exception('授权应用aes密钥查询失败');
             }
         } catch (\Exception $e) {
-            Log::error( "授权应用aes密钥查询失败：{$e->getMessage()}。追踪：{$e->getTraceAsString()}" );
+            Log::error( "授权应用aes密钥查询失败：". $e->getMessage() . "追踪：" . $e->getTraceAsString() );
             throw new Exception('授权应用aes密钥查询失败');
         }
     }
@@ -84,7 +84,7 @@ class AliOpen
                 throw new Exception('小程序类目树查询失败');
             }
         } catch (Exception $e) {
-            Log::error( "小程序类目树查询失败：{$e->getMessage()}。追踪：{$e->getTraceAsString()}" );
+            Log::error( "小程序类目树查询失败：". $e->getMessage(). "追踪：". $e->getTraceAsString() );
             throw new Exception('小程序类目树查询失败');
         }
 
@@ -110,7 +110,7 @@ class AliOpen
                 throw new Exception('查询小程序基础信息失败');
             }
         }catch (Exception $e) {
-            Log::error( "查询小程序基础信息失败：{$e->getMessage()}。追踪：{$e->getTraceAsString()}" );
+            Log::error( "查询小程序基础信息失败：". $e->getMessage() . "追踪：". $e->getTraceAsString() );
             throw new Exception('查询小程序基础信息失败');
         }
 
@@ -150,7 +150,7 @@ class AliOpen
                 throw new Exception('换取令牌失败');
             }
         } catch (Exception $e) {
-            Log::error( "换取令牌失败：{$e->getMessage()}。追踪：{$e->getTraceAsString()}" );
+            Log::error( "换取令牌失败：" . $e->getMessage() . "追踪：" . $e->getTraceAsString() );
             throw new Exception('换取令牌失败');
         }
 
@@ -178,7 +178,7 @@ class AliOpen
                 throw new Exception('获取小程序版本信息失败');
             }
         } catch (Exception $e) {
-            Log::error( "获取小程序版本信息失败：{$e->getMessage()}。追踪：{$e->getTraceAsString()}" );
+            Log::error( "获取小程序版本信息失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
             throw new Exception('获取小程序版本信息失败');
         }
     }

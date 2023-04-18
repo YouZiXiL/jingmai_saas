@@ -2,12 +2,7 @@
 
 namespace app\web\controller;
 
-use app\admin\model\appinfo\Orders;
-use app\common\library\alipay\AliOpen;
 use app\common\library\alipay\Alipay;
-use app\common\library\alipay\aop\AopCertClient;
-use app\common\library\alipay\aop\AopClient;
-use app\common\library\alipay\aop\request\AlipayOpenAuthTokenAppRequest;
 use app\common\model\Order;
 use app\web\library\ali\AliConfig;
 use app\web\model\Admin;
@@ -15,13 +10,9 @@ use app\web\model\AgentAssets;
 use app\web\model\AgentAuth;
 use app\web\model\Rebatelist;
 use think\Controller;
+use think\Db;
 use think\Exception;
 use think\Log;
-use think\Queue;
-use think\Request;
-use WeChatPay\Crypto\AesGcm;
-use WeChatPay\Crypto\Rsa;
-use WeChatPay\Formatter;
 
 class Notice extends Controller
 {
@@ -29,8 +20,10 @@ class Notice extends Controller
      * 支付宝支付回调
      *
      * @return string
+     * @throws Exception
+     * @throws \Exception
      */
-    public function ali()
+    public function ali(): string
     {
         $success = "success";
         $fail = "fail";
@@ -38,6 +31,7 @@ class Notice extends Controller
         $alipay = AliConfig::options(input('app_id'))->payment()->common();
 
         $verifySign= $alipay->verifyNotify(input());
+        Log::info(['验签结果' => $verifySign]);
         if (!$verifySign){
             Log::error("支付宝验签失败");
             return $fail;
@@ -88,7 +82,17 @@ class Notice extends Controller
             !empty($orders['vloum_width']) &&($content['vloumWidth'] = $orders['vloum_width']);
             !empty($orders['vloum_height']) &&($content['vloumHeight'] = $orders['vloum_height']);
             !empty($orders['bill_remark']) &&($content['billRemark'] = $orders['bill_remark']);
+
+            // 测试退款
+            sleep(5);
+            $ref = Alipay::start()->base()->refund(input('out_trade_no'), input('buyer_pay_amount'));
+            Log::error(['退款详情' => $ref]);
+
+            return $fail;
+
+            Log::error('云洋下单结果查询0000000');
             $data=$Common->yunyang_api('ADD_BILL_INTELLECT',$content);
+            Log::error(['云洋下单结果查询：' => $data]);
             if ($data['code']!=1){
                 Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
                 //支付成功下单失败  执行退款操作
@@ -171,37 +175,49 @@ class Notice extends Controller
             'source' => 'alipay_app_auth',
           ),
          */
-        $code = input('app_auth_code');
-        $appid = input('app_id');
-        $aliOpen = Alipay::start()->open();
-        $authInfo = $aliOpen->getAuthToken($code);
-        Log::error(['授权成功app_auth_token：' => $authInfo->app_auth_token]);
-        $miniProgram = $aliOpen->getMiniBaseInfo($authInfo->app_auth_token);
-        $version = $aliOpen->getMiniVersionNow($authInfo->app_auth_token);
-        $agent_id = 23;
-        $data=[
-            'agent_id' => $agent_id,
-            'app_id'=>$authInfo->auth_app_id,
-            'name'=>$miniProgram->app_name,
-            'avatar'=>$miniProgram->app_logo,
-            'wx_auth'=>2,
-            'yuanshi_id'=>$authInfo->auth_app_id,
-            'body_name'=>'',
-            'refresh_token'=>$authInfo->app_refresh_token,
-            'auth_token'=>$authInfo->app_refresh_token,
-            'user_version'=>$version,
-            'auth_type'=>2
-        ];
-        $agentAuth=AgentAuth::where('app_id',$authInfo->auth_app_id)->find();
-        if ($agentAuth){
-            if($agentAuth->agent_id != $agent_id) exit('该app_id已被授权过');
-            $data['id'] = $agentAuth->id;
-            $agentAuth->save($data);
-        }else{
-            AgentAuth::create($data);
-        }
+        Db::startTrans();
+        try {
+            $code = input('app_auth_code');
+            $appid = input('app_id');
+            $aliOpen = Alipay::start()->open();
+            $authInfo = $aliOpen->getAuthToken($code);
+            Log::error(['授权成功app_auth_token：' => $authInfo->app_auth_token]);
+            $miniProgram = $aliOpen->getMiniBaseInfo($authInfo->app_auth_token);
+            $version = $aliOpen->getMiniVersionNow($authInfo->app_auth_token);
+            $agent_id = 23;
+            $data = [
+                'agent_id' => $agent_id,
+                'app_id' => $authInfo->auth_app_id,
+                'name' => $miniProgram->app_name,
+                'avatar' => $miniProgram->app_logo,
+                'wx_auth' => 2,
+                'yuanshi_id' => $authInfo->auth_app_id,
+                'body_name' => '',
+                'refresh_token' => $authInfo->app_refresh_token,
+                'user_version' => $version,
+                'auth_type' => 2
+            ];
+            $agentAuth = AgentAuth::where('app_id', $authInfo->auth_app_id)->find();
+            if ($agentAuth) {
+                if ($agentAuth->agent_id != $agent_id) exit('该app_id已被授权过');
+                $data['id'] = $agentAuth->id;
+                $agentAuth->save($data);
+            } else {
+                AgentAuth::create($data);
+            }
 
-        exit('授权成功');
+            Admin::where('id', $agent_id)
+                ->update([
+                    'refresh_token'=>$authInfo->app_refresh_token,
+                    'auth_token'=>$authInfo->app_auth_token,
+                ]);
+            Db::commit();
+            exit('授权成功');
+        }catch (\Exception $e) {
+            // 回滚事务
+            Db::rollback();
+            exit('授权失败');
+        }
     }
 }
 

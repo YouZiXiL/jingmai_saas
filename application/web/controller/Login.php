@@ -150,12 +150,11 @@ class Login extends Controller
         $appid = input('appid');
         $code = input('code');
         $response = input('response');
-        $agent_id = AgentAuth::where('app_id', input('appid'))->value('agent_id');
-        $agent_id = 23;
-        if (empty($agent_id))  return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
-
+        $agent = AgentAuth::field('agent_id,auth_token')->where('app_id', input('appid'))->find();
+        if (empty($agent))  return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+        $agent_id = $agent->agent_id;
         $clientEsk = 'W15T4J+wA/JPnMaPTMypLw==';
-        $appAuthToken = '202304BB55a2563b199a42b285d4a81135561X16';
+        $appAuthToken = $agent->auth_token;
 
         // 获取user_id, access_token;
         $result = Alipay::start()->base()->getOauthToken($code, $appAuthToken);

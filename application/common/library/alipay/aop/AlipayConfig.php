@@ -1,5 +1,6 @@
-
 <?php
+namespace app\common\library\alipay\aop;
+
 class AlipayConfig {
     /**
      * 网关地址

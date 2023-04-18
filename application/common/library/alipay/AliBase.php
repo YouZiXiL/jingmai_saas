@@ -3,10 +3,12 @@
 
 namespace app\common\library\alipay;
 
-
 use app\common\library\alipay\aop\request\AlipaySystemOauthTokenRequest;
+use app\common\library\alipay\aop\request\AlipayTradeCreateRequest;
+use app\common\library\alipay\aop\request\AlipayTradeRefundRequest;
 use app\common\library\alipay\aop\request\AlipayUserInfoShareRequest;
 use Exception;
+use stdClass;
 use think\Log;
 
 class AliBase
@@ -44,10 +46,15 @@ class AliBase
                   "sign" :  string(344) "VvFIEOeB94pKWqNQ7CCvZGtHZdqmFKpiJPWfdQ/1tfiMfO/VO0AMdpChImNgH0RFU9KuYfmG/7Qv3QGlShcgJOUbihHEf4gfskgVtMyNXlfsph/r7VgR3xakz8uQm513Q2MrDYxXPvC55j3hLXpTBYZpTsXMR6F1SXkya6Z9gyhyBIg3T+W1D7nthuOtDLoXfPfU5vsqa9KIdgKVG/whxn6ly4cwAlq4kdUT9wge0lZzr2VegeOQoEU2i1ZmAHvtJ/aiWeWRp4yb8TCQ7RhPkDQL7aQKcQ7TJOzpsdM5m2TLDibhC3PkJ5G7S8e7HEFQzBprd6F5c38zffAW9Nl6cA=="
             }
             */
+
+            if(isset($result->error_response)){
+                Log::error(['换取授权访问令牌失败' => $result]);
+                throw new Exception('换取授权访问令牌失败');
+            }
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
             return $result->$responseNode;
         }catch (Exception $exception){
-            Log::error( "换取授权访问令牌失败：{$exception->getMessage()}。追踪：{$exception->getTraceAsString()}" );
+            Log::error( "换取授权访问令牌失败：" . $exception->getMessage(). "追踪：". $exception->getTraceAsString() );
             throw new Exception('换取授权访问令牌失败');
         }
     }
@@ -72,11 +79,69 @@ class AliBase
                 throw new Exception('获取用户信息失败');
             }
         }catch (Exception $e){
-            Log::error( "获取用户信息失败：{$e->getMessage()}。追踪：{$e->getTraceAsString()}" );
+            Log::error( "获取用户信息失败：".$e->getMessage()."追踪：".$e->getTraceAsString() );
             throw new Exception('获取用户信息失败');
         }
+    }
 
 
+    /**
+     * 统一收单交易创建接口
+     * @param $object
+     * @param $appAuthToken
+     * @return object {code:1000, msg:Success, out_trade_no:XD1681719306712952887, trade_no:2023041722001408751405766558,}
+     * @throws Exception
+     */
+    public function create($object, $appAuthToken = null){
+        $json = json_encode($object);
+        $request = new AlipayTradeCreateRequest();
+        $request->setNotifyUrl(request()->domain() . '/web/notice/ali');
+        $request->setBizContent($json);
+        try {
+            $result = $this->aop->execute($request, null, $appAuthToken);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            if(!empty($resultCode)&&$resultCode == 10000){
+                return $result->$responseNode;
+            } else {
+                Log::error( ["支付宝创建订单失败：" => $result] );
+                throw new Exception('支付宝创建订单失败');
+            }
+        } catch (Exception $e) {
+            Log::error( "支付宝创建订单失败：".$e->getMessage()."追踪：".$e->getTraceAsString() );
+            throw new Exception('支付宝创建订单失败');
+        }
+    }
 
+    /**
+     * 退款
+     * @param $outTradeNo @des 商户订单号
+     * @param $refundAmount @des 退款金额
+     * @param null $appAuthToken
+     * @return mixed
+     * @throws Exception
+     */
+    public function refund($outTradeNo, $refundAmount, $appAuthToken = null){
+        $object = new stdClass();
+        $object->refund_amount = $refundAmount;
+        $object->out_request_no = $outTradeNo;
+        $json = json_encode($object);
+        $request = new AlipayTradeRefundRequest();
+        $request->setBizContent($json);
+
+        try {
+            $result = $this->aop->execute($request, null, $appAuthToken);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            if(!empty($resultCode)&&$resultCode == 10000){
+                return $result->$responseNode;
+            } else {
+                Log::error( ["支付宝退款失败：" => $result] );
+                throw new Exception('支付宝退款失败');
+            }
+        } catch (Exception $e) {
+            Log::error( "支付宝退款失败：".$e->getMessage()."追踪：".$e->getTraceAsString() );
+            throw new Exception('支付宝退款失败');
+        }
     }
 }

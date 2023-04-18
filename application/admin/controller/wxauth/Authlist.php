@@ -176,30 +176,27 @@ class Authlist extends Backend
      */
     public function auth_ali($data){
 //        $agentAuth=AgentAuth::where('app_id','2021003182686889')->find();
-        $redirectUri = request()->domain() . "/web/notice/aliappauth"; // 授权后的回调地址
+//        $redirectUri = request()->domain() . "/web/notice/aliappauth"; // 授权后的回调地址
+        $redirectUri = "https://admin.bajiehuidi.com/web/notice/aliappauth"; // 授权后的回调地址
         $appTypes = ["TINYAPP","BASEAPP","MOBILEAPP","WEBAPP","PUBLICAPP"]; // 可选值：APP、SERVICE，表示获取的授权令牌可用于哪种类型的应用
         $isvAppId = "2021003176656290"; // 可选项，如果开发者是 ISV 应用，则需要传入 ISV 应用的 AppID
-        $state = $this->auth->id; // 可选项，可用于传递额外的参数或标识符
-
+        $state = (string) $this->auth->id; // 可选项，可用于传递额外的参数或标识符
         // 构造授权链接参数
         // 创建参数数组
-        $params = array(
+        $params = [
             "platformCode" => "O",
             "taskType" => "INTERFACE_AUTH",
-            "agentOpParam" => array(
+            "agentOpParam" => [
                 "redirectUri" => $redirectUri,
                 "appTypes" => $appTypes,
                 "isvAppId" => $isvAppId,
                 "state" => $state
-            )
-        );
-
-
+            ]
+        ];
         $biz_data_str = urlencode(json_encode($params));
-
-        // PC端授权链接：
-//        $url = "https://b.alipay.com/page/message/tasksDetail?bizData=" . $biz_data_str;
-//        exit($url);
+         //PC端授权链接：
+        $url = "https://b.alipay.com/page/message/tasksDetail?bizData=" . $biz_data_str;
+        dd($url);
 
         // 二维码授权链接
         $auth_url = "alipays://platformapi/startapp?appId=2021003130652097&page=pages%2Fauthorize%2Findex%3FbizData%3D{$biz_data_str}";

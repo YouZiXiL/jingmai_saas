@@ -1,6 +1,7 @@
 <?php
 namespace app\common\library\alipay\aop;
 
+
 require_once 'AopEncrypt.php';
 require_once 'AopCertification.php';
 require_once 'EncryptParseItem.php';
