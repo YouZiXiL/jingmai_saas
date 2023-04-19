@@ -367,7 +367,7 @@ class Wxcallback extends Controller
                         ->find();
                     Log::error(['云洋回调---agent_auth' => $agent_auth_xcx->toArray()]);
                     // 退款给用户
-                    $refund = Alipay::start()->base()->refund($orders['out_trade_no'],0.01/*$orders['final_price']*/,$agent_auth_xcx['auth_token']);
+                    $refund = Alipay::start()->base()->refund($orders['out_trade_no'],$orders['final_price'],$agent_auth_xcx['auth_token']);
                     if($refund){
                         $out_refund_no=$common->get_uniqid();//下单退款订单号
                         $update=[

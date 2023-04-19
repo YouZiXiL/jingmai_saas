@@ -9,6 +9,7 @@ use app\web\controller\Common;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
+use Exception;
 use think\exception\DbException;
 use think\Response;
 use think\response\Json;
@@ -162,7 +163,7 @@ class Authlist extends Backend
     /**
      * 支付宝小程序授权
      * @param $data
-     * @throws Exception|\Exception
+     * @throws  Exception
      */
     public function auth_ali($data){
 //        $agentAuth=AgentAuth::where('app_id','2021003182686889')->find();

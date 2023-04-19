@@ -167,6 +167,7 @@ class Notice extends Controller
             'source' => 'alipay_app_auth',
           ),
          */
+        if(!input('app_auth_code')) exit('无效的请求');
         Db::startTrans();
         try {
             $code = input('app_auth_code');

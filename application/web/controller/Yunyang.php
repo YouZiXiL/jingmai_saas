@@ -841,7 +841,7 @@ class Yunyang extends Controller
 
         $object = new stdClass();
         $object->out_trade_no = $out_trade_no;
-        $object->total_amount = 0.01;//  $check_channel_intellect['final_price'];
+        $object->total_amount = $check_channel_intellect['final_price'];
         $object->subject = '快递下单-'.$out_trade_no;
         $object->buyer_id = $this->user->open_id;
         $object->query_options = [$agent_info->agent_auth[0]->auth_token];

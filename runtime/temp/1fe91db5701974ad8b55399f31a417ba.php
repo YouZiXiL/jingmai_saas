@@ -1,4 +1,4 @@
-<?php if (!defined('THINK_PATH')) exit(); /*a:4:{s:90:"/www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/wxauth/authlist/index.html";i:1681291549;s:73:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/layout/default.html";i:1680070912;s:70:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/meta.html";i:1680070912;s:72:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/script.html";i:1680070912;}*/ ?>
+<?php if (!defined('THINK_PATH')) exit(); /*a:4:{s:90:"/www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/wxauth/authlist/index.html";i:1681869255;s:73:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/layout/default.html";i:1680070912;s:70:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/meta.html";i:1680070912;s:72:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/script.html";i:1680070912;}*/ ?>
 <!DOCTYPE html>
 <html>
     <head>
