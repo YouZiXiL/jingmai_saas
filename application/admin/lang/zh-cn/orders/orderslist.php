@@ -51,7 +51,7 @@ return [
     'Order_status'       => '运单状态',
     'Overload_status'    => '超重状态',
     'Consume_status'     => '耗材状态',
-    'Final_price'        => '下单付费',
+    'Final_price'        => '下单金额',
     'Wx_out_trade_no'    => '微信订单号',
     'Freight'            => '云洋运费',
     'Final_weight'       => '计费重量',

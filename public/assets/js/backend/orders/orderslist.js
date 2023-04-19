@@ -4,11 +4,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
 
         index: function () {
             var copy_out_trade_no = new ClipboardJS('.btn-copy-out_trade_no');
-            copy_out_trade_no.on('success', function (e) {
+            copy_out_trade_no.on('success', function () {
                 Toastr.success("复制成功");
             });
             var copy_waybill = new ClipboardJS('.btn-copy-waybill');
-            copy_waybill.on('success', function (e) {
+            copy_waybill.on('success', function () {
                 Toastr.success("复制成功");
             });
 
@@ -29,12 +29,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
             table.on('post-header.bs.table',function() {
                 var tip_index = '';
                 $("td").on("mouseenter",function() {
-                    console.log(this.offsetWidth);
-                    console.log(this.scrollWidth);
                     if (this.offsetWidth <= this.scrollWidth) {
                         var that = this;
                         var text = $(this).text();
-                        tip_index = layer.tips("<span style='font-size: 15px'>"+text+"</span>", that,{
+                        tip_index = Layer.tips("<span style='font-size: 15px'>"+text+"</span>", that,{
                             tips: [2, '#0b8cdc'],
                             time: 0,
                             maxWidth: 350
@@ -59,7 +57,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                 columns: [
                     [
                         //{field: 'id', title: __('Id')},
-                        {field: 'waybill', title: __('Waybill'), operate: 'LIKE', formatter:function (value, row, index) {
+                        {field: 'waybill', title: __('Waybill'), operate: 'LIKE', formatter:function (value) {
                             if (value!=null){
                                 return '<a style="color:#195967;" href="https://www.baidu.com/s?wd='+value+'"  target="_blank"  class="btn btn-xs btn-waybill">' + value + '</a><code data-toggle="tooltip" data-clipboard-text="'+value+'" class="fa fa-files-o btn btn-xs btn-copy-waybill"></code>';
                             }else{
@@ -67,11 +65,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                             }
                             }},
                         {field: 'out_trade_no', title: __('Out_trade_no'),operate: 'LIKE',events:{
-                                'click .btn-out_trade_no': function (e, value, row, index) {
+                                'click .btn-out_trade_no': function (e, value, row) {
                                     Fast.api.open('orders/orderslist/detail?ids='+row.id,'订单详情');
                                     //Layer.alert("该行数据为: <code>" + JSON.stringify(row) + "</code>");
                                 },
-                            }, formatter:function (value, row, index) {
+                            }, formatter:function (value) {
                                 return '<a style="color:rgba(154,30,30,0.92);" class="btn btn-xs btn-out_trade_no">' + value + '</a><code data-toggle="tooltip" data-clipboard-text="'+value+'" class="fa fa-files-o btn btn-xs btn-copy-out_trade_no"></code>';
                             }},
 
@@ -83,7 +81,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     classname: 'btn btn-xs btn-success btn-magic btn-ajax',
                                     icon: 'fa fa-user-o',
                                     url: 'orders/orderslist/comments',
-                                    success: function (data, ret) {
+                                    success: function (data) {
                                         Layer.alert(data);
                                         //如果需要阻止成功提示，则必须使用return false;
                                         return false;
@@ -103,22 +101,22 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                         {field: 'pay_status', title: __('Pay_status'), searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1'),"2":__('Pay_status 2'),"3":__('Pay_status 3'),"4":__('Pay_status 4'),"5":__('Pay_status 5')}, formatter: Table.api.formatter.normal},
                         {field: 'order_status', title: __('Order_status'), operate: 'LIKE',formatter: Table.api.formatter.normal},
                         {field: 'overload_status', title: __('Overload_status'), searchList: {"0":__('Overload_status 0'),"1":__('Overload_status 1'),"2":__('Overload_status 2')},events:{
-                                'click .btn-overload_status': function (e, value, row, index) {
-                                    layer.confirm('确定已经处理超重问题了？', {
+                                'click .btn-overload_status': function (e, value, row) {
+                                    Layer.confirm('确定已经处理超重问题了？', {
                                         title: "处理超重",
                                         icon: 0,
                                     }, function(index){
                                         Fast.api.ajax({
                                             url: 'orders/orderslist/overload_change?ids='+row.id,
-                                        }, function (data) { //success
+                                        }, function () { //success
                                             table.bootstrapTable('refresh');
-                                            layer.close(index);
+                                            Layer.close(index);
                                             return true;
-                                        }, function (data,ret) { //error
-                                            layer.close(index);
+                                        }, function () { //error
+                                            Layer.close(index);
                                             return true;
                                         });
-                                    }, function(index){
+                                    }, function(){
                                         return true;
                                     });
                                 },
@@ -130,22 +128,22 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                 }
                             }},
                         {field: 'consume_status', title: __('Consume_status'), searchList: {"0":__('Consume_status 0'),"1":__('Consume_status 1'),"2":__('Consume_status 2')}, events:{
-                                'click .btn-consume_status': function (e, value, row, index) {
-                                    layer.confirm('确定已经处理耗材问题了？', {
+                                'click .btn-consume_status': function (e, value, row) {
+                                    Layer.confirm('确定已经处理耗材问题了？', {
                                         title: "处理耗材",
                                         icon: 0,
                                     }, function(index){
                                         Fast.api.ajax({
                                             url: 'orders/orderslist/consume_change?ids='+row.id,
-                                        }, function (data) { //success
+                                        }, function () { //success
                                             table.bootstrapTable('refresh');
-                                            layer.close(index);
+                                            Layer.close(index);
                                             return true;
-                                        }, function (data,ret) { //error
-                                            layer.close(index);
+                                        }, function () { //error
+                                            Layer.close(index);
                                             return true;
                                         });
-                                    }, function(index){
+                                    }, function(){
                                         return true;
                                     });
                                 },
@@ -156,25 +154,25 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     return Table.api.formatter.normal.call(this,value,row,index);
                                 }
                             }},
-                        {field: 'overload_price', title: __('Overload_price'), operate: false, formatter: function (value, row, index) {
+                        {field: 'overload_price', title: __('Overload_price'), operate: false, formatter: function (value, row) {
                                 if (row.overload_status==='1'){
-                                    return '<span style="color:#ff0000;">'+value+'元</span>'
+                                    return '<span style="color:#ff0000;">'+value+'元</span>';
                                 }else{
-                                    return '<span ">'+value+'元</span>'
+                                    return '<span ">'+value+'元</span>';
                                 }
                             }},
-                        {field: 'haocai_freight', title: __('Haocai_freight'), operate: false, formatter: function (value, row, index) {
+                        {field: 'haocai_freight', title: __('Haocai_freight'), operate: false, formatter: function (value, row) {
                                         if (row.consume_status==='1'){
-                                            return '<span style="color:#ff0000;">'+value+'元</span>'
+                                            return '<span style="color:#ff0000;">'+value+'元</span>';
                                         }else{
-                                            return '<span ">'+value+'元</span>'
+                                            return '<span>'+value+'元</span>';
                                         }
                             }},
-                        {field: 'weight', title: __('Weight'), operate: false, formatter: function (value, row, index) {
-                                    return '<span ">'+value+'kg</span>'
+                        {field: 'weight', title: __('Weight'), operate: false, formatter: function (value) {
+                                    return '<span >'+value+'kg</span>';
                             }},
-                        {field: 'final_weight', title: __('Final_weight'), operate: false,formatter: function (value, row, index) {
-                                return '<span ">'+value+'kg</span>'
+                        {field: 'final_weight', title: __('Final_weight'), operate: false,formatter: function (value) {
+                                return '<span>'+value+'kg</span>';
                             }},
                         {field: 'item_name', title: __('Item_name') ,operate: false, cellStyle:function () {
                                 return{
@@ -188,18 +186,33 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                             }},
                         {field: 'usersinfo.mobile',operate: 'Like',visible:false, title: __('Nick_name')},
 
-                        {field: 'users_xuzhong', title: __('Users_xuzhong'), operate: false, formatter: function (value, row, index) {
-                                return '<span ">'+value+'元</span>'
+                        {field: 'users_xuzhong', title: __('Users_xuzhong'), operate: false, formatter: function (value) {
+                                return '<span>'+value+'元</span>';
                             }},
-                        {field: 'final_price', title: __('Final_price'), operate: false,formatter: function (value, row, index) {
-                                return '<span ">'+value+'元</span>'
+                        {field: 'final_price', title: __('Final_price'), operate: false,formatter: function (value) {
+                                return '<span>'+value+'元</span>';
+                            }},
+                        {field: 'couponpapermoney', title: __('优惠券金额'), operate: false,formatter: function (value) {
+                                if (value==null){
+                                    return '<span>0.00元</span>';
+                                }else{
+                                    return '<span style="color:#42980c;">'+value+'元</span>';
+                                }
+                            }},
+                        {field: 'aftercoupon', title: __('支付金额'), operate: false,formatter: function (value, row) {
+                                if (value==null){
+                                    return '<span>'+row.final_price+'元</span>';
+                                }else{
+                                    return '<span>'+value+'元</span>';
+                                }
+
                             }},
 
-                        {field: 'agent_price', title: __('Agent_price'), operate: false, formatter: function (value, row, index) {
-                                return '<span ">'+value+'元</span>'
+                        {field: 'agent_price', title: __('Agent_price'), operate: false, formatter: function (value) {
+                                return '<span ">'+value+'元</span>';
                             }},
-                        {field: 'profit', title: __('利润'), operate: false, formatter: function (value, row, index) {
-                                return '<span ">'+value+'元</span>'
+                        {field: 'profit', title: __('利润'), operate: false, formatter: function (value) {
+                                return '<span ">'+value+'元</span>';
                             }},
                         {field: 'wxauthinfo.name', title: __('归属账号'), operate: false},
                         {field: 'create_time', title: __('Create_time'),operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},

@@ -77,7 +77,7 @@ class Orderslist extends Backend
         }
         $list = $list
             ->where($where)
-            ->field('id,tag_type,waybill,out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,overload_price,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
+            ->field('id,tag_type,waybill,couponpapermoney,aftercoupon,out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,overload_price,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
             ->where('pay_status','<>',0)
             ->where('channel_tag','<>','同城')
             ->with([
