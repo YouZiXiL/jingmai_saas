@@ -46,9 +46,8 @@ class AliBase
                   "sign" :  string(344) "VvFIEOeB94pKWqNQ7CCvZGtHZdqmFKpiJPWfdQ/1tfiMfO/VO0AMdpChImNgH0RFU9KuYfmG/7Qv3QGlShcgJOUbihHEf4gfskgVtMyNXlfsph/r7VgR3xakz8uQm513Q2MrDYxXPvC55j3hLXpTBYZpTsXMR6F1SXkya6Z9gyhyBIg3T+W1D7nthuOtDLoXfPfU5vsqa9KIdgKVG/whxn6ly4cwAlq4kdUT9wge0lZzr2VegeOQoEU2i1ZmAHvtJ/aiWeWRp4yb8TCQ7RhPkDQL7aQKcQ7TJOzpsdM5m2TLDibhC3PkJ5G7S8e7HEFQzBprd6F5c38zffAW9Nl6cA=="
             }
             */
-
             if(isset($result->error_response)){
-                Log::error(['换取授权访问令牌失败' => $result]);
+                Log::error(['换取授权访问令牌失败' => $result->error_response]);
                 throw new Exception('换取授权访问令牌失败');
             }
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";

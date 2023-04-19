@@ -163,21 +163,23 @@ class Notice extends Controller
          '支付第三方授权' =>
           array (
             'app_auth_code' => 'P660f271c5b724f3da528855a3da9416',
+            'state' => '23',
             'app_id' => '2021003176656290',
             'source' => 'alipay_app_auth',
           ),
          */
+        $code = input('app_auth_code');
+        $appid = input('app_id');
+        $agent_id = input('state');
         if(!input('app_auth_code')) exit('无效的请求');
+        if(!$agent_id) exit('无效参数');
         Db::startTrans();
         try {
-            $code = input('app_auth_code');
-            $appid = input('app_id');
             $aliOpen = Alipay::start()->open();
             $authInfo = $aliOpen->getAuthToken($code);
-            Log::error(['授权成功app_auth_token：' => $authInfo->app_auth_token]);
             $miniProgram = $aliOpen->getMiniBaseInfo($authInfo->app_auth_token);
             $version = $aliOpen->getMiniVersionNow($authInfo->app_auth_token);
-            $agent_id = 23;
+            $aes = $aliOpen->getAes($appid)??$aliOpen->setAes($appid);
             $data = [
                 'agent_id' => $agent_id,
                 'app_id' => $authInfo->auth_app_id,
@@ -186,7 +188,9 @@ class Notice extends Controller
                 'wx_auth' => 2,
                 'yuanshi_id' => $authInfo->auth_app_id,
                 'body_name' => '',
+                'auth_token' => $authInfo->app_auth_token,
                 'refresh_token' => $authInfo->app_refresh_token,
+                'aes' => $aes,
                 'user_version' => $version,
                 'auth_type' => 2
             ];
@@ -198,12 +202,6 @@ class Notice extends Controller
             } else {
                 AgentAuth::create($data);
             }
-
-            Admin::where('id', $agent_id)
-                ->update([
-                    'refresh_token'=>$authInfo->app_refresh_token,
-                    'auth_token'=>$authInfo->app_auth_token,
-                ]);
             Db::commit();
             exit('授权成功');
         }catch (\Exception $e) {

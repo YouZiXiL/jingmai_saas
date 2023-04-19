@@ -8,6 +8,7 @@ use app\common\library\alipay\aop\request\AlipayOpenAuthAppAesSetRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAuthTokenAppRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniBaseinfoQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniCategoryQueryRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniVersionAuditApplyRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionListQueryRequest;
 use Exception;
 use think\Log;
@@ -18,18 +19,32 @@ class AliOpen
     public function __construct(){
         $this->aop = AliConfig::options();
     }
+
     /**
      * alipay.open.auth.app.aes.set(授权应用aes密钥设置)
      * @param $appid @商户号appid
+     * @return string
+     * @throws Exception
      */
-    public function setAes($appid){
+    public function setAes($appid): string
+    {
         $request = new AlipayOpenAuthAppAesSetRequest ();
         $request->setBizContent("{" .
             "\"merchant_app_id\":\"{$appid}\"" .
             "  }");
         try {
             $result = $this->aop->execute($request);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            if(!empty($resultCode)&&$resultCode == 10000){
+                return $result->$responseNode->aes_key;
+            } else {
+                Log::error( ["设置aes密钥失败：" =>  $result->$responseNode]);
+                throw new Exception('设置aes密钥失败');
+            }
         } catch (\Exception $e) {
+            Log::error( "设置aes密钥失败：". $e->getMessage() . "追踪：" . $e->getTraceAsString() );
+            throw new Exception('设置aes密钥失败');
         }
     }
 
@@ -50,9 +65,9 @@ class AliOpen
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
             $resultCode = $result->$responseNode->code;
             if(!empty($resultCode)&&$resultCode == 10000){
-                return $result->$responseNode->aes_key;
+                return $result->$responseNode->aes_key??'';
             } else {
-                Log::error( ["授权应用aes密钥查询失败：$responseNode" => $responseNode]);
+                Log::error( ["授权应用aes密钥查询失败：" =>  $result->$responseNode]);
                 throw new Exception('授权应用aes密钥查询失败');
             }
         } catch (\Exception $e) {
@@ -80,7 +95,7 @@ class AliOpen
             if(!empty($resultCode)&&$resultCode == 10000){
                 return $result->$responseNode->mini_category_list;
             } else {
-                Log::error( ["小程序类目树查询失败：$responseNode" => $responseNode]);
+                Log::error( ["小程序类目树查询失败：" =>  $result->$responseNode]);
                 throw new Exception('小程序类目树查询失败');
             }
         } catch (Exception $e) {
@@ -106,7 +121,7 @@ class AliOpen
             if(!empty($resultCode)&&$resultCode == 10000){
                 return $result->$responseNode;
             } else {
-                Log::error( ["查询小程序基础信息失败：$responseNode" => $responseNode]);
+                Log::error( ["查询小程序基础信息失败：" =>  $result->$responseNode]);
                 throw new Exception('查询小程序基础信息失败');
             }
         }catch (Exception $e) {
@@ -146,7 +161,7 @@ class AliOpen
                  */
                 return $result->$responseNode->tokens[0];
             }else{
-                Log::error( ["换取令牌失败：$responseNode" => $responseNode]);
+                Log::error( ["换取令牌失败：" =>  $result->$responseNode]);
                 throw new Exception('换取令牌失败');
             }
         } catch (Exception $e) {
@@ -157,12 +172,13 @@ class AliOpen
     }
 
     /**
+     * alipay.open.mini.version.list.query
      * 获取小程序版本信息列表
      * @param $appAuthToken
      * @return mixed
      * @throws Exception
      */
-    public function getMiniVersionList($appAuthToken){
+    public function getMiniVersionList($appAuthToken, $versionStatus = ''){
         $request = new AlipayOpenMiniVersionListQueryRequest ();
         $request->setBizContent("{" .
             "  \"bundle_id\":\"com.alipay.alipaywallet\"" .
@@ -172,9 +188,9 @@ class AliOpen
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
             $resultCode = $result->$responseNode->code;
             if(!empty($resultCode)&&$resultCode == 10000){
-                return $result->$responseNode->app_versions;
+                return $result->$responseNode->app_versions??[];
             } else {
-                Log::error( ["获取小程序版本信息失败：$responseNode" => $responseNode]);
+                Log::error( ["获取小程序版本信息失败：" =>  $result->$responseNode]);
                 throw new Exception('获取小程序版本信息失败');
             }
         } catch (Exception $e) {
@@ -189,8 +205,43 @@ class AliOpen
      * @return mixed
      * @throws Exception
      */
-    public function getMiniVersionNow($appAuthToken){
-        return $this->getMiniVersionList($appAuthToken)[0];
+    public function getMiniVersionNow($appAuthToken): string
+    {
+        return $this->getMiniVersionList($appAuthToken)[0] ?? '';
+    }
+
+    /**
+     * 提交审核
+     * @param $appAuthToken
+     * @throws Exception
+     */
+    public function setMiniVersionAudit($appAuthToken){
+        $request = new AlipayOpenMiniVersionAuditApplyRequest ();
+        $request->setServiceEmail("example@mail.com");
+        $request->setVersionDesc("本次版本更新优化了3项功能，修复了5个BUG");
+        $request->setMemo("小程序示例");
+        $request->setRegionType("CHINA");
+        $request->setAppVersion("0.0.6");
+
+        $request->setSpeedUp("true");
+        $request->setAutoOnline("true");
+        try {
+            $result = $this->aop->execute($request, null, $appAuthToken);
+
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            if(!empty($resultCode)&&$resultCode == 10000){
+                dd($result->$responseNode);
+            } else {
+                Log::error( ["获取小程序版本发布失败：" => $result->$responseNode]);
+                throw new Exception('获取小程序版本发布失败');
+            }
+        } catch (Exception $e) {
+            Log::error( "获取小程序版本发布失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
+            throw new Exception('获取小程序版本发布失败');
+        }
+
+
     }
 
 }

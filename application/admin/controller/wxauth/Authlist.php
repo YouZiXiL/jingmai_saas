@@ -5,6 +5,7 @@ namespace app\admin\controller\wxauth;
 use app\admin\model\Admin;
 use app\admin\model\cdk\Cdklist;
 use app\common\controller\Backend;
+use app\common\library\alipay\Alipay;
 use app\web\controller\Common;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
@@ -166,11 +167,12 @@ class Authlist extends Backend
      * @throws  Exception
      */
     public function auth_ali($data){
+
 //        $agentAuth=AgentAuth::where('app_id','2021003182686889')->find();
 //        $redirectUri = request()->domain() . "/web/notice/aliappauth"; // 授权后的回调地址
         $redirectUri = "https://admin.bajiehuidi.com/web/notice/aliappauth"; // 授权后的回调地址
         $appTypes = ["TINYAPP","BASEAPP","MOBILEAPP","WEBAPP","PUBLICAPP"]; // 可选值：APP、SERVICE，表示获取的授权令牌可用于哪种类型的应用
-        $isvAppId = "2021003176656290"; // 可选项，如果开发者是 ISV 应用，则需要传入 ISV 应用的 AppID
+        $isvAppId = $this->auth->appid;//"2021003176656290"; // 可选项，如果开发者是 ISV 应用，则需要传入 ISV 应用的 AppID
         $state = (string) $this->auth->id; // 可选项，可用于传递额外的参数或标识符
         // 构造授权链接参数
         // 创建参数数组

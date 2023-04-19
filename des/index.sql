@@ -5,6 +5,9 @@ alter table fa_agent_auth
 alter table fa_agent_auth
     add auth_token varchar(100) default '' null comment '支付宝app_auth_token';
 
+alter table fa_agent_auth
+    add aes varchar(32) default '' null comment '支付宝加密秘钥';
+
 alter table fa_orders
     add pay_type enum('1', '2') default '1' null comment '支付类型 1微信 2支付宝';
 
