@@ -244,8 +244,8 @@ class Yunyang extends Controller
 
                         $agent_price=$v['freight']+$v['freight']*$agent_info['agent_db_ratio']/100;//代理商价格
                         $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
-                        $admin_shouzhong=$v['discountPriceOne'];//平台首重
-                        $admin_xuzhong=$v['discountPriceMore'];//平台续重
+                        $admin_shouzhong=@$v['discountPriceOne'];//平台首重
+                        $admin_xuzhong=@$v['discountPriceMore'];//平台续重
                         $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_db_ratio']/100;//代理商首重
                         $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
                         $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
@@ -253,8 +253,8 @@ class Yunyang extends Controller
                     }elseif ($v['tagType']=='京东'){
                         $agent_price=$v['freight']+$v['freight']*$agent_info['agent_jd_ratio']/100;//代理商价格
                         $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
-                        $admin_shouzhong=$v['discountPriceOne'];//平台首重
-                        $admin_xuzhong=$v['discountPriceMore'];//平台续重
+                        $admin_shouzhong=@$v['discountPriceOne'];//平台首重
+                        $admin_xuzhong=@$v['discountPriceMore'];//平台续重
                         $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_jd_ratio']/100;//代理商首重
                         $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_jd_ratio']/100;//代理商续重
                         $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
@@ -694,8 +694,8 @@ class Yunyang extends Controller
                 'pay_template'=>$template['pay_template'],
             ];
             if(!empty($couponinfo)){
-//                $couponinfo["state"]=2;
-//                $couponinfo->save();
+                $couponinfo["state"]=2;
+                $couponinfo->save();
                 //表示该笔订单使用了优惠券
                 $data["couponid"]=$param["couponid"];
                 $data["couponpapermoney"]=$couponinfo->money;
@@ -841,7 +841,7 @@ class Yunyang extends Controller
 
         $object = new stdClass();
         $object->out_trade_no = $out_trade_no;
-        $object->total_amount = 0.01;//  $check_channel_intellect['final_price'];
+        $object->total_amount = $check_channel_intellect['final_price'];
         $object->subject = '快递下单-'.$out_trade_no;
         $object->buyer_id = $this->user->open_id;
         $object->query_options = [$agent_info->agent_auth[0]->auth_token];

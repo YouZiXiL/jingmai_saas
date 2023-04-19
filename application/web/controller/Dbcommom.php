@@ -18,7 +18,8 @@ class Dbcommom
      * @param $remark  //备注
      * @return bool
      */
-    function set_agent_amount($id,$setType,$amount,$logType,$remark){
+    function set_agent_amount($id,$setType,$amount,$logType,$remark): bool
+    {
         Db::startTrans();
         try {
             $Admin=Admin::get($id);
