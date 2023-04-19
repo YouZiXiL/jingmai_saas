@@ -54,7 +54,7 @@ class Notice extends Controller
         }
 
         // 改订单状态为付款中
-        $orderModel->isUpdate(true)->save(['pay_status' => 6, 'order_status' => '付款中']);
+        $orderModel->isUpdate(true)->save(['id'=> $orders['id'],'pay_status' => 6, 'order_status' => '付款中']);
 
         Log::error(['订单状态2' => $orderModel->toArray()]);
         $DbCommon= new Dbcommom();
@@ -100,6 +100,7 @@ class Notice extends Controller
             if(!$refund) return $signal; // 退款失败
             $out_refund_no=$Common->get_uniqid();//下单退款订单号
             $update=[
+                'id'=> $orders['id'],
                 'pay_status'=>2,
                 'yy_fail_reason'=>$data['message'],
                 'order_status'=>'下单失败咨询客服',
@@ -114,7 +115,7 @@ class Notice extends Controller
             Log::error(['这是啥' => $rebatelist]);
             if(empty($rebatelist)){
                 $rebatelist=new Rebatelist();
-                $data=[
+                $data_re=[
                     "user_id"=>$orders["user_id"],
                     "invitercode"=>$users["invitercode"],
                     "fainvitercode"=>$users["fainvitercode"],
@@ -126,20 +127,21 @@ class Notice extends Controller
                     "createtime"=>time(),
                     "updatetime"=>time()
                 ];
-                !empty($users["rootid"]) && ($data["rootid"]=$users["rootid"]);
-                $rebatelist->save($data);
+                !empty($users["rootid"]) && ($data_re["rootid"]=$users["rootid"]);
+                $rebatelist->save($data_re);
             }
 
             $DbCommon->set_agent_amount(
                 $orders['agent_id'],
                 'setDec',$orders['agent_price'],
                 0,
-                '运单号：'.$data['waybill'].' 下单支付成功'
+                '运单号：'.$data['result']['waybill'].' 下单支付成功'
             );
             Log::error(['下单成功222']);
             $update=[
-                'waybill'=>$data['waybill'],
-                'shopbill'=>$data['shopbill'],
+                'id'=> $orders['id'],
+                'waybill'=>$data['result']['waybill'],
+                'shopbill'=>$data['result']['shopbill'],
                 'order_status'=>'已付款',
                 'pay_status'=>1,
             ];
