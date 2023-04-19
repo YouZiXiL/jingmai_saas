@@ -375,7 +375,8 @@ class Yunyangtc extends Controller
             'create_time'=>time(),
             'waybill'=>$check_channel_intellect['waybill'],
             'sender_logo'=>$check_channel_intellect['sender_logo'],
-            'receive_logo'=>$check_channel_intellect['receive_logo']
+            'receive_logo'=>$check_channel_intellect['receive_logo'],
+            'pickup_start_time'=>$check_channel_intellect['pickupStartTime']??0
         ];
         !empty($param['bill_remark']) &&($data['bill_remark'] = $param['bill_remark']);
         !empty($check_channel_intellect['insured']) &&($data['insured'] = $check_channel_intellect['insured']);
@@ -496,7 +497,7 @@ class Yunyangtc extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
-        $order=db('orders')->where("channel_tag","同城")->where('pay_status','<>',0)->field('id,waybill,sender_province,sender_mobile,receiver_mobile,receive_province,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status,sender_logo,receive_logo,create_time')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10);
+        $order=db('orders')->where("channel_tag","同城")->where('pay_status','<>',0)->field('id,waybill,sender_province,sender_mobile,receiver_mobile,receive_province,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status,sender_logo,receive_logo,create_time,pickup_start_time')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10);
         if (!empty($param['search_field'])){
             $res=$order->where('receiver_mobile|sender_mobile|waybill|receiver',$param['search_field'])->select();
         }elseif(!empty($param['no_pay'])){
@@ -520,7 +521,7 @@ class Yunyangtc extends Controller
         if (empty($param['id'])){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
-        $order=db('orders')->field('id,waybill,item_name,final_price,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,receive_address,comments,item_pic,overload_status,pay_status,consume_status,,sender_logo,receive_logo,create_time')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
+        $order=db('orders')->field('id,waybill,item_name,final_price,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,receive_address,comments,item_pic,overload_status,pay_status,consume_status,,sender_logo,receive_logo,create_time,pickup_start_time')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
         if(empty($order)){
             return json(['status'=>400,'data'=>'','msg'=>'此订单不存在']);
         }
