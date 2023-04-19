@@ -36,7 +36,7 @@ class Rebatelists extends Model
     
     public function getStateList()
     {
-        return ['0' => __('State 0'), '1' => __('State 1'), '3' => __('State 3'), '4' => __('State 4'), '5' => __('State 5'), '8' => __('State 8')];
+        return ['0' => __('State 0'), '1' => __('State 1'), '2' => __('State 2'), '3' => __('State 3'), '4' => __('State 4'), '5' => __('State 5'), '8' => __('State 8')];
     }
 
     public function getIsimmstateList()

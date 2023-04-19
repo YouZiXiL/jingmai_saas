@@ -25,6 +25,7 @@ class Auth extends \fast\Auth
 
     public function __get($name)
     {
+
         return Session::get('admin.' . $name);
     }
 

@@ -126,12 +126,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 {
                                     name: 'uploads_app',
                                     text: function (row) {
-                                        console.log('row', row);
-                                        if (row.xcx_audit==='5'||row.xcx_audit==='3'){
-                                            return '更新代码';
-                                        }else{
-                                            return '上传代码';
-                                        }
+                                            if (row.xcx_audit==='5'||row.xcx_audit==='3'){
+                                                return '更新代码';
+                                            }else{
+                                                return '上传代码';
+                                            }
                                     },
                                     title: __('上传代码'),
                                     classname: 'btn btn-xs btn-success btn-magic btn-ajax',
