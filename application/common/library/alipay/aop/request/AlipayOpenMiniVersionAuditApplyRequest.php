@@ -1,4 +1,6 @@
 <?php
+
+namespace app\common\library\alipay\aop\request;
 /**
  * ALIPAY API: alipay.open.mini.version.audit.apply request
  *
