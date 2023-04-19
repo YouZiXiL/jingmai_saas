@@ -451,8 +451,8 @@ class Shunfeng extends Controller
                 'pay_template'=>$template['pay_template'],
             ];
             if(!empty($couponinfo)){
-//                $couponinfo["state"]=2;
-//                $couponinfo->save();
+                $couponinfo["state"]=2;
+                $couponinfo->save();
                 //表示该笔订单使用了优惠券
                 $data["couponid"]=$param["couponid"];
                 $data["couponpapermoney"]=$couponinfo->money;
