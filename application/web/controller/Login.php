@@ -150,7 +150,7 @@ class Login extends Controller
         $appid = input('appid');
         $code = input('code');
         $response = input('response');
-        $agent = AgentAuth::field('agent_id,auth_token')->where('app_id', input('appid'))->find();
+        $agent = AgentAuth::field('agent_id,auth_token')->where('app_id', $appid)->find();
         if (empty($agent))  return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
         $agent_id = $agent->agent_id;
         $clientEsk = 'W15T4J+wA/JPnMaPTMypLw==';

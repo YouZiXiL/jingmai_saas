@@ -19,18 +19,32 @@ class AliOpen
     public function __construct(){
         $this->aop = AliConfig::options();
     }
+
     /**
      * alipay.open.auth.app.aes.set(授权应用aes密钥设置)
      * @param $appid @商户号appid
+     * @return string
+     * @throws Exception
      */
-    public function setAes($appid){
+    public function setAes($appid): string
+    {
         $request = new AlipayOpenAuthAppAesSetRequest ();
         $request->setBizContent("{" .
             "\"merchant_app_id\":\"{$appid}\"" .
             "  }");
         try {
             $result = $this->aop->execute($request);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            if(!empty($resultCode)&&$resultCode == 10000){
+                return $result->$responseNode->aes_key;
+            } else {
+                Log::error( ["设置aes密钥失败：" =>  $result->$responseNode]);
+                throw new Exception('设置aes密钥失败');
+            }
         } catch (\Exception $e) {
+            Log::error( "设置aes密钥失败：". $e->getMessage() . "追踪：" . $e->getTraceAsString() );
+            throw new Exception('设置aes密钥失败');
         }
     }
 
@@ -51,7 +65,7 @@ class AliOpen
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
             $resultCode = $result->$responseNode->code;
             if(!empty($resultCode)&&$resultCode == 10000){
-                return $result->$responseNode->aes_key;
+                return $result->$responseNode->aes_key??'';
             } else {
                 Log::error( ["授权应用aes密钥查询失败：" =>  $result->$responseNode]);
                 throw new Exception('授权应用aes密钥查询失败');

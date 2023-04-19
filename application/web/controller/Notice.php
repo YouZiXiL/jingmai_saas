@@ -179,6 +179,7 @@ class Notice extends Controller
             $authInfo = $aliOpen->getAuthToken($code);
             $miniProgram = $aliOpen->getMiniBaseInfo($authInfo->app_auth_token);
             $version = $aliOpen->getMiniVersionNow($authInfo->app_auth_token);
+            $aes = $aliOpen->getAes($appid)??$aliOpen->setAes($appid);
             $data = [
                 'agent_id' => $agent_id,
                 'app_id' => $authInfo->auth_app_id,
@@ -189,6 +190,7 @@ class Notice extends Controller
                 'body_name' => '',
                 'auth_token' => $authInfo->app_auth_token,
                 'refresh_token' => $authInfo->app_refresh_token,
+                'aes' => $aes,
                 'user_version' => $version,
                 'auth_type' => 2
             ];
