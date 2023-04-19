@@ -384,6 +384,9 @@ class Wxcallback extends Controller
                         Log::error('云洋回调--退款失败');
                     }
                     $orderModel->save($update);
+                    $DbCommon= new Dbcommom();
+                    $DbCommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已取消并退款');
+                    Log::error('云洋回调--调试结束');
                     return json(['code'=>1, 'message'=>'ok']);
                 }else{
                     // 微信支付
