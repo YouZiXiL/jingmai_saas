@@ -188,8 +188,8 @@ class Authlist extends Backend
         ];
         $biz_data_str = urlencode(json_encode($params));
          //PC端授权链接：
-        $url = "https://b.alipay.com/page/message/tasksDetail?bizData=" . $biz_data_str;
-        dd($url);
+//        $url = "https://b.alipay.com/page/message/tasksDetail?bizData=" . $biz_data_str;
+//        dd($url);
 
         // 二维码授权链接
         $auth_url = "alipays://platformapi/startapp?appId=2021003130652097&page=pages%2Fauthorize%2Findex%3FbizData%3D{$biz_data_str}";
