@@ -741,6 +741,7 @@ class Users extends Controller
                 $usercoupon=new Couponlist();
                 $usercoupon->papercode=$couponinfo["papercode"];
                 $usercoupon->user_id=$this->user->id;
+                $usercoupon->agent_id=$this->user->agent_id;
                 $usercoupon->gain_way=1;
                 $usercoupon->money=$couponinfo["money"];
                 $usercoupon->type=$couponinfo["type"];
@@ -962,6 +963,7 @@ class Users extends Controller
                 while ($index<$coupon_manager->conpon_group_count){
 
                     $item["user_id"]=$this->user->id;
+                    $item["agent_id"]=$this->user->agent_id;
                     $key ="JF-".$this->common->getinvitecode(5)."-".$this->common->getinvitecode(5)."-".$this->common->getinvitecode(5)."-".$this->common->getinvitecode(5)."-".$this->user->id.strtoupper(uniqid());//$params["agent_id"];
 
                     $item["papercode"]=$key;

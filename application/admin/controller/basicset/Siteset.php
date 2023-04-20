@@ -48,7 +48,7 @@ class Siteset extends Backend
      */
     public function index()
     {
-        $row=$this->model->where('id',$this->auth->id)->field('zizhu,zhonghuo,coupon,qudao_close,city_close,wx_guanzhu,qywx_id,kf_url,wx_title,ordtips,ordtips_title,ordtips_cnt,zhongguo_tips,button_txt,order_tips,bujiao_tips,banner,add_tips,share_tips,share_pic,checkin_conti_prize,checkin_cycledays,package_rule,privacy_rule')->find();
+        $row=$this->model->where('id',$this->auth->id)->field('zizhu,zhonghuo,coupon,qudao_close,city_close,wx_guanzhu,qywx_id,kf_url,wx_title,ordtips,ordtips_title,ordtips_cnt,zhongguo_tips,button_txt,order_tips,bujiao_tips,banner,add_tips,share_tips,share_pic,checkin_conti_prize,checkin_cycledays,package_rule,privacy_rule,agent_rebate')->find();
 
         if (!$row) {
             $this->error(__('No Results were found'));
