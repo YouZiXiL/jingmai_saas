@@ -122,21 +122,21 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             }},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,
                             buttons: [
-                                {
-                                    name: 'detail',
-                                    text: __('弹出窗口打开'),
-                                    title: __('弹出窗口打开'),
-                                    classname: 'btn btn-xs btn-primary btn-dialog',
-                                    icon: 'fa fa-list',
-                                    url: 'example/bootstraptable/detail',
-                                    callback: function (data) {
-                                        Layer.alert("接收到回传数据：" + JSON.stringify(data), {title: "回传数据"});
-                                    },
-                                    visible: function (row) {
-                                        //返回true时按钮显示,返回false隐藏
-                                        return true;
-                                    }
-                                },
+                                // {
+                                //     name: 'detail',
+                                //     text: __('弹出窗口打开'),
+                                //     title: __('弹出窗口打开'),
+                                //     classname: 'btn btn-xs btn-primary btn-dialog',
+                                //     icon: 'fa fa-list',
+                                //     url: 'example/bootstraptable/detail',
+                                //     callback: function (data) {
+                                //         Layer.alert("接收到回传数据：" + JSON.stringify(data), {title: "回传数据"});
+                                //     },
+                                //     visible: function (row) {
+                                //         //返回true时按钮显示,返回false隐藏
+                                //         return true;
+                                //     }
+                                // },
                                 {
                                     name: 'uploads_app',
                                     text: function (row) {
