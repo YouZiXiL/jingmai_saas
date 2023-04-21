@@ -1,4 +1,5 @@
 <?php
+namespace app\common\library\alipay\aop\request;
 /**
  * ALIPAY API: alipay.open.mini.isv.create request
  *

@@ -1,0 +1,50 @@
+---------------------------------------------------------------
+[2023-04-19T17:45:54+08:00] 192.168.33.1 GET tp.jingmai.test/VeMyLJAZtQ.php/ajax/lang?callback=define&controllername=index&lang=zh-cn&v=1681897553&v=1681897553
+[运行时间：0.562508s] [吞吐率：1.78req/s] [内存消耗：3,625.53kb] [文件加载：140]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000054s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.020161s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.007142s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000061s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'admin',
+    1 => 'ajax',
+    2 => 'lang',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'cookie' => 'sidebar_collapse=0; thinkphp_show_page_trace=0|0; PHPSESSID=fjvngv3at9rvlb5b0e58u29mbv; thinkphp_show_page_trace=0|0; think_var=zh-cn; keeplogin=23%7C86400%7C1681900209%7Cb319997e4ab744e3dae0d25a94a0906a',
+  'accept-language' => 'zh,zh-CN;q=0.9',
+  'accept-encoding' => 'gzip, deflate',
+  'accept' => '*/*',
+  'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+  'content-type' => '',
+)
+[ info ] [ PARAM ] array (
+  'callback' => 'define',
+  'controllername' => 'index',
+  'lang' => 'zh-cn',
+  'v' => '1681897553',
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.011610s ]
+[ info ] [ SESSION ] INIT array (
+  'id' => '',
+  'var_session_id' => '',
+  'prefix' => 'think',
+  'type' => '',
+  'auto_start' => true,
+  'expire' => 1296000,
+)
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/ajax.php
+[ info ] [ RUN ] app\admin\controller\Ajax->lang[ /www/wwwroot/jiyu/jingmai_saas/application/admin/controller/Ajax.php ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/public/../application/admin/lang/zh-cn/index.php
+[ info ] [ BEHAVIOR ] Run app\admin\behavior\AdminLog @app_end [ RunTime:0.003143s ]
+[ info ] [ LOG ] INIT File

@@ -128,7 +128,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 //     title: __('弹出窗口打开'),
                                 //     classname: 'btn btn-xs btn-primary btn-dialog',
                                 //     icon: 'fa fa-list',
-                                //     url: 'example/bootstraptable/detail',
+                                //     url: 'bootstraptable/detail',
                                 //     callback: function (data) {
                                 //         Layer.alert("接收到回传数据：" + JSON.stringify(data), {title: "回传数据"});
                                 //     },
@@ -137,6 +137,16 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 //         return true;
                                 //     }
                                 // },
+                                {
+                                    name: 'uploads_ali',
+                                    text: __('上传代码'),
+                                    classname: 'btn btn-xs btn-success btn-magic btn-ajax',
+                                    icon: 'fa fa-magic',
+                                    url: 'wxauth/authlist/uploads_ali',
+                                    visible: function (row) {
+                                        return row.wx_auth === '2';
+                                    }
+                                },
                                 {
                                     name: 'uploads_app',
                                     text: function (row) {

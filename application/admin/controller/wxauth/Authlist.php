@@ -171,8 +171,8 @@ class Authlist extends Backend
 //        $agentAuth=AgentAuth::where('app_id','2021003182686889')->find();
 //        $redirectUri = request()->domain() . "/web/notice/aliappauth"; // 授权后的回调地址
         $redirectUri = "https://admin.bajiehuidi.com/web/notice/aliappauth"; // 授权后的回调地址
-        $appTypes = ["TINYAPP","BASEAPP","MOBILEAPP","WEBAPP","PUBLICAPP"]; // 可选值：APP、SERVICE，表示获取的授权令牌可用于哪种类型的应用
-        $isvAppId = $this->auth->appid;//"2021003176656290"; // 可选项，如果开发者是 ISV 应用，则需要传入 ISV 应用的 AppID
+        $appTypes = ["TINYAPP"]; // 可选值：APP、SERVICE，表示获取的授权令牌可用于哪种类型的应用
+        $isvAppId = "2021003176656290"; // 可选项，如果开发者是 ISV 应用，则需要传入 ISV 应用的 AppID
         $state = (string) $this->auth->id; // 可选项，可用于传递额外的参数或标识符
         // 构造授权链接参数
         // 创建参数数组
@@ -199,6 +199,20 @@ class Authlist extends Backend
         $qrCode->setMargin(-10);
         $result=$writer->write($qrCode);
         $this->success('成功','',base64_encode($result->getString()));
+    }
+
+
+    /**
+     * 支付宝上传代码
+     * @throws Exception
+     */
+    public function uploads_ali(){
+        $token = '202304BB2acf003f82dd498a8a5c6ca3ee34aA16';
+        $open = Alipay::start()->open();
+        $v = $open->setMiniVersionAudit($token);
+        dd($v);
+        $version = $open->setMiniVersionAudit($token);
+        dd($version);
     }
 
     /**

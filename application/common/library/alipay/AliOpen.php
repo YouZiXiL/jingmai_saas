@@ -8,7 +8,11 @@ use app\common\library\alipay\aop\request\AlipayOpenAuthAppAesSetRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAuthTokenAppRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniBaseinfoQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniCategoryQueryRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniIsvCreateRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionAuditApplyRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniVersionAuditedCancelRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniVersionBuildQueryRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniVersionDetailQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionListQueryRequest;
 use Exception;
 use think\Log;
@@ -178,10 +182,12 @@ class AliOpen
      * @return mixed
      * @throws Exception
      */
-    public function getMiniVersionList($appAuthToken, $versionStatus = ''){
+    public function getMiniVersionList($appAuthToken, $versionStatus = ''): array
+    {
         $request = new AlipayOpenMiniVersionListQueryRequest ();
         $request->setBizContent("{" .
-            "  \"bundle_id\":\"com.alipay.alipaywallet\"" .
+            "  \"bundle_id\":\"com.alipay.alipaywallet\"," .
+            "  \"version_status\":\"AUDIT_REJECT\"" .
             "}");
         try {
             $result = $this->aop->execute($request, null, $appAuthToken);
@@ -211,20 +217,22 @@ class AliOpen
     }
 
     /**
-     * 提交审核
+     * 提交审核 alipay.open.mini.version.audit.apply
      * @param $appAuthToken
      * @throws Exception
      */
     public function setMiniVersionAudit($appAuthToken){
         $request = new AlipayOpenMiniVersionAuditApplyRequest ();
-        $request->setServiceEmail("example@mail.com");
+        $request->setServiceEmail("865832@qq.com");
         $request->setVersionDesc("本次版本更新优化了3项功能，修复了5个BUG");
         $request->setMemo("小程序示例");
         $request->setRegionType("CHINA");
         $request->setAppVersion("0.0.6");
 
-        $request->setSpeedUp("true");
+        $request->setSpeedUp(false);
         $request->setAutoOnline("true");
+        $request->setFirstScreenShot("@".root_path('public/ali-1.jpg'));
+        $request->setSecondScreenShot("@".root_path('public/ali-2.jpg'));
         try {
             $result = $this->aop->execute($request, null, $appAuthToken);
 
@@ -233,6 +241,7 @@ class AliOpen
             if(!empty($resultCode)&&$resultCode == 10000){
                 dd($result->$responseNode);
             } else {
+                dd($result->$responseNode);
                 Log::error( ["获取小程序版本发布失败：" => $result->$responseNode]);
                 throw new Exception('获取小程序版本发布失败');
             }
@@ -244,4 +253,117 @@ class AliOpen
 
     }
 
+    /**
+     * 创建小程序
+     * @throws Exception
+     */
+    public function miniCreate(){
+        $request = new AlipayOpenMiniIsvCreateRequest ();
+        $request->setBizContent("{" .
+            "  \"create_mini_request\":{" .
+            "    \"out_order_no\":\"202324353454545\"," .
+            "    \"alipay_account\":\"jingmai365@163.com\"," .
+            "    \"legal_personal_name\":\"张三\"," .
+            "    \"cert_name\":\"河南鲸迈科技有限公司\"," .
+            "    \"cert_no\":\"3704354348893534\"," .
+            "    \"app_name\":\"张三的小程序\"," .
+            "    \"contact_phone\":\"19925376338\"," .
+            "    \"contact_name\":\"张三\"" .
+            "}");
+        try {
+            $result = $this->aop->execute($request);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            if(!empty($resultCode)&&$resultCode == 10000){
+                return $result->$responseNode;
+            } else {
+                Log::error( ["获取小程序版本发布失败：" => $result->$responseNode]);
+                throw new Exception('获取小程序版本发布失败');
+            }
+
+        } catch (Exception $e) {
+            Log::error( "获取小程序版本发布失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
+            throw new Exception('获取小程序版本发布失败');
+        }
+
+    }
+
+    /**
+     * alipay.open.mini.version.build.query(小程序查询版本构建状态)
+     * @param $appAuthToken
+     * @return mixed
+     * @throws Exception
+     */
+    public function getMiniVersionBuild($appAuthToken){
+        $request = new AlipayOpenMiniVersionBuildQueryRequest ();
+        $request->setBizContent("{" .
+            "  \"app_version\":\"0.0.6\"," .
+            "  \"bundle_id\":\"com.alipay.alipaywallet\"" .
+            "}");
+        try {
+            $result = $this->aop->execute($request, null, $appAuthToken);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            if(!empty($resultCode)&&$resultCode == 10000){
+                return $result->$responseNode;
+            } else {
+                Log::error( ["查询失败：" => $result->$responseNode]);
+                throw new Exception('查询失败');
+            }
+        } catch (Exception $e) {
+            Log::error( "查询失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
+            throw new Exception('查询失败');
+        }
+    }
+
+    /**
+     * 获取小程序版本详情
+     * INIT: 开发中, AUDITING: 审核中, AUDIT_REJECT: 审核驳回, WAIT_RELEASE: 待上架, BASE_AUDIT_PASS: 准入不可营销, GRAY: 灰度中, RELEASE: 已上架, OFFLINE: 已下架, AUDIT_OFFLINE: 已下架;
+     * @param $appAuthToken
+     */
+    public function getMiniVersionDetail($appAuthToken){
+        $request = new AlipayOpenMiniVersionDetailQueryRequest ();
+        $request->setBizContent("{" .
+            "  \"app_version\":\"0.0.6\"," .
+            "  \"bundle_id\":\"com.alipay.alipaywallet\"" .
+            "}");
+        try {
+            $result = $this->aop->execute($request,null,$appAuthToken);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            dump($result->$responseNode->status);exit;
+            if(!empty($resultCode)&&$resultCode == 10000){
+                echo "成功";
+            } else {
+                echo "失败";
+            }
+        } catch (Exception $e) {
+        }
+    }
+
+    /**
+     * 小程序退款开发
+     * @param $appAuthToken
+     */
+    public function miniVersionAuditedCancel($appAuthToken){
+        $request = new AlipayOpenMiniVersionAuditedCancelRequest ();
+        $request->setBizContent("{" .
+            "  \"app_version\":\"0.0.6\"," .
+            "  \"bundle_id\":\"com.alipay.alipaywallet\"" .
+            "}");
+        try {
+            $result = $this->aop->execute($request, null, $appAuthToken);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            dd($result->$responseNode);
+            if(!empty($resultCode)&&$resultCode == 10000){
+                echo "成功";
+            } else {
+                echo "失败";
+            }
+        } catch (Exception $e) {
+        }
+
+
+    }
 }
