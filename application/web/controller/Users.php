@@ -547,6 +547,11 @@ class Users extends Controller
         ];
 
         $params=$this->request->param();
+        if(empty($params["app_id"])){
+            $data["status"]=400;
+            $data["msg"]="请输入关键信息";
+            return json($data);
+        }
         if(empty($params["env_version"])){
             $data["status"]=400;
             $data["msg"]="请输入发布版本类型";
@@ -569,6 +574,7 @@ class Users extends Controller
                 "url"=>urldecode($currentuser->posterpath)//小程序码链接
             ];
             $data["data"]=$invitedata;
+            if(!empty($currentuser->posterpath))
             //返回值：邀请码 以及带参小程序码
             return \json($data);
         }
@@ -640,7 +646,7 @@ class Users extends Controller
 //            }
 //
 //        }
-
+        try {
         //获取小程序码
         $url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=".$this->common->get_authorizer_access_token($params["app_id"]);
 
@@ -651,7 +657,7 @@ class Users extends Controller
             "env_version"=>$params["env_version"]
         ];
         $url=$this->common->httpRequest($url,$content,"POST");
-        try {
+
             // 判断是否是 json格式， 如果请求失败，会返回 JSON 格式的数据。
             if (is_null(json_decode($url))){
                 /**
@@ -685,6 +691,8 @@ class Users extends Controller
         }
         catch (Exception $e){
             file_put_contents('xiochengxucode.txt',$e->getMessage().PHP_EOL.$url.PHP_EOL,FILE_APPEND);
+            $data["status"]=400;
+            $data["msg"]="网络错误";
         }
 
         $data["data"]=$invitedata;
