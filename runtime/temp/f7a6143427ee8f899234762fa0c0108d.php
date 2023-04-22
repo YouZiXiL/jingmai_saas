@@ -1,4 +1,4 @@
-<?php if (!defined('THINK_PATH')) exit(); /*a:4:{s:96:"/www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/wxauth/authlist/version_ali.html";i:1682138259;s:73:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/layout/default.html";i:1680070912;s:70:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/meta.html";i:1680070912;s:72:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/script.html";i:1680070912;}*/ ?>
+<?php if (!defined('THINK_PATH')) exit(); /*a:4:{s:96:"/www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/wxauth/authlist/version_ali.html";i:1682143711;s:73:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/layout/default.html";i:1680070912;s:70:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/meta.html";i:1680070912;s:72:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/script.html";i:1680070912;}*/ ?>
 <!DOCTYPE html>
 <html>
     <head>
@@ -70,6 +70,7 @@
         width: 130px; /* 设置第一列的宽度为100像素 */
     }
 </style>
+
 <?php if(is_array($version) || $version instanceof \think\Collection || $version instanceof \think\Paginator): $i = 0; $__LIST__ = $version;if( count($__LIST__)==0 ) : echo "" ;else: foreach($__LIST__ as $key=>$vo): $mod = ($i % 2 );++$i;?>
 <table class="table">
     <thead>
@@ -95,7 +96,7 @@
             <?php break; case "INIT": ?>
                 <td class="text-info">
                     <?php echo $name[$vo->version_status]; ?>
-                    <button class="btn btn-success btn-audit btn-sm ml-4">提交审核</button>
+                    <button class="btn btn-success btn-audit btn-xs ml-4">提交审核</button>
                 </td>
             <?php break; case "AUDIT_REJECT": ?>
                 <td class="text-danger" style="word-break: break-all;">
@@ -117,8 +118,10 @@
         <td style="word-break: break-all;"><?php echo $vo->create_time; ?></td>
     </tr>
 </tbody>
-<?php endforeach; endif; else: echo "" ;endif; ?>
 <input  name=<?php echo $vo->version_status; ?> class="form-control hidden" value=<?php echo $ids; ?> />
+<?php endforeach; endif; else: echo "" ;endif; ?>
+
+
 
 <div class="hide layer-footer">
     <label class="control-label col-xs-12 col-sm-2"></label>

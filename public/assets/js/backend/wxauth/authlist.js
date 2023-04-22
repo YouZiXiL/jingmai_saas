@@ -324,7 +324,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 }, function (data,ret) { //success
                 }, function (data,ret) { //error
                 });
-                Fast.close(index);
             });
             $(document).on('click', '.btn-audit', function () {
                 // 提交审核
@@ -335,7 +334,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 }, function (data,ret) { //success
                 }, function (data,ret) { //error
                 });
-                Fast.close(index);
             });
             $(document).on('click', '.btn-cancel', function () {
                 // 消息审核
@@ -346,7 +344,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 }, function (data,ret) { //success
                 }, function (data,ret) { //error
                 });
-                Fast.close(index);
             });
         },
 

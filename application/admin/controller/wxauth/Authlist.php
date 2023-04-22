@@ -233,12 +233,12 @@ class Authlist extends Backend
 
     /**
      * 支付宝版本管理
-     * @param $appAuthToken
-     * @param $type @ 操作类型
-     * @param $version @ 版本
+     * @param string $appAuthToken
+     * @param string $type 操作类型
+     * @param string $version 版本
      * @throws Exception
      */
-    public function versionManager($appAuthToken, $type, $version){
+    public function versionManager(string $appAuthToken, string $type, string $version){
         $open = Alipay::start()->open();
 
         switch ($type){

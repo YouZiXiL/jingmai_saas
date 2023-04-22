@@ -1,4 +1,4 @@
-<?php if (!defined('THINK_PATH')) exit(); /*a:4:{s:90:"/www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/wxauth/authlist/index.html";i:1682056761;s:73:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/layout/default.html";i:1680070912;s:70:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/meta.html";i:1680070912;s:72:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/script.html";i:1680070912;}*/ ?>
+<?php if (!defined('THINK_PATH')) exit(); /*a:4:{s:90:"/www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/wxauth/authlist/index.html";i:1682137613;s:73:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/layout/default.html";i:1680070912;s:70:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/meta.html";i:1680070912;s:72:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/script.html";i:1680070912;}*/ ?>
 <!DOCTYPE html>
 <html>
     <head>
@@ -88,7 +88,6 @@
                            data-operate-edit="<?php echo $auth->check('wxauth/authlist/edit'); ?>"
                            data-operate-del="<?php echo $auth->check('wxauth/authlist/del'); ?>"
                            data-operate-version_ali="<?php echo $auth->check('wxauth/authlist/version_ali'); ?>"
-                           data-operate-uploads_ali="<?php echo $auth->check('wxauth/authlist/uploads_ali'); ?>"
                            data-operate-uploads_app="<?php echo $auth->check('wxauth/authlist/uploads_app'); ?>"
                            data-operate-release_app="<?php echo $auth->check('wxauth/authlist/release_app'); ?>"
                            data-operate-remove_app="<?php echo $auth->check('wxauth/authlist/remove_app'); ?>"

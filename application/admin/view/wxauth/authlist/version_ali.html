@@ -9,6 +9,7 @@
         width: 130px; /* 设置第一列的宽度为100像素 */
     }
 </style>
+
 {volist name="version" id="vo"  }
 <table class="table">
     <thead>
@@ -37,7 +38,7 @@
             {case value="INIT"}
                 <td class="text-info">
                     {$name[$vo:version_status]}
-                    <button class="btn btn-success btn-audit btn-sm ml-4">提交审核</button>
+                    <button class="btn btn-success btn-audit btn-xs ml-4">提交审核</button>
                 </td>
             {/case}
             {case value="AUDIT_REJECT"}
@@ -62,8 +63,10 @@
         <td style="word-break: break-all;">{$vo:create_time}</td>
     </tr>
 </tbody>
-{/volist}
 <input  name={$vo:version_status} class="form-control hidden" value={$ids} />
+{/volist}
+
+
 
 <div class="hide layer-footer">
     <label class="control-label col-xs-12 col-sm-2"></label>
