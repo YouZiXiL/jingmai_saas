@@ -1,0 +1,74 @@
+
+<style>
+    table {
+        margin-bottom:50px !important;
+        border:2px solid #eee;
+        border-collapse: collapse;
+    }
+    th:first-child, td:first-child {
+        width: 130px; /* 设置第一列的宽度为100像素 */
+    }
+</style>
+{volist name="version" id="vo"  }
+<table class="table">
+    <thead>
+    <tr>
+        <th>{:__('Title')}</th>
+        <th>{:__('Content')}</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>版本</td>
+        <td><code name={$vo:version_status}>{$vo:app_version}</code></td>
+    </tr>
+    <tr>
+        <td>状态</td>
+        {switch name="$vo:version_status" }
+            {case value="RELEASE"}
+                <td  class="text-success" >{$name[$vo:version_status]}</td>
+            {/case}
+            {case value="AUDITING"}
+                <td class="text-warning">
+                    {$name[$vo:version_status]}
+                    <button class="btn btn-success btn-cancel btn-sm ml-4">取消审核</button>
+                </td>
+            {/case}
+            {case value="INIT"}
+                <td class="text-info">
+                    {$name[$vo:version_status]}
+                    <button class="btn btn-success btn-audit btn-sm ml-4">提交审核</button>
+                </td>
+            {/case}
+            {case value="AUDIT_REJECT"}
+                <td class="text-danger" style="word-break: break-all;">
+                    {$name[$vo:version_status]}
+                    <button class="btn btn-success btn-back btn-sm ml-4">退回开发</button>
+                </td>
+            {/case}
+            {case value="WAIT_RELEASE"}
+                <td class="text-info" style="word-break: break-all;">{$name[$vo:version_status]}</td>
+            {/case}
+            {default /} <td style="word-break: break-all;">{$name[$vo:version_status]}</td>
+        {/switch}
+
+    </tr>
+    <tr>
+        <td>简介</td>
+        <td style="word-break: break-all;">{$vo:version_description ?? ''}</td>
+    </tr>
+    <tr>
+        <td>创建时间</td>
+        <td style="word-break: break-all;">{$vo:create_time}</td>
+    </tr>
+</tbody>
+{/volist}
+<input  name={$vo:version_status} class="form-control hidden" value={$ids} />
+
+<div class="hide layer-footer">
+    <label class="control-label col-xs-12 col-sm-2"></label>
+    <div class="col-xs-12 col-sm-8">
+        <button type="reset" class="btn btn-primary btn-embossed btn-close" onclick="Layer.closeAll();">{:__('Close')}</button>
+    </div>
+</div>
+

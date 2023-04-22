@@ -7,6 +7,7 @@ use app\admin\model\cdk\Cdklist;
 use app\common\controller\Backend;
 use app\common\library\alipay\Alipay;
 use app\web\controller\Common;
+use app\web\model\AgentAuth;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
@@ -201,18 +202,60 @@ class Authlist extends Backend
         $this->success('成功','',base64_encode($result->getString()));
     }
 
-
     /**
-     * 支付宝上传代码
+     * 支付宝版本管理
      * @throws Exception
      */
-    public function uploads_ali(){
-        $token = '202304BB2acf003f82dd498a8a5c6ca3ee34aA16';
+    public function version_ali(){
+        $ids = input('ids');
+        $type = input('type');
+        $v = input('v');
+        $appAuthToken = AgentAuth::field('auth_token')->where('id', $ids)->value('auth_token');
+        if(!$appAuthToken)  $this->error("代理不存在");
+        if ($type && $v){
+            $this->versionManager($appAuthToken, $type, $v);
+        }else{
+            $open = Alipay::start()->open();
+            $version = $open->getMiniVersionList($appAuthToken);
+            //      * INIT: 开发中, AUDITING: 审核中, AUDIT_REJECT: 审核驳回, WAIT_RELEASE: 待上架, BASE_AUDIT_PASS: 准入不可营销, GRAY: 灰度中, RELEASE: 已上架, OFFLINE: 已下架, AUDIT_OFFLINE: 已下架;
+            $name=  [
+                'INIT'  => '开发中',
+                'AUDITING'  => '审核中',
+                'AUDIT_REJECT'  => '审核驳回',
+                'WAIT_RELEASE'  => '待上架',
+                'RELEASE'  => '已上架',
+            ];
+            $this->view->assign(compact('version', 'name','ids'));
+            return $this->view->fetch();
+        }
+    }
+
+
+    /**
+     * 支付宝版本管理
+     * @param $appAuthToken
+     * @param $type @ 操作类型
+     * @param $version @ 版本
+     * @throws Exception
+     */
+    public function versionManager($appAuthToken, $type, $version){
         $open = Alipay::start()->open();
-        $v = $open->setMiniVersionAudit($token);
-        dd($v);
-        $version = $open->setMiniVersionAudit($token);
-        dd($version);
+
+        switch ($type){
+            case 'back': $open->miniVersionAuditedCancel($version, $appAuthToken); break;  // 退回快发
+            case 'audit': // 提交审核
+                $auditResult = $open->setMiniVersionAudit($version, $appAuthToken);
+                if($auditResult->code == 10000) $this->success("操作成功");
+                $this->error($auditResult->sub_msg);
+                break;
+            case 'cancel': // 取消审核
+                $cancelResult = $open->miniVersionAuditCancel($version, $appAuthToken);
+                if($cancelResult->code == 10000) $this->success("操作成功");
+                $this->error($cancelResult->sub_msg);
+                break;
+            default: $this->error("操作失败");
+        }
+        $this->success("操作成功");
     }
 
     /**

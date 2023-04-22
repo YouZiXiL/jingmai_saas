@@ -122,28 +122,18 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             }},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,
                             buttons: [
-                                // {
-                                //     name: 'detail',
-                                //     text: __('弹出窗口打开'),
-                                //     title: __('弹出窗口打开'),
-                                //     classname: 'btn btn-xs btn-primary btn-dialog',
-                                //     icon: 'fa fa-list',
-                                //     url: 'bootstraptable/detail',
-                                //     callback: function (data) {
-                                //         Layer.alert("接收到回传数据：" + JSON.stringify(data), {title: "回传数据"});
-                                //     },
-                                //     visible: function (row) {
-                                //         //返回true时按钮显示,返回false隐藏
-                                //         return true;
-                                //     }
-                                // },
                                 {
-                                    name: 'uploads_ali',
-                                    text: __('上传代码'),
-                                    classname: 'btn btn-xs btn-success btn-magic btn-ajax',
-                                    icon: 'fa fa-magic',
-                                    url: 'wxauth/authlist/uploads_ali',
+                                    name: 'version',
+                                    text: __('版本管理'),
+                                    title: __('版本管理'),
+                                    classname: 'btn btn-xs btn-primary btn-dialog',
+                                    icon: 'fa fa-list',
+                                    url: 'wxauth/authlist/version_ali',
+                                    callback: function (data) {
+                                        Layer.alert("接收到回传数据：" + JSON.stringify(data), {title: "回传数据"});
+                                    },
                                     visible: function (row) {
+                                        //返回true时按钮显示,返回false隐藏
                                         return row.wx_auth === '2';
                                     }
                                 },
@@ -178,7 +168,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         return false;
                                     },
                                     visible: function (row) {
-                                        if (row.xcx_audit==='4'||row.auth_type==='1'){
+                                        if (row.xcx_audit==='4'||row.auth_type==='1' || row.wx_auth === '2'){
                                             return false;
                                         }else{
                                             return true;
@@ -204,7 +194,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         return false;
                                     },
                                     visible: function (row) {
-                                        if (row.xcx_audit==='3'){
+                                        if(row.wx_auth === '2'){
+                                            return false;
+                                        }else if (row.xcx_audit==='3'){
                                             return true;
                                         }else{
                                             return false;
@@ -231,7 +223,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         return false;
                                     },
                                     visible: function (row) {
-                                        if (row.xcx_audit==='1'){
+                                        if(row.wx_auth === '2'){
+                                            return false;
+                                        }else if (row.xcx_audit==='1'){
                                             return true;
                                         }else{
                                             return false;
@@ -258,7 +252,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         return false;
                                     },
                                     visible: function (row) {
-                                        if (row.xcx_audit==='4'){
+                                        if(row.wx_auth === '2'){
+                                            return false;
+                                        }else if (row.xcx_audit==='4'){
                                             return true;
                                         }else{
                                             return false;
@@ -273,9 +269,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     classname: 'btn btn-xs btn-success btn-click',
                                     icon: 'fa fa-magic',
                                     click: function(options, row, button){
-
                                         Layer.open({
-
                                             title:['请输入卡密'],
                                             content:'<div class="form-inline row"><code>卡密:</code><input class="form-control" id="kami" autocomplete="off" type="text"></div>',
                                             btn:['确认','取消'],
@@ -319,6 +313,41 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             bindevent: function () {
                 Form.api.bindevent($("form[role=form]"));
             }
+        },
+        version_ali: function () {
+            $(document).on('click', '.btn-back', function () {
+                // Fast.api.close($("input[name=callback]").val());
+                var ids = $("input[name=AUDIT_REJECT]").val();
+                var version = $("code[name=AUDIT_REJECT]").text();
+                Fast.api.ajax({
+                    url: `wxauth/authlist/version_ali?ids=${ids}&type=back&v=${version}`
+                }, function (data,ret) { //success
+                }, function (data,ret) { //error
+                });
+                Fast.close(index);
+            });
+            $(document).on('click', '.btn-audit', function () {
+                // 提交审核
+                var ids = $("input[name=INIT]").val();
+                var version = $("code[name=INIT]").text();
+                Fast.api.ajax({
+                    url: `wxauth/authlist/version_ali?ids=${ids}&type=audit&v=${version}`
+                }, function (data,ret) { //success
+                }, function (data,ret) { //error
+                });
+                Fast.close(index);
+            });
+            $(document).on('click', '.btn-cancel', function () {
+                // 消息审核
+                var ids = $("input[name=AUDITING]").val();
+                var version = $("code[name=AUDITING]").text();
+                Fast.api.ajax({
+                    url: `wxauth/authlist/version_ali?ids=${ids}&type=cancel&v=${version}`
+                }, function (data,ret) { //success
+                }, function (data,ret) { //error
+                });
+                Fast.close(index);
+            });
         },
 
     };

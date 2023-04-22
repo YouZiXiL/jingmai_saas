@@ -178,7 +178,8 @@ class Notice extends Controller
             $aliOpen = Alipay::start()->open();
             $authInfo = $aliOpen->getAuthToken($code);
             $miniProgram = $aliOpen->getMiniBaseInfo($authInfo->app_auth_token);
-            $version = $aliOpen->getMiniVersionNow($authInfo->app_auth_token);
+            $version = $aliOpen->getMiniVersionCur($authInfo->app_auth_token);
+            $vn = isset($version)?$version->app_version:null;
             $aes = $aliOpen->getAes($authInfo->auth_app_id)??$aliOpen->setAes($authInfo->auth_app_id);
             $data = [
                 'agent_id' => $agent_id,
@@ -191,7 +192,7 @@ class Notice extends Controller
                 'auth_token' => $authInfo->app_auth_token,
                 'refresh_token' => $authInfo->app_refresh_token,
                 'aes' => $aes,
-                'user_version' => $version,
+                'user_version' => $vn,
                 'auth_type' => 2
             ];
             $agentAuth = AgentAuth::where('app_id', $authInfo->auth_app_id)->find();

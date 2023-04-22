@@ -523,8 +523,15 @@ if(!function_exists('root_path')){
 
 // 调试
 if(!function_exists('dd')){
-    function dd($content)
+    function dd($args)
     {
-        print_r($content);exit;
+        if (is_array($args)){
+            foreach ($args as $x) {
+                is_array($x)?print_r($x):dump($x);
+            }
+        }else{
+            dump($args);
+        }
+        die(1);
     }
 }
