@@ -213,23 +213,23 @@ class Users extends Controller
         }elseif ($param["type"]==2){
             $item1=[
                 "title"=>"移动充值协议",
-                "content"=>config("'site.ch_yidong'")
+                "content"=>config('site.ch_yidong')
             ];
             $item2=[
                 "title"=>"联通充值协议",
-                "content"=>config("'site.ch_yidong'")
+                "content"=>config('site.ch_yidong')
             ];
             $item3=[
                 "title"=>"电信充值协议",
-                "content"=>config("'site.ch_yidong'")
+                "content"=>config('site.ch_yidong')
             ];
             $item4=[
                 "title"=>"国网充值规则",
-                "content"=>config("'site.ch_guowang'")??"国网充值 概不退费"
+                "content"=>config('site.ch_guowang')??"国网充值 概不退费"
             ];
             $item5=[
                 "title"=>"南网充值规则",
-                "content"=>config("'site.ch_nanwang'")??"南网充值 不要退费"
+                "content"=>config('site.ch_nanwang')??"南网充值 不要退费"
             ];
             array_push($agentrule,$item1);
             array_push($agentrule,$item2);
