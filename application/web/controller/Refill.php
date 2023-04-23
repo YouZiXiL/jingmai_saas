@@ -71,7 +71,7 @@ class Refill extends Controller
             "sign"=>$this->common->getsign($data)
         ];
         $content+=$data;
-
+        $agent=db('admin')->where('id',$this->user->agent_id)->find();
         $allproduct=$this->common->httpRequest($this->baseapi.$currentapi,$content,"POST");
         $tempdata=[];
         $datas=json_decode($allproduct,true);
@@ -169,7 +169,7 @@ class Refill extends Controller
             "sign"=>$this->common->getsign($data)
         ];
         $content+=$data;
-
+        $agent=db('admin')->where('id',$this->user->agent_id)->find();
         $allproduct=$this->common->httpRequest($this->baseapi.$currentapi,$content,"POST");
         $tempdata=[];
         $datas=json_decode($allproduct,true);
@@ -360,7 +360,7 @@ class Refill extends Controller
             "sign"=>$this->common->getsign($data)
         ];
         $content+=$data;
-
+        $agent=db('admin')->where('id',$this->user->agent_id)->find();
         $allproduct=$this->common->httpRequest($this->baseapi.$currentapi,$content,"POST");
         $tempdata=[];
         $datas=json_decode($allproduct,true);
