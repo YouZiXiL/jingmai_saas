@@ -113,9 +113,15 @@ class Orderslist extends Backend
                     $tralight_price=0;
                     $agent_tralight_price=0;
                 }
+                //使用优惠券
+                if ($v['couponid']){
+                    $couponpapermoney=$v['couponpapermoney'];
+                }else{
+                    $couponpapermoney=0;
+                }
                 $amount=$v['agent_price']-$agent_tralight_price;
 
-                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight-$tralight_price,$amount,2);
+                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight-$tralight_price-$couponpapermoney,$amount,2);
             }
         }
         $result = ['total' => $list->total(), 'rows' => $list->items()];

@@ -217,11 +217,11 @@ class Users extends Controller
             ];
             $item2=[
                 "title"=>"联通充值协议",
-                "content"=>config('site.ch_yidong')
+                "content"=>config('site.ch_liantong')
             ];
             $item3=[
                 "title"=>"电信充值协议",
-                "content"=>config('site.ch_yidong')
+                "content"=>config('site.ch_dianxin')
             ];
             $item4=[
                 "title"=>"国网充值规则",
