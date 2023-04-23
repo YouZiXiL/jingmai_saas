@@ -105,6 +105,56 @@
             <input id="c-agent_jd_ratio" class="form-control" step="0.01" name="row[agent_jd_ratio]" type="number" value="{$row.agent_jd_ratio|htmlentities}">
         </div>
     </div>
+
+    <div class="form-group">
+        <label for="agent_elec" class="control-label col-xs-12 col-sm-2">电费增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" step="0.01" id="agent_elec" name="row[agent_elec]" value="{$row.agent_elec|htmlentities}"  />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="agent_credit" class="control-label col-xs-12 col-sm-2">话费增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" step="0.01" id="agent_credit" name="row[agent_credit]" value="{$row.agent_credit|htmlentities}"  />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="agent_gas" class="control-label col-xs-12 col-sm-2">燃气增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" step="0.01" id="agent_gas" name="row[agent_gas]" value="{$row.agent_gas|htmlentities}"  />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="agent_water" class="control-label col-xs-12 col-sm-2">水费增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" step="0.01" id="agent_water" name="row[agent_water]" value="{$row.agent_water|htmlentities}"  />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="agent_tc" class="control-label col-xs-12 col-sm-2">同城增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" step="0.01" id="agent_tc" name="row[agent_tc]" value="{$row.agent_tc|htmlentities}"  />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="sf_agent_ratio" class="control-label col-xs-12 col-sm-2">顺风增加比例%(顺丰特惠)</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" step="0.01" id="sf_agent_ratio" name="row[sf_agent_ratio]" value="{$row.sf_agent_ratio|htmlentities}"  />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="db_agent_ratio" class="control-label col-xs-12 col-sm-2">德邦增加比例%(寄重货)</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" step="0.01" id="db_agent_ratio" name="row[db_agent_ratio]" value="{$row.db_agent_ratio|htmlentities}"  />
+        </div>
+    </div>
+
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Users_shouzhong')}:</label>
         <div class="col-xs-12 col-sm-8">
@@ -180,7 +230,7 @@
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Qywx_id')}:</label>
         <div class="col-xs-12 col-sm-8">
-            <input id="c-qywx_id" data-source="qywx/index" class="form-control selectpage" name="row[qywx_id]" type="text" value="{$row.qywx_id|htmlentities}">
+            <input id="c-qywx_id" class="form-control" name="row[qywx_id]" type="text" value="{$row.qywx_id|htmlentities}">
         </div>
     </div>
     <div class="form-group">
