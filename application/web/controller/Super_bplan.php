@@ -2,7 +2,6 @@
 
 namespace app\web\controller;
 
-use app\web\model\Admin;
 use app\web\model\AgentPoster;
 use app\web\model\Cashserviceinfo;
 use app\web\model\Rebatelist;
@@ -257,108 +256,5 @@ class Super_bplan extends \think\Controller
         return json($data);
     }
 
-    //超级B提现默认未扣手续费 需要提供发票 否则将扣手续费
-    //提现(提交 真实姓名 支付宝账号等信息)
-    public function cashservice(){
-        $data=[
-            'status'=>200,
-            'data'=>"",
-            'msg'=>'Success'
-        ];
-        $params=$this->request->param();
-        if(empty($params["id"])){
-            $data["status"]=400;
-
-            $data["msg"]="请输入 id 参数";
-            return json($data);
-        }
-        //1、获取用户余额
-        $agentinfo= \app\web\model\Admin::get($params["id"]);
-        $userday=$agentinfo->user_cashoutdate??26;
-        if(date("d")<$userday){
-            $data["msg"]="本月 ".$userday." 号开始提现";
-            return json($data);
-        }
-//        //2、获取商家提现手续费率
-//        $rate=($agentinfo->user_cashoutdate??8)/100;//应该从控制台设置获得
-//
-
-
-        $balance=$agentinfo->ratemoney;
-
-
-        if($agentinfo->ratemoney<$params["money"]){
-            $data["status"]=400;
-            $data["msg"]="提交信息有误";
-        }
-        else{
-            $cashservice=new Cashserviceinfo();
-            $cashservice->user_id=$params["id"];
-            $cashservice->balance=$balance;
-            $cashservice->cashout=$params["money"];
-            $cashservice->servicerate=0;
-            $cashservice->actualamount=floatval(number_format($params["money"]-$params["money"]*0,2));
-            $cashservice->realname=$params["realname"];
-            $cashservice->aliid=$params["alinum"];
-            $cashservice->state=1;
-            $cashservice->type=2;
-            $cashservice->createtime=time();
-            $cashservice->updatetime=time();
-
-            $cashservice->save();
-
-            $agentinfo->ratemoney-=$params["money"];
-            $agentinfo->save();
-        }
-        $data["data"]=$params;
-
-        return \json($data);
-    }
-    //提现记录
-    public function cashoutlist(){
-        $data=[
-            'status'=>200,
-            'data'=>"",
-            'msg'=>'Success'
-        ];
-
-        $params=$this->request->param();
-        $page=$params["page"]??1;
-        if(empty($params["id"])){
-            $data["status"]=400;
-
-            $data["msg"]="请输入 id 参数";
-            return json($data);
-        }
-        $cashserviceinfo=new Cashserviceinfo();
-        $cashlist=$cashserviceinfo->field("balance,cashout,servicerate,actualamount,realname,aliid,state,createtime")->where(["user_id"=>$params["id"]])->where("type",2)->order("id","desc")->page($page,$this->page_rows)->select();
-
-
-
-        $data["data"]=$cashlist;
-
-
-        return \json($data);
-    }
-    //定时任务
-    //计算超级B 的分润金额
-    public function agent_ratemoney(){
-
-        //控制台调用时需 指定的超级B类型
-        $agents=Admin::all("id","类型");
-
-        foreach ($agents as $agent ){
-//            if($agent->)
-            $agentorders=db("rebatelist")->where("rootid",$agent->id)->where("state","<>","3")->count();
-            if($agentorders>$agent->target_orders_count){
-                $agent->ratemoney+=$agent->vipamoount;
-            }
-            else{
-                $agent->ratemoney+=$agent->defaltamoount;
-            }
-            $agent->defaltamoount=0;
-            $agent->vipamoount=0;
-            $agent->save();
-        }
-    }
+    
 }

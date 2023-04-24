@@ -19,7 +19,7 @@
         </div>
     </div>
     <div class="form-group {:$auth->check('basicset/saleratio/sf_users_ratio')?'':'hide'}">
-        <label for="sf_users_ratio" class="control-label col-xs-12 col-sm-2">顺风增加比例%(顺丰特惠)</label>
+        <label for="sf_users_ratio" class="control-label col-xs-12 col-sm-2">顺丰增加比例%(顺丰特惠)</label>
         <div class="col-xs-12 col-sm-2">
             <input type="number" min="0" class="form-control" id="sf_users_ratio" name="row[sf_users_ratio]" autocomplete="off" value="{$row.sf_users_ratio}"  />
         </div>
@@ -65,12 +65,12 @@
         </div>
     </div>
 
-    <div class="form-group {:$auth->check('basicset/saleratio/agent_wa_ratio')?'':'hide'}">
-        <label for="agent_wa_ratio" class="control-label col-xs-12 col-sm-2">水费折扣:</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="agent_wa_ratio" name="row[agent_wa_ratio]" autocomplete="off" value="{$row.agent_wa_ratio}"  />
-        </div>
-    </div>
+<!--    <div class="form-group {:$auth->check('basicset/saleratio/agent_wa_ratio')?'':'hide'}">-->
+<!--        <label for="agent_wa_ratio" class="control-label col-xs-12 col-sm-2">水费折扣:</label>-->
+<!--        <div class="col-xs-12 col-sm-2">-->
+<!--            <input type="number" min="0" class="form-control" id="agent_wa_ratio" name="row[agent_wa_ratio]" autocomplete="off" value="{$row.agent_wa_ratio}"  />-->
+<!--        </div>-->
+<!--    </div>-->
 
     <div class="form-group {:$auth->check('basicset/saleratio/agent_elec_ratio')?'':'hide'}">
         <label for="agent_elec_ratio" class="control-label col-xs-12 col-sm-2">电费折扣:</label>
@@ -79,12 +79,12 @@
         </div>
     </div>
 
-    <div class="form-group {:$auth->check('basicset/saleratio/agent_gas_ratio')?'':'hide'}">
-        <label for="agent_gas_ratio" class="control-label col-xs-12 col-sm-2">燃气折扣:</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="agent_gas_ratio" name="row[agent_gas_ratio]" autocomplete="off" value="{$row.agent_gas_ratio}"  />
-        </div>
-    </div>
+<!--    <div class="form-group {:$auth->check('basicset/saleratio/agent_gas_ratio')?'':'hide'}">-->
+<!--        <label for="agent_gas_ratio" class="control-label col-xs-12 col-sm-2">燃气折扣:</label>-->
+<!--        <div class="col-xs-12 col-sm-2">-->
+<!--            <input type="number" min="0" class="form-control" id="agent_gas_ratio" name="row[agent_gas_ratio]" autocomplete="off" value="{$row.agent_gas_ratio}"  />-->
+<!--        </div>-->
+<!--    </div>-->
 
     <div class="form-group {:$auth->check('basicset/saleratio/agent_credit_ratio')?'':'hide'}">
         <label for="agent_credit_ratio" class="control-label col-xs-12 col-sm-2">话费折扣:</label>

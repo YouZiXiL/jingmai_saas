@@ -556,7 +556,7 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'没有指定快递渠道']);
         }
 
-        if ($agent_info['amount']<=200){
+        if ($agent_info['amount']<=100){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
         }
 
@@ -745,7 +745,7 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'小程序没有被授权']);
         }
 
-        if ($agent_info['amount']<=200){
+        if ($agent_info['amount']<=100){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
         }
 
@@ -1065,18 +1065,18 @@ class Yunyang extends Controller
         $id=$this->request->param('id');
         $file = $this->request->file('pic');
         try {
-        if (empty($file)||empty($id)){
-            throw new Exception('参数错误');
-        }
-        //判断图片字节 最大5M
-        if ($file->getSize()>5242880){
-            throw new Exception('图片不能超过5M');
-        }
+            if (empty($file)||empty($id)){
+                throw new Exception('参数错误');
+            }
+            //判断图片字节 最大5M
+            if ($file->getSize()>5242880){
+                throw new Exception('图片不能超过5M');
+            }
 
-        $row=db('orders')->where('id',$id)->where('user_id',$this->user->id)->find();
-        if($row['pay_status']!=1){
-            throw new Exception('此订单已取消');
-        }
+            $row=db('orders')->where('id',$id)->where('user_id',$this->user->id)->find();
+            if($row['pay_status']!=1){
+                throw new Exception('此订单已取消');
+            }
             $upload = new Upload($file);
             if (!in_array($upload->getSuffix(),['jpg','png','jpeg','bmp','webp'])){
                 throw new Exception('图片类型错误');

@@ -3,7 +3,7 @@
 return [
     'Balance'      => '提现前余额',
     'Cashout'      => '提现金额',
-    'Servicerate'  => '服务商费率%',
+    'Servicerate'  => '提现费率%',
     'Actualamount' => '实际到账金额',
     'Realname'     => '真实姓名',
     'Aliid'        => '支付宝账号',

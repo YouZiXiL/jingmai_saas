@@ -1,5 +1,6 @@
 <?php
 namespace app\web\aes;
+
 /**
  * 对公众平台发送给公众账号的消息加解密示例代码.
  *
@@ -12,73 +13,73 @@ namespace app\web\aes;
  */
 class WxBizMsgCrypt
 {
-	private $token;
-	private $encodingAesKey;
-	private $appId;
+    private $token;
+    private $encodingAesKey;
+    private $appId;
 
-	/**
-	 * 构造函数
-	 * @param $token string 公众平台上，开发者设置的token
-	 * @param $encodingAesKey string 公众平台上，开发者设置的EncodingAESKey
-	 * @param $appId string 公众平台的appId
-	 */
-	public function __construct ($token, $encodingAesKey, $appId)
-	{
+    /**
+     * 构造函数
+     * @param $token string 公众平台上，开发者设置的token
+     * @param $encodingAesKey string 公众平台上，开发者设置的EncodingAESKey
+     * @param $appId string 公众平台的appId
+     */
+    public function __construct ($token, $encodingAesKey, $appId)
+    {
 
-		$this->token = $token;
-		$this->encodingAesKey = $encodingAesKey;
-		$this->appId = $appId;
-	}
+        $this->token = $token;
+        $this->encodingAesKey = $encodingAesKey;
+        $this->appId = $appId;
+    }
 
-	/**
-	 * 将公众平台回复用户的消息加密打包.
-	 * <ol>
-	 *    <li>对要发送的消息进行AES-CBC加密</li>
-	 *    <li>生成安全签名</li>
-	 *    <li>将消息密文和安全签名打包成xml格式</li>
-	 * </ol>
-	 *
-	 * @param $replyMsg string 公众平台待回复用户的消息，xml格式的字符串
-	 * @param $timeStamp string 时间戳，可以自己生成，也可以用URL参数的timestamp
-	 * @param $nonce string 随机串，可以自己生成，也可以用URL参数的nonce
-	 * @param &$encryptMsg string 加密后的可以直接回复用户的密文，包括msg_signature, timestamp, nonce, encrypt的xml格式的字符串,
-	 *                      当return返回0时有效
-	 *
-	 * @return int 成功0，失败返回对应的错误码
-	 */
-	public function encryptMsg($replyMsg, $timeStamp, $nonce, &$encryptMsg)
-	{
+    /**
+     * 将公众平台回复用户的消息加密打包.
+     * <ol>
+     *    <li>对要发送的消息进行AES-CBC加密</li>
+     *    <li>生成安全签名</li>
+     *    <li>将消息密文和安全签名打包成xml格式</li>
+     * </ol>
+     *
+     * @param $replyMsg string 公众平台待回复用户的消息，xml格式的字符串
+     * @param $timeStamp string 时间戳，可以自己生成，也可以用URL参数的timestamp
+     * @param $nonce string 随机串，可以自己生成，也可以用URL参数的nonce
+     * @param &$encryptMsg string 加密后的可以直接回复用户的密文，包括msg_signature, timestamp, nonce, encrypt的xml格式的字符串,
+     *                      当return返回0时有效
+     *
+     * @return int 成功0，失败返回对应的错误码
+     */
+    public function encryptMsg($replyMsg, $timeStamp, $nonce, &$encryptMsg)
+    {
 
-		$pc = new Pkcs7Encoder($this->encodingAesKey);
+        $pc = new Pkcs7Encoder($this->encodingAesKey);
 
 
-		//加密
-		$array = $pc->encrypt($replyMsg, $this->appId);
+        //加密
+        $array = $pc->encrypt($replyMsg, $this->appId);
 
-		$ret = $array[0];
-		if ($ret != 0) {
-			return $ret;
-		}
+        $ret = $array[0];
+        if ($ret != 0) {
+            return $ret;
+        }
 
-		if ($timeStamp == null) {
-			$timeStamp = time();
-		}
-		$encrypt = $array[1];
+        if ($timeStamp == null) {
+            $timeStamp = time();
+        }
+        $encrypt = $array[1];
 
-		//生成安全签名
-		$sha1 = new Sha1;
-		$array = $sha1->getSHA1($this->token, $timeStamp, $nonce, $encrypt);
-		$ret = $array[0];
-		if ($ret != 0) {
-			return $ret;
-		}
-		$signature = $array[1];
+        //生成安全签名
+        $sha1 = new Sha1;
+        $array = $sha1->getSHA1($this->token, $timeStamp, $nonce, $encrypt);
+        $ret = $array[0];
+        if ($ret != 0) {
+            return $ret;
+        }
+        $signature = $array[1];
 
-		//生成发送的xml
-		$xmlparse = new XmlParse;
-		$encryptMsg = $xmlparse->generate($encrypt, $signature, $timeStamp, $nonce);
-		return ErrorCode::$OK;
-	}
+        //生成发送的xml
+        $xmlparse = new XmlParse;
+        $encryptMsg = $xmlparse->generate($encrypt, $signature, $timeStamp, $nonce);
+        return ErrorCode::$OK;
+    }
 
 
     /**
@@ -112,7 +113,6 @@ class WxBizMsgCrypt
         //提取密文
         $xmlparse = new XmlParse;
         $array = $xmlparse->extract($postData);
-
         $ret = $array[0];
 
         if ($ret != 0) {
