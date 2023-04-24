@@ -20,6 +20,7 @@ use Exception;
 use think\Cache;
 use think\console\Input;
 use think\Controller;
+use think\Env;
 use think\exception\DbException;
 use think\Log;
 use think\Request;
