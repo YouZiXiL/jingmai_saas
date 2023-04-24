@@ -32,7 +32,7 @@
             {case value="AUDITING"}
                 <td class="text-warning">
                     {$name[$vo:version_status]}
-                    <button class="btn btn-success btn-cancel btn-sm ml-4">取消审核</button>
+                    <button class="btn btn-success btn-cancel btn-xs ml-4">取消审核</button>
                 </td>
             {/case}
             {case value="INIT"}
@@ -44,7 +44,7 @@
             {case value="AUDIT_REJECT"}
                 <td class="text-danger" style="word-break: break-all;">
                     {$name[$vo:version_status]}
-                    <button class="btn btn-success btn-back btn-sm ml-4">退回开发</button>
+                    <button class="btn btn-success btn-back btn-xs ml-4">退回开发</button>
                 </td>
             {/case}
             {case value="WAIT_RELEASE"}
