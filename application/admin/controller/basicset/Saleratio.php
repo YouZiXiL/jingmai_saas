@@ -49,8 +49,8 @@ class Saleratio extends Backend
     public function index()
     {
 
-        $row=$this->model->where('id',$this->auth->id)->field('users_shouzhong,users_xuzhong,users_shouzhong_ratio,agent_water,
-        agent_elec,agent_gas,agent_credit,sf_users_ratio,agent_tc_ratio,imm_rate,midd_rate,service_rate,user_cashoutdate,vipprice,couponcount,db_users_ratio')->find();
+        $row=$this->model->where('id',$this->auth->id)->field('users_shouzhong,users_xuzhong,users_shouzhong_ratio,agent_wa_ratio,
+        agent_elec_ratio,agent_gas_ratio,agent_credit_ratio,sf_users_ratio,agent_tc_ratio,imm_rate,midd_rate,service_rate,user_cashoutdate,vipprice,couponcount,db_users_ratio')->find();
         if (!$row) {
             $this->error(__('No Results were found'));
         }

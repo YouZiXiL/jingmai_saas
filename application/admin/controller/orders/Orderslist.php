@@ -77,7 +77,7 @@ class Orderslist extends Backend
         }
         $list = $list
             ->where($where)
-            ->field('id,tag_type,waybill,couponpapermoney,aftercoupon,out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,overload_price,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
+            ->field('id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,overload_price,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
             ->where('pay_status','<>',0)
             ->where('channel_tag','<>','同城')
             ->with([
@@ -113,9 +113,15 @@ class Orderslist extends Backend
                     $tralight_price=0;
                     $agent_tralight_price=0;
                 }
+                //使用优惠券
+                if ($v['couponid']){
+                    $couponpapermoney=$v['couponpapermoney'];
+                }else{
+                    $couponpapermoney=0;
+                }
                 $amount=$v['agent_price']-$agent_tralight_price;
 
-                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight-$tralight_price,$amount,2);
+                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight-$tralight_price-$couponpapermoney,$amount,2);
             }
         }
         $result = ['total' => $list->total(), 'rows' => $list->items()];
