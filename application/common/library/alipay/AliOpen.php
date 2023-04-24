@@ -225,7 +225,8 @@ class AliOpen
      */
     public function getMiniVersionCur($appAuthToken)
     {
-        return $this->getMiniVersionList($appAuthToken, "RELEASE");
+        $release = $this->getMiniVersionList($appAuthToken, "RELEASE");
+        return empty($release)?null:$release[0];
     }
 
     /**
@@ -253,12 +254,12 @@ class AliOpen
             if(!empty($resultCode)){
                 return $result->$responseNode;
             } else {
-                Log::error( ["获取小程序版本发布失败：" =>  $result->$responseNode]);
-                throw new Exception('获取小程序版本发布失败');
+                Log::error( ["提交审核失败：" =>  $result->$responseNode]);
+                throw new Exception('提交审核失败');
             }
         } catch (Exception $e) {
-            Log::error( "获取小程序版本发布失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
-            throw new Exception('获取小程序版本发布失败');
+            Log::error( "提交审核失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
+            throw new Exception('提交审核失败');
         }
 
 
