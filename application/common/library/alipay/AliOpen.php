@@ -244,7 +244,7 @@ class AliOpen
         $request->setAppVersion($version);
 
         $request->setSpeedUp(false);
-        $request->setAutoOnline("true");
+        $request->setAutoOnline(false);
         $request->setFirstScreenShot("@".root_path('public/assets/img/image/ali-1.jpg'));
         $request->setSecondScreenShot("@".root_path('public/assets/img/image/ali-2.jpg'));
         try {

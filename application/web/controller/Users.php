@@ -269,7 +269,7 @@ class Users extends Controller
 
         $userinfo= \app\web\model\Users::get($this->user->id);
         //此处从控制台获取 代理商设置状态 是否允许签到
-        if($this->admin["is_opencheckin"]){
+        if(empty($this->admin["is_opencheckin"])){
 
             $checkin=Checkin::get(["user_id"=>$this->user->id]);
 
@@ -667,7 +667,8 @@ class Users extends Controller
 
                 $basepath=ROOT_PATH."public";
                 //此处以年月为分割目录
-                $midpath=DS."assets".DS."img".DS.\date("Y").DS.\date("m");
+//                $midpath=DS."assets".DS."img".DS.\date("Y").DS.\date("m");
+                $midpath=DS."uploads".DS."code".DS.\date("Y").DS.\date("m");
                 $target=$basepath.$midpath;
                 if(!file_exists($target)){
                     mkdir($target,0777,true);
