@@ -345,6 +345,16 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 }, function (data,ret) { //error
                 });
             });
+            $(document).on('click', '.btn-online', function () {
+                // 待上架
+                var ids = $("input[name=WAIT_RELEASE]").val();
+                var version = $("code[name=WAIT_RELEASE]").text();
+                Fast.api.ajax({
+                    url: `wxauth/authlist/version_ali?ids=${ids}&type=online&v=${version}`
+                }, function (data,ret) { //success
+                }, function (data,ret) { //error
+                });
+            });
         },
 
     };

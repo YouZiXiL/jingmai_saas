@@ -48,7 +48,10 @@
                 </td>
             {/case}
             {case value="WAIT_RELEASE"}
-                <td class="text-info" style="word-break: break-all;">{$name[$vo:version_status]}</td>
+                <td class="text-info" >
+                    {$name[$vo:version_status]}
+                    <button class="btn btn-success btn-online btn-xs ml-4">待上架</button>
+                </td>
             {/case}
             {default /} <td style="word-break: break-all;">{$name[$vo:version_status]}</td>
         {/switch}

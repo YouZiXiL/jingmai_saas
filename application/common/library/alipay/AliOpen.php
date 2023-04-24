@@ -15,6 +15,7 @@ use app\common\library\alipay\aop\request\AlipayOpenMiniVersionAuditedCancelRequ
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionBuildQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionDetailQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionListQueryRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniVersionOnlineRequest;
 use Exception;
 use stdClass;
 use think\Log;
@@ -244,8 +245,8 @@ class AliOpen
 
         $request->setSpeedUp(false);
         $request->setAutoOnline("true");
-        $request->setFirstScreenShot("@".root_path('public/ali-1.jpg'));
-        $request->setSecondScreenShot("@".root_path('public/ali-2.jpg'));
+        $request->setFirstScreenShot("@".root_path('public/assets/img/image/ali-1.jpg'));
+        $request->setSecondScreenShot("@".root_path('public/assets/img/image/ali-2.jpg'));
         try {
             $result = $this->aop->execute($request, null, $appAuthToken);
 
@@ -410,6 +411,36 @@ class AliOpen
             Log::error( "取消审核失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
             throw new Exception('取消审核失败');
         }
+    }
+
+    /**
+     * alipay.open.mini.version.online(小程序上架)
+     * @param $version
+     * @param $appAuthToken
+     * @return mixed
+     * @throws Exception
+     */
+    public function miniVersionOnline($version, $appAuthToken){
+        $request = new AlipayOpenMiniVersionOnlineRequest ();
+        $object = new stdClass();
+        $object->app_version = $version;
+        $object->bundle_id = 'com.alipay.alipaywallet';
+        $request->setBizContent( json_encode($object));
+        try {
+            $result = $this->aop->execute($request, null, $appAuthToken);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $resultCode = $result->$responseNode->code;
+            if(!empty($resultCode)){
+                $result->$responseNode;
+            }else{
+                Log::error( ["小程序上架失败：" =>  $result->$responseNode]);
+                throw new Exception('小程序上架失败');
+            }
+        } catch (Exception $e) {
+            Log::error( "小程序上架失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
+            throw new Exception('小程序上架失败');
+        }
+
 
 
     }

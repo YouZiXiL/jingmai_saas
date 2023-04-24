@@ -1,4 +1,4 @@
-<?php if (!defined('THINK_PATH')) exit(); /*a:4:{s:96:"/www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/wxauth/authlist/version_ali.html";i:1682143711;s:73:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/layout/default.html";i:1680070912;s:70:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/meta.html";i:1680070912;s:72:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/script.html";i:1680070912;}*/ ?>
+<?php if (!defined('THINK_PATH')) exit(); /*a:4:{s:96:"/www/wwwroot/jiyu/jingmai_saas/public/../application/admin/view/wxauth/authlist/version_ali.html";i:1682314317;s:73:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/layout/default.html";i:1680070912;s:70:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/meta.html";i:1680070912;s:72:"/www/wwwroot/jiyu/jingmai_saas/application/admin/view/common/script.html";i:1680070912;}*/ ?>
 <!DOCTYPE html>
 <html>
     <head>
@@ -91,7 +91,7 @@
             <?php break; case "AUDITING": ?>
                 <td class="text-warning">
                     <?php echo $name[$vo->version_status]; ?>
-                    <button class="btn btn-success btn-cancel btn-sm ml-4">取消审核</button>
+                    <button class="btn btn-success btn-cancel btn-xs ml-4">取消审核</button>
                 </td>
             <?php break; case "INIT": ?>
                 <td class="text-info">
@@ -101,10 +101,13 @@
             <?php break; case "AUDIT_REJECT": ?>
                 <td class="text-danger" style="word-break: break-all;">
                     <?php echo $name[$vo->version_status]; ?>
-                    <button class="btn btn-success btn-back btn-sm ml-4">退回开发</button>
+                    <button class="btn btn-success btn-back btn-xs ml-4">退回开发</button>
                 </td>
             <?php break; case "WAIT_RELEASE": ?>
-                <td class="text-info" style="word-break: break-all;"><?php echo $name[$vo->version_status]; ?></td>
+                <td class="text-info" >
+                    <?php echo $name[$vo->version_status]; ?>
+                    <button class="btn btn-success btn-online btn-xs ml-4">待上架</button>
+                </td>
             <?php break; default: ?> <td style="word-break: break-all;"><?php echo $name[$vo->version_status]; ?></td>
         <?php endswitch; ?>
 

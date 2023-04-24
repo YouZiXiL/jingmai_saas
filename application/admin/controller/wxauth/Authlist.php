@@ -253,6 +253,11 @@ class Authlist extends Backend
                 if($cancelResult->code == 10000) $this->success("操作成功");
                 $this->error($cancelResult->sub_msg);
                 break;
+            case 'online': // 上架
+                $cancelResult = $open->miniVersionOnline($version, $appAuthToken);
+                if($cancelResult->code == 10000) $this->success("操作成功");
+                $this->error($cancelResult->sub_msg);
+                break;
             default: $this->error("操作失败");
         }
         $this->success("操作成功");
