@@ -210,10 +210,11 @@ class Authlist extends Backend
         $ids = input('ids');
         $type = input('type');
         $v = input('v');
-        $appAuthToken = AgentAuth::field('auth_token')->where('id', $ids)->value('auth_token');
-        if(!$appAuthToken)  $this->error("代理不存在");
+        $agentAuth = AgentAuth::field('auth_token')->find($ids);
+        if(!$agentAuth)  $this->error("未找到授权版本");
+        $appAuthToken = $agentAuth->auth_token;
         if ($type && $v){
-            $this->versionManager($appAuthToken, $type, $v);
+            $this->versionManager($agentAuth, $type, $v);
         }else{
             $open = Alipay::start()->open();
             $version = $open->getMiniVersionList($appAuthToken);
@@ -233,12 +234,13 @@ class Authlist extends Backend
 
     /**
      * 支付宝版本管理
-     * @param string $appAuthToken
+     * @param object $agentAuth
      * @param string $type 操作类型
      * @param string $version 版本
      * @throws Exception
      */
-    public function versionManager(string $appAuthToken, string $type, string $version){
+    public function versionManager($agentAuth, string $type, string $version){
+        $appAuthToken = $agentAuth->auth_token;
         $open = Alipay::start()->open();
 
         switch ($type){
@@ -255,7 +257,13 @@ class Authlist extends Backend
                 break;
             case 'online': // 上架
                 $cancelResult = $open->miniVersionOnline($version, $appAuthToken);
-                if($cancelResult->code == 10000) $this->success("操作成功");
+                if($cancelResult->code == 10000){
+                    $this->success("操作成功");
+                    $agentAuth->save([
+                        'user_version' => $version,
+                        'xcx_audit' => 5
+                    ]);
+                }
                 $this->error($cancelResult->sub_msg);
                 break;
             default: $this->error("操作失败");
