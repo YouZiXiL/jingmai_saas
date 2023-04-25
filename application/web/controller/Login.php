@@ -2,15 +2,7 @@
 
 namespace app\web\controller;
 
-use app\common\library\alipay\AliConfigB;
-use app\common\library\alipay\AliBase;
-use app\common\library\alipay\AliConfig;
-use app\common\library\alipay\AliOpen;
 use app\common\library\alipay\Alipay;
-use app\common\library\alipay\aop\request\AlipayOpenAuthAppAesSetRequest;
-use app\common\library\alipay\aop\request\AlipayOpenInviteOrderCreateRequest;
-use app\common\library\alipay\aop\request\AlipaySystemOauthTokenRequest;
-use app\common\library\alipay\aop\request\AlipayUserInfoShareRequest;
 use app\common\library\R;
 use app\web\library\BaseException;
 use app\web\model\AgentAuth;
@@ -18,16 +10,11 @@ use app\web\model\Users;
 use app\web\library\ali\AliConfig as AliConfigC;
 use Exception;
 use think\Cache;
-use think\console\Input;
 use think\Controller;
-use think\Env;
 use think\exception\DbException;
 use think\Log;
 use think\Request;
 use think\response\Json;
-use Alipay\EasySDK\Kernel\Factory;
-use function app\common\library\alipay\aop\decrypt;
-use function app\common\library\alipay\aop\stripPKSC7Padding;
 
 class Login extends Controller
 {
@@ -195,7 +182,6 @@ class Login extends Controller
         ];
         cache($token,$session,3600*24*25);
         return json($data);
-
     }
 
     /**

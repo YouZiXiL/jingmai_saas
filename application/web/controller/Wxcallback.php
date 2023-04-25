@@ -316,15 +316,11 @@ class Wxcallback extends Controller
      */
     function way_type(){
         $pamar=$this->request->param();
-        Log::error(['云洋回调---way_type' => input()]);
         try {
-            Log::error('云洋回调---1111');
             if (empty($pamar)){
                 throw new Exception('传来的数据为空');
             }
-            Log::error('云洋回调---2222');
             $common= new Common();
-            Log::error('云洋回调---3333');
             $data=[
                 'waybill'=>$pamar['waybill'],
                 'shopbill'=>$pamar['shopbill'],
