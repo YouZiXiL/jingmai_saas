@@ -47,6 +47,11 @@ class Coupon extends Model
         return ['1' => __('Gain_way 1'), '2' => __('Gain_way 2'), '3' => __('Gain_way 3'), '4' => __('Gain_way 4'), '5' => __('Gain_way 5')];
     }
 
+    public function getGainWay()
+    {
+        return ['2' => __('Gain_way 2'), '3' => __('Gain_way 3'), '4' => __('Gain_way 4'), '5' => __('Gain_way 5')];
+    }
+
     public function getTypeList()
     {
         return ['1' => __('Type 1'), '2' => __('Type 2')];
