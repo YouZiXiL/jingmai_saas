@@ -3594,7 +3594,7 @@ class Wxcallback extends Controller
         while ($index<$coupon_manager->conpon_group_count){
 
             $item["user_id"]=$user_id;
-            $item["agent_id"]=$this->user->agent_id;
+            $item["agent_id"]=$coupon_manager->agent_id;
             $key =$type.$common->getinvitecode(5)."-".$common->getinvitecode(5)."-".$common->getinvitecode(5)."-".$common->getinvitecode(5)."-".strval($user_id).strtoupper(uniqid());//$params["agent_id"];
 
             $item["papercode"]=$key;
@@ -3642,7 +3642,7 @@ class Wxcallback extends Controller
             while ($index<$coupon_manager->conpon_group_count){
 
                 $item["user_id"]=$user_id;
-                $item["agent_id"]=$this->user->agent_id;
+                $item["agent_id"]=$agent_id;
                 $key =$type.$common->getinvitecode(5)."-".$common->getinvitecode(5)."-".$common->getinvitecode(5)."-".$common->getinvitecode(5)."-".strval($user_id).strtoupper(uniqid());//$params["agent_id"];
 
                 $item["papercode"]=$key;

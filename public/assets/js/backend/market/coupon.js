@@ -115,9 +115,37 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
         },
 
         add: function () {
+            function switchSelect(){
+                var scene= $("select[name='row[scene]']").val();
+                if (scene==='2'){
+                    $('#uselimits').css('display','none');
+                }else {
+                    $('#uselimits').css('display','');
+                }
+            }
+            switchSelect();
+
+            $('#c-scene').change(function () {
+                switchSelect();
+
+            });
             Controller.api.bindevent();
         },
         edit: function () {
+            function switchSelect(){
+                var scene= $("select[name='row[scene]']").val();
+                if (scene==='2'){
+                    $('#uselimits').css('display','none');
+                }else {
+                    $('#uselimits').css('display','');
+                }
+            }
+            switchSelect();
+
+            $('#c-scene').change(function () {
+                switchSelect();
+
+            });
             Controller.api.bindevent();
         },
         api: {

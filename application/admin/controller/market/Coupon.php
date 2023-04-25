@@ -85,6 +85,8 @@ class Coupon extends Backend
     {
         $common=new Common();
         if (false === $this->request->isPost()) {
+
+            $this->view->assign("gainWayList", $this->model->getGainWay());
             return $this->view->fetch();
         }
         $params = $this->request->post('row/a');
@@ -117,6 +119,8 @@ class Coupon extends Backend
         }
         $this->success();
     }
+
+
 
 
 }
