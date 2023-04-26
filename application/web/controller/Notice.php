@@ -137,7 +137,6 @@ class Notice extends Controller
                 0,
                 '运单号：'.$data['result']['waybill'].' 下单支付成功'
             );
-            Log::error(['下单成功222']);
             $update=[
                 'id'=> $orders['id'],
                 'waybill'=>$data['result']['waybill'],

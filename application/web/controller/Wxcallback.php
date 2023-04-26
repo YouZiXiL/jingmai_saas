@@ -1015,6 +1015,7 @@ class Wxcallback extends Controller
                 if('expressLogisticsStatus' === input('type')){
                     $message = input('message');
                     $ordersUpdate = [
+                        'id' => $orderModel->id,
                         'waybill' => $message['wlbCode'],
                         'order_status' => $message['logisticsStatusDesc'],
                         'comments' => $message['logisticsDesc'],
