@@ -783,7 +783,7 @@ class Users extends Controller
         $startdate=date("Y-m-d",strtotime("-1 month"));
         $enddate=time();
 
-        return $enddate;
+     
         //1、获得用户
         $user_info= \app\web\model\Users::get($this->user->id);
         if($type==1)
