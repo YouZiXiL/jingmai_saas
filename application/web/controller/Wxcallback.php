@@ -1014,7 +1014,7 @@ class Wxcallback extends Controller
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
                 }
-                Log::error(['订单状态fhd' => $orders['orderId']]);
+                Log::error(['订单状态fhd' => $orders['out_trade_no']]);
                 // 快递运输状态
                 if('expressLogisticsStatus' === input('type')){
                     $message = input('message');
@@ -1024,9 +1024,9 @@ class Wxcallback extends Controller
                         'order_status' => $message['logisticsStatusDesc'],
                         'comments' => $message['logisticsDesc'],
                     ];
-                    Log::error("更新订单状态--fhd");
+                    Log::error("更新订单状态开始---fhd");
                     $rup = $orderModel->isUpdate(true)->save($ordersUpdate);
-                    Log::error("更新订单状态结果--fhd：{$rup}");
+                    Log::error("更新订单状态结果---fhd：{$rup}");
                 }
                 $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
