@@ -394,9 +394,16 @@ class Yunyang extends Controller
                 file_put_contents('check_channel_intellect.txt',json_encode($content).PHP_EOL,FILE_APPEND);
 
                 $res=json_decode($res,true);
-
-                $agent_price=$res['data']['amount']/100*0.68+$res['data']['amount']/100*$agent_info['db_agent_ratio']/100;//代理商价格
-                $users_price=$agent_price+$res['data']['amount']/100*$agent_info['db_users_ratio']/100;//用户价格
+                foreach ($res['data']['predictInfo']['detail'] as $k=>$v){
+                    if ($v['priceEntryCode']=='FRT'){
+                        $total['fright']=$v['caculateFee'];
+                    }
+                    if ($v['priceEntryCode']=='BF'){
+                        $total['fb']=$v['caculateFee'];
+                    }
+                }
+                $agent_price=$total['fright']*0.68+$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
+                $users_price=$agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
                 $admin_shouzhong=0;//平台首重
                 $admin_xuzhong=0;//平台续重
                 $agent_shouzhong=0;//代理商首重
@@ -404,7 +411,7 @@ class Yunyang extends Controller
                 $users_shouzhong=0;//用户首重
                 $users_xuzhong=0;//用户续重
 
-                $finalPrice=sprintf("%.2f",$users_price+$param['insured']*0.006);//用户拿到的价格=用户运费价格+保价费
+                $finalPrice=sprintf("%.2f",$users_price+($total['fb']??0));//用户拿到的价格=用户运费价格+保价费
                 $res['final_price']=$finalPrice;//用户支付总价
                 $res['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
                 $res['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
@@ -412,14 +419,14 @@ class Yunyang extends Controller
                 $res['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                 $res['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
                 $res['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                $res['agent_price']=sprintf("%.2f",$agent_price+$param['insured']*0.006);//代理商结算
+                $res['agent_price']=sprintf("%.2f",$agent_price+($total['fb']??0));//代理商结算
                 $res['jijian_id']=$param['jijian_id'];//寄件id
                 $res['shoujian_id']=$param['shoujian_id'];//收件id
                 $res['weight']=$param['weight'];//重量
                 $res['package_count']=$param['package_count'];//包裹数量
-                $res['freightInsured']=sprintf("%.2f",$param['insured']*0.006);//保价费用
+                $res['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
                 $res['channel']='德邦-精准汽运';
-                $res['freight']=sprintf("%.2f",$res['data']['amount']/100*0.68);
+                $res['freight']=sprintf("%.2f",$total['fright']*0.68);
                 $res['send_start_time']=$time;
                 $res['send_end_time']=$sendEndTime;
                 $res['tagType']='德邦重货';
@@ -479,9 +486,16 @@ class Yunyang extends Controller
                 file_put_contents('check_channel_intellect.txt',json_encode($content).PHP_EOL,FILE_APPEND);
 
                 $res=json_decode($res,true);
-
-                $agent_price=$res['data']['amount']/100*0.68+$res['data']['amount']/100*$agent_info['db_agent_ratio']/100;//代理商价格
-                $users_price=$agent_price+$res['data']['amount']/100*$agent_info['db_users_ratio']/100;//用户价格
+                foreach ($res['data']['predictInfo']['detail'] as $k=>$v){
+                    if ($v['priceEntryCode']=='FRT'){
+                        $total['fright']=$v['caculateFee'];
+                    }
+                    if ($v['priceEntryCode']=='BF'){
+                        $total['fb']=$v['caculateFee'];
+                    }
+                }
+                $agent_price=$total['fright']*0.68+$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
+                $users_price=$agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
                 $admin_shouzhong=0;//平台首重
                 $admin_xuzhong=0;//平台续重
                 $agent_shouzhong=0;//代理商首重
@@ -489,7 +503,7 @@ class Yunyang extends Controller
                 $users_shouzhong=0;//用户首重
                 $users_xuzhong=0;//用户续重
 
-                $finalPrice=sprintf("%.2f",$users_price+$param['insured']*0.006);//用户拿到的价格=用户运费价格+保价费
+                $finalPrice=sprintf("%.2f",$users_price+($total['fb']??0));//用户拿到的价格=用户运费价格+保价费
                 $res['final_price']=$finalPrice;//用户支付总价
                 $res['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
                 $res['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
@@ -497,14 +511,14 @@ class Yunyang extends Controller
                 $res['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                 $res['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
                 $res['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                $res['agent_price']=sprintf("%.2f",$agent_price+$param['insured']*0.006);//代理商结算
+                $res['agent_price']=sprintf("%.2f",$agent_price+($total['fb']??0));//代理商结算
                 $res['jijian_id']=$param['jijian_id'];//寄件id
                 $res['shoujian_id']=$param['shoujian_id'];//收件id
                 $res['weight']=$param['weight'];//重量
                 $res['package_count']=$param['package_count'];//包裹数量
-                $res['freightInsured']=sprintf("%.2f",$param['insured']*0.006);//保价费用
+                $res['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
                 $res['channel']='德邦-精准卡航';
-                $res['freight']=sprintf("%.2f",$res['data']['amount']/100*0.68);
+                $res['freight']=sprintf("%.2f",$total['fright']*0.68);
                 $res['send_start_time']=$time;
                 $res['send_end_time']=$sendEndTime;
                 $res['tagType']='德邦重货';
