@@ -1003,7 +1003,7 @@ class Wxcallback extends Controller
                 'create_time'=>time()
             ];
             db('fhd_callback')->insert($data);
-
+            Log::error("风火递---订单ID：" . $result['orderId']);
             $orderModel = Order::where('out_trade_no',$result['orderId'])->find();
 
             if ($orderModel){
