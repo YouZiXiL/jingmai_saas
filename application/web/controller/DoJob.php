@@ -60,7 +60,7 @@ class DoJob
                 $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
                     'touser'=>$data['open_id'],  //接收者openid
                     'template_id'=>$data['template_id'],
-                    'page'=>'pages/information/overload/overload?id='.$orders['id'],  //模板跳转链接
+                    'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],  //模板跳转链接
                     'data'=>[
                         'character_string6'=>['value'=>$orders['waybill']],
                         'thing5'=>['value'=>$data['cal_weight']],

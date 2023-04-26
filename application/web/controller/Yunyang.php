@@ -1111,6 +1111,7 @@ class Yunyang extends Controller
     function overload_detail(): Json
     {
         $id=$this->request->param('id');
+        Log::error("超重详情ID：{$id}");
         if (empty($id)||!is_numeric($id)){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
@@ -1132,6 +1133,7 @@ class Yunyang extends Controller
     function overload_pay(): Json
     {
         $id=$this->request->param('id');
+        Log::error("超重支付ID: {$id}");
         if (empty($id)||!is_numeric($id)){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
