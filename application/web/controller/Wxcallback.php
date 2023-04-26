@@ -967,10 +967,10 @@ class Wxcallback extends Controller
 
 
     /**
-     * 云洋订单回调
+     * 风火递
      */
     function fhd_callback(){
-        Log::error(['云洋回调---fhd_callback' => input()]);
+        Log::error(['风火递---fhd_callback' => input()]);
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
         $result=$pamar['message'];
@@ -1004,12 +1004,22 @@ class Wxcallback extends Controller
             ];
             db('fhd_callback')->insert($data);
 
-            $orders=db('orders')->where('out_trade_no',$result['orderId'])->find();
+            $orderModel = Order::where('out_trade_no',$result['orderId'])->find();
 
-
-            if ($orders){
+            if ($orderModel){
+                $orders = $orderModel->toArray();
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
+                }
+                // 快递运输状态
+                if('expressLogisticsStatus' === input('type')){
+                    $message = input('message');
+                    $ordersUpdate = [
+                        'waybill' => $message['wlbCode'],
+                        'order_status' => $message['logisticsStatusDesc'],
+                        'comments' => $message['logisticsDesc'],
+                    ];
+                    $orderModel->isUpdate(true)->save($ordersUpdate);
                 }
                 $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
