@@ -430,7 +430,7 @@ class Refill extends Controller
     //话费 充值
     public function recharge_hf(){
         $param=$this->request->param();
-        if( empty($param["product_id"]) || empty($param["mobile"]) ||empty($param["amount"])||empty($param["cateid"]) ||$param["selectid"]){
+        if( empty($param["product_id"]) || empty($param["mobile"]) ||empty($param["amount"])||empty($param["cateid"]) || empty($param["selectid"])){
             return json(["status"=>"400","msg"=>"请输入有效参数","data"=>""]);
         }
         $select = db("refill_product")->find($param["selectid"]);
