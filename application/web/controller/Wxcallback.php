@@ -576,7 +576,7 @@ class Wxcallback extends Controller
                             $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                                 'touser'=>$users['open_id'],  //接收者openid
                                 'template_id'=>$agent_auth_xcx['waybill_template'],
-                                'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                                'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
                                 'data'=>[
                                     'character_string13'=>['value'=>$orders['waybill']],
                                     'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
@@ -941,7 +941,7 @@ class Wxcallback extends Controller
                     $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                         'touser'=>$users['open_id'],  //接收者openid
                         'template_id'=>$agent_auth_xcx['waybill_template'],
-                        'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                        'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
                         'data'=>[
                             'character_string13'=>['value'=>$orders['waybill']],
                             'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
@@ -1013,9 +1013,8 @@ class Wxcallback extends Controller
                 }
                 Log::error(['订单状态fhd' => $orders['orderId']]);
                 // 快递运输状态
-                $message = input('message');
                 if('expressLogisticsStatus' === input('type')){
-                    // 运输状态
+                    $message = input('message');
                     $ordersUpdate = [
                         'id' => $orderModel->id,
                         'waybill' => $message['wlbCode'],
@@ -1275,7 +1274,7 @@ class Wxcallback extends Controller
                     $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                         'touser'=>$users['open_id'],  //接收者openid
                         'template_id'=>$agent_auth_xcx['waybill_template'],
-                        'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                        'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
                         'data'=>[
                             'character_string13'=>['value'=>$orders['waybill']],
                             'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
@@ -2482,7 +2481,7 @@ class Wxcallback extends Controller
                     $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                         'touser'=>$users['open_id'],  //接收者openid
                         'template_id'=>$agent_auth_xcx['waybill_template'],
-                        'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                        'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
                         'data'=>[
                             'character_string13'=>['value'=>$orders['waybill']],
                             'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
@@ -2571,7 +2570,7 @@ class Wxcallback extends Controller
                 $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                     'touser'=>$users['open_id'],  //接收者openid
                     'template_id'=>$agent_auth_xcx['waybill_template'],
-                    'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                    'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
                     'data'=>[
                         'character_string13'=>['value'=>$orders['waybill']],
                         'thing9'=>['value'=>"手机号：".$_POST['mobile']],
@@ -2593,7 +2592,7 @@ class Wxcallback extends Controller
                 $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                     'touser'=>$users['open_id'],  //接收者openid
                     'template_id'=>$agent_auth_xcx['waybill_template'],
-                    'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                    'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
                     'data'=>[
                         'character_string13'=>['value'=>$orders['waybill']],
                         'thing9'=>['value'=>"手机号：".$_POST['mobile']],
@@ -3385,7 +3384,7 @@ class Wxcallback extends Controller
                         $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
                             'touser'=>$users['open_id'],  //接收者openid
                             'template_id'=>$agent_auth_xcx['waybill_template'],
-                            'page'=>'pages/information/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                            'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
                             'data'=>[
                                 'character_string13'=>['value'=>$orders['waybill']],
                                 'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
