@@ -970,10 +970,12 @@ class Wxcallback extends Controller
      * 风火递
      */
     function fhd_callback(){
-        Log::error(['风火递---fhd_callback' => input()]);
+//        Log::error(['风火递---fhd_callback' => input()]);
+        Log::error("风火递---type：" . input('type'));
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
-        $result=$pamar['message'];
+        $result= $pamar['message'];
+        Log::error(["风火递---message：" => $result]);
         try {
             if (empty($pamar)){
                 throw new Exception('传来的数据为空');
@@ -1000,19 +1002,19 @@ class Wxcallback extends Controller
                 'packageServicePrice'=>$result['orderEvent']['packageServicePrice']??null,
                 'otherPrice'=>$result['orderEvent']['otherPrice']??null,
                 'comments'=>$result['orderEvent']['comments']??null,
-                'create_time'=>time()
+                'create_time'=> time()
             ];
             db('fhd_callback')->insert($data);
             Log::error("风火递---订单ID：" . $result['orderId']);
             $orderModel = Order::where('out_trade_no',$result['orderId'])->find();
 
             if ($orderModel){
+                Log::error("风火递---订单查询：" . $orderModel->id);
                 $orders = $orderModel->toArray();
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
                 }
                 Log::error(['订单状态fhd' => $orders['orderId']]);
-                Log::error(['风火递type' => input('type')]);
                 // 快递运输状态
                 if('expressLogisticsStatus' === input('type')){
                     $message = input('message');
