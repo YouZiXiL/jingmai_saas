@@ -1012,6 +1012,7 @@ class Wxcallback extends Controller
                     throw new Exception('订单已取消');
                 }
                 Log::error(['订单状态fhd' => $orders['orderId']]);
+                Log::error(['风火递type' => input('type')]);
                 // 快递运输状态
                 if('expressLogisticsStatus' === input('type')){
                     $message = input('message');
