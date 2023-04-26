@@ -1090,6 +1090,9 @@ class Wxcallback extends Controller
                 ];
                 $up_data['comments']=$result['orderEvent']['comments']??null;
                 if ($result['orderStatusCode']=='GOT'){
+                    if ($result['orderEvent']['calculateWeight']/1000<$result['orderEvent']['totalVolume']*1000/6000){
+                        $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000;
+                    }
                     $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68+($result['orderEvent']['totalPrice']-$result['orderEvent']['transportPrice']/100);
 
                     $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
