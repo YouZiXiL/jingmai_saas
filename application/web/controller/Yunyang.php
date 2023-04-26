@@ -178,9 +178,9 @@ class Yunyang extends Controller
             if (empty($param['channel_tag'])||($param['channel_tag']!='智能'&&$param['channel_tag']!='重货')){
                 throw new Exception('快递渠道错误');
             }
-            if ($param['channel_tag']=='重货'){
-                throw new Exception('重货渠道暂时维护中');
-            }
+//            if ($param['channel_tag']=='重货'){
+//                throw new Exception('重货渠道暂时维护中');
+//            }
             $bujiao=db('orders')->where('user_id',$this->user->id)->where('agent_id',$this->user->agent_id)->where('pay_status',1)->where('overload_status|consume_status',1)->find();
             if($bujiao){
                 throw new Exception('请先补缴欠费运单');
