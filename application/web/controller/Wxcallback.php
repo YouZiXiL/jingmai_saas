@@ -1011,16 +1011,20 @@ class Wxcallback extends Controller
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
                 }
+                Log::error(['订单状态fhd' => $orders['orderId']]);
                 // 快递运输状态
+                $message = input('message');
                 if('expressLogisticsStatus' === input('type')){
-                    $message = input('message');
+                    // 运输状态
                     $ordersUpdate = [
                         'id' => $orderModel->id,
                         'waybill' => $message['wlbCode'],
                         'order_status' => $message['logisticsStatusDesc'],
                         'comments' => $message['logisticsDesc'],
                     ];
-                    $orderModel->isUpdate(true)->save($ordersUpdate);
+                    Log::error("更新订单状态--fhd");
+                    $rup = $orderModel->isUpdate(true)->save($ordersUpdate);
+                    Log::error("更新订单状态结果--fhd：{$rup}");
                 }
                 $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
@@ -1228,7 +1232,6 @@ class Wxcallback extends Controller
                 db('orders')->where('out_trade_no',$result['orderId'])->update($up_data);
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'){
-
                     if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
                         if(!empty($rebatelist["invitercode"])){
                             $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
