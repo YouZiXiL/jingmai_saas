@@ -424,7 +424,7 @@ class Yunyang extends Controller
                 $res['send_end_time']=$sendEndTime;
                 $res['tagType']='德邦重货';
                 $res['db_type']='JZQY_LONG';
-                !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价金额
+                !empty($param['insured']) &&($res['insured'] = $param['insured']);//保价金额
                 !empty($param['vloum_long']) &&($res['vloumLong'] = $param['vloum_long']);//货物长度
                 !empty($param['vloum_width']) &&($res['vloumWidth'] = $param['vloum_width']);//货物宽度
                 !empty($param['vloum_height']) &&($res['vloumHeight'] = $param['vloum_height']);//货物高度
