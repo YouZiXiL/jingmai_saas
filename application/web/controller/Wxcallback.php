@@ -1300,7 +1300,7 @@ class Wxcallback extends Controller
                 $rebatelist->save($rebatelistdata);
 
             }
-            Log::info("风火递--处理成功");
+            Log::info("风火递---处理成功");
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
             file_put_contents('way_type.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
