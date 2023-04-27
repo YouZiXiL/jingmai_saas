@@ -971,7 +971,7 @@ class Wxcallback extends Controller
      */
     function fhd_callback(){
 
-        Log::error('风火递---fhd_callback：' . json_encode(input()));
+        Log::info('风火递---fhd_callback：' . json_encode(input()));
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
         $result= $pamar['message'];
@@ -1026,8 +1026,11 @@ class Wxcallback extends Controller
                     $rup = $orderModel->isUpdate(true)->save($ordersUpdate);
                 }
                 $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+
                 $users=db('users')->where('id',$orders['user_id'])->find();
+
                 $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
 
                 $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
@@ -1092,12 +1095,13 @@ class Wxcallback extends Controller
                         $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000;
                         $up_data['final_weight']=$result['orderEvent']['calculateWeight'];
                     }
-                    $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68+($result['orderEvent']['totalPrice']-$result['orderEvent']['transportPrice']/100);
+                    $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68+($result['orderEvent']['totalPrice']/100-$result['orderEvent']['transportPrice']/100);
 
 
                     //超轻处理
                     $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
                     if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])){
+
                         $tralight_weight=$weight;//超轻重量
                         $tralight_amt=$orders['freight']-$result['orderEvent']['transportPrice']/100*0.68;//超轻金额
                         $admin_xuzhong=$tralight_amt/$tralight_weight;//平台续重单价
@@ -1296,10 +1300,11 @@ class Wxcallback extends Controller
                 $rebatelist->save($rebatelistdata);
 
             }
+            Log::info("风火递--处理成功");
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
             file_put_contents('way_type.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
-            return json(['code'=>0, 'message'=>'推送失败']);
+            return json(['code'=>0, 'message'=>$e->getMessage()]);
         }
     }
 
