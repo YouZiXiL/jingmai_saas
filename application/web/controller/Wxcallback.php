@@ -970,12 +970,11 @@ class Wxcallback extends Controller
      * 风火递
      */
     function fhd_callback(){
-//        Log::error(['风火递---fhd_callback' => input()]);
-        Log::error("风火递---type：" . input('type'));
+
+        Log::error(['风火递---fhd_callback' => input('message')]);
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
         $result= $pamar['message'];
-        Log::error(["风火递---message：" => $result]);
         try {
             if (empty($pamar)){
                 throw new Exception('传来的数据为空');
@@ -1017,16 +1016,14 @@ class Wxcallback extends Controller
                 }
                 // 快递运输状态
                 if('expressLogisticsStatus' === input('type')){
-                    $message = input('message');
+                    $message = $pamar['message'];
                     $ordersUpdate = [
                         'id' => $orderModel->id,
                         'waybill' => $message['wlbCode'],
                         'order_status' => $message['logisticsStatusDesc'],
                         'comments' => $message['logisticsDesc'],
                     ];
-                    Log::error("更新订单状态开始---fhd");
                     $rup = $orderModel->isUpdate(true)->save($ordersUpdate);
-                    Log::error("更新订单状态结果---fhd：{$rup}");
                 }
                 $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
