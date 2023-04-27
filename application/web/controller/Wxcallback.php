@@ -1146,7 +1146,7 @@ class Wxcallback extends Controller
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
-                        $overload_amt=$pamar['freight']-$orders['freight'];//超出金额
+                        $overload_amt=$result['orderEvent']['transportPrice']-$orders['freight'];//超出金额
                         $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
                         $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
                         $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
