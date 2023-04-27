@@ -971,7 +971,7 @@ class Wxcallback extends Controller
      */
     function fhd_callback(){
 
-        Log::error(['风火递---fhd_callback' => input()]);
+        Log::error('风火递---fhd_callback：' . json_encode(input()));
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
         $result= $pamar['message'];
