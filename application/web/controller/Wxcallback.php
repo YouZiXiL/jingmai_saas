@@ -1098,8 +1098,7 @@ class Wxcallback extends Controller
 
                     //超轻处理
                     $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
-                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])){
-
+                      if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
                         $tralight_weight=$weight;//超轻重量
                         $tralight_amt=$orders['freight']-$result['orderEvent']['transportPrice']/100*0.68;//超轻金额
                         $admin_xuzhong=$tralight_amt/$tralight_weight;//平台续重单价
@@ -1142,16 +1141,18 @@ class Wxcallback extends Controller
                         }
 
                     }
-
                     //更改超重状态
-                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+//                  // if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
-                        $overload_amt=$result['orderEvent']['transportPrice']-$orders['freight'];//超出金额
+                        $overload_amt=$result['orderEvent']['transportPrice']/100-$orders['freight'];//超出金额
+
                         $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
                         $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
                         $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+
                         $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
                         $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                         $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
@@ -1298,7 +1299,7 @@ class Wxcallback extends Controller
                 $rebatelist->save($rebatelistdata);
             }
             Log::info("风火递---处理成功");
-            return json(['code'=>1, 'message'=>'推送成功']);
+            return json(['code'=>0, 'message'=>'推送成功']);
         }catch (\Exception $e){
             $errData = "-------"
                 .PHP_EOL."风火递回调："
@@ -1308,7 +1309,7 @@ class Wxcallback extends Controller
                 .PHP_EOL.$e->getFile()
                 .PHP_EOL;
             file_put_contents('way_type.txt', $errData , FILE_APPEND);
-            return json(['code'=>0, 'message'=>$e->getMessage()]);
+            return json(['code'=>1, 'message'=>$e->getMessage()]);
         }
     }
 
