@@ -1049,7 +1049,6 @@ class Wxcallback extends Controller
                         $superB=db("admin")->find($users["rootid"]);
                         //计算 超级B 价格
                         if ($orders['tag_type']=='德邦'||$orders['tag_type']=='德邦重货'){
-
                             $agent_price=$orders['freight']+$orders['freight']*$superB['agent_db_ratio']/100;// 超级B 达标价格
                             $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_db_ratio']/100;//超级B 默认价格
                             $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
@@ -1143,11 +1142,11 @@ class Wxcallback extends Controller
                     }
                     //更改超重状态
                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
-                    // if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
+//                     if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
-                        $overload_amt=$result['orderEvent']['transportPrice']/100-$orders['freight'];//超出金额
+                        $overload_amt=$result['orderEvent']['transportPrice']/100*0.68-$orders['freight'];//超出金额
 
                         $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
                         $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
@@ -1200,7 +1199,7 @@ class Wxcallback extends Controller
                             $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["imm_rate"]??0)/100,2);
                             $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
                         }
-                        Log::error(['超重推送' => $data]);
+                        Log::info(['超重推送' => $data]);
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
                     }
