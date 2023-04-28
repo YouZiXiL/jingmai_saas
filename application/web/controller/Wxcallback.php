@@ -1087,17 +1087,17 @@ class Wxcallback extends Controller
                     $up_data['comments'] = $result['orderEvent']['comments'];
                 }
                 if (@$result['orderStatusCode']=='GOT'){
-                    $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
                     if ($result['orderEvent']['calculateWeight']/1000<$result['orderEvent']['totalVolume']*1000/6000){
-                        $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000;
-                        $up_data['final_weight']=$result['orderEvent']['calculateWeight'];
+                        $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000*1000;
                     }
+                    $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
+
                     $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68+($result['orderEvent']['totalPrice']/100-$result['orderEvent']['transportPrice']/100);
 
 
                     //超轻处理
                     $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
-                      if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
+                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
                         $tralight_weight=$weight;//超轻重量
                         $tralight_amt=$orders['freight']-$result['orderEvent']['transportPrice']/100*0.68;//超轻金额
                         $admin_xuzhong=$tralight_amt/$tralight_weight;//平台续重单价
@@ -1109,13 +1109,13 @@ class Wxcallback extends Controller
                         $users_tralight_amt=$tralight_weight*$up_data['users_xuzhong'];//代理商给用户退款金额
                         $agent_tralight_amt=$tralight_weight*$up_data['agent_xuzhong'];//平台给代理商退余额
 
-                            if(!empty($users["rootid"])){
-                                $superB=db("admin")->find($users["rootid"]);
-                                $agent_default_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_default_db_ratio']/100;//超级B 默认续重价格
-                                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_db_ratio']/100;//超级B 达标续重价格
-                                $root_tralight_amt=$tralight_weight*$agent_xuzhong;
-                                $root_default_tralight_amt=$tralight_weight*$agent_default_xuzhong;
-                            }
+                        if(!empty($users["rootid"])){
+                            $superB=db("admin")->find($users["rootid"]);
+                            $agent_default_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_default_db_ratio']/100;//超级B 默认续重价格
+                            $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_db_ratio']/100;//超级B 达标续重价格
+                            $root_tralight_amt=$tralight_weight*$agent_xuzhong;
+                            $root_default_tralight_amt=$tralight_weight*$agent_default_xuzhong;
+                        }
 
 
                         $up_data['tralight_status']=1;
@@ -1141,7 +1141,7 @@ class Wxcallback extends Controller
 
                     }
                     //更改超重状态
-                   if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
 //                     if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
