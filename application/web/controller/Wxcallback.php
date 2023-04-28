@@ -1004,13 +1004,13 @@ class Wxcallback extends Controller
                 'create_time'=> time()
             ];
             db('fhd_callback')->insert($data);
-            Log::error("风火递---订单ID：" . $result['orderId']);
+            Log::info("风火递---订单ID：" . $result['orderId']);
             $orderModel = Order::where('out_trade_no',$result['orderId'])->find();
 
             if ($orderModel){
-                Log::error("风火递---订单查询：" . $orderModel->id);
+                Log::info("风火递---订单查询：" . $orderModel->id);
                 $orders = $orderModel->toArray();
-                Log::error("风火递---订单状态：" . $orders['order_status']);
+                Log::info("风火递---订单状态：" . $orders['order_status']);
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
                 }
@@ -1089,7 +1089,7 @@ class Wxcallback extends Controller
                     "updatetime"=>time()
                 ];
                 $up_data['comments']=$result['orderEvent']['comments']??null;
-                if ($result['orderStatusCode']=='GOT'){
+                if (@$result['orderStatusCode']=='GOT'){
                     $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
                     if ($result['orderEvent']['calculateWeight']/1000<$result['orderEvent']['totalVolume']*1000/6000){
                         $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000;
@@ -1226,7 +1226,7 @@ class Wxcallback extends Controller
                 // }
 
 
-                if($result['orderStatusCode']=='CANCEL'&&$orders['pay_status']!=2){
+                if(@$result['orderStatusCode']=='CANCEL'&&$orders['pay_status']!=2){
                     $data = [
                         'type'=>4,
                         'order_id' => $orders['id'],
