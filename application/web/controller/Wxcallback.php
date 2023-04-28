@@ -1026,13 +1026,9 @@ class Wxcallback extends Controller
                     $orderModel->isUpdate(true)->save($ordersUpdate);
                 }
                 $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
-
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
-
                 $users=db('users')->where('id',$orders['user_id'])->find();
-
                 $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
-
                 $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
                 if(empty($rebatelist)){
                     $rebatelist=new Rebatelist();
@@ -1084,7 +1080,6 @@ class Wxcallback extends Controller
                     }
                     $rebatelist->save($data);
                 }
-
                 $rebatelistdata=[
                     "updatetime"=>time()
                 ];
@@ -1228,7 +1223,6 @@ class Wxcallback extends Controller
                 //     $up_data['final_weight']=$pamar['calWeight'];
                 // }
 
-
                 if(@$result['orderStatusCode']=='CANCEL'&&$orders['pay_status']!=2){
                     $data = [
                         'type'=>4,
@@ -1243,8 +1237,6 @@ class Wxcallback extends Controller
                 if (!empty($up_data)){
                     db('orders')->where('out_trade_no',$result['orderId'])->update($up_data);
                 }
-
-
 
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'){
@@ -1303,15 +1295,19 @@ class Wxcallback extends Controller
                         'lang'=>'zh_CN'
                     ],'POST');
                 }
-
-
                 $rebatelist->save($rebatelistdata);
-
             }
             Log::info("风火递---处理成功");
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
-            file_put_contents('way_type.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
+            $errData = "-------"
+                .PHP_EOL."风火递回调："
+                .PHP_EOL.date('y-m-d h:i:s', time())
+                .PHP_EOL.$e->getMessage()
+                .PHP_EOL.$e->getLine()
+                .PHP_EOL.$e->getFile()
+                .PHP_EOL;
+            file_put_contents('way_type.txt', $errData , FILE_APPEND);
             return json(['code'=>0, 'message'=>$e->getMessage()]);
         }
     }
