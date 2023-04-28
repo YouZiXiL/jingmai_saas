@@ -1142,8 +1142,8 @@ class Wxcallback extends Controller
 
                     }
                     //更改超重状态
-//                  // if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
-                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
+                   if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+                    // if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
