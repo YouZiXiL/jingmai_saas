@@ -1023,7 +1023,7 @@ class Wxcallback extends Controller
                         'order_status' => $message['logisticsStatusDesc'],
                         'comments' => $message['logisticsDesc'],
                     ];
-                    $rup = $orderModel->isUpdate(true)->save($ordersUpdate);
+                    $orderModel->isUpdate(true)->save($ordersUpdate);
                 }
                 $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
 
@@ -1088,7 +1088,10 @@ class Wxcallback extends Controller
                 $rebatelistdata=[
                     "updatetime"=>time()
                 ];
-                $up_data['comments']=$result['orderEvent']['comments']??null;
+                $up_data = [];
+                if (isset($result['orderEvent']['comments'])){
+                    $up_data['comments'] = $result['orderEvent']['comments'];
+                }
                 if (@$result['orderStatusCode']=='GOT'){
                     $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
                     if ($result['orderEvent']['calculateWeight']/1000<$result['orderEvent']['totalVolume']*1000/6000){
@@ -1237,7 +1240,12 @@ class Wxcallback extends Controller
                     Queue::push(DoJob::class, $data,'way_type');
                 }
 
-                db('orders')->where('out_trade_no',$result['orderId'])->update($up_data);
+                if (!empty($up_data)){
+                    db('orders')->where('out_trade_no',$result['orderId'])->update($up_data);
+                }
+
+
+
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'){
                     if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
