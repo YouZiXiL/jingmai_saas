@@ -1091,7 +1091,7 @@ class Wxcallback extends Controller
                         $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000*1000;
                     }
                     $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
-
+                    // 风火递扣我们的费用
                     $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68+($result['orderEvent']['totalPrice']/100-$result['orderEvent']['transportPrice']/100);
 
 
@@ -1101,8 +1101,8 @@ class Wxcallback extends Controller
                         $tralight_weight=$weight;//超轻重量
                         $tralight_amt=$orders['freight']-$result['orderEvent']['transportPrice']/100*0.68;//超轻金额
                         $admin_xuzhong=$tralight_amt/$tralight_weight;//平台续重单价
-                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
-                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['db_agent_ratio']/100;//代理商续重
+                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['db_users_ratio']/100;//用户续重
                         $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
                         $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                         $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
@@ -1141,22 +1141,23 @@ class Wxcallback extends Controller
 
                     }
                     //更改超重状态
-                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
-//                     if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
+//                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+                     if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
                         $overload_amt=$result['orderEvent']['transportPrice']/100*0.68-$orders['freight'];//超出金额
 
                         $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
-                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
-                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['db_agent_ratio']/100;//代理商续重
+                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['db_users_ratio']/100;//用户续重
 
                         $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
                         $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                         $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                         $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
                         $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
+                        dd($agent_overload_amt);
 
                         if(!empty($users["rootid"])){
                             $superB=db("admin")->find($users["rootid"]);
