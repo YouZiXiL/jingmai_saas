@@ -1157,7 +1157,6 @@ class Wxcallback extends Controller
                         $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                         $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
                         $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
-                        dd($agent_overload_amt);
 
                         if(!empty($users["rootid"])){
                             $superB=db("admin")->find($users["rootid"]);
