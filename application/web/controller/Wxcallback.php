@@ -977,7 +977,7 @@ class Wxcallback extends Controller
         $result= $pamar['message'];
         try {
             if (empty($pamar)){
-                throw new Exception('传来的数据为空');
+                return json(['code'=>0, 'message'=>'传来的数据为空']);
             }
             $common= new Common();
             $data=[
@@ -1012,7 +1012,7 @@ class Wxcallback extends Controller
                 $orders = $orderModel->toArray();
                 Log::info("风火递---订单状态：" . $orders['order_status']);
                 if ($orders['order_status']=='已取消'){
-                    throw new Exception('订单已取消');
+                    return json(['code'=>0, 'message'=>'订单已取消']);
                 }
                 // 快递运输状态
                 if('expressLogisticsStatus' === input('type')){
@@ -1204,11 +1204,11 @@ class Wxcallback extends Controller
                         Queue::push(DoJob::class, $data,'way_type');
                     }
                     //更改耗材状态
-                    if ($result['orderEvent']['packageServicePrice']/100!=0){
-                        $up_data['haocai_freight']=$result['orderEvent']['packageServicePrice']/100;
+                    if ($result['orderEvent']['packageServicePrice']!=0 || $result['orderEvent']['insurancePrice']!=0){
+                        $up_data['haocai_freight'] = ($result['orderEvent']['packageServicePrice'] + $result['orderEvent']['insurancePrice'])/100;
                         $data = [
                             'type'=>2,
-                            'freightHaocai' =>$result['orderEvent']['packageServicePrice']/100,
+                            'freightHaocai' => $up_data['haocai_freight'],
                             'order_id' => $orders['id'],
                         ];
                         $rebatelistdata["state"]=2;
