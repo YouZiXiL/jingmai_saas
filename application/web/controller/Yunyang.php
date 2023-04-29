@@ -1133,7 +1133,8 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
         $order=db('orders')->field('id,waybill,item_name,weight,final_weight,overload_price')->where('overload_status',1)->where('id',$id)->where('user_id',$this->user->id)->find();
-
+        $order['weight'] = $order['weight'] . 'kg';
+        $order['final_weight'] = $order['final_weight'] . 'kg';
         $data=[
             'status'=>200,
             'data'=>$order,
