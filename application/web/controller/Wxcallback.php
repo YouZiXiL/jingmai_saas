@@ -327,6 +327,7 @@ class Wxcallback extends Controller
                 'type'=>$pamar['type'],
                 'weight'=>$pamar['weight'],
                 'real_weight'=>$pamar['realWeight']??'',
+                'total_freight'=>$pamar['totalFreight']??'',
                 'transfer_weight'=>$pamar['transferWeight']??'',
                 'cal_weight'=>$pamar['calWeight'],
                 'volume'=>$pamar['volume']??'',
@@ -434,7 +435,7 @@ class Wxcallback extends Controller
                         ];
 
                         $up_data=[
-                            'final_freight'=>$pamar['freight'],
+                            'final_freight'=>$pamar['totalFreight'],
                             'comments'=>str_replace("null","",$pamar['comments'])
                         ];
                         if(!empty($pamar['type'])){
@@ -730,7 +731,7 @@ class Wxcallback extends Controller
                     "updatetime"=>time()
                 ];
                 $up_data=[
-                    'final_freight'=>$pamar['freight'],
+                    'final_freight'=>$pamar['totalFreight'],
                     'comments'=>str_replace("null","",$pamar['comments']),
                     'final_weight'=>$pamar['calWeight']
                 ];
@@ -971,13 +972,13 @@ class Wxcallback extends Controller
      */
     function fhd_callback(){
 
-        Log::error('风火递---fhd_callback：' . json_encode(input()));
+        Log::info('风火递---fhd_callback：' . json_encode(input()));
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
         $result= $pamar['message'];
         try {
             if (empty($pamar)){
-                throw new Exception('传来的数据为空');
+                return json(['code'=>0, 'message'=>'传来的数据为空']);
             }
             $common= new Common();
             $data=[
@@ -1004,15 +1005,15 @@ class Wxcallback extends Controller
                 'create_time'=> time()
             ];
             db('fhd_callback')->insert($data);
-            Log::error("风火递---订单ID：" . $result['orderId']);
+            Log::info("风火递---订单ID：" . $result['orderId']);
             $orderModel = Order::where('out_trade_no',$result['orderId'])->find();
 
             if ($orderModel){
-                Log::error("风火递---订单查询：" . $orderModel->id);
+                Log::info("风火递---订单查询：" . $orderModel->id);
                 $orders = $orderModel->toArray();
-                Log::error("风火递---订单状态：" . $orders['order_status']);
+                Log::info("风火递---订单状态：" . $orders['order_status']);
                 if ($orders['order_status']=='已取消'){
-                    throw new Exception('订单已取消');
+                    return json(['code'=>0, 'message'=>'订单已取消']);
                 }
                 // 快递运输状态
                 if('expressLogisticsStatus' === input('type')){
@@ -1023,13 +1024,12 @@ class Wxcallback extends Controller
                         'order_status' => $message['logisticsStatusDesc'],
                         'comments' => $message['logisticsDesc'],
                     ];
-                    $rup = $orderModel->isUpdate(true)->save($ordersUpdate);
+                    $orderModel->isUpdate(true)->save($ordersUpdate);
                 }
                 $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
                 $users=db('users')->where('id',$orders['user_id'])->find();
                 $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
-
                 $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
                 if(empty($rebatelist)){
                     $rebatelist=new Rebatelist();
@@ -1050,7 +1050,6 @@ class Wxcallback extends Controller
                         $superB=db("admin")->find($users["rootid"]);
                         //计算 超级B 价格
                         if ($orders['tag_type']=='德邦'||$orders['tag_type']=='德邦重货'){
-
                             $agent_price=$orders['freight']+$orders['freight']*$superB['agent_db_ratio']/100;// 超级B 达标价格
                             $agent_default_price=$orders['freight']+$orders['freight']*$superB['agent_default_db_ratio']/100;//超级B 默认价格
                             $admin_shouzhong=$orders['admin_shouzhong'];//平台首重
@@ -1081,41 +1080,43 @@ class Wxcallback extends Controller
                     }
                     $rebatelist->save($data);
                 }
-
                 $rebatelistdata=[
                     "updatetime"=>time()
                 ];
-                $up_data['comments']=$result['orderEvent']['comments']??null;
-                if ($result['orderStatusCode']=='GOT'){
-                    $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
+                $up_data = [];
+                if (isset($result['orderEvent']['comments'])){
+                    $up_data['comments'] = $result['orderEvent']['comments'];
+                }
+                if (@$result['orderStatusCode']=='GOT'){
                     if ($result['orderEvent']['calculateWeight']/1000<$result['orderEvent']['totalVolume']*1000/6000){
-                        $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000;
-                        $up_data['final_weight']=$result['orderEvent']['calculateWeight'];
+                        $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000*1000;
                     }
-                    $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68+($result['orderEvent']['totalPrice']-$result['orderEvent']['transportPrice']/100);
+                    $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
+                    // 风火递扣我们的费用
+                    $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68+($result['orderEvent']['totalPrice']/100-$result['orderEvent']['transportPrice']/100);
 
 
                     //超轻处理
                     $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
-                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])){
+                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
                         $tralight_weight=$weight;//超轻重量
                         $tralight_amt=$orders['freight']-$result['orderEvent']['transportPrice']/100*0.68;//超轻金额
                         $admin_xuzhong=$tralight_amt/$tralight_weight;//平台续重单价
-                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
-                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['db_agent_ratio']/100;//代理商续重
+                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['db_users_ratio']/100;//用户续重
                         $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
                         $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                         $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                         $users_tralight_amt=$tralight_weight*$up_data['users_xuzhong'];//代理商给用户退款金额
                         $agent_tralight_amt=$tralight_weight*$up_data['agent_xuzhong'];//平台给代理商退余额
 
-                            if(!empty($users["rootid"])){
-                                $superB=db("admin")->find($users["rootid"]);
-                                $agent_default_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_default_db_ratio']/100;//超级B 默认续重价格
-                                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_db_ratio']/100;//超级B 达标续重价格
-                                $root_tralight_amt=$tralight_weight*$agent_xuzhong;
-                                $root_default_tralight_amt=$tralight_weight*$agent_default_xuzhong;
-                            }
+                        if(!empty($users["rootid"])){
+                            $superB=db("admin")->find($users["rootid"]);
+                            $agent_default_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_default_db_ratio']/100;//超级B 默认续重价格
+                            $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB['agent_db_ratio']/100;//超级B 达标续重价格
+                            $root_tralight_amt=$tralight_weight*$agent_xuzhong;
+                            $root_default_tralight_amt=$tralight_weight*$agent_default_xuzhong;
+                        }
 
 
                         $up_data['tralight_status']=1;
@@ -1140,16 +1141,18 @@ class Wxcallback extends Controller
                         }
 
                     }
-
                     //更改超重状态
-                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+//                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+                     if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
-                        $overload_amt=$result['orderEvent']['transportPrice']-$orders['freight'];//超出金额
+                        $overload_amt=$result['orderEvent']['transportPrice']/100*0.68-$orders['freight'];//超出金额
+
                         $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
-                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
-                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['db_agent_ratio']/100;//代理商续重
+                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['db_users_ratio']/100;//用户续重
+
                         $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
                         $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                         $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
@@ -1197,16 +1200,16 @@ class Wxcallback extends Controller
                             $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["imm_rate"]??0)/100,2);
                             $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
                         }
-                        Log::error(['超重推送' => $data]);
+                        Log::info(['超重推送' => $data]);
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
                     }
                     //更改耗材状态
-                    if ($result['orderEvent']['packageServicePrice']/100!=0){
-                        $up_data['haocai_freight']=$result['orderEvent']['packageServicePrice']/100;
+                    if ($result['orderEvent']['packageServicePrice']!=0 || $result['orderEvent']['insurancePrice']!=0){
+                        $up_data['haocai_freight'] = ($result['orderEvent']['packageServicePrice'] + $result['orderEvent']['insurancePrice'])/100;
                         $data = [
                             'type'=>2,
-                            'freightHaocai' =>$result['orderEvent']['packageServicePrice']/100,
+                            'freightHaocai' => $up_data['haocai_freight'],
                             'order_id' => $orders['id'],
                         ];
                         $rebatelistdata["state"]=2;
@@ -1221,8 +1224,7 @@ class Wxcallback extends Controller
                 //     $up_data['final_weight']=$pamar['calWeight'];
                 // }
 
-
-                if($result['orderStatusCode']=='CANCEL'&&$orders['pay_status']!=2){
+                if(@$result['orderStatusCode']=='CANCEL'&&$orders['pay_status']!=2){
                     $data = [
                         'type'=>4,
                         'order_id' => $orders['id'],
@@ -1233,7 +1235,10 @@ class Wxcallback extends Controller
                     Queue::push(DoJob::class, $data,'way_type');
                 }
 
-                db('orders')->where('out_trade_no',$result['orderId'])->update($up_data);
+                if (!empty($up_data)){
+                    db('orders')->where('out_trade_no',$result['orderId'])->update($up_data);
+                }
+
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'){
                     if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
@@ -1291,15 +1296,20 @@ class Wxcallback extends Controller
                         'lang'=>'zh_CN'
                     ],'POST');
                 }
-
-
                 $rebatelist->save($rebatelistdata);
-
             }
-            return json(['code'=>1, 'message'=>'推送成功']);
+            Log::info("风火递---处理成功");
+            return json(['code'=>0, 'message'=>'推送成功']);
         }catch (\Exception $e){
-            file_put_contents('way_type.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
-            return json(['code'=>0, 'message'=>'推送失败']);
+            $errData = "-------"
+                .PHP_EOL."风火递回调："
+                .PHP_EOL.date('y-m-d h:i:s', time())
+                .PHP_EOL.$e->getMessage()
+                .PHP_EOL.$e->getLine()
+                .PHP_EOL.$e->getFile()
+                .PHP_EOL;
+            file_put_contents('way_type.txt', $errData , FILE_APPEND);
+            return json(['code'=>1, 'message'=>$e->getMessage()]);
         }
     }
 
@@ -2304,7 +2314,7 @@ class Wxcallback extends Controller
                 ];
 
                 $up_data=[
-                    'final_freight'=>$pamar['freight'],
+                    'final_freight'=>$pamar['totalFreight'],
                     'comments'=>str_replace("null","",$pamar['comments'])
                 ];
                 if(!empty($pamar['type'])){
