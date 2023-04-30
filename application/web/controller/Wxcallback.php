@@ -894,7 +894,7 @@ class Wxcallback extends Controller
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
                 }
-              
+
                 db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'){
@@ -1142,8 +1142,8 @@ class Wxcallback extends Controller
 
                     }
                     //更改超重状态
-//                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
-                     if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
+                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+//                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
@@ -1694,19 +1694,19 @@ class Wxcallback extends Controller
                     if(empty($rebatelist)){
                         $rebatelist=new Rebatelist();
                         $data_re=[
-                        "user_id"=>$orders["user_id"],
-                        "invitercode"=>$users["invitercode"],
-                        "fainvitercode"=>$users["fainvitercode"],
-                        "out_trade_no"=>$orders["out_trade_no"],
-                        "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
-                        "payinback"=>0,//补交费用 为负则表示超轻
-                        "state"=>0,
-                        "rebate_amount"=>0,
-                        "createtime"=>time(),
-                        "updatetime"=>time()
-                    ];
-                    !empty($users["rootid"]) && ($data_re["rootid"]=$users["rootid"]);
-                    $rebatelist->save($data_re);
+                            "user_id"=>$orders["user_id"],
+                            "invitercode"=>$users["invitercode"],
+                            "fainvitercode"=>$users["fainvitercode"],
+                            "out_trade_no"=>$orders["out_trade_no"],
+                            "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
+                            "payinback"=>0,//补交费用 为负则表示超轻
+                            "state"=>0,
+                            "rebate_amount"=>0,
+                            "createtime"=>time(),
+                            "updatetime"=>time()
+                        ];
+                        !empty($users["rootid"]) && ($data_re["rootid"]=$users["rootid"]);
+                        $rebatelist->save($data_re);
                     }
 
                     //支付成功下单成功
@@ -3414,41 +3414,41 @@ class Wxcallback extends Controller
                     elseif ($params["data"]["status"]==5){
                         if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
                             if(empty($rebatelist->isimmstate))
-                            if(!empty($rebatelist["invitercode"])){
-                                $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
+                                if(!empty($rebatelist["invitercode"])){
+                                    $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
 
-                                if(!empty($fauser)){
-                                    $fauser->money+=$rebatelist->imm_rebate??0;
-                                    $fauser->save();
-                                    $rebatelistdata["isimmstate"]=1;
+                                    if(!empty($fauser)){
+                                        $fauser->money+=$rebatelist->imm_rebate??0;
+                                        $fauser->save();
+                                        $rebatelistdata["isimmstate"]=1;
+                                    }
                                 }
-                            }
                             if(empty($rebatelist->ismidstate))
                                 if(!empty($rebatelist["fainvitercode"])){
-                                $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-                                if(!empty($gruser)){
-                                    $gruser->money+=$rebatelist->mid_rebate??0;
-                                    $gruser->save();
-                                    $rebatelistdata["ismidstate"]=1;
+                                    $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
+                                    if(!empty($gruser)){
+                                        $gruser->money+=$rebatelist->mid_rebate??0;
+                                        $gruser->save();
+                                        $rebatelistdata["ismidstate"]=1;
 
+                                    }
                                 }
-                            }
 
                             $rebatelistdata["state"]=5;
                             //超级 B 分润 + 返佣（返佣用自定义比例 ） 返佣表需添加字段：1、基本比例分润字段 2、达标比例分润字段 默认金额 达标时金额
                             if(!empty($users["rootid"])){
 
                                 if(empty($rebatelist->isrootstate))
-                                if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4) {
-                                    $superB=Admin::get($users["rootid"]);
-                                    if (!empty($superB)){
-                                        $superB->defaltamoount+=$rebatelist->root_default_rebate;
-                                        $superB->vipamoount+=$rebatelist->root_vip_rebate;
-                                        $superB->save();
-                                        $rebatelistdata["isrootstate"]=1;
-                                    }
+                                    if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4) {
+                                        $superB=Admin::get($users["rootid"]);
+                                        if (!empty($superB)){
+                                            $superB->defaltamoount+=$rebatelist->root_default_rebate;
+                                            $superB->vipamoount+=$rebatelist->root_vip_rebate;
+                                            $superB->save();
+                                            $rebatelistdata["isrootstate"]=1;
+                                        }
 
-                                }
+                                    }
                             }
                         }
                         if($rebatelist->state ==2){

@@ -322,7 +322,7 @@ class Yunyang extends Controller
                     }else{
                         continue;
                     }
-
+                    if(isset($v['extFreightFlag'])) $users_price = $users_price + $v['extFreight'];
                     $finalPrice=sprintf("%.2f",$users_price+$v['freightInsured']);//用户拿到的价格=用户运费价格+保价费
                     $v['final_price']=$finalPrice;//用户支付总价
                     $v['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
@@ -1133,7 +1133,8 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
         $order=db('orders')->field('id,waybill,item_name,weight,final_weight,overload_price')->where('overload_status',1)->where('id',$id)->where('user_id',$this->user->id)->find();
-
+        $order['weight'] = $order['weight'] . 'kg';
+        $order['final_weight'] = $order['final_weight'] . 'kg';
         $data=[
             'status'=>200,
             'data'=>$order,
