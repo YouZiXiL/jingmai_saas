@@ -56,9 +56,18 @@ class Refilllist extends Backend
             return $this->selectpage();
         }
         [$where, $sort, $order, $offset, $limit] = $this->buildparams();
-        $list = $this->model
+        if (in_array(2,$this->auth->getGroupIds())) {
+            $list = $this->model->where("agent_id", $this->auth->id);
+        } else {
+            $list = $this->model;
+        }
+        $list = $list
             ->where($where)
             ->where('pay_status','<>',0)
+            ->with([
+                'wxauthinfo'=>function($query){
+                    $query->where('auth_type',2)->WithField('name');
+                }])
             ->order($sort, $order)
             ->paginate($limit);
         $result = ['total' => $list->total(), 'rows' => $list->items()];
