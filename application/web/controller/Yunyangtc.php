@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\common\library\R;
 use app\web\model\Couponlist;
 use think\Controller;
 use think\Exception;
@@ -16,7 +17,7 @@ class Yunyangtc extends Controller
 {
 
     protected $user;
-    protected $common;
+    protected Common $common;
 
     public function _initialize()
     {
@@ -178,10 +179,150 @@ class Yunyangtc extends Controller
         ];
         return json($data);
     }
+
+    /**
+     * 万利同城价格查询
+     */
+    public function wanli_inquiry(){
+        $url = 'https://testapi.wlhulian.com/api/v1/order/billing';
+        $data = json_encode($this->request->param()) ;
+
+        $timestamp = floor(microtime(true) * 1000);
+        $nonce = str_shuffle($timestamp);
+        $appid = "354f080650684f76b45b5d089c544d20";
+        $secret = "962f08a7112b45f09f8594023bf407be";
+        $sign = md5($secret . $timestamp . $nonce . $data) ;
+        $param = [
+            'appId' => $appid,
+            'sign' => $sign,
+            'data' => $data,
+            'timestamp' => $timestamp,
+            'nonce' => $nonce,
+        ];
+//        dump(json_encode($param));exit;
+        $res = $this->common->httpRequest($url, $param, 'POST');
+        $res = json_decode($res);
+
+        return R::error($res);
+    }
+
+    /**
+     * 万利同城价格查询
+     */
+    public function check_channel_intellect(): Json
+    {
+        try {
+
+            $param=$this->request->param();
+            if($param['weight']<=0){
+                throw new Exception('参数错误');
+            }
+//            if(empty($param['pickupStartTime'])){
+//                throw new Exception('请选择骑手上门时间');
+//            }
+            $bujiao=db('orders')->where('user_id',$this->user->id)->where('agent_id',$this->user->agent_id)->where('pay_status',1)->where('overload_status|consume_status',1)->find();
+            if($bujiao){
+                throw new Exception('请先补缴欠费运单');
+            }
+            if (empty($param['insured'])){
+                $param['insured']=0;
+            }
+            $jijian_address=db('users_address')->where('id',$param['jijian_id'])->find();
+            $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
+            if (empty($jijian_address)||empty($shoujian_address)){
+                throw new Exception('收件或寄件信息错误');
+            }
+//            if ($jijian_address['city']!=$shoujian_address['city']){
+//                return json(['status'=>400,'data'=>'','msg'=>"请选择同城地址"]);
+//            }
+            $out_trade_no='TC'.$this->common->get_uniqid();
+            $content=[
+                "fromSenderName"=> $jijian_address['name'],
+                "fromMobile"=>$jijian_address['mobile'],
+                "fromLng" => $jijian_address['lng'],
+                "fromLat" => $jijian_address['lat'],
+                "fromAddress"=>$jijian_address['address'],
+                "fromAddressDetail"=>$jijian_address['location'],
+                "outOrderNo" => $out_trade_no,
+                "toReceiverName"=>$shoujian_address['name'],
+                "toMobile"=>$shoujian_address['mobile'],
+                "toLng" => $shoujian_address['lng'],
+                "toLat"=>$shoujian_address['lat'],
+                "toAddress"=>$shoujian_address['address'],
+                "toAddressDetail" => $shoujian_address['location'],
+
+                "goodType"=>9,
+                "weight"=>$param['weight'],
+            ];
+
+
+
+            $url = 'https://testapi.wlhulian.com/api/v1/order/billing';
+            $content = json_encode($content) ;
+            $timestamp = floor(microtime(true) * 1000);
+            $nonce = str_shuffle($timestamp);
+            $appid = "354f080650684f76b45b5d089c544d20";
+            $secret = "962f08a7112b45f09f8594023bf407be";
+            $sign = md5($secret . $timestamp . $nonce . $content) ;
+            $data = [
+                'appId' => $appid,
+                'sign' => $sign,
+                'data' => $content,
+                'timestamp' => $timestamp,
+                'nonce' => $nonce,
+            ];
+//        dump(json_encode($param));exit;
+            $res = $this->common->httpRequest($url, $data, 'POST');
+            $res = json_decode($res,true);
+            if ($res['code'] != 200) throw new Exception($res['message']);
+            $channelList = $res['data']['billingDetailList'];
+            $agent_info=db('admin')->field('agent_tc_ratio,agent_tc')->where('id',$this->user->agent_id)->find();
+            $assemble=[];
+            foreach ($channelList as $key => $channel){
+                if(isset($channel['errorMsg'])) continue;
+                $price=$channel["estimatePrice"];
+                $agent_tc=($agent_info["agent_tc"]??10)/100;//公司上浮百分比 默认为0.1
+                $agent_price=$price+$price*$agent_tc;
+                $agent_tc_ratio=($agent_info["agent_tc_ratio"]??0)/100;//代理商上浮百分比 默认为0
+                $users_price= ceil($agent_price+$agent_price*$agent_tc_ratio); // 用户需要付的价格（单位分）
+                $users_price = strval($users_price/100) ;
+
+                $channel['final_price']=$users_price;//用户支付总价
+                $channel['admin_shouzhong']=0;//平台首重
+                $channel['admin_xuzhong']=0;//平台续重
+                $channel['agent_shouzhong']=0;//代理商首重
+                $channel['agent_xuzhong']=0;//代理商续重
+                $channel['users_shouzhong']=0;//用户首重
+                $channel['users_xuzhong']=0;//用户续重
+                $channel['agent_price']=$agent_price;//代理商结算
+                $channel['jijian_id']=$param['jijian_id'];//寄件id
+                $channel['shoujian_id']=$param['shoujian_id'];//收件id
+                $channel['weight']=$param['weight'];//重量
+                $channel['sender_logo']=$jijian_address['logo'];//商户订单号
+                $channel['receive_logo']=$shoujian_address['logo'];//商户订单号
+
+                $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>"同城",'content'=>json_encode($channel,JSON_UNESCAPED_UNICODE ), 'create_time'=>time()]);
+                $assemble[$key]['tag_type']=$channel['deliveryChannelName'];
+                $assemble[$key]['icon']=$channel['icon'];
+                $assemble[$key]['final_price']=$users_price;
+                $assemble[$key]['insert_id']=$insert_id;
+
+            }
+            $assemble = array_values($assemble);
+            if (empty($assemble)){
+                throw new Exception('没有指定配送渠道请联系客服');
+            }
+            return json(['status'=>200,'data'=>$assemble,'msg'=>'成功']);
+        }catch (\Exception $e){
+            return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
+        }
+    }
+
+
     /**
      * 选择快递公司
      */
-    public function check_channel_intellect(): Json
+    public function check_channel_intellect_backup(): Json
     {
         try {
 
@@ -278,9 +419,193 @@ class Yunyangtc extends Controller
     }
 
     /**
-     * 下单接口
+     * 万利下单接口
      */
     function create_order(): Json
+    {
+        $param=$this->request->param();
+
+
+
+        /*-----------测试-------------*/
+
+        // 组装参数
+
+
+
+        /*-------------------------*/
+
+
+
+        if(empty($param['insert_id'])||empty($param['item_name'])){
+            return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
+        }
+
+        $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
+        if ($agent_info['status']=='hidden'){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户已禁止使用']);
+        }
+        if ($agent_info['agent_expire_time']<=time()){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户已过期']);
+        }
+        if (empty($agent_info['wx_mchid'])||empty($agent_info['wx_mchcertificateserial'])){
+            return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
+        }
+        $bujiao=db('orders')->where('user_id',$this->user->id)->where('agent_id',$this->user->agent_id)->where('pay_status',1)->where('overload_status|consume_status',1)->find();
+        if($bujiao){
+            return json(['status'=>400,'data'=>'','msg'=>'请先补缴欠费运单']);
+        }
+        $info=db('check_channel_intellect')->where('id',$param['insert_id'])->find();
+        if (!$info){
+            return json(['status'=>400,'data'=>'','msg'=>'没有指定快递渠道']);
+        }
+
+        if ($agent_info['amount']<=100){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
+        }
+
+        $check_channel_intellect=json_decode($info['content'],true);
+        if ($agent_info['amount']<$check_channel_intellect['agent_price']){
+            return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,无法下单']);
+        }
+        $jijian_address=db('users_address')->where('id',$check_channel_intellect['jijian_id'])->find();
+        //黑名单
+        $blacklist=db('agent_blacklist')->where('agent_id',$this->user->agent_id)->where('mobile',$jijian_address['mobile'])->find();
+        if ($blacklist){
+            return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
+        }
+        $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
+        $out_trade_no='TC'.$this->common->get_uniqid();
+        $data=[
+            'user_id'=>$this->user->id,
+            'agent_id'=>$this->user->agent_id,
+            'channel'=>$check_channel_intellect['deliveryChannelName'],
+            'channel_tag'=>$info['channel_tag'],
+            'insert_id'=>$param['insert_id'],
+            'out_trade_no'=>$out_trade_no,
+            'freight'=>$check_channel_intellect['estimatePrice'],
+//            'channel_id'=>$check_channel_intellect['third_logistics_id'],
+            'tag_type'=>$check_channel_intellect['deliveryChannelName'],
+            'admin_shouzhong'=>0,
+            'admin_xuzhong'=>0,
+            'agent_shouzhong'=>0,
+            'agent_xuzhong'=>0,
+            'users_shouzhong'=>0,
+            'users_xuzhong'=>0,
+            'agent_price'=>$check_channel_intellect['agent_price'],
+            'comments'=>'无',
+            'wx_mchid'=>$agent_info['wx_mchid'],
+            'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+            'final_freight'=>0,//云洋最终运费
+            'pay_status'=>0,
+            'order_status'=>'派单中',
+            'overload_price'=>0,//超重金额
+            'agent_overload_price'=>0,//代理商超重金额
+            'tralight_price'=>0,//超轻金额
+            'agent_tralight_price'=>0,//代理商超轻金额
+            'final_weight'=>0,
+            'haocai_freight'=>0,
+            'overload_status'=>0,
+            'consume_status'=>0,
+            'tralight_status'=>0,
+            'final_price'=>$check_channel_intellect['final_price'],
+            'sender'=> $jijian_address['name'],
+            'sender_mobile'=>$jijian_address['mobile'],
+            'sender_province'=>$jijian_address['province'],
+            'sender_city'=>$jijian_address['city'],
+            'sender_county'=>$jijian_address['county'],
+            'sender_location'=>$jijian_address['location'],
+            'sender_address'=>$jijian_address['province'].$jijian_address['city'].$jijian_address['county'].$jijian_address['location'],
+            'receiver'=>$shoujian_address['name'],
+            'receiver_mobile'=>$shoujian_address['mobile'],
+            'receive_province'=>$shoujian_address['province'],
+            'receive_city'=>$shoujian_address['city'],
+            'receive_county'=>$shoujian_address['county'],
+            'receive_location'=>$shoujian_address['location'],
+            'receive_address'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
+            'weight'=>$check_channel_intellect['weight'],
+//            'package_count'=>$check_channel_intellect['package_count'],
+            'item_name'=>$param['item_name'],
+            'create_time'=>time(),
+//            'waybill'=>$check_channel_intellect['waybill'],
+            'sender_logo'=>$check_channel_intellect['sender_logo'],
+            'receive_logo'=>$check_channel_intellect['receive_logo'],
+            'pickup_start_time'=>$check_channel_intellect['pickupStartTime']??0
+        ];
+        !empty($param['bill_remark']) &&($data['bill_remark'] = $param['bill_remark']);
+        !empty($check_channel_intellect['insured']) &&($data['insured'] = $check_channel_intellect['insured']);
+
+
+        $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+        $json=[
+            'mchid'        => $agent_info['wx_mchid'],
+            'out_trade_no' => $out_trade_no,
+            'appid'        => $this->user->app_id,
+            'description'  => '快递下单-'.$out_trade_no,
+            'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_tcorder_pay',
+            'amount'       => [
+                'total'    =>(int)bcmul($check_channel_intellect['final_price'],100),
+                'currency' => 'CNY'
+            ],
+            'payer'        => [
+                'openid'   =>$this->user->open_id
+            ]
+        ];
+
+        try {
+            $resp = $wx_pay
+                ->chain('v3/pay/transactions/jsapi')
+                ->post(['json' =>$json]);
+
+
+            $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
+            $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+            //获取小程序通知模版
+
+            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template')->find();
+
+            $prepay_id=json_decode($resp->getBody(),true);
+            if (!array_key_exists('prepay_id',$prepay_id)){
+                throw new Exception('拉取支付错误');
+            }
+            $params = [
+                'appId'     => $this->user->app_id,
+                'timeStamp' => (string)Formatter::timestamp(),
+                'nonceStr'  => Formatter::nonce(),
+                'package'   =>'prepay_id='. $prepay_id['prepay_id'],
+            ];
+            $params += [
+                'paySign' => Rsa::sign(
+                    Formatter::joinedByLineFeed(...array_values($params)),
+                    $merchantPrivateKeyInstance),
+                'signType' => 'RSA',
+                'waybill_template'=>$template['waybill_template'],
+                'pay_template'=>$template['pay_template'],
+            ];
+//            if(!empty($couponinfo)){
+//                $couponinfo["state"]=2;
+//                $couponinfo->save();
+//                //表示该笔订单使用了优惠券
+//                $data["couponid"]=$param["couponid"];
+//            }
+            $inset=db('orders')->insert($data);
+            if (!$inset){
+                throw new Exception('插入数据失败');
+            }
+            return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
+        } catch (\Exception $e) {
+
+            file_put_contents('create_order.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+
+            // 进行错误处理
+            return json(['status'=>400,'data'=>'','msg'=>'商户号配置错误,请联系管理员']);
+        }
+    }
+
+    /**
+     * 下单接口
+     */
+    function create_order_backup(): Json
     {
         $param=$this->request->param();
         if(empty($param['insert_id'])||empty($param['item_name'])){
