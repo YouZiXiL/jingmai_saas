@@ -71,6 +71,7 @@ class Coupon extends Backend
         }
         $list = $list
             ->where($where)
+            ->where('state',1)
             ->order($sort, $order)
             ->paginate($limit);
         $result = ['total' => $list->total(), 'rows' => $list->items()];
@@ -170,7 +171,7 @@ class Coupon extends Backend
                 'score'=>$params['score']??$row['score'],
                 'scene'=>$params['scene']??$row['scene'],
                 'uselimits'=>$params['uselimits']??$row['uselimits'],
-                'state'=>$params['state']??$row['state'],
+                'state'=>1,
                 'validdate'=>$params['validdate']??$row['validdate'],
                 'validdateend'=>$params['validdateend']??$row['validdateend'],
                 'limitsday'=>$params['limitsday']??$row['limitsday'],

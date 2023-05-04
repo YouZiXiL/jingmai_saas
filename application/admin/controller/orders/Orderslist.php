@@ -159,9 +159,10 @@ class Orderslist extends Backend
                 'reason'=>'不要了'
             ];
             $res=$common->fhd_api('cancelExpressOrder',$content);
+
             $res=json_decode($res,true);
-            if (!$res['data']['result']){
-                $this->error('取消失败');
+            if ($res['rcode']!=0){
+                $this->error($res['errorMsg']);
             }
         }else{
             $content=[

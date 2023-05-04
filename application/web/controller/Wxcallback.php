@@ -1224,7 +1224,7 @@ class Wxcallback extends Controller
                 //     $up_data['final_weight']=$pamar['calWeight'];
                 // }
 
-                if(@$result['orderStatusCode']=='CANCEL'&&$orders['pay_status']!=2){
+                if(($result['orderStatusCode']=='CANCEL'||$result['orderStatusCode']=='GOBACK')&&$orders['pay_status']!=2){
                     $data = [
                         'type'=>4,
                         'order_id' => $orders['id'],
