@@ -207,7 +207,6 @@ class Afterlist extends Backend
                         ]]);
                     $up_data['out_overload_refund_no']=$out_overload_refund_no;
                     $up_data['overload_price']=0;
-                    $up_data['overload_status']=0;
                 }
 
                 //耗材退款
@@ -228,10 +227,11 @@ class Afterlist extends Backend
                         ]]);
                     $up_data['out_haocai_refund_no']=$out_haocai_refund_no;
                     $up_data['haocai_freight']=0;
-                    $up_data['consume_status']=0;
                 }
                 //处理退款完成 更改退款状态和订单状态
                 $up_data['pay_status']=2;
+                $up_data['overload_status']=0;
+                $up_data['consume_status']=0;
                 $up_data['order_status']='已作废';
                 $up_data['cancel_time']=time();
                 //代理商增加余额  退款
