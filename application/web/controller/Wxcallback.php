@@ -1225,12 +1225,18 @@ class Wxcallback extends Controller
                 //     $up_data['final_weight']=$pamar['calWeight'];
                 // }
 
+
+                /*
+                1、已取消不复活的，不计费
+                2、已退回的，看德邦是否计费，目前是不计费的
+                3、已作废，不计费
+                4、揽货失败看货是否原单发出
+                5、取消复活单，看是否发出，如果原单发出，德邦计费，我们就计费，这种非常非常少，如果换单发出，这种德邦是不计费的
+                复活单是操作异常才会有，这种避免不了，但是几率很小
+                异常单子建议先不给客户退费，找我们客服核实是否计费，再操作是否给客户退费
+                 * */
                 if(
-                    (
-                        $result['orderStatusCode']=='CANCEL'
-                        ||$result['orderStatusCode']=='GOBACK'
-                        ||$result['orderStatusCode']=='INVALID'
-                    )
+                    ( $result['orderStatusCode']=='GOBACK'  ||$result['orderStatusCode']=='INVALID')
                     &&$orders['pay_status']!=2
                 ){
                     $data = [
@@ -1477,7 +1483,7 @@ class Wxcallback extends Controller
      * 微信下单支付回调
      */
     function wx_order_pay(){
-
+        Log::info('微信支付回调');
         $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
         $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
         $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
@@ -1737,6 +1743,7 @@ class Wxcallback extends Controller
                     break;
 
                 case 'wanli':
+                    Log::info('万利下单');
                     $res = (new WanLi())->createOrder($orders);
                     $result = json_decode($res,true);
                     if($result['code'] != 200){
@@ -1786,9 +1793,8 @@ class Wxcallback extends Controller
                         }
 
                         //支付成功下单成功
-                        $result=$result['data'];
                         $update=[
-                            'shopbill'=>$result['orderNo'], // 万利订单号
+                            'shopbill'=>$result['data']['orderNo'], // 万利订单号
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                             'pay_status'=>1,
                         ];
@@ -1798,10 +1804,8 @@ class Wxcallback extends Controller
                             $couponinfo->save();
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0, ' 下单支付成功');
-
                     }
                     break;
-
             }
 
             db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($update);

@@ -450,48 +450,6 @@ class Yunyangtc extends Controller
         $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
         $out_trade_no='TC'.$this->common->get_uniqid();
 
-
-
-
-        /*-----------测试-------------*/
-
-        $url = 'https://testapi.wlhulian.com/api/v1/order/create';
-
-        // 组装参数
-        $load = [
-            "outOrderNo"=> $out_trade_no, //接入方平台订单号
-            "estimatePrice"=> $check_channel_intellect['estimatePrice'], //比价金额  单位分,用来校验金额有没有发生变化
-            "supplierCode" => $check_channel_intellect['deliveryCode'],
-            "fromSenderName"=> $jijian_address['name'], //发货人姓名(点到点模式下必填)
-            "fromMobile"=> $jijian_address['mobile'], //发货人手机号(点到点模式下必填)
-            "fromLng" => $jijian_address['lng'],
-            "fromLat" => $jijian_address['lat'],
-            "fromAddress"=>$jijian_address['address'],
-            "fromAddressDetail"=>$jijian_address['location'],
-
-            "toReceiverName"=>$shoujian_address['name'],
-            "toMobile"=>$shoujian_address['mobile'],
-            "toLng" => $shoujian_address['lng'],
-            "toLat"=>$shoujian_address['lat'],
-            "toAddress"=>$shoujian_address['address'],
-            "toAddressDetail" => $shoujian_address['location'],
-
-            "goodType"=> 9,
-            "weight"=> $check_channel_intellect['weight'] //物品重量,单位KG
-        ];
-        $data = $wanLi->setParma($load);
-        $res = $this->common->httpRequest($url, $data,'POST');
-        $result = json_decode($res,true);
-        if($result['code'] != 200){
-            // TODO 下单失败执行退款操作
-            Log::error('同城下单失败：'.$res);
-        }
-        return R::ok($result);
-        /*-------------------------*/
-
-
-
-
         $data=[
             'user_id'=>$this->user->id,
             'agent_id'=>$this->user->agent_id,
@@ -540,7 +498,7 @@ class Yunyangtc extends Controller
             'receive_county'=>$shoujian_address['county'],
             'receive_location'=>$shoujian_address['location'],
             'receive_address'=>$shoujian_address['address'],
-            'receive_address'=>"{$shoujian_address['lng']},{$shoujian_address['lat']}",
+            'receive_coordinate'=>"{$shoujian_address['lng']},{$shoujian_address['lat']}",
             'weight'=>$check_channel_intellect['weight'],
 //            'package_count'=>$check_channel_intellect['package_count'],
             'item_name'=>$param['item_name'],
@@ -562,7 +520,7 @@ class Yunyangtc extends Controller
             'description'  => '快递下单-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_tcorder_pay',
             'amount'       => [
-                'total'    =>(int)bcmul($check_channel_intellect['final_price'],100),
+                'total'    => 1, // TODO (int)bcmul($check_channel_intellect['final_price'],100),
                 'currency' => 'CNY'
             ],
             'payer'        => [

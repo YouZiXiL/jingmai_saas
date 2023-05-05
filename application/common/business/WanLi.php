@@ -40,6 +40,7 @@ class WanLi
     }
 
     /**
+     * 万利下单接口
      * @param $orders
      * @return bool|string
      */
@@ -48,7 +49,7 @@ class WanLi
         $senderCoordinate = explode(',', $orders['sender_coordinate']);
         $receiveCoordinate = explode(',', $orders['receive_coordinate']);
         // 组装参数
-        $load = [
+        $parma = [
             "outOrderNo"=> $orders['out_trade_no'], // 接入方平台订单号
             "estimatePrice"=> $orders['freight'], // 比价金额  单位分,用来校验金额有没有发生变化
             "supplierCode" => $orders['deliveryCode'],
@@ -69,7 +70,7 @@ class WanLi
             "goodType"=> 9,
             "weight"=> $orders['weight'] //物品重量,单位KG
         ];
-        $data = $this->setParma($load);
+        $data = $this->setParma($parma);
         return $this->utils->httpRequest($url, $data,'POST');
     }
 
