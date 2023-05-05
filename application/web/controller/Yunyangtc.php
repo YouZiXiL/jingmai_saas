@@ -2,11 +2,15 @@
 
 namespace app\web\controller;
 
+use app\common\business\WanLi;
 use app\common\library\R;
 use app\web\model\Couponlist;
 use think\Controller;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
 use think\exception\DbException;
+use think\Log;
 use think\Request;
 use think\response\Json;
 use WeChatPay\Crypto\Rsa;
@@ -182,34 +186,23 @@ class Yunyangtc extends Controller
 
     /**
      * 万利同城价格查询
+     * @param WanLi $wl
+     * @return Json
      */
-    public function wanli_inquiry(){
+    public function wanli_inquiry(WanLi $wl){
         $url = 'https://testapi.wlhulian.com/api/v1/order/billing';
-        $data = json_encode($this->request->param()) ;
-
-        $timestamp = floor(microtime(true) * 1000);
-        $nonce = str_shuffle($timestamp);
-        $appid = "354f080650684f76b45b5d089c544d20";
-        $secret = "962f08a7112b45f09f8594023bf407be";
-        $sign = md5($secret . $timestamp . $nonce . $data) ;
-        $param = [
-            'appId' => $appid,
-            'sign' => $sign,
-            'data' => $data,
-            'timestamp' => $timestamp,
-            'nonce' => $nonce,
-        ];
-//        dump(json_encode($param));exit;
+        $param =  $wl->setParma($this->request->param());
         $res = $this->common->httpRequest($url, $param, 'POST');
         $res = json_decode($res);
-
-        return R::error($res);
+        return R::ok($res);
     }
 
     /**
      * 万利同城价格查询
+     * @param WanLi $wl
+     * @return Json
      */
-    public function check_channel_intellect(): Json
+    public function check_channel_intellect(WanLi $wl): Json
     {
         try {
 
@@ -258,19 +251,7 @@ class Yunyangtc extends Controller
 
 
             $url = 'https://testapi.wlhulian.com/api/v1/order/billing';
-            $content = json_encode($content) ;
-            $timestamp = floor(microtime(true) * 1000);
-            $nonce = str_shuffle($timestamp);
-            $appid = "354f080650684f76b45b5d089c544d20";
-            $secret = "962f08a7112b45f09f8594023bf407be";
-            $sign = md5($secret . $timestamp . $nonce . $content) ;
-            $data = [
-                'appId' => $appid,
-                'sign' => $sign,
-                'data' => $content,
-                'timestamp' => $timestamp,
-                'nonce' => $nonce,
-            ];
+            $data = $wl->setParma($content);
 //        dump(json_encode($param));exit;
             $res = $this->common->httpRequest($url, $data, 'POST');
             $res = json_decode($res,true);
@@ -298,15 +279,13 @@ class Yunyangtc extends Controller
                 $channel['jijian_id']=$param['jijian_id'];//寄件id
                 $channel['shoujian_id']=$param['shoujian_id'];//收件id
                 $channel['weight']=$param['weight'];//重量
-                $channel['sender_logo']=$jijian_address['logo'];//商户订单号
-                $channel['receive_logo']=$shoujian_address['logo'];//商户订单号
-
-                $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>"同城",'content'=>json_encode($channel,JSON_UNESCAPED_UNICODE ), 'create_time'=>time()]);
+                $channel['sender_logo']=$jijian_address['logo'];
+                $channel['receive_logo']=$shoujian_address['logo'];
+                $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>"wanli",'content'=>json_encode($channel,JSON_UNESCAPED_UNICODE ), 'create_time'=>time()]);
                 $assemble[$key]['tag_type']=$channel['deliveryChannelName'];
                 $assemble[$key]['icon']=$channel['icon'];
                 $assemble[$key]['final_price']=$users_price;
                 $assemble[$key]['insert_id']=$insert_id;
-
             }
             $assemble = array_values($assemble);
             if (empty($assemble)){
@@ -420,21 +399,15 @@ class Yunyangtc extends Controller
 
     /**
      * 万利下单接口
+     * @param WanLi $wanLi
+     * @return Json
+     * @throws DbException
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
      */
-    function create_order(): Json
+    function create_order(WanLi $wanLi): Json
     {
         $param=$this->request->param();
-
-
-
-        /*-----------测试-------------*/
-
-        // 组装参数
-
-
-
-        /*-------------------------*/
-
 
 
         if(empty($param['insert_id'])||empty($param['item_name'])){
@@ -476,6 +449,49 @@ class Yunyangtc extends Controller
         }
         $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
         $out_trade_no='TC'.$this->common->get_uniqid();
+
+
+
+
+        /*-----------测试-------------*/
+
+        $url = 'https://testapi.wlhulian.com/api/v1/order/create';
+
+        // 组装参数
+        $load = [
+            "outOrderNo"=> $out_trade_no, //接入方平台订单号
+            "estimatePrice"=> $check_channel_intellect['estimatePrice'], //比价金额  单位分,用来校验金额有没有发生变化
+            "supplierCode" => $check_channel_intellect['deliveryCode'],
+            "fromSenderName"=> $jijian_address['name'], //发货人姓名(点到点模式下必填)
+            "fromMobile"=> $jijian_address['mobile'], //发货人手机号(点到点模式下必填)
+            "fromLng" => $jijian_address['lng'],
+            "fromLat" => $jijian_address['lat'],
+            "fromAddress"=>$jijian_address['address'],
+            "fromAddressDetail"=>$jijian_address['location'],
+
+            "toReceiverName"=>$shoujian_address['name'],
+            "toMobile"=>$shoujian_address['mobile'],
+            "toLng" => $shoujian_address['lng'],
+            "toLat"=>$shoujian_address['lat'],
+            "toAddress"=>$shoujian_address['address'],
+            "toAddressDetail" => $shoujian_address['location'],
+
+            "goodType"=> 9,
+            "weight"=> $check_channel_intellect['weight'] //物品重量,单位KG
+        ];
+        $data = $wanLi->setParma($load);
+        $res = $this->common->httpRequest($url, $data,'POST');
+        $result = json_decode($res,true);
+        if($result['code'] != 200){
+            // TODO 下单失败执行退款操作
+            Log::error('同城下单失败：'.$res);
+        }
+        return R::ok($result);
+        /*-------------------------*/
+
+
+
+
         $data=[
             'user_id'=>$this->user->id,
             'agent_id'=>$this->user->agent_id,
@@ -484,7 +500,7 @@ class Yunyangtc extends Controller
             'insert_id'=>$param['insert_id'],
             'out_trade_no'=>$out_trade_no,
             'freight'=>$check_channel_intellect['estimatePrice'],
-//            'channel_id'=>$check_channel_intellect['third_logistics_id'],
+            'channel_id'=>$check_channel_intellect['deliveryCode'],
             'tag_type'=>$check_channel_intellect['deliveryChannelName'],
             'admin_shouzhong'=>0,
             'admin_xuzhong'=>0,
@@ -515,14 +531,16 @@ class Yunyangtc extends Controller
             'sender_city'=>$jijian_address['city'],
             'sender_county'=>$jijian_address['county'],
             'sender_location'=>$jijian_address['location'],
-            'sender_address'=>$jijian_address['province'].$jijian_address['city'].$jijian_address['county'].$jijian_address['location'],
+            'sender_address'=>$jijian_address['address'],
+            'sender_coordinate' => "{$jijian_address['lng']},{$jijian_address['lat']}",
             'receiver'=>$shoujian_address['name'],
             'receiver_mobile'=>$shoujian_address['mobile'],
             'receive_province'=>$shoujian_address['province'],
             'receive_city'=>$shoujian_address['city'],
             'receive_county'=>$shoujian_address['county'],
             'receive_location'=>$shoujian_address['location'],
-            'receive_address'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
+            'receive_address'=>$shoujian_address['address'],
+            'receive_address'=>"{$shoujian_address['lng']},{$shoujian_address['lat']}",
             'weight'=>$check_channel_intellect['weight'],
 //            'package_count'=>$check_channel_intellect['package_count'],
             'item_name'=>$param['item_name'],
