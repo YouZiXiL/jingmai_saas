@@ -49,6 +49,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'order_status', title: __('Order_status'), operate: 'LIKE'},
                         {field: 'state', title: __('State'), searchList: {"-1":__('State 11'),"0":__('State 0'),"1":__('State 1'),"2":__('State 2'),"3":__('State 3'),"8":__('State 8')}, formatter: Table.api.formatter.status},
                         //{field: 'refill_fail_reason', title: __('Refill_fail_reason'), operate: 'LIKE'},
+                        {field: 'wxauthinfo.name', title: __('归属账号'), operate: false},
+
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'pay_status', title: __('Pay_status'),searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1')}, formatter: Table.api.formatter.normal},
                         {field: 'type', title: __('Type'), searchList: {"1":__('Type 1'),"2":__('Type 2'),"3":__('Type 3')}, formatter: Table.api.formatter.normal},

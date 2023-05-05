@@ -2,6 +2,8 @@
 
 namespace app\admin\model\orders;
 
+use app\admin\model\wxauth\Authlist;
+use app\web\model\Users;
 use think\Model;
 
 
@@ -55,6 +57,14 @@ class Refilllist extends Model
         $value = $value ? $value : (isset($data['type']) ? $data['type'] : '');
         $list = $this->getTypeList();
         return isset($list[$value]) ? $list[$value] : '';
+    }
+
+    function usersinfo(){
+        return $this->belongsTo(Users::class,'user_id','id', [], 'LEFT')->setEagerlyType(0);
+    }
+
+    function wxauthinfo(){
+        return $this->belongsTo(Authlist::class,'agent_id','agent_id', [], 'LEFT')->setEagerlyType(0);
     }
 
 

@@ -445,7 +445,7 @@ class Refill extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
         }
 
-        if ($agent_info['amount']<=200){
+        if ($agent_info['amount']<=100){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
         }
 
@@ -587,7 +587,7 @@ class Refill extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
         }
 
-        if ($agent_info['amount']<=200){
+        if ($agent_info['amount']<=100){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
         }
 
@@ -731,7 +731,7 @@ class Refill extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
         }
 
-        if ($agent_info['amount']<=200){
+        if ($agent_info['amount']<=100){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
         }
 
