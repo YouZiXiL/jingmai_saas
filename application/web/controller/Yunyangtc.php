@@ -568,6 +568,7 @@ class Yunyangtc extends Controller
             if (!$inset){
                 throw new Exception('插入数据失败');
             }
+            Log::info('万利下单成功：' . $data['out_trade_no']);
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         } catch (\Exception $e) {
 
