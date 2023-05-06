@@ -4,6 +4,7 @@ namespace app\web\controller;
 
 use app\common\business\WanLi;
 use app\common\library\R;
+use app\common\model\Order;
 use app\web\model\Couponlist;
 use think\Controller;
 use think\db\exception\DataNotFoundException;
@@ -261,13 +262,13 @@ class Yunyangtc extends Controller
             $assemble=[];
             foreach ($channelList as $key => $channel){
                 if(isset($channel['errorMsg'])) continue;
-                $price=$channel["estimatePrice"];
+                $price=$channel["estimatePrice"]; // 平台价格 （分）
                 $agent_tc=($agent_info["agent_tc"]??10)/100;//公司上浮百分比 默认为0.1
-                $agent_price=$price+$price*$agent_tc;
+                $agent_price= ceil($price+$price*$agent_tc)/100; // 代理商价格 （元）
                 $agent_tc_ratio=($agent_info["agent_tc_ratio"]??0)/100;//代理商上浮百分比 默认为0
-                $users_price= ceil($agent_price+$agent_price*$agent_tc_ratio); // 用户需要付的价格（单位分）
-                $users_price = strval($users_price/100) ;
+                $users_price= $agent_price+$agent_price*$agent_tc_ratio; // 用户需要付的价格（元）
 
+                $channel['price']= $price/100;//用户支付总价
                 $channel['final_price']=$users_price;//用户支付总价
                 $channel['admin_shouzhong']=0;//平台首重
                 $channel['admin_xuzhong']=0;//平台续重
@@ -281,7 +282,7 @@ class Yunyangtc extends Controller
                 $channel['weight']=$param['weight'];//重量
                 $channel['sender_logo']=$jijian_address['logo'];
                 $channel['receive_logo']=$shoujian_address['logo'];
-                $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>"wanli",'content'=>json_encode($channel,JSON_UNESCAPED_UNICODE ), 'create_time'=>time()]);
+                $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>"同城",'content'=>json_encode($channel,JSON_UNESCAPED_UNICODE ), 'create_time'=>time()]);
                 $assemble[$key]['tag_type']=$channel['deliveryChannelName'];
                 $assemble[$key]['icon']=$channel['icon'];
                 $assemble[$key]['final_price']=$users_price;
@@ -407,8 +408,21 @@ class Yunyangtc extends Controller
      */
     function create_order(WanLi $wanLi): Json
     {
-        $param=$this->request->param();
 
+        //**********************
+//        $order = Order::get(32775);
+//        $r = $wanLi->createOrder($order->toArray());
+//
+////        $par = $wanLi->setParma(input());
+////        $url = 'https://testapi.wlhulian.com/api/v1/order/create';
+////        $r = $wanLi->utils->httpRequest($url, $par,'POST');
+//        return R::ok($r);
+//exit;
+
+
+        //**********************
+
+        $param=$this->request->param();
 
         if(empty($param['insert_id'])||empty($param['item_name'])){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
@@ -457,7 +471,7 @@ class Yunyangtc extends Controller
             'channel_tag'=>$info['channel_tag'],
             'insert_id'=>$param['insert_id'],
             'out_trade_no'=>$out_trade_no,
-            'freight'=>$check_channel_intellect['estimatePrice'],
+            'freight'=>$check_channel_intellect['price'],
             'channel_id'=>$check_channel_intellect['deliveryCode'],
             'tag_type'=>$check_channel_intellect['deliveryChannelName'],
             'admin_shouzhong'=>0,

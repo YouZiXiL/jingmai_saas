@@ -1483,7 +1483,6 @@ class Wxcallback extends Controller
      * 微信下单支付回调
      */
     function wx_order_pay(){
-        Log::info('微信支付回调');
         $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
         $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
         $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
@@ -1648,6 +1647,7 @@ class Wxcallback extends Controller
                     break;
 
                 case '智能':
+                    Log::info('云洋下单');
                     $content=[
                         'channelId'=> $orders['channel_id'],
                         'channelTag'=>$orders['channel_tag'],
@@ -1677,7 +1677,7 @@ class Wxcallback extends Controller
                     $data=$Common->yunyang_api('ADD_BILL_INTELLECT',$content);
 
                     if ($data['code']!=1){
-                        Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
+                        Log::error('云洋下单失败：：'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付成功下单失败  执行退款操作
                         $update=[
@@ -1742,7 +1742,7 @@ class Wxcallback extends Controller
                     }
                     break;
 
-                case 'wanli':
+                case '同城':
                     Log::info('万利下单');
                     $res = (new WanLi())->createOrder($orders);
                     $result = json_decode($res,true);
@@ -1771,6 +1771,7 @@ class Wxcallback extends Controller
                             $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                         }
                     }else{
+                        Log::error('同城下单成功：'.$res);
                         $users=db('users')->where('id',$orders['user_id'])->find();
 
                         $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
@@ -2188,10 +2189,10 @@ class Wxcallback extends Controller
         }
     }
     /**
-     * 微信下单支付回调
+     * 微信下单支付回调-同城
      */
     function wx_tcorder_pay(){
-
+        Log::info('微信支付回调');
         $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
         $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
         $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
@@ -2240,61 +2241,138 @@ class Wxcallback extends Controller
 
             $Common=new Common();
             $Dbcommmon= new Dbcommom();
-            $content=[
-                'third_logistics_id'=> $orders['channel_id'],
-                'waybill'=>$orders["waybill"]
-            ];
-            $data=$Common->yunyangtc_api('ADD_BILL',$content);
-            if ($data['code']!=1){
-                Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
-                $out_refund_no=$Common->get_uniqid();//下单退款订单号
-                //支付成功下单失败  执行退款操作
-                $update=[
-                    'pay_status'=>2,
-                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                    'yy_fail_reason'=>$data['message'],
-                    'order_status'=>'下单失败咨询客服',
-                    'out_refund_no'=>$out_refund_no,
-                ];
 
-                $data = [
-                    'type'=>3,
-                    'order_id'=>$orders['id'],
-                    'out_refund_no' => $out_refund_no,
-                    'reason'=>$data['message'],
-                ];
+            // --------
 
-                // 将该任务推送到消息队列，等待对应的消费者去执行
-                Queue::push(DoJob::class, $data,'way_type');
+            if($orders['channel_tag'] == '同城'){
+                Log::info('万利下单');
+                $res = (new WanLi())->createOrder($orders);
+                $result = json_decode($res,true);
+                if($result['code'] != 200){
+                    Log::error('同城下单失败：'.$res);
+                    $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                    //支付成功下单失败  执行退款操作
+                    $update=[
+                        'pay_status'=>2,
+                        'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        'yy_fail_reason'=>$result['message'],
+                        'order_status'=>'下单失败咨询客服',
+                        'out_refund_no'=>$out_refund_no,
+                    ];
+                    $data = [
+                        'type'=>3,
+                        'order_id'=>$orders['id'],
+                        'out_refund_no' => $out_refund_no,
+                        'reason'=>$result['message'],
+                    ];
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
 
-                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
-                    //推送企业微信消息
-                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                    if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                        //推送企业微信消息
+                        $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                    }
+                }else{
+                    Log::error('同城下单成功：'.$res);
+                    $users=db('users')->where('id',$orders['user_id'])->find();
+
+                    $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                    if(empty($rebatelist)){
+                        $rebatelist=new Rebatelist();
+                        $dataRebate=[
+                            "user_id"=>$orders["user_id"],
+                            "invitercode"=>$users["invitercode"],
+                            "fainvitercode"=>$users["fainvitercode"],
+                            "out_trade_no"=>$orders["out_trade_no"],
+                            "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
+                            "payinback"=>0,//补交费用 为负则表示超轻
+                            "state"=>0,
+                            "rebate_amount"=>0,
+                            "createtime"=>time(),
+                            "updatetime"=>time()
+                        ];
+                        !empty($users["rootid"]) && ($dataRebate["rootid"]=$users["rootid"]);
+                        $rebatelist->save($dataRebate);
+                    }
+
+                    $update=[
+                        'shopbill'=>$result['data']['orderNo'], // 万利订单号
+                        'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        'pay_status'=>1,
+                    ];
+                    if(!empty($orders["couponid"])){
+                        $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                        $couponinfo->state=2;
+                        $couponinfo->save();
+                    }
+
+                    $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0, ' 下单支付成功');
                 }
+
 
             }else{
-
-                //支付成功下单成功
-                $result=$data['result'];
-                $update=[
-                    'waybill'=>$result['waybill'],
-                    'shopbill'=>$result['shopbill'],
-                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                    'pay_status'=>1,
+                $content=[
+                    'third_logistics_id'=> $orders['channel_id'],
+                    'waybill'=>$orders["waybill"]
                 ];
-                if(!empty($orders["couponid"])){
-                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                    $couponinfo->state=2;
-                    $couponinfo->save();
+
+                $data=$Common->yunyangtc_api('ADD_BILL',$content);
+                if ($data['code']!=1){
+                    Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
+                    $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                    //支付成功下单失败  执行退款操作
+                    $update=[
+                        'pay_status'=>2,
+                        'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        'yy_fail_reason'=>$data['message'],
+                        'order_status'=>'下单失败咨询客服',
+                        'out_refund_no'=>$out_refund_no,
+                    ];
+
+                    $data = [
+                        'type'=>3,
+                        'order_id'=>$orders['id'],
+                        'out_refund_no' => $out_refund_no,
+                        'reason'=>$data['message'],
+                    ];
+
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
+
+                    if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                        //推送企业微信消息
+                        $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                    }
+
+                }else{
+
+                    //支付成功下单成功
+                    $result=$data['result'];
+                    $update=[
+                        'waybill'=>$result['waybill'],
+                        'shopbill'=>$result['shopbill'],
+                        'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        'pay_status'=>1,
+                    ];
+                    if(!empty($orders["couponid"])){
+                        $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                        $couponinfo->state=2;
+                        $couponinfo->save();
+                    }
+                    $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
                 }
-                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
             }
+
+
+
+
+
 
             db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($update);
 
             exit('success');
         }catch (\Exception $e){
-            Log::error('接收回调失败'.PHP_EOL.$e->getMessage());
+            Log::error('接收回调失败：'.$e->getMessage().'line：'.$e->getLine());
             exit('fail');
         }
     }

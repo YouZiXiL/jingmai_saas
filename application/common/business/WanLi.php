@@ -11,9 +11,9 @@ use think\Queue;
 class WanLi
 {
 
-    private Common $utils;
+    public Common $utils;
 
-    public function _initialize(){
+    public function __construct(){
         $this->utils = new Common();
     }
 
@@ -23,7 +23,6 @@ class WanLi
      * @return array
      */
     public function setParma(array $data){
-        $url = 'https://testapi.wlhulian.com/api/v1/order/billing';
         $json = json_encode($data);
         $timestamp = floor(microtime(true) * 1000);
         $nonce = str_shuffle($timestamp);
@@ -51,8 +50,8 @@ class WanLi
         // 组装参数
         $parma = [
             "outOrderNo"=> $orders['out_trade_no'], // 接入方平台订单号
-            "estimatePrice"=> $orders['freight'], // 比价金额  单位分,用来校验金额有没有发生变化
-            "supplierCode" => $orders['deliveryCode'],
+            "estimatePrice"=> $orders['freight'] * 100, // 比价金额  单位分,用来校验金额有没有发生变化
+            "supplierCode" => $orders['channel_id'],
             "fromSenderName"=> $orders['sender'], //发货人姓名(点到点模式下必填)
             "fromMobile"=> $orders['sender_mobile'], //发货人手机号(点到点模式下必填)
             "fromLng" => @$senderCoordinate[0],
@@ -68,7 +67,7 @@ class WanLi
             "toAddressDetail" => $orders['receive_location'],
 
             "goodType"=> 9,
-            "weight"=> $orders['weight'] //物品重量,单位KG
+            "weight"=> (int) $orders['weight'] //物品重量,单位KG
         ];
         $data = $this->setParma($parma);
         return $this->utils->httpRequest($url, $data,'POST');
