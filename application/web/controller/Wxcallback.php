@@ -187,7 +187,7 @@ class Wxcallback extends Controller
             }
             $res=$common->httpRequest('https://api.weixin.qq.com/wxa/setwebviewdomain?access_token='.$authorization_info['authorizer_access_token'],[
                 'action'=>'set',
-                'webviewdomain'=>[$this->request->domain()]
+                'webviewdomain'=>[$this->request->domain(),'https://apis.map.qq.com']
             ],'POST');
             $res=json_decode($res,true);
             if ($res['errcode']!=0){

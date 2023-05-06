@@ -29,7 +29,7 @@ class Profile extends Backend
             $this->model = model('AdminLog');
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
 
-            if (in_array(2,$this->auth->getGroupIds())) {
+            if (in_array(2,$this->auth->getGroupIds())||in_array(11,$this->auth->getGroupIds())) {
                 $list = $this->model->where("admin_id", $this->auth->id);
             } else {
                 $list = $this->model;

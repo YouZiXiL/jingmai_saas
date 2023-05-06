@@ -57,7 +57,7 @@ class Refilllist extends Backend
         }
         [$where, $sort, $order, $offset, $limit] = $this->buildparams();
         if (in_array(2,$this->auth->getGroupIds())) {
-            $list = $this->model->where("agent_id", $this->auth->id);
+            $list = $this->model->where("refilllist.agent_id", $this->auth->id);
         } else {
             $list = $this->model;
         }

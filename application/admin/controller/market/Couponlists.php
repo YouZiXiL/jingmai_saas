@@ -106,9 +106,12 @@ class Couponlists extends Backend
                 $validate = is_bool($this->modelValidate) ? ($this->modelSceneValidate ? $name . '.add' : $name) : $this->modelValidate;
                 $this->model->validateFailException()->validate($validate);
             }
-            $params['papercode']=$common->getinvitecode(5).'-'.$common->getinvitecode(5).'-'.$common->getinvitecode(5).'-'.$common->getinvitecode(5);
             $params['agent_id']=$this->auth->id;
-            $result = $this->model->allowField(true)->save($params);
+            for ($i=1;$i<=$params['number'];$i++){
+                $params['papercode']=$common->getinvitecode(5).'-'.$common->getinvitecode(5).'-'.$common->getinvitecode(5).'-'.$common->getinvitecode(5);
+                $data[]=$params;
+            }
+            $result = $this->model->allowField(true)->saveAll($data);
             Db::commit();
         } catch (ValidateException|PDOException|Exception $e) {
             Db::rollback();
