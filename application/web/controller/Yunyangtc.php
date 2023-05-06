@@ -766,10 +766,15 @@ class Yunyangtc extends Controller
 
     /**
      * 取消订单
+     * @param WanLi $wanLi
      * @return Json
-     * @throws DbException|Exception
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws Exception
+     * @throws ModelNotFoundException
+     * @throws \think\exception\PDOException
      */
-    function order_cancel(): Json
+    function order_cancel(WanLi $wanLi): Json
     {
 
         $id=$this->request->param('id');
@@ -787,13 +792,20 @@ class Yunyangtc extends Controller
         if (!empty($row['cancel_time'])){
             return json(['status'=>400,'data'=>'','msg'=>'订单处理中...']);
         }
-        $content=[
-            'shopbill'=>$row['shopbill']
-        ];
-        $res=$this->common->yunyangtc_api('CANCEL',$content);
-        if ($res['code']!=1){
-            return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
+        $res = $wanLi->cancelOrder($row['out_trade_no']);
+        $result = json_decode($res, true);
+        if ($result['code'] != 200){
+            Log::error('万利取消订单失败-'.$row['out_trade_no'].'：'. $res);
+            return R::error($result['message']);
         }
+
+//        $content=[
+//            'shopbill'=>$row['shopbill']
+//        ];
+//        $res=$this->common->yunyangtc_api('CANCEL',$content);
+//        if ($res['code']!=1){
+//            return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
+//        }
         db('orders')->where('id',$id)->where('user_id',$this->user->id)->update(['cancel_time'=>time(),"order_status"=>"处理中"]);
         if (!empty($agent_info['wx_im_bot'])&&$row['weight']>=2){
             $this->common->wxim_bot($agent_info['wx_im_bot'],$row);

@@ -1090,9 +1090,10 @@ class Wxcallback extends Controller
                 }
                 if (@$result['orderStatusCode']=='GOT'){
                     if ($result['orderEvent']['calculateWeight']/1000<$result['orderEvent']['totalVolume']*1000/6000){
-                        $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000*1000;
+                         $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000*1000;
                     }
                     $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
+
                     // 风火递扣我们的费用
                     $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68+($result['orderEvent']['totalPrice']/100-$result['orderEvent']['transportPrice']/100);
 
@@ -1142,7 +1143,7 @@ class Wxcallback extends Controller
                         }
 
                     }
-                    //更改超重状态
+                    //超重状态
                     if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
 //                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
