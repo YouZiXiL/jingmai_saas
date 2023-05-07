@@ -91,4 +91,19 @@ class WanLi
         return $this->utils->httpRequest($url, $data,'POST');
     }
 
+
+    /**
+     * 主动触发回调
+     * @return bool|string
+     */
+    public function testCallback(){
+        $url = $this->baseUlr . '/api/v1/order/test';
+        $parma = [
+            "orderNo" => 'JH1683344169353149',
+            "status" => 3 // 状态 1:待接单 2：取货 3：配送 4：完成 5：取消 6：配送异常
+        ];
+        $data = $this->setParma($parma);
+        return $this->utils->httpRequest($url, $data,'POST');
+    }
+
 }

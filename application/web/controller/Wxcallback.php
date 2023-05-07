@@ -1328,6 +1328,25 @@ class Wxcallback extends Controller
         }
     }
 
+
+
+    /**
+     * 万利回调
+     */
+    function wanli_callback(){
+        Log::info('万利回调');
+        Log::info(['万利回调--time' => date('Y-m-d H:i:s')]);
+        $backData = $this->request->param();
+        Log::info(['万利回调--data' => $backData]);
+        $data = json_decode($backData['data'],true);
+        $type = $data['type']; // 回调类型 状态 1:待接单 2：取货 3：配送 4：完成 5：取消 6：配送异常
+        $body = json_decode($data['param']) ; // 回调参数
+
+        /*
+         取消给用户退款，配送异常看下原因，根据原因决定是否给用户取消退款
+         */
+    }
+
     /**
      * 超重支付回调
      * @return void

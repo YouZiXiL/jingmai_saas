@@ -792,20 +792,23 @@ class Yunyangtc extends Controller
         if (!empty($row['cancel_time'])){
             return json(['status'=>400,'data'=>'','msg'=>'订单处理中...']);
         }
-        $res = $wanLi->cancelOrder($row['out_trade_no']);
-        $result = json_decode($res, true);
-        if ($result['code'] != 200){
-            Log::error('万利取消订单失败-'.$row['out_trade_no'].'：'. $res);
-            return R::error($result['message']);
+        if($row['channel_tag'] == '同城'){
+            $res = $wanLi->cancelOrder($row['out_trade_no']);
+            $result = json_decode($res, true);
+            if ($result['code'] != 200){
+                Log::error('万利取消订单失败-'.$row['out_trade_no'].'：'. $res);
+                return R::error($result['message']);
+            }
+        }else{
+            $content=[
+                'shopbill'=>$row['shopbill']
+            ];
+            $res=$this->common->yunyangtc_api('CANCEL',$content);
+            if ($res['code']!=1){
+                return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
+            }
         }
 
-//        $content=[
-//            'shopbill'=>$row['shopbill']
-//        ];
-//        $res=$this->common->yunyangtc_api('CANCEL',$content);
-//        if ($res['code']!=1){
-//            return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
-//        }
         db('orders')->where('id',$id)->where('user_id',$this->user->id)->update(['cancel_time'=>time(),"order_status"=>"处理中"]);
         if (!empty($agent_info['wx_im_bot'])&&$row['weight']>=2){
             $this->common->wxim_bot($agent_info['wx_im_bot'],$row);
@@ -813,6 +816,15 @@ class Yunyangtc extends Controller
         return json(['status'=>200,'data'=>'','msg'=>'取消成功']);
     }
 
+    /**
+     * 万利主动触发回调 （测试用）
+     * @param WanLi $wanLi
+     * @return bool|string
+     */
+    function handleWanliCallback(WanLi $wanLi){
+        $res= $wanLi->testCallback();
+        return R::ok($res);
+    }
 
     /**
      * 订单查询列表
