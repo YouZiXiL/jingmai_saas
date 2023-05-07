@@ -54,6 +54,7 @@ class Refill extends Controller
 
     public function getproduct(){
         $param=$this->request->param();
+        file_put_contents('getproduct.txt',json_encode($param).PHP_EOL,FILE_APPEND);
         $currentapi="index/product";
         $data=[];
         if(empty($param["producttype"])){
@@ -143,15 +144,17 @@ class Refill extends Controller
             $returndata["selectid"]=$insertid;
             $returndata["data"]=$tempdata;
 
-            return \json(["status"=>"400","msg"=>"获取产品类型错误","data"=>$returndata]);
+            return json(["status"=>"400","msg"=>"获取产品类型错误","data"=>$returndata]);
         }else{
             return json(["status"=>"400","msg"=>"获取产品类型错误","data"=>$datas]);
         }
     }
-    //花费产品查询
+    //话费产品查询
     public function getproduct_recharge(){
         $this->common=new Common();
         $param=$this->request->param();
+        file_put_contents('getproduct_recharge.txt',json_encode($param).PHP_EOL,FILE_APPEND);
+
         $currentapi="index/product";
         $data=[];
         if(empty($param["type"])){
@@ -171,6 +174,8 @@ class Refill extends Controller
         $content+=$data;
         $agent=db('admin')->where('id',$this->user->agent_id)->find();
         $allproduct=$this->common->httpRequest($this->baseapi.$currentapi,$content,"POST");
+        file_put_contents('getproduct_recharge.txt',$allproduct.PHP_EOL,FILE_APPEND);
+
         $tempdata=[];
         $datas=json_decode($allproduct,true);
         if(empty($datas["errno"])){
@@ -334,7 +339,7 @@ class Refill extends Controller
             $returndata["selectid"]=$insertid;
             $returndata["data"]=$tempdata;
 
-            return \json(["status"=>"200","msg"=>"","data"=>$returndata]);
+            return json(["status"=>"200","msg"=>"","data"=>$returndata]);
         }else{
             return json(["status"=>"400","msg"=>"获取产品类型错误","data"=>$datas]);
         }
