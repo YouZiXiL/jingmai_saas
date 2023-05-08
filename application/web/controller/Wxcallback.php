@@ -1342,6 +1342,7 @@ class Wxcallback extends Controller
         $data = json_decode($backData['data'],true);
         Log::info("万利回调--data:" . $data['param']);
         $body = json_decode($data['param'],true) ; // 回调参数
+        $body['createTime'] = date('Y-m-d h:i:s', time());
         db('wanli_callback')->strict(false)->insert($body);
         $orderModel = Order::where('out_trade_no',$body['outOrderNo'])->find();
         if (!$orderModel){
