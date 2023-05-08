@@ -742,28 +742,32 @@ class Users extends Controller
             else{
 
 //                return \json($couponinfo);
-                if(time()>$couponinfo["validdateend"]){
-                    $data["msg"]="券码已失效";
-                    $data["status"]=400;
-                    return \json($data);
-                }
-                $usercoupon=new Couponlist();
-                $usercoupon->papercode=$couponinfo["papercode"];
-                $usercoupon->user_id=$this->user->id;
-                $usercoupon->agent_id=$this->user->agent_id;
-                $usercoupon->gain_way=1;
-                $usercoupon->money=$couponinfo["money"];
-                $usercoupon->type=$couponinfo["type"];
-                $usercoupon->scene=$couponinfo["scene"];
-                $usercoupon->uselimits=$couponinfo["uselimits"];
-                $usercoupon->state=1;
-                $usercoupon->validdate=strtotime($couponinfo["validdatestart"]);
-                $usercoupon->validdateend=$couponinfo["validdateend"];
-                $usercoupon->createtime=time();
-                $usercoupon->updatetime=time();
-                $usercoupon->save();
-                $couponinfo->state=2;
-                $couponinfo->save();
+//                if(time()>$couponinfo["validdateend"]){
+//                    $data["msg"]="券码已失效";
+//                    $data["status"]=400;
+//                    return \json($data);
+//                }
+                $validdatestart=$couponinfo["validdatestart"]??time();
+                $validdateend=$couponinfo["validdateend"]==0?(time()+30*24*3600):$couponinfo["validdateend"];
+                $usercouponl=new Couponlist();
+                $usercoupon['papercode']=$couponinfo["papercode"];
+                $usercoupon['user_id']=$this->user->id;
+                $usercoupon['agent_id']=$this->user->agent_id;
+                $usercoupon['gain_way']=1;
+                $usercoupon['money']=$couponinfo["money"];
+                $usercoupon['type']=$couponinfo["type"];
+                $usercoupon['scene']=$couponinfo["scene"];
+                $usercoupon['uselimits']=$couponinfo["uselimits"];
+                $usercoupon['state']=1;
+                $usercoupon['validdate']=strtotime($validdatestart);
+                $usercoupon['validdateend']=$validdateend;
+                $usercoupon['createtime']=time();
+                $usercoupon['updatetime']=time();
+                $usercouponl->save($usercoupon);
+                $couponinfoup['validdatestart']=strtotime($validdatestart);
+                $couponinfoup['validdateend']=$validdateend;
+                $couponinfoup['state']=2;
+                $couponinfo->save($couponinfoup);
             }
         }
 
