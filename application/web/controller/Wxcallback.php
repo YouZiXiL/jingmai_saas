@@ -972,7 +972,6 @@ class Wxcallback extends Controller
      * 风火递
      */
     function fhd_callback(){
-
         Log::info('风火递---fhd_callback：' . json_encode(input()));
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
@@ -1337,20 +1336,72 @@ class Wxcallback extends Controller
     /**
      * 万利回调
      */
-    function wanli_callback(){
+    function wanli_callback(WanLi $wanLi){
         Log::info('万利回调');
-        Log::info(['万利回调--time' => date('Y-m-d H:i:s')]);
         $backData = $this->request->param();
-        Log::info(['万利回调--data' => $backData]);
         $data = json_decode($backData['data'],true);
-
-        $type = $data['type']; // 回调类型 状态 1:待接单 2：取货 3：配送 4：完成 5：取消 6：配送异常
+        Log::info("万利回调--data:" . $data['param']);
         $body = json_decode($data['param'],true) ; // 回调参数
-        $body['type'] = $type;
         db('wanli_callback')->strict(false)->insert($body);
-        /*
-         取消给用户退款，配送异常看下原因，根据原因决定是否给用户取消退款
-         */
+        $orderModel = Order::where('out_trade_no',$body['outOrderNo'])->find();
+        if (!$orderModel){
+            Log::error('万利回调---订单不存在');
+            return;
+        }
+        $orders = $orderModel->toArray();
+        $updateOrder = [];
+        $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+        $xcx_access_token=$wanLi->utils->get_authorizer_access_token($agent_auth_xcx['app_id']);
+        $users=db('users')->where('id',$orders['user_id'])->find();
+        Log::info("订单id：{$orders['id']}" );
+        if($body['sendStatus'] == 60 && $orders['pay_status']!=2){
+            Log::info('订单已取消');
+            /*
+             取消给用户退款，配送异常看下原因，根据原因决定是否给用户取消退款
+             */
+            // 罚金
+            isset($body['punishAmount']) && $updateOrder['punish_price'] = ceil($body['punishAmount'])/100 ;
+            // 订单已取消
+            $data = [
+                'type'=>4,
+                'order_id' => $orders['id'],
+                'refund' => ceil($body['returnPrice'])/100,
+            ];
+            // 将该任务推送到消息队列，等待对应的消费者去执行
+            Queue::push(DoJob::class, $data,'way_type');
+        }else{
+            isset($body['thirdPartyOrderNo']) && $updateOrder['waybill'] = $body['thirdPartyOrderNo']; // 运单号
+            isset($body['cancelMessage'])  &&  $updateOrder['comments'] = $body['cancelMessage']; // 取消原因
+            isset($body['remarks'])  &&  $updateOrder['comments'] = $body['remarks']; // 备注
+            if(isset($body['courierName'] )||isset($body['courierMobile']))    $updateOrder['comments'] = "快递员姓名：{$body['courierName']}，电话：{$body['courierMobile']}";
+            isset($body['discountLastMoney'])  &&  $updateOrder['final_freight'] = ceil($body['discountLastMoney']) /100; // 商户成本
+            isset($body['weight'])  &&  $updateOrder['final_weight'] = $body['weight']; // kg
+            isset($body['sendStatus'])   && $updateOrder['order_status'] = $wanLi->getOrderStatus($body['sendStatus']) ;
+            isset($body['failMessage'])  &&  $updateOrder['yy_fail_reason'] = $body['failMessage']; // 失败原因
+            isset($body['cancelTime'])  &&  $updateOrder['cancel_time'] = strtotime($body['cancelTime']); // 取消时间
+        }
+
+        //发送小程序订阅消息(运单状态)
+        if ($body['sendStatus'] == 40){ // 配送中
+            $result = $wanLi->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
+                'touser'=>$users['open_id'],  //接收者openid
+                'template_id'=>$agent_auth_xcx['waybill_template'],
+                'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                'data'=>[
+                    'character_string13'=>['value'=>$orders['waybill']],
+                    'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
+                    'thing10'=>['value'=>$orders['receive_province'].$orders['receive_city']],
+                    'phrase3'=>['value'=>$updateOrder['order_status']],
+                    'thing8'  =>['value'=>'点击查看快递信息与物流详情',]
+                ],
+                'miniprogram_state'=>'formal',
+                'lang'=>'zh_CN'
+            ],'POST');
+        }
+        if (!empty($updateOrder)){
+            Log::info("订单更新成功");
+            $orderModel->save($updateOrder);
+        }
     }
 
     /**

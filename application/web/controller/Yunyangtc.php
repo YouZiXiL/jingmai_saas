@@ -534,7 +534,7 @@ class Yunyangtc extends Controller
             'description'  => '快递下单-'.$out_trade_no,
             'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_tcorder_pay',
             'amount'       => [
-                'total'    => 1, // TODO (int)bcmul($check_channel_intellect['final_price'],100),
+                'total'    => (int)bcmul($check_channel_intellect['final_price'],100),
                 'currency' => 'CNY'
             ],
             'payer'        => [

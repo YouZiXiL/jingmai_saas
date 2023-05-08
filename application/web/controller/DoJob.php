@@ -135,7 +135,8 @@ class DoJob
                 ]]);
         }elseif ($data['type']==4){
                 $row=db('orders')->where('id',$data['order_id'])->find();
-                $refoundAmount=$row['aftercoupon']??$row['final_price'];
+                $totalAmount=$row['aftercoupon']??$row['final_price'];
+                $refoundAmount = $data['refund']??$row['final_price'];
 
                 if ($row['pay_status']!=2){
                     // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
@@ -165,7 +166,7 @@ class DoJob
                             'reason'=>'自助取消',
                             'amount'       => [
                                 'refund'   => (int)bcmul($refoundAmount,100),
-                                'total'    =>(int)bcmul($refoundAmount,100),
+                                'total'    =>(int)bcmul($totalAmount,100),
                                 'currency' => 'CNY'
                             ],
                         ]]);

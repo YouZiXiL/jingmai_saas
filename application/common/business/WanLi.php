@@ -106,4 +106,24 @@ class WanLi
         return $this->utils->httpRequest($url, $data,'POST');
     }
 
+
+    /**
+     * 运单状态
+     * @param $status
+     * @return string
+     */
+    public function getOrderStatus($status){
+        // 1-初始化 20-待接单、30-取货中 40-配送中、50-已完成、60- 己取消、70- 配送异常
+         switch ($status){
+            case 1: return '初始化';
+            case 20: return '待接单';
+            case 30: return '取货中';
+            case 40: return '配送中';
+            case 50: return '已完成';
+            case 60: return '己取消';
+            case 70: return '配送异常';
+            default: return '其他';
+        }
+    }
+
 }
