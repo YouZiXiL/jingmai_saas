@@ -2,269 +2,29 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>数据中心</title>
+    <title>万利互联</title>
     <script type="text/javascript" src="https://unpkg.com/@antv/g2plot@latest/dist/g2plot.min.js"></script>
 </head>
 <body style="margin: 24px;">
-<div class="rate-container">
-    <div class="top-view">
-        <div class="title">功能导航</div>
-    </div>
-    <div class="btn-box">
-        <div class="menu-btn openview" >
-            <div>账号充值</div>
-        </div>
-        <div class="menu-btn wanli-recharge" >
-            <div>万利充值</div>
-        </div>
-        <div class="menu-btn authlist">
-            <div>授权管理</div>
-        </div>
-        <div class="menu-btn assetslist">
-            <div>资金明细</div>
-        </div>
-        <div class="menu-btn orderslist">
-            <div>订单管理</div>
-        </div>
-        <div class="menu-btn jijian">
-            <div>寄件提交</div>
-        </div>
-        <div class="menu-btn fankui">
-            <div>建议反馈</div>
-        </div>
-    </div>
-</div>
+
 <div class="tip-container">
     <div class="item">
         <div class="card">
             <div class="card-title">余额</div>
-            <div class="card-content">{$row.amount}元</div>
-        </div>
-    </div>
-    <div class="item">
-        <div class="card">
-            <div class="card-title">万利余额(元)</div>
-            <div class="card-content">{$row.wanliAmt}</div>
-        </div>
-    </div>
-    <div class="item">
-        <div class="card">
-            <div class="card-title">今日有效订单</div>
-            <div class="card-content">{$row.today_add_order}</div>
-        </div>
-    </div>
-    <div class="item">
-        <div class="card">
-            <div class="card-title">今日利润</div>
-            <div class="card-content">{$row.today_profits}元</div>
-        </div>
-    </div>
-    <div class="item">
-        <div class="card">
-            <div class="card-title">今日营业额</div>
-            <div class="card-content">{$row.today_final_price}元</div>
-        </div>
-    </div>
-    <div class="item">
-        <div class="card">
-            <div class="card-title">今日结算额</div>
-            <div class="card-content">{$row.today_agent_price}元</div>
-        </div>
-    </div>
-    <div class="item">
-        <div class="card">
-            <div class="card-title">今日新增会员</div>
-            <div class="card-content">{$row.today_users}</div>
-        </div>
-    </div>
-    <div class="item">
-        <div class="card">
-            <div class="card-title">今日推送</div>
-            <div class="card-content">{$row.todao_overload}</div>
+            <div class="card-content">{$usableAmt}元</div>
         </div>
     </div>
 </div>
-<div class="msg-container">
-    <div class="msg-item">
-        <div class="card">
-            <div class="card-title">本月预估利润（元）</div>
-            <div class="card-content">
-                {$row.month_profits}元
-                <div class="card-tips">本月订单数 {$row.month_order}</div>
-            </div>
-        </div>
-        <div class="msg-card">
-            <div class="msg-title">取消订单率</div>
-            <div class="msg-content">{$row.month_refund}%</div>
-        </div>
-        <div class="msg-card">
-            <div class="msg-title">超重订单率</div>
-            <div class="msg-content">{$row.month_overload}%</div>
-        </div>
-        <div class="msg-card">
-            <div class="msg-title">未处理超重订单率</div>
-            <div class="msg-content">{$row.month_overload_wait}%</div>
-        </div>
-    </div>
-    <div class="msg-item">
-        <div class="card">
-            <div class="card-title">总预估利润（元）</div>
-            <div class="card-content">
-                {$row.total_profits}元
-                <div class="card-tips">总订单数 {$row.total_order}</div>
-            </div>
-        </div>
-        <div class="msg-card">
-            <div class="msg-title">取消订单率</div>
-            <div class="msg-content">{$row.total_refund}%</div>
-        </div>
-        <div class="msg-card">
-            <div class="msg-title">超重订单率</div>
-            <div class="msg-content">{$row.total_overload}%</div>
-        </div>
-        <div class="msg-card">
-            <div class="msg-title">未处理超重订单率</div>
-            <div class="msg-content">{$row.total_overload_wait}%</div>
-        </div>
-    </div>
-    <div class="msg-item2">
-        <div class="card2">
-            <div class="card-title">本月交易额</div>
-            <div class="card-content2">{$row.month_final_price}</div>
-            <div style="padding: 0 24px;">
-                <img src="https://gw.alipayobjects.com/zos/alicdn/zevpN7Nv_/xiaozhexiantu.svg" alt="" width="100%">
-            </div>
-            <div class="card-title">本月结算额</div>
-            <div class="card-content2">{$row.month_agent_price}</div>
-        </div>
-        <div class="card2">
-            <div class="card-title">总交易额</div>
-            <div class="card-content2">{$row.total_final_price}</div>
-            <div style="padding: 0 24px;">
-                <img src="https://gw.alipayobjects.com/zos/alicdn/zevpN7Nv_/xiaozhexiantu.svg" alt="" width="100%">
-            </div>
-            <div class="card-title">总结算额</div>
-            <div class="card-content2">{$row.total_agent_price}</div>
-        </div>
-        <div class="card2">
-            <div class="card-title">本月新增会员</div>
-            <div class="card-content2">{$row.month_add_users}</div>
-            <div style="padding: 0 24px;">
-                <img src="https://gw.alipayobjects.com/zos/alicdn/zevpN7Nv_/xiaozhexiantu.svg" alt="" width="100%">
-            </div>
-            <div class="card-title">总会员数</div>
-            <div class="card-content2">{$row.total_add_users}</div>
-        </div>
-    </div>
-</div>
-<div class="rate-container">
-    <div class="top-view">
-        <div class="title">快递成功率</div>
-        <form role="form">
-        <div class="form-group">
-            <input id="c-createtime" type="text" class="form-control datetimerange data-time-picker" placeholder="指定日期" />
-        </div>
-        </form>
-    </div>
-    <div class="rate-box">
-        <div id = "yt"></div>
-        <div id = "yd"></div>
-        <div id = "jt"></div>
-        <div id = "st"></div>
-        <div id = "zt"></div>
-        <div id = "sf"></div>
-        <div id = "db"></div>
-        <div id = "jd"></div>
-    </div>
-</div>
-<div class="chart-container">
-    <div style="padding-right: 12px;min-width: 50%;">
-        <div class="chart-box">
-            <div id = "areaChart"></div>
-        </div>
-    </div>
 
-    <div style="padding-left: 12px;min-width: 50%;">
-        <div class="chart-box">
-            <div id = "pie-chart"></div>
-        </div>
-    </div>
-
-</div>
 <!-- 弹窗 -->
 <div class="mask closeview" id="mask"></div>
-<div class="model-container" id="model-container">
-    <div class="model-view">
-        <div class="model-title">
-            账户余额充值
-            <img src="/assets/img/close.png" id="close-icon" class="closeview" alt="">
-        </div>
-        <div class="line"></div>
-        <div class="model-content">
-            <div class="warning" id="warning">
-                <img src="/assets/img/warning.png" id="warning-icon" alt="">
-                <div style="margin-left: 10px;">账户充值默认扣除微信官方收取的千分之六手续费，请知悉！</div>
-                <img src="/assets/img/close.png" id="close-icon2" class="closeviewa" alt="">
-            </div>
-            <div class="type">
-                <div style="margin-bottom: 10px;">充值渠道</div>
-                <div class="type-container">
-                    <div class="type-item" tabindex="2" onclick="choosePayType(1)">
-                        <img src="/assets/img/zfb.png" alt="" style="width: 65px;height: 65px;">
-                        <span>支付宝</span>
-                        <div class="icon" id="icon1" tabindex="1"></div>
-                    </div>
-                    <div class="type-item" tabindex="1" style="margin-left: 20px;padding-left: 10px;" onclick="choosePayType(2)">
-                        <img src="/assets/img/wx.png" alt="" class="img">
-                        <span style="margin-left: 10px;">微信</span>
-                        <div class="icon" id="icon2" tabindex="2"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="type">
-                <div style="margin-bottom: 10px;">充值金额</div>
-                <div style="display: flex;">
-                    <div class="inp-box">
-                        <span style="color: rgba(0,0,0,.85);font-size: 14px;">￥</span>
-                        <input step="1" type="number" value="100" class="amount" style="border: 0;outline: 0;">
-                    </div>
-                    <div class="btnss">确认充值</div>
-                </div>
-            </div>
-            <div style="border: 0px solid;width: 180px;height: 180px;position: absolute;right: 50px;bottom: 30px;">
-                <img src="" id = "ewm" alt="">
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="model-container" id="model-wanli">
-    <div class="model-view">
-        <div class="model-title">
-            万利账户充值
-            <img src="/assets/img/close.png" id="close-icon" class="closeview" alt="">
-        </div>
-        <div class="line"></div>
-        <div class="model-content">
-            <div class="type">
-                <div style="margin-bottom: 10px;">充值金额</div>
-                <div style="display: flex;">
-                    <div class="inp-box">
-                        <span style="color: rgba(0,0,0,.85);font-size: 14px;">￥</span>
-                        <input step="1" type="number" value="100" class="amount" style="border: 0;outline: 0;">
-                    </div>
-                    <div class="wanli-pay btn btn-info ml-3">确认充值</div>
-                </div>
-        </div>
-    </div>
-</div>
 </body>
 <script>
 
 
     const { RingProgress } = G2Plot;
     // 快递成功率
-    var kdDate = {"yt": {$row.yt},"yd":{$row.yd},"jt":{$row.jt},"st":{$row.st},"zt":{$row.zt},"sf":{$row.sf},"db":{$row.db},"jd":{$row.jd}}
     const yt = new RingProgress('yt', {
         height: 100,
         width: 100,
@@ -372,35 +132,7 @@
 
     const { Area,Pie } = G2Plot;
     // 统计图表
-    var data1 = [
-        {
-            "Date": '{$row.days_one}',
-            "订单数量": {$row.one_num}
-        },
-        {
-            "Date": '{$row.days_two}',
-            "订单数量": {$row.two_num}
-        },
-        {
-            "Date": '{$row.days_three}',
-            "订单数量": {$row.three_num}
-        },
-        {
-            "Date": '{$row.days_four}',
-            "订单数量": {$row.four_num}
-        },
-        {
-            "Date": '{$row.days_five}',
-            "订单数量": {$row.five_num}
-        },{
-            "Date": '{$row.days_six}',
-            "订单数量": {$row.six_num}
-        },
-        {
-            "Date": '{$row.days_seven}',
-            "订单数量": {$row.seven_num}
-        }
-        ];
+
     const areaChart = new Area("areaChart", {
         data: data1,
         xField: 'Date',
@@ -415,18 +147,6 @@
             };
         },
     });
-    areaChart.render();
-
-    var data2 = [
-        { type: '圆通', value: {$row.yt_success} },
-        { type: '申通', value: {$row.yd_success} },
-        { type: '京东', value: {$row.jd_success} },
-        { type: '德邦', value: {$row.db_success} },
-        { type: '顺丰', value: {$row.sf_success} },
-        { type: '韵达', value: {$row.yd_success} },
-        { type: '极兔', value: {$row.jt_success} },
-        { type: '中通', value: {$row.zt_success} }
-    ];
 
     const pie = new Pie("pie-chart",{
         padding: 16,

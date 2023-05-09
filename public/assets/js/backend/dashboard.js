@@ -8,10 +8,18 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 mc.style.display = 'inline'
                 mask.style.display = 'inline'
             });
+            $(".wanli-recharge").click(function(){
+                var mc = document.getElementById("model-wanli")
+                var mask = document.getElementById("mask")
+                mc.style.display = 'inline'
+                mask.style.display = 'inline'
+            });
             $(".closeview").click(function(){
                 var mc = document.getElementById("model-container")
+                var mw = document.getElementById("model-wanli")
                 var mask = document.getElementById("mask")
                 mc.style.display = 'none'
+                mw.style.display = 'none'
                 mask.style.display = 'none'
             });
             $(".closeviewa").click(function(){
@@ -35,6 +43,21 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     });
                     return true;
                 }, function (data,ret) { //error
+                    return true;
+                });
+            });
+
+
+            $(".wanli-pay").click(function(){
+                Fast.api.ajax({
+                    url: 'open/wanli/recharge?rechargePrice='+$('.amount').val(),
+                }, function (data) { //success
+                    alertWanliQrCode( data )
+
+                    return true;
+                }, function (data,ret) { //error
+
+
                     return true;
                 });
             });
@@ -66,15 +89,27 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
 
 
-
-
-
             function setEWM( data ){
                 var img = document.getElementById("ewm")
                 img.setAttribute( 'src', 'data:image/png' +
                     ';base64,' + data
                 );
+
+                return false;
             }
+
+            function alertWanliQrCode( data ){
+
+                // 创建img标签
+                let img = document.createElement('img');
+                img.setAttribute( 'src', 'data:image/png' +
+                    ';base64,' + data
+                );
+                Layer.msg(img.outerHTML,{closeBtn: 1,time:0});
+                return false;
+            }
+
+
 
             Form.api.bindevent($("form[role=form]"));
         },

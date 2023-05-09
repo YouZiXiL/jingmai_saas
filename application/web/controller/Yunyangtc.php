@@ -266,7 +266,7 @@ class Yunyangtc extends Controller
                 $agent_tc=($agent_info["agent_tc"]??10)/100;//公司上浮百分比 默认为0.1
                 $agent_price= ceil($price+$price*$agent_tc)/100; // 代理商价格 （元）
                 $agent_tc_ratio=($agent_info["agent_tc_ratio"]??0)/100;//代理商上浮百分比 默认为0
-                $users_price= $agent_price+$agent_price*$agent_tc_ratio; // 用户需要付的价格（元）
+                $users_price= number_format($agent_price+$agent_price*$agent_tc_ratio, 2, '.', '') ; // 用户需要付的价格（元）
 
                 $channel['price']= $price/100;//用户支付总价
                 $channel['final_price']=$users_price;//用户支付总价
@@ -396,6 +396,28 @@ class Yunyangtc extends Controller
         }catch (\Exception $e){
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
+    }
+
+
+    /**
+     * 万利查询余额
+     * @param WanLi $wanLi
+     * @return Json
+     */
+    public function getWalletBalance(WanLi $wanLi){
+        $result = $wanLi->getWalletBalance();
+        return R::ok($result);
+    }
+
+    /**
+     * 万利充值
+     * @param WanLi $wanLi
+     * @return Json
+     */
+    public function recharge(WanLi $wanLi){
+
+        $result = $wanLi->recharge(input('rechargePrice'));
+        return R::ok($result);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace app\admin\controller;
 
 
+use app\common\business\WanLi;
 use app\common\controller\Backend;
 
 
@@ -271,6 +272,14 @@ class Dashboard extends Backend
             $seven_num=db('orders')->whereTime('create_time','between',[$seven,$seven.' 23:59:59'])->where('pay_status','<>',0)->count();
 
         }
+
+
+        // 万利
+        $wanli = new WanLi();
+        $result = $wanli->getWalletBalance();
+        $result = json_decode($result,true);
+        if($result['code'] != 200) $usableAmt = $result['message'];
+        $arr['wanliAmt'] = number_format($result['data']['usableAmt']/100, 2,'.','') ;
 
         $arr['days_one']=$one;
         $arr['days_two']=$two;

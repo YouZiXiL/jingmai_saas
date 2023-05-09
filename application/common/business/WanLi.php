@@ -5,6 +5,7 @@ namespace app\common\business;
 use app\common\model\Order;
 use app\web\controller\Common;
 use app\web\controller\DoJob;
+use think\Env;
 use think\Log;
 use think\Queue;
 
@@ -12,10 +13,11 @@ class WanLi
 {
 
     public Common $utils;
-    public string $baseUlr = 'https://testapi.wlhulian.com';
+    public  $baseUlr;
 
     public function __construct(){
         $this->utils = new Common();
+        $this->baseUlr = Env::get('wanli.url');
     }
 
     /**
@@ -27,8 +29,8 @@ class WanLi
         $json = json_encode($data);
         $timestamp = floor(microtime(true) * 1000);
         $nonce = str_shuffle($timestamp);
-        $appid = "354f080650684f76b45b5d089c544d20";
-        $secret = "962f08a7112b45f09f8594023bf407be";
+        $appid = Env::get('wanli.appid');
+        $secret = Env::get('wanli.secret');
         $sign = md5($secret . $timestamp . $nonce . $json) ;
         return [
             'appId' => $appid,
@@ -126,9 +128,32 @@ class WanLi
         }
     }
 
+    /**
+     * 余额查询
+     * @return bool|string
+     */
     public function getWalletBalance(){
-        $url = '/api/v1/wallet/balance';
-        return $this->utils->httpRequest($url, '','POST');
+        $url = $this->baseUlr .  '/api/v1/wallet/balance';
+        $data = $this->setParma([]);
+        $result = $this->utils->httpRequest($url, $data,'POST');
+        $logData =  date('y-m-d h:i:s', time()) .$result;
+        file_put_contents( root_path('runtime/cur/wanli/recharge.txt'), $logData , FILE_APPEND);
+        return $result;
+    }
+
+
+    /**
+     * 充值
+     * @param $price
+     * @return bool|string
+     */
+    public function recharge($price){
+        $url = $this->baseUlr . '/api/v1/wallet/accountRecharge';
+        $data = $this->setParma(['rechargePrice' => $price]);
+        $result = $this->utils->httpRequest($url, $data,'POST');
+        $logData =  date('y-m-d h:i:s', time()) .$result;
+        file_put_contents( root_path('runtime/cur/wanli/recharge.txt'), $logData , FILE_APPEND);
+        return $result;
     }
 
 }
