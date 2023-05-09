@@ -754,6 +754,7 @@ class Users extends Controller
                 $usercoupon['user_id']=$this->user->id;
                 $usercoupon['agent_id']=$this->user->agent_id;
                 $usercoupon['gain_way']=1;
+                $usercoupon['name']=$couponinfo["name"];
                 $usercoupon['money']=$couponinfo["money"];
                 $usercoupon['type']=$couponinfo["type"];
                 $usercoupon['scene']=$couponinfo["scene"];
