@@ -126,4 +126,9 @@ class WanLi
         }
     }
 
+    public function getWalletBalance(){
+        $url = '/api/v1/wallet/balance';
+        return $this->utils->httpRequest($url, '','POST');
+    }
+
 }
