@@ -83,7 +83,12 @@ ASt4V0K4Pn6cd84Eq0qxH2BbSg==
   'ch_yidong' => '<p>你好</p><p>你在干嘛<br></p>',
   'ch_liantong' => '2',
   'ch_dianxin' => '3',
-    'wanli_appid'  => '000e8f9c948a48e9908bccd30b2ff05a', // '354f080650684f76b45b5d089c544d20',
-    'wanli_secret'  => 'bd1e102becd34fc29b7a57c21f566589', //'962f08a7112b45f09f8594023bf407be',
-    'wanli_url' => 'https://openapi.wlhulian.com',  //'https://testapi.wlhulian.com',
+    // 正式环境
+    'wanli_appid'  => '000e8f9c948a48e9908bccd30b2ff05a',
+    'wanli_secret'  => 'bd1e102becd34fc29b7a57c21f566589',
+    'wanli_url' => 'https://openapi.wlhulian.com',
+    // 测试环境
+//    'wanli_appid'  => '354f080650684f76b45b5d089c544d20', // '354f080650684f76b45b5d089c544d20',
+//    'wanli_secret'  => '962f08a7112b45f09f8594023bf407be', //'962f08a7112b45f09f8594023bf407be',
+//    'wanli_url' => 'https://testapi.wlhulian.com',  //'https://testapi.wlhulian.com',
 );

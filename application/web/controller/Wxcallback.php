@@ -15,7 +15,10 @@ use app\web\model\Couponlist;
 use app\web\model\Rebatelist;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use think\Controller;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
+use think\exception\DbException;
 use think\Log;
 use think\Queue;
 use think\Request;
@@ -122,9 +125,9 @@ class Wxcallback extends Controller
      * 授权小程序|公众号
      * @return void
      * @throws Exception
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
      * @throws \think\exception\PDOException
      */
     public function shouquan_success(){
@@ -1099,8 +1102,8 @@ class Wxcallback extends Controller
 
                     //超轻处理
                     $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
-//                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
-                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0) {
+                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
+//                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0) {
                         $tralight_weight=$weight;//超轻重量
                         $tralight_amt=$orders['freight']-$result['orderEvent']['transportPrice']/100*0.68;//超轻金额
                         $admin_xuzhong=$tralight_amt/$tralight_weight;//平台续重单价
@@ -1145,8 +1148,8 @@ class Wxcallback extends Controller
 
                     }
                     //超重状态
-//                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
-                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
+                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+//                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
@@ -1341,9 +1344,13 @@ class Wxcallback extends Controller
     }
 
 
-
     /**
      * 万利回调
+     * @param WanLi $wanLi
+     * @throws Exception
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
      */
     function wanli_callback(WanLi $wanLi){
         Log::info('万利回调');
@@ -1386,6 +1393,7 @@ class Wxcallback extends Controller
             if(isset($body['courierName'] )||isset($body['courierMobile']))    $updateOrder['comments'] = "快递员姓名：{$body['courierName']}，电话：{$body['courierMobile']}";
             isset($body['discountLastMoney'])  &&  $updateOrder['final_freight'] = ceil($body['discountLastMoney']) /100; // 商户成本
             isset($body['weight'])  &&  $updateOrder['final_weight'] = $body['weight']; // kg
+            isset($body['finishCode'])  &&  $updateOrder['code'] = $body['finishCode']; // 收货码
             isset($body['sendStatus'])   && $updateOrder['order_status'] = $wanLi->getOrderStatus($body['sendStatus']) ;
             isset($body['failMessage'])  &&  $updateOrder['yy_fail_reason'] = $body['failMessage']; // 失败原因
             isset($body['cancelTime'])  &&  $updateOrder['cancel_time'] = strtotime($body['cancelTime']); // 取消时间
@@ -1417,9 +1425,9 @@ class Wxcallback extends Controller
     /**
      * 超重支付回调
      * @return void
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
      */
     function wx_overload_pay(){
         $inWechatpaySignature = $this->request->header('Wechatpay-Signature');// 请根据实际情况获取
@@ -1997,9 +2005,9 @@ class Wxcallback extends Controller
 
     /**
      * 资源包微信下单回调
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
      */
     function resource_buy(){
         $inWechatpaySignature = $this->request->header('Wechatpay-Signature');// 请根据实际情况获取
