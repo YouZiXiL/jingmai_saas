@@ -2,12 +2,7 @@
 
 namespace app\common\business;
 
-use app\common\model\Order;
 use app\web\controller\Common;
-use app\web\controller\DoJob;
-use think\Env;
-use think\Log;
-use think\Queue;
 
 class WanLi
 {
