@@ -8,12 +8,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 mc.style.display = 'inline'
                 mask.style.display = 'inline'
             });
-            $(".wanli-recharge").click(function(){
-                var mc = document.getElementById("model-wanli")
-                var mask = document.getElementById("mask")
-                mc.style.display = 'inline'
-                mask.style.display = 'inline'
-            });
+
             $(".closeview").click(function(){
                 var mc = document.getElementById("model-container")
                 var mw = document.getElementById("model-wanli")
@@ -47,20 +42,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 });
             });
 
-
-            $(".wanli-pay").click(function(){
-                Fast.api.ajax({
-                    url: 'open/wanli/recharge?rechargePrice='+$('.amount').val(),
-                }, function (data) { //success
-                    alertWanliQrCode( data )
-
-                    return true;
-                }, function (data,ret) { //error
-
-
-                    return true;
-                });
-            });
 
             $(".choosePayType").click(function(){
                 var warning = document.getElementById("warning")

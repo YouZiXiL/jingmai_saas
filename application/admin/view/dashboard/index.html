@@ -14,9 +14,7 @@
         <div class="menu-btn openview" >
             <div>账号充值</div>
         </div>
-        <div class="menu-btn wanli-recharge" >
-            <div>万利充值</div>
-        </div>
+
         <div class="menu-btn authlist">
             <div>授权管理</div>
         </div>
@@ -41,12 +39,12 @@
             <div class="card-content">{$row.amount}元</div>
         </div>
     </div>
-    <div class="item">
-        <div class="card">
-            <div class="card-title">万利余额(元)</div>
-            <div class="card-content">{$row.wanliAmt}</div>
-        </div>
-    </div>
+<!--    <div class="item">-->
+<!--        <div class="card">-->
+<!--            <div class="card-title">万利余额(元)</div>-->
+<!--            <div class="card-content">xxxx</div>-->
+<!--        </div>-->
+<!--    </div>-->
     <div class="item">
         <div class="card">
             <div class="card-title">今日有效订单</div>
@@ -238,26 +236,6 @@
     </div>
 </div>
 
-<div class="model-container" id="model-wanli">
-    <div class="model-view">
-        <div class="model-title">
-            万利账户充值
-            <img src="/assets/img/close.png" id="close-icon" class="closeview" alt="">
-        </div>
-        <div class="line"></div>
-        <div class="model-content">
-            <div class="type">
-                <div style="margin-bottom: 10px;">充值金额</div>
-                <div style="display: flex;">
-                    <div class="inp-box">
-                        <span style="color: rgba(0,0,0,.85);font-size: 14px;">￥</span>
-                        <input step="1" type="number" value="100" class="amount" style="border: 0;outline: 0;">
-                    </div>
-                    <div class="wanli-pay btn btn-info ml-3">确认充值</div>
-                </div>
-        </div>
-    </div>
-</div>
 </body>
 <script>
 

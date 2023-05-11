@@ -16,3 +16,12 @@ info
 info
 [2023-05-09T11:03:26+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001907s ]
 info
+[2023-05-09T19:06:22+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000181s ]
+[ info ] [ LOG ] INIT File
+info
+[2023-05-09T19:06:22+08:00][ info ] [ CACHE ] INIT File
+info
+[2023-05-09T19:06:22+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.010549s ]
+info
+[2023-05-09T19:06:22+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.002085s ]
+info

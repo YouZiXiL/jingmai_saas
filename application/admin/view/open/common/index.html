@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>基本信息</title>
+</head>
+<body style="padding: 30px">
+    <div class="tip-container">
+        <div class="card">
+            <div class="card-title">万利余额（元）</div>
+            <div class="card-content">{$data.wanliAmt}</div>
+            <button class="wanli-recharge btn btn-info">充值</button>
+        </div>
+    </div>
+
+    <!-- 弹窗 -->
+    <div class="mask closeview" id="mask"></div>
+    <div class="model-container" id="model-container">
+        <div class="model-view">
+            <div class="model-title">
+                万利账户充值
+                <img src="/assets/img/close.png" id="close-icon" class="closeview" alt="">
+            </div>
+            <div class="line"></div>
+            <div class="model-content">
+                <div class="type">
+                    <div style="margin-right: 10px;">充值金额</div>
+                    <div style="display: flex;">
+                        <div class="inp-box">
+                            <span style="color: rgba(0,0,0,.85);font-size: 14px;">￥</span>
+                            <input step="1" type="number" value="100" class="amount" style="border: 0;outline: 0;">
+                        </div>
+                        <div class="wanli-pay btn btn-info ml-3">确认充值</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+
+
+</script>
+<style>
+    body{
+        background-color: #eff2f5;
+    }
+    .tip-container{
+        display: flex;
+        flex-flow: row wrap;
+        font-size: 14px;
+    }
+
+    .card:hover {
+        box-shadow: -6px -6px 20px rgba(0,0,0,0.1);
+    }
+
+    .card{
+        transition: all 0.3s;
+        height: 100%;
+        border: 1px solid rgba(0,0,0,.06);
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+        border-radius: 12px;
+        padding: 20px;
+    }
+    .card-title{
+        padding: 16px 24px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: rgba(0,0,0,.5);
+        font-weight: 500;
+        font-size: 16px;
+    }
+    .card-content{
+        padding: 24px;
+        color: rgba(0,0,0,.85);
+        font-size: 24px;
+        font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+        font-variant: tabular-nums;
+    }
+
+    .mask{
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-color: rgba(0,0,0,.45);
+        display: none;
+    }
+    .model-container{
+        position: fixed;
+        top: 100px;
+        right: 0;
+        left: 0;
+        /* bottom: 0; */
+        width: 700px;
+        margin: auto;
+        display: none;
+    }
+    .model-view{
+        position: relative;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 10px 10px 60px rgba(0,0,0,0.5);
+    }
+    .model-title{
+        padding: 16px 24px;
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 22px;
+        position: relative;
+    }
+    .model-content{
+        padding: 24px;
+    }
+    .warning{
+        padding: 8px 15px;
+        background-color: #fffbe6;
+        border: 1px solid #ffe58f;
+        font-size: 14px;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .icon{
+        width: 14px;
+        height: 14px;
+    }
+    .type{
+        margin: 20px;
+        display: flex;
+        align-items: center;
+    }
+
+    .icon{
+        width: 0;
+        height: 0;
+        border-top: 10px solid #5cabff;
+        border-left: 10px solid transparent;
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        display: none;
+    }
+    div:focus{
+        border: 1px solid #5cabff;
+    }
+    div:focus .icon{
+        display: inline;
+    }
+    .type-item:hover{
+        border: 1px solid #5cabff;
+    }
+    .inp-box{
+        border: 1px solid #d9d9d9;
+        border-radius: 2px;
+        padding-left: 11px;
+        display: flex;
+        align-items: center;
+    }
+    .inp-box:hover{
+        border: 1px solid #5cabff;
+    }
+    .btnss{
+        width: 88px;
+        height: 32px;
+        line-height: 32px;
+        margin-left: 20px;
+        background-color: rgb(51, 144, 255);
+        /* background-color: #5cabff; */
+        color: #fff;
+        font-size: 14px;
+        text-align: center;
+        border-radius: 2px;
+        box-shadow: 0 2px 0 rgb(0 0 0 / 5%);
+        cursor: pointer;
+    }
+    .btn:hover{
+        background-color: #5cabff;
+    }
+    #close-icon{
+        width: 1em;
+        height: 1em;
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        cursor: pointer;
+    }
+    #close-icon2{
+        width: 1em;
+        height: 1em;
+        position: absolute;
+        right: 16px;
+        top: 12px;
+        cursor: pointer;
+    }
+    #warning-icon{
+        width: 1em;
+        height: 1em;
+        cursor: pointer;
+    }
+    .line{
+        border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+</style>
+</html>

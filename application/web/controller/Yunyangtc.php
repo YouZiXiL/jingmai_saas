@@ -14,8 +14,10 @@ use think\exception\DbException;
 use think\Log;
 use think\Request;
 use think\response\Json;
+use WeChatPay\Builder;
 use WeChatPay\Crypto\Rsa;
 use WeChatPay\Formatter;
+use WeChatPay\Util\PemUtil;
 
 //云洋同城
 class Yunyangtc extends Controller
@@ -250,11 +252,11 @@ class Yunyangtc extends Controller
             ];
 
 
-
-            $url = 'https://testapi.wlhulian.com/api/v1/order/billing';
-            $data = $wl->setParma($content);
-//        dump(json_encode($param));exit;
-            $res = $this->common->httpRequest($url, $data, 'POST');
+            $res = $wl->getPrice($content);
+//            $url = config('site.wanli_url') .'/api/v1/order/billing' ;// 'https://testapi.wlhulian.com/api/v1/order/billing';
+//            $data = $wl->setParma($content);
+////        dump(json_encode($param));exit;
+//            $res = $this->common->httpRequest($url, $data, 'POST');
             $res = json_decode($res,true);
             if ($res['code'] != 200) throw new Exception($res['message']);
             $channelList = $res['data']['billingDetailList'];
@@ -406,7 +408,7 @@ class Yunyangtc extends Controller
      */
     public function getWalletBalance(WanLi $wanLi){
         $result = $wanLi->getWalletBalance();
-        return R::ok($result);
+        return R::ok(json_decode($result) );
     }
 
     /**
@@ -883,7 +885,10 @@ class Yunyangtc extends Controller
         if (empty($param['id'])){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
-        $order=db('orders')->field('id,waybill,item_name,final_price,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,receive_address,comments,item_pic,overload_status,pay_status,consume_status,,sender_logo,receive_logo,create_time,pickup_start_time')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
+
+//        $order=db('orders')->field('id,waybill,item_name,final_price,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,receive_address,comments,item_pic,overload_status,pay_status,consume_status,,sender_logo,receive_logo,create_time,pickup_start_time')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
+        $order=db('orders')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
+
         if(empty($order)){
             return json(['status'=>400,'data'=>'','msg'=>'此订单不存在']);
         }
@@ -915,6 +920,16 @@ class Yunyangtc extends Controller
             throw new Exception('订单信息错误');
         }
         return json(['status'=>200,'data'=>$data,'msg'=>'成功']);
+    }
+
+    /**
+     * 万利查看订单详情
+     * @param WanLi $wanLi
+     * @return Json
+     */
+    function get_order(WanLi $wanLi){
+        $res = $wanLi->detail(input('outOrderNo'));
+        return R::ok(json_decode($res));
     }
 
 }

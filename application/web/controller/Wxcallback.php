@@ -1099,7 +1099,8 @@ class Wxcallback extends Controller
 
                     //超轻处理
                     $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
-                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
+//                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
+                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0) {
                         $tralight_weight=$weight;//超轻重量
                         $tralight_amt=$orders['freight']-$result['orderEvent']['transportPrice']/100*0.68;//超轻金额
                         $admin_xuzhong=$tralight_amt/$tralight_weight;//平台续重单价
@@ -1110,6 +1111,7 @@ class Wxcallback extends Controller
                         $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                         $users_tralight_amt=$tralight_weight*$up_data['users_xuzhong'];//代理商给用户退款金额
                         $agent_tralight_amt=$tralight_weight*$up_data['agent_xuzhong'];//平台给代理商退余额
+
 
                         if(!empty($users["rootid"])){
                             $superB=db("admin")->find($users["rootid"]);
@@ -1143,8 +1145,8 @@ class Wxcallback extends Controller
 
                     }
                     //超重状态
-                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
-//                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
+//                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
@@ -1210,8 +1212,15 @@ class Wxcallback extends Controller
                         }
                     }
                     //更改耗材状态
-                    if ($result['orderEvent']['packageServicePrice']!=0 || $result['orderEvent']['insurancePrice']!=0){
-                        $up_data['haocai_freight'] = ($result['orderEvent']['packageServicePrice'] + $result['orderEvent']['insurancePrice'])/100;
+                    if ($result['orderEvent']['packageServicePrice']!=0
+                        || $result['orderEvent']['insurancePrice']!=0
+                        || $result['orderEvent']['deliveryPrice']!=0
+                    ){
+                        $up_data['haocai_freight'] = (
+                            $result['orderEvent']['packageServicePrice']
+                            + $result['orderEvent']['insurancePrice']
+                            + $result['orderEvent']['deliveryPrice']
+                        )/100;
                         $data = [
                             'type'=>2,
                             'freightHaocai' => $up_data['haocai_freight'],

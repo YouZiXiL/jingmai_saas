@@ -1,0 +1,221 @@
+---------------------------------------------------------------
+[2023-05-11T08:24:43+08:00] 192.168.33.1 GET tp.jingmai.test/web/login/msg_list
+[运行时间：0.908150s] [吞吐率：1.10req/s] [内存消耗：3,740.87kb] [文件加载：133]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.001398s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.015938s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001972s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000047s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'login',
+    2 => 'msg_list',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'accept-encoding' => 'gzip, deflate',
+  'referer' => 'https://servicewechat.com/wx4e1c5790644d5936/devtools/page-frame.html',
+  'accept' => '*/*',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.3 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1 wechatdevtools/1.06.2301160 MicroMessenger/8.0.5 Language/zh_CN webview/',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.007133s ]
+[ info ] [ RUN ] app\web\controller\Login->msg_list[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.052222s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_orders` [ RunTime:0.029667s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_orders` WHERE  `pay_status` = '1' ORDER BY `id` DESC LIMIT 10 [ RunTime:0.018415s ]
+---------------------------------------------------------------
+[2023-05-11T08:24:43+08:00] 192.168.33.1 GET tp.jingmai.test/web/login/get_config?app_id=wx4e1c5790644d5936
+[运行时间：0.923661s] [吞吐率：1.08req/s] [内存消耗：3,749.44kb] [文件加载：136]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.004222s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.018585s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.004180s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000979s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'login',
+    2 => 'get_config',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'accept-encoding' => 'gzip, deflate',
+  'referer' => 'https://servicewechat.com/wx4e1c5790644d5936/devtools/page-frame.html',
+  'accept' => '*/*',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.3 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1 wechatdevtools/1.06.2301160 MicroMessenger/8.0.5 Language/zh_CN webview/',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+  'app_id' => 'wx4e1c5790644d5936',
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.006407s ]
+[ info ] [ RUN ] app\web\controller\Login->get_config[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.056032s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_agent_auth` [ RunTime:0.031202s ]
+[ sql ] [ SQL ] SELECT `agent_id` FROM `fa_agent_auth` WHERE  `app_id` = 'wx4e1c5790644d5936' LIMIT 1 [ RunTime:0.018170s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_admin` [ RunTime:0.007024s ]
+[ sql ] [ SQL ] SELECT `zizhu`,`zhonghuo`,`coupon`,`wx_guanzhu`,`qywx_id`,`kf_url`,`wx_title`,`ordtips`,`ordtips_title`,`ordtips_cnt`,`zhongguo_tips`,`button_txt`,`order_tips`,`bujiao_tips`,`banner`,`add_tips`,`share_tips`,`share_pic`,`wx_map_key` FROM `fa_admin` WHERE  `id` IS NULL LIMIT 1 [ RunTime:0.009078s ]
+[ error ] [8]Trying to access array offset on value of type null[/www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php:279]
+---------------------------------------------------------------
+[2023-05-11T08:24:47+08:00] 192.168.33.1 GET tp.jingmai.test/web/users/checkinlist
+[运行时间：0.485058s] [吞吐率：2.06req/s] [内存消耗：2,828.70kb] [文件加载：127]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000041s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.025688s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.004271s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000099s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'users',
+    2 => 'checkinlist',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'accept-encoding' => 'gzip, deflate',
+  'referer' => 'https://servicewechat.com/wx4e1c5790644d5936/devtools/page-frame.html',
+  'accept' => '*/*',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.3 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1 wechatdevtools/1.06.2301160 MicroMessenger/8.0.5 Language/zh_CN webview/',
+  'phpsessid' => '',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.004469s ]
+[ info ] [ LOG ] INIT File
+---------------------------------------------------------------
+[2023-05-11T08:24:47+08:00] 192.168.33.1 GET tp.jingmai.test/web/users/userinfo
+[运行时间：0.506501s] [吞吐率：1.97req/s] [内存消耗：2,828.66kb] [文件加载：127]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.001059s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.015578s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.004257s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000045s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'users',
+    2 => 'userinfo',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'accept-encoding' => 'gzip, deflate',
+  'referer' => 'https://servicewechat.com/wx4e1c5790644d5936/devtools/page-frame.html',
+  'accept' => '*/*',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.3 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1 wechatdevtools/1.06.2301160 MicroMessenger/8.0.5 Language/zh_CN webview/',
+  'phpsessid' => '',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.018536s ]
+[ info ] [ LOG ] INIT File
+---------------------------------------------------------------
+[2023-05-11T08:24:47+08:00] 192.168.33.1 GET tp.jingmai.test/web/users/checkinlist
+[运行时间：0.202186s] [吞吐率：4.95req/s] [内存消耗：2,828.70kb] [文件加载：127]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000048s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.010687s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001521s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000036s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'users',
+    2 => 'checkinlist',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'accept-encoding' => 'gzip, deflate',
+  'referer' => 'https://servicewechat.com/wx4e1c5790644d5936/devtools/page-frame.html',
+  'accept' => '*/*',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.3 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1 wechatdevtools/1.06.2301160 MicroMessenger/8.0.5 Language/zh_CN webview/',
+  'phpsessid' => '',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.002239s ]
+[ info ] [ LOG ] INIT File
+---------------------------------------------------------------
+[2023-05-11T08:24:52+08:00] 192.168.33.1 GET tp.jingmai.test/web/login/get_openid?code=0a1feM0w3al5D03KDD3w3wbvpW1feM0f&app_id=wx4e1c5790644d5936&encrypted_data=ra51GN5e%2FcEBhUEaabG524gpq%2FRAEFxbsxlMBeFK662xrdPaFz81ZEm5LaEEvlci5obuTNelaZYk%2BS9030mUZ92FWtaCujyH0T0bFXQG7d4lqjm1q7oge6o1nH%2FcbaM2EuXW%2FBGb6BTVhAFC7370rspI0L5lJKXOjLnqBjsZFBmMtoAn%2FP1f7ArPZ1uat3X6M8EbMNv17S3kSZXohE9znQ%3D%3D&iv=W4YsC1K%2FMFdhB8bD5U8kBQ%3D%3D
+[运行时间：0.840547s] [吞吐率：1.19req/s] [内存消耗：3,717.05kb] [文件加载：136]
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.002436s ]
+[ info ] [ CACHE ] INIT File
+[ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.007757s ]
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.001262s ]
+[ info ] [ LANG ] /www/wwwroot/jiyu/jingmai_saas/thinkphp/lang/zh-cn.php
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_dispatch [ RunTime:0.000036s ]
+[ info ] [ ROUTE ] array (
+  'type' => 'module',
+  'module' => 
+  array (
+    0 => 'web',
+    1 => 'login',
+    2 => 'get_openid',
+  ),
+)
+[ info ] [ HEADER ] array (
+  'accept-encoding' => 'gzip, deflate',
+  'referer' => 'https://servicewechat.com/wx4e1c5790644d5936/devtools/page-frame.html',
+  'accept' => '*/*',
+  'content-type' => 'application/x-www-form-urlencoded',
+  'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.3 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1 wechatdevtools/1.06.2301160 MicroMessenger/8.0.5 Language/zh_CN webview/',
+  'connection' => 'keep-alive',
+  'host' => 'tp.jingmai.test',
+  'content-length' => '',
+)
+[ info ] [ PARAM ] array (
+  'code' => '0a1feM0w3al5D03KDD3w3wbvpW1feM0f',
+  'app_id' => 'wx4e1c5790644d5936',
+  'encrypted_data' => 'ra51GN5e/cEBhUEaabG524gpq/RAEFxbsxlMBeFK662xrdPaFz81ZEm5LaEEvlci5obuTNelaZYk+S9030mUZ92FWtaCujyH0T0bFXQG7d4lqjm1q7oge6o1nH/cbaM2EuXW/BGb6BTVhAFC7370rspI0L5lJKXOjLnqBjsZFBmMtoAn/P1f7ArPZ1uat3X6M8EbMNv17S3kSZXohE9znQ==',
+  'iv' => 'W4YsC1K/MFdhB8bD5U8kBQ==',
+)
+[ info ] [ BEHAVIOR ] Run app\common\behavior\Common @module_init [ RunTime:0.003519s ]
+[ info ] [ RUN ] app\web\controller\Login->get_openid[ /www/wwwroot/jiyu/jingmai_saas/application/web/controller/Login.php ]
+[ info ] [ DB ] INIT mysql
+[ info ] [ LOG ] INIT File
+[ sql ] [ DB ] CONNECT:[ UseTime:0.007692s ] mysql:host=127.0.0.1;dbname=admin_bajiehuidi;charset=utf8mb4
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_access_token` [ RunTime:0.011715s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_access_token` WHERE  `app_id` = 'wx29b33310b40315cb' ORDER BY `id` DESC LIMIT 1 [ RunTime:0.002819s ]
+[ sql ] [ SQL ] SHOW COLUMNS FROM `fa_wxcallback` [ RunTime:0.001808s ]
+[ sql ] [ SQL ] SELECT * FROM `fa_wxcallback` WHERE  `type` = 'component_verify_ticket' ORDER BY `id` DESC LIMIT 1 [ RunTime:0.003955s ]
+[ error ] [8]未定义数组索引: component_access_token[/www/wwwroot/jiyu/jingmai_saas/application/web/controller/Common.php:218]

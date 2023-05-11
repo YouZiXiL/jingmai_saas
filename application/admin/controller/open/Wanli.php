@@ -7,8 +7,6 @@ use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Exception;
 use think\Controller;
-use think\Request;
-use think\Response;
 use think\response\Json;
 use app\common\business\WanLi as Bs;
 
@@ -25,9 +23,9 @@ class Wanli extends Controller
     {
         $result = $wanLi->getWalletBalance();
         $result = json_decode($result,true);
-        if($result['code'] != 200) $usableAmt = $result['message'];
-        $usableAmt = $result['data']['usableAmt'];
-        $this->view->assign("usableAmt",$usableAmt);
+        if($result['code'] != 200) $wanliAmt = $result['message'];
+        $wanliAmt = $result['data']['usableAmt'];
+        $this->view->assign("wanliAmt",$wanliAmt);
         return $this->view->fetch();
     }
 
@@ -48,7 +46,7 @@ class Wanli extends Controller
      * @throws Exception
      */
     public function recharge(Bs $wanLi){
-        $result = $wanLi->recharge(input('rechargePrice'));
+        $result = $wanLi->recharge(input('rechargePrice') * 100);
 
         $result = json_decode($result,true);
         if ($result['code'] == 200){
@@ -65,7 +63,6 @@ class Wanli extends Controller
         }
 
     }
-
 
 
 }

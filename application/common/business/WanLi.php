@@ -13,11 +13,11 @@ class WanLi
 {
 
     public Common $utils;
-    public  $baseUlr;
+    public string $baseUlr;
 
     public function __construct(){
         $this->utils = new Common();
-        $this->baseUlr = Env::get('wanli.url');
+        $this->baseUlr = config('site.wanli_url');
     }
 
     /**
@@ -29,8 +29,8 @@ class WanLi
         $json = json_encode($data);
         $timestamp = floor(microtime(true) * 1000);
         $nonce = str_shuffle($timestamp);
-        $appid = Env::get('wanli.appid');
-        $secret = Env::get('wanli.secret');
+        $appid = config('site.wanli_appid');
+        $secret = config('site.wanli_secret');
         $sign = md5($secret . $timestamp . $nonce . $json) ;
         return [
             'appId' => $appid,
@@ -39,6 +39,17 @@ class WanLi
             'timestamp' => $timestamp,
             'nonce' => $nonce,
         ];
+    }
+
+    /**
+     * 获取快递价格
+     * @param array $content
+     * @return mixed
+     */
+    public function getPrice(array $content){
+        $url = $this->baseUlr . '/api/v1/order/billing';
+        $data = $this->setParma($content);
+        return $this->utils->httpRequest($url, $data, 'POST');
     }
 
     /**
@@ -135,10 +146,8 @@ class WanLi
     public function getWalletBalance(){
         $url = $this->baseUlr .  '/api/v1/wallet/balance';
         $data = $this->setParma([]);
-        $result = $this->utils->httpRequest($url, $data,'POST');
-        $logData =  date('y-m-d h:i:s', time()) .$result;
-        file_put_contents( root_path('runtime/cur/wanli/recharge.txt'), $logData , FILE_APPEND);
-        return $result;
+        return $this->utils->httpRequest($url, $data,'POST');
+
     }
 
 
@@ -151,9 +160,20 @@ class WanLi
         $url = $this->baseUlr . '/api/v1/wallet/accountRecharge';
         $data = $this->setParma(['rechargePrice' => $price]);
         $result = $this->utils->httpRequest($url, $data,'POST');
-        $logData =  date('y-m-d h:i:s', time()) .$result;
+        $logData =  date('y-m-d h:i:s', time()) .$result . PHP_EOL;
         file_put_contents( root_path('runtime/cur/wanli/recharge.txt'), $logData , FILE_APPEND);
         return $result;
+    }
+
+    /**
+     * 万利 查看订单详情
+     * @param $outOrderNo
+     * @return bool|string
+     */
+    public function detail($outOrderNo){
+        $url = $this->baseUlr . '/api/v1/order/query/detail';
+        $data = $this->setParma(['outOrderNo' => $outOrderNo]);
+        return $this->utils->httpRequest($url, $data,'POST');
     }
 
 }
