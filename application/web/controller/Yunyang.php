@@ -27,7 +27,7 @@ class Yunyang extends Controller
 {
 
     protected $user;
-    protected $common;
+    protected Common $common;
 
     public function _initialize()
     {
@@ -1366,11 +1366,14 @@ class Yunyang extends Controller
         if ($orders['pay_status']!=1){
             throw new Exception('此订单已取消');
         }
-          $upload = new Upload($file);
-          if (!in_array($upload->getSuffix(),['jpg','png','jpeg','bmp','webp'])){
-              throw new Exception('图片类型错误');
-          }
+
+
+        $upload = new Upload($file);
+        if (!in_array($upload->getSuffix(),['jpg','png','jpeg','bmp','webp'])){
+            throw new Exception('图片类型错误');
+        }
         $attachment = $upload->upload();
+
 //            $content=[
 //                'subType'=>'2',
 //                'waybill'=>$orders['waybill'],
@@ -1384,8 +1387,8 @@ class Yunyang extends Controller
 //                throw new Exception($data['message']);
 //            }
 
-            // 成功上传后 获取上传信息
-            // 输出 20160820/42a79759f284b767dfcb2a0197904287.jpg
+
+
             db('after_sale')->insert([
                 'order_id'=>$pamar['id'],
                 'user_id'=>$this->user->id,
@@ -1410,6 +1413,28 @@ class Yunyang extends Controller
                 'create_time'=>time(),
                 'update_time'=>time(),
             ]);
+
+            // 推送异常反馈订单
+            $agentModel = Admin::find($orders['agent_id']);
+            if (!$agentModel){
+                Log::info('异常推送订单记录：' . $orders['waybill']);
+                $agent_info = $agentModel->toArray();
+                $content='>>>问题运单号:'.PHP_EOL.
+                    '<font color="info">'.$orders['waybill'].'</font>'.PHP_EOL.
+                    '物品:'.PHP_EOL.
+                    '<font color="info">'.$orders['item_name'].'</font>'.PHP_EOL.
+                    '反馈内容:'.PHP_EOL.
+                    '<font color="comment">'.$pamar['salf_content'].'</font>'.PHP_EOL.
+                    '反馈重量:'.PHP_EOL.
+                    '<font color="warning">'.$pamar['salf_weight'].'</font>'.PHP_EOL.
+                    '反馈体积:'.PHP_EOL.
+                    '<font color="warning">'.$pamar['salf_volume'].'</font>'.PHP_EOL;
+                    '<img src="' . $this->request->domain().$attachment->url .'"' . '/>'.PHP_EOL;
+                $this->common->wxrobot_exception_msg($agent_info['wx_im_bot'],$content);
+                Log::info('异常推送完成');
+            }
+
+
             return json(['status'=>200,'data'=>'','msg'=>'提交成功']);
         }catch (Exception $e){
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);

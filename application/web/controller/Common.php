@@ -340,6 +340,21 @@ class Common
         ],'POST');
     }
 
+    /**
+     * 推送企业微信消息(异常反馈)
+     * @param string $wx_im_bot
+     * @param string $content 反馈内容
+     * @return void
+     */
+    function wxrobot_exception_msg($wx_im_bot,$content){
+        $common=new Common();
+        $common->httpRequest($wx_im_bot,['msgtype'=>'markdown',
+            'markdown'=>[
+                'content'=>$content
+            ]
+        ],'POST');
+    }
+
     public function chongzhi($path,$data){
         $content=[
             "userid"=>$this->userid,
