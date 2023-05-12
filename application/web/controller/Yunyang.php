@@ -1371,18 +1371,18 @@ class Yunyang extends Controller
               throw new Exception('图片类型错误');
           }
         $attachment = $upload->upload();
-            $content=[
-                'subType'=>'2',
-                'waybill'=>$orders['waybill'],
-                'checkGoodsName'=>$orders['item_name'],
-                'checkWeight'=>$pamar['salf_weight'],
-                'checkVolume'=>$pamar['salf_volume'],
-                'checkPicOne'=>$this->request->domain().$attachment->url,
-            ];
-            $data=$this->common->yunyang_api('AFTER_SALE',$content);
-            if ($data['code']!=1){
-                throw new Exception($data['message']);
-            }
+//            $content=[
+//                'subType'=>'2',
+//                'waybill'=>$orders['waybill'],
+//                'checkGoodsName'=>$orders['item_name'],
+//                'checkWeight'=>$pamar['salf_weight'],
+//                'checkVolume'=>$pamar['salf_volume'],
+//                'checkPicOne'=>$this->request->domain().$attachment->url,
+//            ];
+//            $data=$this->common->yunyang_api('AFTER_SALE',$content);
+//            if ($data['code']!=1){
+//                throw new Exception($data['message']);
+//            }
 
             // 成功上传后 获取上传信息
             // 输出 20160820/42a79759f284b767dfcb2a0197904287.jpg
