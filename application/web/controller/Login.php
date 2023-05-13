@@ -11,6 +11,8 @@ use app\web\library\ali\AliConfig as AliConfigC;
 use Exception;
 use think\Cache;
 use think\Controller;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\exception\DbException;
 use think\Log;
 use think\Request;
@@ -92,6 +94,7 @@ class Login extends Controller
             }
             $s=$user->save($user_info);
             $user_id=$user->id;
+            $mobile = $user_info['mobile'];
 
         } else {
             $data=[
@@ -108,13 +111,14 @@ class Login extends Controller
             }
             $s=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
             $user_id=$user_info->id;
-
+            $mobile = $data['mobile'];
         }
 
         if ($s){
             $data=['status'=>200,'data'=>$_3rd_session,'msg'=>'登录成功'];
             $session=[
                 'id' =>$user_id,
+                'mobile' => $mobile,
                 'agent_id'=>$agent_id,
                 'app_id' =>$param['app_id'],
                 'open_id'=>$json_obj["openid"],
@@ -175,6 +179,7 @@ class Login extends Controller
         $data=['status'=>200,'data'=>$token,'msg'=>'登录成功'];
         $session=[
             'id' => $user->id,
+            'mobile' => $user->mobile,
             'agent_id'=>$agent_id,
             'app_id' => input('appid'),
             'open_id'=> $openid,
@@ -245,6 +250,9 @@ class Login extends Controller
     /**
      * 消息列表
      * @return Json
+     * @throws DbException
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
      */
     function msg_list(): Json
     {

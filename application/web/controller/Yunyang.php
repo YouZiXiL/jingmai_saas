@@ -1345,6 +1345,7 @@ class Yunyang extends Controller
      */
     function after_sale(): Json
     {
+        Log::info('异常反馈');
         $pamar=$this->request->param();
         $file = $this->request->file('pic');
       try {
@@ -1359,6 +1360,10 @@ class Yunyang extends Controller
         if (!$orders){
             throw new Exception('没有此订单');
         }
+
+
+
+
         $after_sale=db('after_sale')->where('order_id',$pamar['id'])->where('user_id',$this->user->id)->find();
         if ($after_sale){
             throw new Exception('不能重复反馈');
@@ -1414,25 +1419,22 @@ class Yunyang extends Controller
                 'update_time'=>time(),
             ]);
 
+
             // 推送异常反馈订单
-            $agentModel = Admin::find($orders['agent_id']);
-            if (!$agentModel){
-                Log::info('异常推送订单记录：' . $orders['waybill']);
-                $agent_info = $agentModel->toArray();
-                $content='>>>问题运单号:'.PHP_EOL.
-                    '<font color="info">'.$orders['waybill'].'</font>'.PHP_EOL.
-                    '物品:'.PHP_EOL.
-                    '<font color="info">'.$orders['item_name'].'</font>'.PHP_EOL.
-                    '反馈内容:'.PHP_EOL.
-                    '<font color="comment">'.$pamar['salf_content'].'</font>'.PHP_EOL.
-                    '反馈重量:'.PHP_EOL.
-                    '<font color="warning">'.$pamar['salf_weight'].'</font>'.PHP_EOL.
-                    '反馈体积:'.PHP_EOL.
-                    '<font color="warning">'.$pamar['salf_volume'].'</font>'.PHP_EOL;
-                    '<img src="' . $this->request->domain().$attachment->url .'"' . '/>'.PHP_EOL;
-                $this->common->wxrobot_exception_msg($agent_info['wx_im_bot'],$content);
-                Log::info('异常推送完成');
-            }
+            Log::info('异常推送订单记录：' . $orders['waybill']);
+            $user = $this->user;
+            $agentModel = Admin::field('nickname')->find($orders['agent_id'])->toArray();
+            $content = [
+                'user' => $user->mobile . "（{$agentModel['nickname']}）", // 反馈人
+                'waybill' => $orders['waybill'],   // 运单号
+                'item_name' => $orders['item_name'], // 物品名称
+                'body' => $pamar['salf_content'],  // 反馈内容
+                'weight' => $pamar['salf_weight'],    // 反馈重量
+                'volume' => $pamar['salf_volume'],    // 反馈体积
+                'img' => $this->request->domain().$attachment->url,  // 图片地址
+            ];
+            $this->common->wxrobot_exception_msg($content);
+            Log::info('异常推送完成');
 
 
             return json(['status'=>200,'data'=>'','msg'=>'提交成功']);

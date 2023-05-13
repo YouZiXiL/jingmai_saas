@@ -342,15 +342,27 @@ class Common
 
     /**
      * 推送企业微信消息(异常反馈)
-     * @param string $wx_im_bot
-     * @param string $content 反馈内容
+     * @param array $content
+     * [
+     *  waybill 运单号
+     *  item_name 物品名称
+     *  body 反馈内容
+     *  weight 反馈重量
+     *  volume 反馈体积
+     *  img 图片地址
+     * ]
      * @return void
      */
-    function wxrobot_exception_msg($wx_im_bot,$content){
-        $common=new Common();
-        $common->httpRequest($wx_im_bot,['msgtype'=>'markdown',
+    function wxrobot_exception_msg(array $content){
+        $data = $this->httpRequest(config('site.wx_robot_url'),['msgtype'=>'markdown',
             'markdown'=>[
-                'content'=>$content
+                'content'=> '异常反馈订单'.PHP_EOL.
+                    '> 运单号：<font color="info">' .$content['waybill']. '</font>'. PHP_EOL .
+                    '> 反馈人：<font color="info">' .$content['user']. '</font>'. PHP_EOL .
+                    '> 反馈物品：<font color="info">' .$content['item_name']. '</font>'. PHP_EOL .
+                    '> 反馈重量：<font color="warning">'.$content['weight'].'</font>'. PHP_EOL .
+                    '> 反馈体积：<font color="warning">'.$content['volume'].'</font>'. PHP_EOL .
+                    '> 反馈内容：' . strip_tags($content['body']) . PHP_EOL
             ]
         ],'POST');
     }

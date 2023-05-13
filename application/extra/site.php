@@ -1,43 +1,44 @@
 <?php
 
 return array (
-  'name' => '鲸喜物流测试',
-  'beian' => '',
-  'cdnurl' => '',
-  'version' => '1.0.12',
-  'timezone' => 'Asia/Shanghai',
-  'forbiddenip' => '',
-  'languages' => 
-  array (
+    'name' => '鲸喜物流测试',
+    'beian' => '',
+    'cdnurl' => '',
+    'version' => '1.0.12',
+    'timezone' => 'Asia/Shanghai',
+    'forbiddenip' => '',
+    'languages' =>
+    array (
     'backend' => 'zh-cn',
     'frontend' => 'zh-cn',
-  ),
-  'fixedpage' => 'dashboard',
-  'categorytype' => 
-  array (
-  ),
-  'configgroup' => 
-  array (
+    ),
+    'fixedpage' => 'dashboard',
+    'categorytype' =>
+    array (
+    ),
+    'configgroup' =>
+    array (
     'admin_config' => '后台配置',
     'basic' => '基础配置',
     'email' => '邮件配置',
     'dictionary' => '字典配置',
-  ),
-  'mail_type' => '1',
-  'mail_smtp_host' => 'smtp.qq.com',
-  'mail_smtp_port' => '465',
-  'mail_smtp_user' => '10000',
-  'mail_smtp_pass' => 'password',
-  'mail_verify_type' => '2',
-  'mail_from' => '10000@qq.com',
-  'attachmentcategory' => 
-  array (
+    ),
+    'mail_type' => '1',
+    'mail_smtp_host' => 'smtp.qq.com',
+    'mail_smtp_port' => '465',
+    'mail_smtp_user' => '10000',
+    'mail_smtp_pass' => 'password',
+    'mail_verify_type' => '2',
+    'mail_from' => '10000@qq.com',
+    'attachmentcategory' =>
+    array (
     'category1' => '分类一',
-  ),
-  'wx_appid' => 'wx2bdcfd1e4405bde9',
-  'wx_mchid' => '1637142421',
-  'wx_mchprivatekey' => 'Jingxiwuliu0Jingmaikeji1jingxi88',
-  'wx_mchcertificateserial' => '3BDDA981C2DD2864C223F20855D050BB962C4F2E',
+    ),
+    'wx_appid' => 'wx2bdcfd1e4405bde9',
+    'wx_mchid' => '1637142421',
+    'wx_mchprivatekey' => 'Jingxiwuliu0Jingmaikeji1jingxi88',
+    'wx_mchcertificateserial' => '3BDDA981C2DD2864C223F20855D050BB962C4F2E',
+    'wx_robot_url' => 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=c8ba9c1c-fd77-49a0-a96b-dd16cce720ce',
   'wx_platformcertificate' => '-----BEGIN PRIVATE KEY-----
 MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDivrw9YqfMS+HF
 AK2//guDw6d4ezesMOaCT7RwyclwyhWvU72bk1xNOuMLnrLU2XPdlQmEVnO4Fn97
@@ -87,6 +88,7 @@ ASt4V0K4Pn6cd84Eq0qxH2BbSg==
     'wanli_appid'  => '000e8f9c948a48e9908bccd30b2ff05a',
     'wanli_secret'  => 'bd1e102becd34fc29b7a57c21f566589',
     'wanli_url' => 'https://openapi.wlhulian.com',
+
     // 测试环境
 //    'wanli_appid'  => '354f080650684f76b45b5d089c544d20', // '354f080650684f76b45b5d089c544d20',
 //    'wanli_secret'  => '962f08a7112b45f09f8594023bf407be', //'962f08a7112b45f09f8594023bf407be',

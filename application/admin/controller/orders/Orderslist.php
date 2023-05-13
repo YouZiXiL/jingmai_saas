@@ -6,6 +6,7 @@ use app\admin\model\users\Blacklist;
 use app\admin\model\users\Userslist;
 use app\common\controller\Backend;
 use app\web\controller\Common;
+use app\web\model\Admin;
 use app\web\model\Users;
 use think\Db;
 use think\Exception;
@@ -189,7 +190,6 @@ class Orderslist extends Backend
     function after($ids = null){
         $Afterlist_model=new \app\admin\model\orders\Afterlist();
         $Afterlist=$Afterlist_model->get(['order_id'=>$ids]);
-
         $row = $this->model->get(['id'=>$ids]);
         if (!$row) {
             $this->error(__('No Results were found'));
@@ -205,7 +205,7 @@ class Orderslist extends Backend
             return $this->view->fetch();
         }
         $params = $this->request->post('row/a');
-        $common=new Common();
+        $common = new Common();
         if (empty($params)) {
             $this->error(__('Parameter %s can not be empty', ''));
         }
@@ -223,55 +223,64 @@ class Orderslist extends Backend
             }
             $row->allowField(true)->save(['tralight_status'=>3]);
         }
+        $agentModel = Admin::field('nickname')->find($row['agent_id'])->toArray();
+        $content = [
+            'user' => "代理商（{$agentModel['nickname']}）", // 反馈人
+            'waybill' => $row['waybill'],          // 运单号
+            'item_name' => $row['item_name'],      // 物品名称
+            'body' => $params['salf_content'],  // 反馈内容
+            'weight' => $params['salf_weight'],    // 反馈重量
+            'volume' => $params['salf_volume'],    // 反馈体积
+            'img' => '',  // 图片地址
+        ];
 
+        if (!empty($params['pic']))$img=$this->request->domain().$params['pic'];
         //超重反馈
         if ($params['salf_type']==1){
             $weight=ceil($row['final_weight']-$row['weight']);
-
             if ($weight<=0){
                 $this->error(__('此订单不能反馈超重'));
             }
+//            $yyContent=[
+//                'subType'=>'2',
+//                'waybill'=>$row['waybill'],
+//                'checkGoodsName'=>$row['item_name'],
+//                'checkWeight'=>$params['salf_weight'],
+//                'checkVolume'=>$params['salf_volume'],
+//            ];
+            $common->wxrobot_exception_msg($content);
 
-            $content=[
-                'subType'=>'2',
-                'waybill'=>$row['waybill'],
-                'checkGoodsName'=>$row['item_name'],
-                'checkWeight'=>$params['salf_weight'],
-                'checkVolume'=>$params['salf_volume'],
-            ];
-            if (!empty($params['pic'])){
-                $content['checkPicOne']=$this->request->domain().$params['pic'];
-                $params['pic']=$this->request->domain().$params['pic'];
-            }
-            $data=$common->yunyang_api('AFTER_SALE',$content);
-            if ($data['code']!=1){
-                $this->error($data['message']);
-            }
+//            $data=$common->yunyang_api('AFTER_SALE',$content);
+//            if ($data['code']!=1){
+//                $this->error($data['message']);
+//            }
         }
         //取消订单反馈
         if ($params['salf_type']==0){
-            $content=[
-                'subType'=>'3',
-                'waybill'=>$row['waybill'],
-                'checkType'=>1,
-            ];
-            $data=$common->yunyang_api('AFTER_SALE',$content);
-            if ($data['code']!=1){
-                $this->error($data['message']);
-            }
+            $common->wxrobot_exception_msg($content);
+//            $content=[
+//                'subType'=>'3',
+//                'waybill'=>$row['waybill'],
+//                'checkType'=>1,
+//            ];
+//            $data=$common->yunyang_api('AFTER_SALE',$content);
+//            if ($data['code']!=1){
+//                $this->error($data['message']);
+//            }
         }
         //现结/到付反馈
         if ($params['salf_type']==3){
-            $content=[
-                'subType'=>'3',
-                'waybill'=>$row['waybill'],
-                'checkType'=>3,
-            ];
-            $data=$common->yunyang_api('AFTER_SALE',$content);
-
-            if ($data['code']!=1){
-                $this->error($data['message']);
-            }
+            $common->wxrobot_exception_msg($content);
+//            $content=[
+//                'subType'=>'3',
+//                'waybill'=>$row['waybill'],
+//                'checkType'=>3,
+//            ];
+//            $data=$common->yunyang_api('AFTER_SALE',$content);
+//
+//            if ($data['code']!=1){
+//                $this->error($data['message']);
+//            }
         }
 
 
