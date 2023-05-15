@@ -1,117 +1,155 @@
-<form id="saleratio-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+<style>
+    .row-center{
+        display: flex; flex-wrap: wrap ;align-items: center
+    }
+    .text-tip{
+        font-size: 10px; color: #666666;
+    }
+</style>
 
-    <div class="form-group {:$auth->check('basicset/saleratio/users_shouzhong')?'':'hide'}">
-        <label for="users_shouzhong" class="control-label col-xs-12 col-sm-2">首重价格￥</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="users_shouzhong" name="row[users_shouzhong]" autocomplete="off" value="{$row.users_shouzhong}"  />
-        </div>
-    </div>
-    <div class="form-group {:$auth->check('basicset/saleratio/users_xuzhong')?'':'hide'}">
-        <label for="users_xuzhong" class="control-label col-xs-12 col-sm-2">续重价格￥</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="users_xuzhong" name="row[users_xuzhong]" autocomplete="off" value="{$row.users_xuzhong}"  />
-        </div>
-    </div>
-    <div class="form-group {:$auth->check('basicset/saleratio/users_shouzhong_ratio')?'':'hide'}">
-        <label for="users_shouzhong_ratio" class="control-label col-xs-12 col-sm-2">续重增加比例%</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="users_shouzhong_ratio" name="row[users_shouzhong_ratio]" autocomplete="off" value="{$row.users_shouzhong_ratio}"  />
-        </div>
-    </div>
-    <div class="form-group {:$auth->check('basicset/saleratio/sf_users_ratio')?'':'hide'}">
-        <label for="sf_users_ratio" class="control-label col-xs-12 col-sm-2">顺丰增加比例%(顺丰特惠)</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="sf_users_ratio" name="row[sf_users_ratio]" autocomplete="off" value="{$row.sf_users_ratio}"  />
-        </div>
-    </div>
-    <div class="form-group {:$auth->check('basicset/saleratio/db_users_ratio')?'':'hide'}">
-        <label for="db_users_ratio" class="control-label col-xs-12 col-sm-2">德邦增加比例%(寄重货)</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="db_users_ratio" name="row[db_users_ratio]" autocomplete="off" value="{$row.db_users_ratio}"  />
-        </div>
-    </div>
-    <div class="form-group {:$auth->check('basicset/saleratio/agent_tc_ratio')?'':'hide'}">
-        <label for="agent_tc_ratio" class="control-label col-xs-12 col-sm-2">同城增加比例%</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="agent_tc_ratio" name="row[agent_tc_ratio]" autocomplete="off" value="{$row.agent_tc_ratio}"  />
-        </div>
-    </div>
+<div class="panel panel-default panel-intro">
+    <div class="panel-body" style="padding: 30px">
+            <form id="saleratio-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/users_shouzhong')?'':'hide'}">
+                    <label for="users_shouzhong" class="control-label col-xs-12 col-sm-2">首重价格￥</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="users_shouzhong" name="row[users_shouzhong]" autocomplete="off" value="{$row.users_shouzhong}" />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >下单时的重量价格</p>
+                </div>
 
-    <div class="form-group {:$auth->check('basicset/saleratio/imm_rate')?'':'hide'}">
-        <label for="imm_rate" class="control-label col-xs-12 col-sm-2">直接返佣比例%</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="imm_rate" name="row[imm_rate]" autocomplete="off" value="{$row.imm_rate}"  />
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/users_xuzhong')?'':'hide'}" >
+                    <label for="users_xuzhong" class="control-label col-xs-12 col-sm-2">续重价格￥</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="users_xuzhong" name="row[users_xuzhong]" autocomplete="off" value="{$row.users_xuzhong}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip">物体超出重量需补交的价格</p>
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/users_shouzhong_ratio')?'':'hide'}"  >
+                    <label for="users_shouzhong_ratio" class="control-label col-xs-12 col-sm-2">续重增加比例%</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="users_shouzhong_ratio" name="row[users_shouzhong_ratio]" autocomplete="off" value="{$row.users_shouzhong_ratio}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格</p>
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/sf_users_ratio')?'':'hide'}">
+                    <label for="sf_users_ratio" class="control-label col-xs-12 col-sm-2">顺丰增加比例%(顺丰特惠)</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="sf_users_ratio" name="row[sf_users_ratio]" autocomplete="off" value="{$row.sf_users_ratio}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格</p>
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/db_users_ratio')?'':'hide'}">
+                    <label for="db_users_ratio" class="control-label col-xs-12 col-sm-2">德邦增加比例%(寄重货)</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="db_users_ratio" name="row[db_users_ratio]" autocomplete="off" value="{$row.db_users_ratio}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格</p>
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/agent_tc_ratio')?'':'hide'}">
+                    <label for="agent_tc_ratio" class="control-label col-xs-12 col-sm-2">同城增加比例%</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="agent_tc_ratio" name="row[agent_tc_ratio]" autocomplete="off" value="{$row.agent_tc_ratio}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格</p>
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/imm_rate')?'':'hide'}">
+                    <label for="imm_rate" class="control-label col-xs-12 col-sm-2">直接返佣比例%</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="imm_rate" name="row[imm_rate]" autocomplete="off" value="{$row.imm_rate}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格</p>
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/midd_rate')?'':'hide'}">
+                    <label for="midd_rate" class="control-label col-xs-12 col-sm-2">间接返佣比例%</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="midd_rate" name="row[midd_rate]" autocomplete="off" value="{$row.midd_rate}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >A用户分享海报给B用户，B用户分享给C用户，C下单后A的收益。</p>
+
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/service_rate')?'':'hide'}">
+                    <label for="service_rate" class="control-label col-xs-12 col-sm-2">佣金提现手续费率：建议8%</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="service_rate" name="row[service_rate]" autocomplete="off" value="{$row.service_rate}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >客户提现时要扣除的费用。</p>
+
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/user_cashoutdate')?'':'hide'}">
+                    <label for="user_cashoutdate" class="control-label col-xs-12 col-sm-2">提现日期(默认26)</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="user_cashoutdate" name="row[user_cashoutdate]" autocomplete="off" value="{$row.user_cashoutdate}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >分佣返现客户提现的日期。</p>
+
+                </div>
+
+                <!--    <div class="form-group {:$auth->check('basicset/saleratio/agent_wa_ratio')?'':'hide'}">-->
+                <!--        <label for="agent_wa_ratio" class="control-label col-xs-12 col-sm-2">水费折扣:</label>-->
+                <!--        <div class="col-xs-12 col-sm-2">-->
+                <!--            <input type="number" min="0" class="form-control" id="agent_wa_ratio" name="row[agent_wa_ratio]" autocomplete="off" value="{$row.agent_wa_ratio}"  />-->
+                <!--        </div>-->
+                <!--    </div>-->
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/agent_elec_ratio')?'':'hide'}">
+                    <label for="agent_elec_ratio" class="control-label col-xs-12 col-sm-2">电费折扣:</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="agent_elec_ratio" name="row[agent_elec_ratio]" autocomplete="off" value="{$row.agent_elec_ratio}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >电费利润，此处填写1，利润为1元，以此类推。</p>
+                </div>
+
+                <!--    <div class="form-group {:$auth->check('basicset/saleratio/agent_gas_ratio')?'':'hide'}">-->
+                <!--        <label for="agent_gas_ratio" class="control-label col-xs-12 col-sm-2">燃气折扣:</label>-->
+                <!--        <div class="col-xs-12 col-sm-2">-->
+                <!--            <input type="number" min="0" class="form-control" id="agent_gas_ratio" name="row[agent_gas_ratio]" autocomplete="off" value="{$row.agent_gas_ratio}"  />-->
+                <!--        </div>-->
+                <!--    </div>-->
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/agent_credit_ratio')?'':'hide'}">
+                    <label for="agent_credit_ratio" class="control-label col-xs-12 col-sm-2">话费折扣:</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="agent_credit_ratio" name="row[agent_credit_ratio]" autocomplete="off" value="{$row.agent_credit_ratio}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >话费利润，此处填写1，利润为1元，以此类推。</p>
+
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/vipprice')?'':'hide'}">
+                    <label for="vipprice" class="control-label col-xs-12 col-sm-2">会员价格:</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="vipprice" name="row[vipprice]" autocomplete="off" value="{$row.vipprice}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >客户购买会员需要支付的金额，配合营销模块-优惠券类型-会员赠送使用</p>
+
+                </div>
+
+                <div class="form-group row-center {:$auth->check('basicset/saleratio/couponcount')?'':'hide'}">
+                    <label for="couponcount" class="control-label col-xs-12 col-sm-2">福利秒杀最大库存:</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input type="number" min="0" class="form-control" id="couponcount" name="row[couponcount]" autocomplete="off" value="{$row.couponcount}"  />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >PLUS会员：福利秒杀抢购最大数量</p>
+
+                </div>
+
+                <div class="form-group layer-footer">
+                    <label class="control-label col-xs-12 col-sm-2"></label>
+                    <div class="col-xs-12 col-sm-8">
+                        <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+                        <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+                    </div>
+                </div>
+            </form>
+
         </div>
-    </div>
-
-    <div class="form-group {:$auth->check('basicset/saleratio/midd_rate')?'':'hide'}">
-        <label for="midd_rate" class="control-label col-xs-12 col-sm-2">间接返佣比例%</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="midd_rate" name="row[midd_rate]" autocomplete="off" value="{$row.midd_rate}"  />
-        </div>
-    </div>
-
-    <div class="form-group {:$auth->check('basicset/saleratio/service_rate')?'':'hide'}">
-        <label for="service_rate" class="control-label col-xs-12 col-sm-2">佣金提现手续费率：建议8%</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="service_rate" name="row[service_rate]" autocomplete="off" value="{$row.service_rate}"  />
-        </div>
-    </div>
-
-    <div class="form-group {:$auth->check('basicset/saleratio/user_cashoutdate')?'':'hide'}">
-        <label for="user_cashoutdate" class="control-label col-xs-12 col-sm-2">提现日期(默认26)</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="user_cashoutdate" name="row[user_cashoutdate]" autocomplete="off" value="{$row.user_cashoutdate}"  />
-        </div>
-    </div>
-
-<!--    <div class="form-group {:$auth->check('basicset/saleratio/agent_wa_ratio')?'':'hide'}">-->
-<!--        <label for="agent_wa_ratio" class="control-label col-xs-12 col-sm-2">水费折扣:</label>-->
-<!--        <div class="col-xs-12 col-sm-2">-->
-<!--            <input type="number" min="0" class="form-control" id="agent_wa_ratio" name="row[agent_wa_ratio]" autocomplete="off" value="{$row.agent_wa_ratio}"  />-->
-<!--        </div>-->
-<!--    </div>-->
-
-    <div class="form-group {:$auth->check('basicset/saleratio/agent_elec_ratio')?'':'hide'}">
-        <label for="agent_elec_ratio" class="control-label col-xs-12 col-sm-2">电费折扣:</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="agent_elec_ratio" name="row[agent_elec_ratio]" autocomplete="off" value="{$row.agent_elec_ratio}"  />
-        </div>
-    </div>
-
-<!--    <div class="form-group {:$auth->check('basicset/saleratio/agent_gas_ratio')?'':'hide'}">-->
-<!--        <label for="agent_gas_ratio" class="control-label col-xs-12 col-sm-2">燃气折扣:</label>-->
-<!--        <div class="col-xs-12 col-sm-2">-->
-<!--            <input type="number" min="0" class="form-control" id="agent_gas_ratio" name="row[agent_gas_ratio]" autocomplete="off" value="{$row.agent_gas_ratio}"  />-->
-<!--        </div>-->
-<!--    </div>-->
-
-    <div class="form-group {:$auth->check('basicset/saleratio/agent_credit_ratio')?'':'hide'}">
-        <label for="agent_credit_ratio" class="control-label col-xs-12 col-sm-2">话费折扣:</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="agent_credit_ratio" name="row[agent_credit_ratio]" autocomplete="off" value="{$row.agent_credit_ratio}"  />
-        </div>
-    </div>
-
-    <div class="form-group {:$auth->check('basicset/saleratio/vipprice')?'':'hide'}">
-        <label for="vipprice" class="control-label col-xs-12 col-sm-2">会员价格:</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="vipprice" name="row[vipprice]" autocomplete="off" value="{$row.vipprice}"  />
-        </div>
-    </div>
-
-    <div class="form-group {:$auth->check('basicset/saleratio/couponcount')?'':'hide'}">
-        <label for="couponcount" class="control-label col-xs-12 col-sm-2">福利秒杀最大库存:</label>
-        <div class="col-xs-12 col-sm-2">
-            <input type="number" min="0" class="form-control" id="couponcount" name="row[couponcount]" autocomplete="off" value="{$row.couponcount}"  />
-        </div>
-    </div>
-
-    <div class="form-group layer-footer">
-        <label class="control-label col-xs-12 col-sm-2"></label>
-        <div class="col-xs-12 col-sm-8">
-            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
-            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
-        </div>
-    </div>
-</form>
+</div>

@@ -228,15 +228,24 @@ class Afterlist extends Backend
                     $up_data['out_haocai_refund_no']=$out_haocai_refund_no;
                     $up_data['haocai_freight']=0;
                 }
+
+                //代理商增加余额  退款
+                //代理结算金额 代理运费+保价金+耗材+超重
+                $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已作废并退款');
+
+
                 //处理退款完成 更改退款状态和订单状态
                 $up_data['pay_status']=2;
                 $up_data['overload_status']=0;
                 $up_data['consume_status']=0;
                 $up_data['order_status']='已作废';
                 $up_data['cancel_time']=time();
-                //代理商增加余额  退款
-                //代理结算金额 代理运费+保价金+耗材+超重
-                $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已作废并退款');
+
+                $up_data['admin_xuzhong']=0;
+                $up_data['agent_xuzhong']=0;
+                $up_data['users_xuzhong']=0;
+
+
                 $orders->allowField(true)->save($up_data);
                 $remark='请通知用户单号已作废，请勿再使用！后期如有物流信息会重新扣除退回金额';
             }

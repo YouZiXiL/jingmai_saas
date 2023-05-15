@@ -94,7 +94,7 @@ class Login extends Controller
             }
             $s=$user->save($user_info);
             $user_id=$user->id;
-            $mobile = $user_info['mobile'];
+            $phone = $user_info['mobile'];
 
         } else {
             $data=[
@@ -108,17 +108,18 @@ class Login extends Controller
                     return json(['status'=>400,'data'=>'','msg'=>'信息解密失败']);
                 }
                 $data['mobile']=$mobile['phoneNumber'];
+
             }
             $s=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
             $user_id=$user_info->id;
-            $mobile = $data['mobile'];
+            $phone = @$data['mobile'];
         }
 
         if ($s){
             $data=['status'=>200,'data'=>$_3rd_session,'msg'=>'登录成功'];
             $session=[
                 'id' =>$user_id,
-                'mobile' => $mobile,
+                'mobile' => $phone,
                 'agent_id'=>$agent_id,
                 'app_id' =>$param['app_id'],
                 'open_id'=>$json_obj["openid"],

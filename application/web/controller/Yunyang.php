@@ -16,6 +16,7 @@ use think\Controller;
 use think\Env;
 use think\Exception;
 use think\exception\DbException;
+use think\exception\PDOException;
 use think\Log;
 use think\Request;
 use think\response\Json;
@@ -1112,7 +1113,7 @@ class Yunyang extends Controller
      * 删除图片
      * @return Json
      * @throws Exception
-     * @throws \think\exception\PDOException
+     * @throws PDOException
      */
     function del_pic(){
         $id=$this->request->param('id');
@@ -1474,7 +1475,7 @@ class Yunyang extends Controller
      * 撤销申诉
      * @return Json
      * @throws Exception
-     * @throws \think\exception\PDOException
+     * @throws PDOException
      */
     function sale_cancel(): Json
     {
@@ -1490,7 +1491,7 @@ class Yunyang extends Controller
      * 重新申诉
      * @return Json
      * @throws Exception
-     * @throws \think\exception\PDOException
+     * @throws PDOException
      */
     function sale_re(): Json
     {
