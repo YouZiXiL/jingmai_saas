@@ -1252,7 +1252,11 @@ class Wxcallback extends Controller
                 异常单子建议先不给客户退费，找我们客服核实是否计费，再操作是否给客户退费
                  * */
                 if(
-                    ( $result['orderStatusCode']=='GOBACK'  ||$result['orderStatusCode']=='INVALID')
+                    (
+                        $result['orderStatusCode']=='GOBACK'
+                        || $result['orderStatusCode']=='CANCEL'
+                        || $result['orderStatusCode']=='INVALID'
+                    )
                     &&$orders['pay_status']!=2
                 ){
                     $data = [

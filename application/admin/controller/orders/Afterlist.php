@@ -244,6 +244,7 @@ class Afterlist extends Backend
                 $up_data['admin_xuzhong']=0;
                 $up_data['agent_xuzhong']=0;
                 $up_data['users_xuzhong']=0;
+                $up_data['haocai_freight']=0;
 
 
                 $orders->allowField(true)->save($up_data);
