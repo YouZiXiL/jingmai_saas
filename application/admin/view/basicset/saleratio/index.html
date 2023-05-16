@@ -15,7 +15,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="users_shouzhong" name="row[users_shouzhong]" autocomplete="off" value="{$row.users_shouzhong}" />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >下单时的重量价格</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >四通一达，首重上浮价格，即您的利润，建议1元以上。</p>
                 </div>
 
                 <div class="form-group row-center {:$auth->check('basicset/saleratio/users_xuzhong')?'':'hide'}" >
@@ -23,7 +23,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="users_xuzhong" name="row[users_xuzhong]" autocomplete="off" value="{$row.users_xuzhong}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip">物体超出重量需补交的价格</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip">四通一达，续重上浮价格，即您的利润，建议1元以上。</p>
                 </div>
 
                 <div class="form-group row-center {:$auth->check('basicset/saleratio/users_shouzhong_ratio')?'':'hide'}"  >
@@ -31,7 +31,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="users_shouzhong_ratio" name="row[users_shouzhong_ratio]" autocomplete="off" value="{$row.users_shouzhong_ratio}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >寄快递德邦、顺丰、京东上浮比例（折后上浮比例），建议14%。</p>
                 </div>
 
                 <div class="form-group row-center {:$auth->check('basicset/saleratio/sf_users_ratio')?'':'hide'}">
@@ -39,7 +39,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="sf_users_ratio" name="row[sf_users_ratio]" autocomplete="off" value="{$row.sf_users_ratio}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >顺丰特惠上浮比例，原价的折扣比例。</p>
                 </div>
 
                 <div class="form-group row-center {:$auth->check('basicset/saleratio/db_users_ratio')?'':'hide'}">
@@ -47,7 +47,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="db_users_ratio" name="row[db_users_ratio]" autocomplete="off" value="{$row.db_users_ratio}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >寄重货板块，重货的利润，按照原价计算的利润比例。</p>
                 </div>
 
                 <div class="form-group row-center {:$auth->check('basicset/saleratio/agent_tc_ratio')?'':'hide'}">
@@ -55,7 +55,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="agent_tc_ratio" name="row[agent_tc_ratio]" autocomplete="off" value="{$row.agent_tc_ratio}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >同城跑腿的上浮比例。</p>
                 </div>
 
                 <div class="form-group row-center {:$auth->check('basicset/saleratio/imm_rate')?'':'hide'}">
@@ -63,7 +63,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="imm_rate" name="row[imm_rate]" autocomplete="off" value="{$row.imm_rate}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >物体超出重量需补交的价格。</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >用户海报分享后，直接下级下单金额的返佣比例。</p>
                 </div>
 
                 <div class="form-group row-center {:$auth->check('basicset/saleratio/midd_rate')?'':'hide'}">
@@ -71,7 +71,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="midd_rate" name="row[midd_rate]" autocomplete="off" value="{$row.midd_rate}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >A用户分享海报给B用户，B用户分享给C用户，C下单后A的收益。</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >用户海报分享后，间接下级下单金额的返佣比例。</p>
 
                 </div>
 
@@ -80,7 +80,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="service_rate" name="row[service_rate]" autocomplete="off" value="{$row.service_rate}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >客户提现时要扣除的费用。</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >团队裂变，用户邀请下级等产生的所有佣金，提现时，扣除的佣金比例。</p>
 
                 </div>
 
@@ -89,8 +89,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="user_cashoutdate" name="row[user_cashoutdate]" autocomplete="off" value="{$row.user_cashoutdate}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >分佣返现客户提现的日期。</p>
-
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >默认每月26日提现，客户在设定每个月第几天提现。</p>
                 </div>
 
                 <!--    <div class="form-group {:$auth->check('basicset/saleratio/agent_wa_ratio')?'':'hide'}">-->
@@ -105,7 +104,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="agent_elec_ratio" name="row[agent_elec_ratio]" autocomplete="off" value="{$row.agent_elec_ratio}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >电费利润，此处填写1，利润为1元，以此类推。</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >电费的利润，单位为元，填写1，利润就是1元。</p>
                 </div>
 
                 <!--    <div class="form-group {:$auth->check('basicset/saleratio/agent_gas_ratio')?'':'hide'}">-->
@@ -120,7 +119,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="agent_credit_ratio" name="row[agent_credit_ratio]" autocomplete="off" value="{$row.agent_credit_ratio}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >话费利润，此处填写1，利润为1元，以此类推。</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >话费的利润，单位为元，填写1，利润就是1元。</p>
 
                 </div>
 
@@ -129,7 +128,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="vipprice" name="row[vipprice]" autocomplete="off" value="{$row.vipprice}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >客户购买会员需要支付的金额，配合营销模块-优惠券类型-会员赠送使用</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >会员购买所需支付的钱，配合优惠券类型“会员赠送”类别使用。</p>
 
                 </div>
 
@@ -138,7 +137,7 @@
                     <div class="col-xs-12 col-sm-3">
                         <input type="number" min="0" class="form-control" id="couponcount" name="row[couponcount]" autocomplete="off" value="{$row.couponcount}"  />
                     </div>
-                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >PLUS会员：福利秒杀抢购最大数量</p>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >超值券包的最大购买量，超值券包里面的库存为虚拟销量。</p>
 
                 </div>
 
