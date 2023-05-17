@@ -87,6 +87,7 @@ class KD100Sms
             'outorder'=>$out_trade_no,
             'callback'=> $this->domain.'/web/wxcallback/send_sms'
         ],'POST',['Content-Type: application/x-www-form-urlencoded']);
+        Log::info('发送短信：'.$res);
         $res=json_decode($res,true);
         if($res['status']!=1) Log::error('发送短信失败'.$order['waybill']);
         return $res['status'];

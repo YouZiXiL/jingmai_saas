@@ -898,8 +898,6 @@ class Wxcallback extends Controller
                     $rebatelistdata["cancel_time"]=time();
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
-                    // 发送耗材短信
-                    KD100Sms::run()->material($orders);
                 }
 
                 db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
