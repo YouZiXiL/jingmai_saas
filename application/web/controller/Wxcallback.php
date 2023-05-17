@@ -4,6 +4,7 @@ namespace app\web\controller;
 
 use app\common\business\WanLi;
 use app\common\library\alipay\Alipay;
+use app\common\library\KD100Sms;
 use app\common\model\Order;
 use app\web\aes\WxBizMsgCrypt;
 
@@ -13,7 +14,6 @@ use app\web\model\AgentAuth;
 use app\web\model\AgentCouponmanager;
 use app\web\model\Couponlist;
 use app\web\model\Rebatelist;
-use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use think\Controller;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -67,10 +67,7 @@ class Wxcallback extends Controller
         $pc = new WxBizMsgCrypt($kaifang_token,$encoding_aeskey, $kaifang_appid);
 
         //获取到微信推送过来post数据（xml格式）
-
-
         $msg = '';
-
         $errCode=$pc->decryptMsg($param['msg_signature'], $param['timestamp'], $param['nonce'], $encryptMsg,$msg);
         if($errCode == 0) {
             //处理消息类型，并设置回复类型和内容
@@ -310,8 +307,6 @@ class Wxcallback extends Controller
             $data['app_id']=$getAccountBasicInfo['authorization_info']['authorizer_appid'];
             db('agent_auth')->insert($data);
         }
-
-
         exit('授权成功');
     }
 
@@ -1097,11 +1092,13 @@ class Wxcallback extends Controller
                     $up_data['final_weight']=$result['orderEvent']['calculateWeight']/1000;
 
                     // 风火递扣我们的费用
-                    $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68+($result['orderEvent']['totalPrice']/100-$result['orderEvent']['transportPrice']/100);
+                    $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68
+                        +($result['orderEvent']['totalPrice']/100-$result['orderEvent']['transportPrice']/100);
 
 
-                    //超轻处理
+
                     $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
+                    //超轻处理
                     if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
 //                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0) {
                         $tralight_weight=$weight;//超轻重量
@@ -1146,10 +1143,11 @@ class Wxcallback extends Controller
                             $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["midd_rate"]??0)/100,2);
                         }
 
-                    }
-                    //超重状态
-                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000&&empty($orders['final_weight_time'])){
+                    } else
+                        if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000 &&empty($orders['final_weight_time'])){
 //                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
+
+                        // 超重状态
                         $up_data['overload_status']=1;
                         $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
@@ -1209,11 +1207,20 @@ class Wxcallback extends Controller
                                 $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
                             }
                             Log::info(['超重推送' => $data]);
-
                             // 将该任务推送到消息队列，等待对应的消费者去执行
                             Queue::push(DoJob::class, $data,'way_type');
+                            // 发送超重短信
+                            KD100Sms::run()->overload($orders);
                         }
                     }
+
+//                    if($orders['out_trade_no'] == 'XD1682654194807927106'){
+//                        $up_data['overload_status']= 0;
+//                        $up_data['overload_price']= 0;
+//                        $up_data['agent_overload_price']= 0;
+//                        $up_data['agent_price']= number_format($orders['freight']/0.73, 2) ;
+//                    }
+
                     //更改耗材状态
                     if ($result['orderEvent']['packageServicePrice']!=0
                         || $result['orderEvent']['insurancePrice']!=0
@@ -1232,6 +1239,8 @@ class Wxcallback extends Controller
                         $rebatelistdata["state"]=2;
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
+                        // 发送耗材短信
+                        KD100Sms::run()->material($orders);
                     }
                 }
                 if(!empty($result['orderStatus'])){
@@ -2287,6 +2296,7 @@ class Wxcallback extends Controller
             exit('success');
         }
     }
+
     /**
      * 微信下单支付回调-同城
      */
@@ -2342,7 +2352,7 @@ class Wxcallback extends Controller
             $Dbcommmon= new Dbcommom();
 
             if($orders['channel_tag'] == '同城'){
-                Log::info('万利下单');
+                Log::info('万利下单' . $orders['out_trade_no']);
                 $res = (new WanLi())->createOrder($orders);
                 $result = json_decode($res,true);
                 if($result['code'] != 200){
