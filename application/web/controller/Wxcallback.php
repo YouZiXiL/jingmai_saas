@@ -525,6 +525,8 @@ class Wxcallback extends Controller
                             $up_data['tralight_price']=$up_data['overload_price'];
                             // 将该任务推送到消息队列，等待对应的消费者去执行
                             Queue::push(DoJob::class, $data,'way_type');
+                            // 发送超重短信
+                            KD100Sms::run()->overload($orders);
                         }
                         //更改耗材状态
                         if ($pamar['freightHaocai']!=0){
@@ -538,6 +540,8 @@ class Wxcallback extends Controller
 
                             // 将该任务推送到消息队列，等待对应的消费者去执行
                             Queue::push(DoJob::class, $data,'way_type');
+                            // 发送耗材短信
+                            KD100Sms::run()->material($orders);
                         }
 
                         if($pamar['type']=='已取消'&&$orders['pay_status']!=2){
@@ -869,6 +873,8 @@ class Wxcallback extends Controller
                     }
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
+                    // 发送超重短信
+                    KD100Sms::run()->overload($orders);
                 }
                 //更改耗材状态
                 if ($pamar['freightHaocai']!=0){
@@ -892,6 +898,8 @@ class Wxcallback extends Controller
                     $rebatelistdata["cancel_time"]=time();
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
+                    // 发送耗材短信
+                    KD100Sms::run()->material($orders);
                 }
 
                 db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
@@ -1246,9 +1254,6 @@ class Wxcallback extends Controller
                 if(!empty($result['orderStatus'])){
                     $up_data['order_status']=$result['orderStatus'];
                 }
-                // if ($orders['final_weight']==0){
-                //     $up_data['final_weight']=$pamar['calWeight'];
-                // }
 
 
                 /*
@@ -2683,6 +2688,8 @@ class Wxcallback extends Controller
                     $up_data['tralight_price']=$up_data['overload_price'];
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
+                    // 发送超重短信
+                    KD100Sms::run()->overload($orders);
                 }
                 //更改耗材状态
                 if ($pamar['freightHaocai']!=0){
@@ -2696,6 +2703,8 @@ class Wxcallback extends Controller
 
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
+                    // 发送超重短信
+                    KD100Sms::run()->material($orders);
                 }
 
                 if($pamar['type']=='已取消'&&$orders['pay_status']!=2){
@@ -3756,6 +3765,8 @@ class Wxcallback extends Controller
                             $haocai=$up_data['haocai_freight'];
                             // 将该任务推送到消息队列，等待对应的消费者去执行
                             Queue::push(DoJob::class, $data,'way_type');
+                            // 发送超重短信
+                            KD100Sms::run()->material($orders);
 
                         }
                     }
@@ -3848,6 +3859,8 @@ class Wxcallback extends Controller
                         $rebatelistdata["state"]=2;
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
+                        // 发送超重短信
+                        KD100Sms::run()->overload($orders);
                     }
 
                 }elseif ($params["pushType"]==3){
