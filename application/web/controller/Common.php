@@ -2,6 +2,13 @@
 
 namespace app\web\controller;
 
+use app\web\model\Admin;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
+use think\exception\DbException;
+use think\Log;
+use think\response\Redirect;
+use think\View;
 use WeChatPay\Builder;
 use WeChatPay\Crypto\Rsa;
 use WeChatPay\Util\PemUtil;
@@ -397,6 +404,70 @@ class Common
         }
 
         return $code;
+    }
+
+
+    /**
+     * 生成小程序连接
+     * @param $agentCode
+     * @return Redirect
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
+     */
+    public function miniLink($agentCode){
+        $agentId = $this->decodeShortCode($agentCode);
+        if(!is_numeric($agentId) || $agentId <= 0)exit('生成链接失败');
+        $agent = Admin::find($agentId);
+        if(!$agent) exit('没有该用户');
+        $appId=db('agent_auth')->where('agent_id',$agentId)->value('app_id' );
+//        if (!$appId) $appId = config('site.wx_appid');
+        if (!$appId) $appId = 'wx20a0814c2c7feb3d';
+        $accessToken = $this->get_authorizer_access_token($appId);
+        $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
+        $resJson = $this->httpRequest($url,[
+            "path" => "/pages/homepage/homepage",
+            "query" =>  "agent_id={$agentId}",
+        ],'post');
+        $res = json_decode($resJson, true);
+        if (@$res['errcode'] == 0)  return redirect($res['url_link']);
+        Log::error("生成链接失败{$resJson}");
+        exit('生成链接失败');
+    }
+
+
+    /**
+     * 生成短链接码
+     * @param $id
+     * @return string
+     */
+    function generateShortCode($id) {
+        $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $base = 62;
+        $result = '';
+        do {
+            $remainder = $id % $base;
+            $result = $chars[$remainder] . $result;
+            $id = ($id - $remainder) / $base;
+        } while ($id > 0);
+        return $result;
+    }
+
+    /**
+     * 解析短链接码
+     * @param $id
+     * @return string
+     */
+    function decodeShortCode($shortCode) {
+        $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $base = 62;
+        $id = 0;
+        $len = strlen($shortCode);
+        for ($i = 0; $i < $len; $i++) {
+            $index = strpos($chars, $shortCode[$i]);
+            $id = $id * $base + $index;
+        }
+        return $id;
     }
 
 

@@ -39,8 +39,8 @@ class Login extends Controller
     }
     /**
      * 登陆
-     * @return \think\response\Json
-     * @throws \think\exception\DbException
+     * @return Json
+     * @throws DbException
      */
     public function get_openid(): Json
     {
@@ -60,10 +60,15 @@ class Login extends Controller
         $_3rd_session=$this->common->get_uniqid();
 
         $user = new Users;
-        $agent_id=db('agent_auth')->where('app_id',$param['app_id'])->value('agent_id');
-        if (empty($agent_id)){
-            return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+        if (!empty($param["agent_id"])){
+            $agent_id = $param["agent_id"];
+        }else{
+            $agent_id=db('agent_auth')->where('app_id',$param['app_id'])->value('agent_id');
+            if (empty($agent_id)){
+                return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+            }
         }
+
         $user_info=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
         $time=time();
         if(empty($user_info)){

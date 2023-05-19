@@ -2,84 +2,51 @@
 
 namespace app\admin\controller\market;
 
-use think\Controller;
+use app\admin\model\Admin;
+use app\common\controller\Backend;
+use app\web\controller\Common;
 use think\Request;
 
-class Link extends Controller
+class Link extends Backend
 {
+    protected ?Common $util = null;
+
+    public function _initialize()
+    {
+        parent::_initialize();
+        $this->util = new Common();
+    }
+
     /**
      * 显示资源列表
      *
-     * @return \think\Response
+     * @return string
+     * @throws \think\Exception
      */
     public function index()
     {
-        //
+        $agentId = $this->auth->id;
+        $url =  request()->domain() . "/{$agentId}";
+        $this->assign('url', $url);
+        return $this->view->fetch();
     }
 
     /**
      * 显示创建资源表单页.
-     *
-     * @return \think\Response
      */
     public function create()
     {
-        //
+        $agentId = $this->auth->id;
+        $url =  request()->domain() . "/web/mini/link/{$agentId}";
+        $appId=db('agent_auth')->where('agent_id',$this->auth->id)->value('app_id' );
+        if (!$appId) $appId = config('site.wx_appid');
+        $accessToken = $this->util->get_authorizer_access_token($appId);
+        $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
+        $res = $this->util->httpRequest($url,'','post');
+        $res = json_decode($res, true);
+        if ($res['errcode'] == 0)  $this->success('成功', '', $res['url_link']);
+        $this->error($res['errmsg']);
     }
 
-    /**
-     * 保存新建的资源
-     *
-     * @param  \think\Request  $request
-     * @return \think\Response
-     */
-    public function save(Request $request)
-    {
-        //
-    }
 
-    /**
-     * 显示指定的资源
-     *
-     * @param  int  $id
-     * @return \think\Response
-     */
-    public function read($id)
-    {
-        //
-    }
-
-    /**
-     * 显示编辑资源表单页.
-     *
-     * @param  int  $id
-     * @return \think\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * 保存更新的资源
-     *
-     * @param  \think\Request  $request
-     * @param  int  $id
-     * @return \think\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * 删除指定资源
-     *
-     * @param  int  $id
-     * @return \think\Response
-     */
-    public function delete($id)
-    {
-        //
-    }
 }

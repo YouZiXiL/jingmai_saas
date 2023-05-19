@@ -3,6 +3,7 @@
 namespace app\admin\controller\basicset;
 
 use app\common\controller\Backend;
+use app\web\controller\Common;
 use think\Db;
 use think\Exception;
 use think\exception\DbException;
@@ -59,6 +60,10 @@ class Saleratio extends Backend
             $this->error(__('You have no permission'));
         }
         if (false === $this->request->isPost()) {
+            $common = new Common();
+            $agentCode = $common->generateShortCode($this->auth->id);
+            $link =  request()->host() . "/u/" . $agentCode;
+            $this->view->assign('link', $link);
             $this->view->assign('row', $row);
             return $this->view->fetch();
         }

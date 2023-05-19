@@ -10,6 +10,14 @@
 <div class="panel panel-default panel-intro">
     <div class="panel-body" style="padding: 30px">
             <form id="saleratio-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+                <div class="form-group row-center">
+                    <label for="users_link" class="control-label col-xs-12 col-sm-2">外部跳转连接</label>
+                    <div class="col-xs-12 col-sm-3">
+                        <input disabled  id="users_link" class="form-control" value="{$link}" />
+                    </div>
+                    <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip" >可在H5，短信，微信，QQ等跳转到小程序。</p>
+                </div>
+
                 <div class="form-group row-center {:$auth->check('basicset/saleratio/users_shouzhong')?'':'hide'}">
                     <label for="users_shouzhong" class="control-label col-xs-12 col-sm-2">首重价格￥</label>
                     <div class="col-xs-12 col-sm-3">

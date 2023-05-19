@@ -1,7 +1,6 @@
 define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefined, Backend, Table, Form) {
 
     var Controller = {
-
         index: function () {
             $(".wanli-recharge").click(function(){
                 $('.model-container').fadeIn(300);
