@@ -417,12 +417,18 @@ class Common
      */
     public function miniLink($agentCode){
         $agentId = $this->decodeShortCode($agentCode);
-        if(!is_numeric($agentId) || $agentId <= 0)exit('生成链接失败');
+        if(!is_numeric($agentId) || $agentId <= 0){
+            Log::error("无效的agentId：{$agentId}");
+            exit("无效的agentId：{$agentId}" );
+        }
+
         $agent = Admin::find($agentId);
         if(!$agent) exit('没有该用户');
-        $appId=db('agent_auth')->where('agent_id',$agentId)->value('app_id' );
-//        if (!$appId) $appId = config('site.wx_appid');
-        if (!$appId) $appId = 'wx20a0814c2c7feb3d';
+        $appId=db('agent_auth')
+            ->where('agent_id',$agentId)
+            ->where('auth_type', 2)
+            ->value('app_id' );
+        if (!$appId) $appId = config('site.mini_appid');
         $accessToken = $this->get_authorizer_access_token($appId);
         $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
         $resJson = $this->httpRequest($url,[
@@ -431,8 +437,8 @@ class Common
         ],'post');
         $res = json_decode($resJson, true);
         if (@$res['errcode'] == 0)  return redirect($res['url_link']);
-        Log::error("生成链接失败{$resJson}");
-        exit('生成链接失败');
+        Log::error("生成链接失败：agentId = {$agentId}，详情：{$resJson}");
+        exit("生成链接失败：agentId = {$agentId}");
     }
 
 

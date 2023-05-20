@@ -93,4 +93,6 @@ ASt4V0K4Pn6cd84Eq0qxH2BbSg==
 //    'wanli_appid'  => '354f080650684f76b45b5d089c544d20', // '354f080650684f76b45b5d089c544d20',
 //    'wanli_secret'  => '962f08a7112b45f09f8594023bf407be', //'962f08a7112b45f09f8594023bf407be',
 //    'wanli_url' => 'https://testapi.wlhulian.com',  //'https://testapi.wlhulian.com',
+
+    'mini_appid' => 'wx20a0814c2c7feb3d', // 番茄快递小程序appid
 );
