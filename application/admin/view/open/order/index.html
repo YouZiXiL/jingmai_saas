@@ -1,10 +1,230 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>智能下单</title>
+    <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-test
+<div id="app" v-cloak>
+    <el-form label-position="right" :model="formData" :rules="rules" ref="ruleForm" label-width="80px" >
+        <el-row :gutter="10">
+            <el-col :span="12">
+                <el-card class="box-card" shadow="never">
+                    <div slot="header" class="clearfix">
+                        <span>寄件人</span>
+                        <el-button style="float: right; padding: 3px 0" type="text">地址簿</el-button>
+                    </div>
+                    <div class="grid-content bg-white">
+                    <el-form-item label-width="0" >
+                    <el-input
+                            type="textarea"
+                            :rows="2"
+                            placeholder="粘贴如：浙江省杭州市西湖区西湖名胜风景区，王美丽，136xxxx8866"
+                            v-model="senderInfo">
+                    </el-input>
+                    </el-form-item>
+                    <el-form-item label="姓名" prop="sender">
+                        <el-input v-model="formData.sender"></el-input>
+                    </el-form-item>
+                    </el-form-item>
+                    <el-form-item label="联系方式" prop="senderMobile">
+                        <el-input v-model="formData.senderMobile"></el-input>
+                    </el-form-item>
+                    <el-form-item label="省市区" prop="senderPlace">
+                        <el-input v-model="formData.senderPlace"></el-input>
+                    </el-form-item>
+                    <el-form-item label="详细地址" prop="senderLocation">
+                        <el-input v-model="formData.senderLocation"></el-input>
+                    </el-form-item>
+
+                </div>
+                </el-card>
+            </el-col>
+            <el-col :span="12">
+                <el-card class="box-card" shadow="never">
+                    <div slot="header" class="clearfix">
+                        <span>收件人</span>
+                        <el-button style="float: right; padding: 3px 0" type="text">地址簿</el-button>
+                    </div>
+                    <div class="grid-content bg-white">
+                    <el-form-item label-width="0" >
+                        <el-input
+                                type="textarea"
+                                :rows="2"
+                                placeholder="粘贴如：浙江省杭州市西湖区西湖名胜风景区，王美丽，136xxxx8866"
+                                v-model="senderInfo">
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="姓名" prop="receiver">
+                        <el-input v-model="formData.receiver"></el-input>
+                    </el-form-item>
+                    <el-form-item label="联系方式" prop="receiverMobile">
+                        <el-input v-model="formData.receiverMobile"></el-input>
+                    </el-form-item>
+                    <el-form-item label="省市区" prop="receiverPlace">
+                        <el-input v-model="formData.receiverPlace"></el-input>
+                    </el-form-item>
+                    <el-form-item required label="详细地址" prop="receiverLocation">
+                        <el-input v-model="formData.receiverLocation"></el-input>
+                    </el-form-item>
+
+                </div>
+                </el-card>
+            </el-col>
+        </el-row>
+
+        <el-card class="box-card mt-2" shadow="never">
+            <div slot="header" class="clearfix">
+                <span>快递信息</span>
+            </div>
+            <el-row>
+                <el-col :span="6">
+                    <el-form-item label="包裹数量">
+                        <el-input v-model="formData.packageCount" placeholder="包裹数量"></el-input>
+                    </el-form-item>
+                    <el-form-item label="寄托物">
+                        <el-input v-model="formData.itemName" placeholder="寄托物"></el-input>
+                    </el-form-item>
+                    <el-form-item label="预约取件">
+                        <el-input v-model="formData.pickupStartTime" placeholder="取件时间"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="长">
+                        <el-input v-model="formData.vloumLong" placeholder="重量">
+                            <template slot="append">CM</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="宽">
+                        <el-input v-model="formData.vloumWidth" placeholder="重量">
+                            <template slot="append">CM</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="高">
+                        <el-input v-model="formData.vloumHeight" placeholder="重量">
+                            <template slot="append">CM</template>
+                        </el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="重量">
+                        <el-input v-model="formData.weight" placeholder="重量">
+                            <template slot="append">KG</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="保价金额">
+                        <el-input v-model="formData.insured" placeholder="审批人"></el-input>
+                    </el-form-item>
+                </el-col>
+
+            </el-row>
+        </el-card>
+    </el-form>
+
+
+        <button-counter></button-counter>
+
+</div>
 </body>
+
+<!-- import Vue before Element -->
+<script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+<!-- import JavaScript -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+<script type="module">
+
+    const c = {
+        // 局部注册名为 'my-component' 的子组件
+        'button-counter': {
+            name: 'button-counter', // 组件名
+            data: function () {
+                return {
+                    count: 0
+                }
+            },
+            template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
+        }
+    }
+
+    new Vue({
+        el: '#app',
+        components: c,
+        data: function() {
+            return {
+                formData: {
+                    sender: '',
+                    senderMobile: '',
+                    senderPlace: '',
+                    senderLocation: '',
+                    receiver: '',
+                    receiverMobile: '',
+                    receiverPlace: '',
+                    receiverLocation: '',
+                    packageCount:'', // 包裹数量
+                    itemName:'', // 寄件物品
+                    weight:1, // 重量
+                    vloumLong:'', // 长
+                    vloumWidth:'', // 宽
+                    vloumHeight:'', // 高
+                    pickupStartTime:'', // 预约取件时间
+                    billRemark:'', // 备注
+                    insured:'', // 保价金额
+                },
+                senderInfo:'',
+                rules: {
+                    sender: [
+                        { required: true, message: '请输入活动名称', trigger: 'blur' },
+                        { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+                    ],
+                    senderMobile: [
+                        { required: true, message: '请选择活动区域', trigger: 'change' }
+                    ],
+                    senderPlace: [
+                        { type: 'date', required: true, message: '请选择日期', trigger: 'change' }
+                    ],
+                    senderLocation: [
+                        { type: 'date', required: true, message: '请选择时间', trigger: 'change' }
+                    ],
+                    receiver: [
+                        { type: 'array', required: true, message: '请至少选择一个活动性质', trigger: 'change' }
+                    ],
+                    receiverMobile: [
+                        { required: true, message: '请选择活动资源', trigger: 'change' }
+                    ],
+                    receiverPlace: [
+                        { required: true, message: '请填写活动形式', trigger: 'blur' }
+                    ]
+                }
+            };
+        },
+        methods:{
+            btnClick(){
+                console.log('点击事件')
+                this.visible = true
+            }
+        }
+    })
+
+    // 定义一个名为 button-counter 的新组件
+    Vue.component('button-counter', {
+        name: 'button-counter', // 组件名
+        data: function () {
+            return {
+                count: 0
+            }
+        },
+        template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
+    })
+
+
+
+
+</script>
 </html>
