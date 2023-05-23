@@ -3,6 +3,8 @@
 namespace app\common\business;
 
 use app\web\controller\Common;
+use think\Exception;
+use think\Log;
 
 class WanLi
 {
@@ -37,6 +39,72 @@ class WanLi
     }
 
     /**
+     * 创建门店
+     * @param $content
+     * @return mixed
+     * @throws Exception
+     */
+    public function shopCreate($content){
+        $url = $this->baseUlr . '/api/v1/shop/create';
+        $data = $this->setParma($content);
+        $resJson = $this->utils->httpRequest($url, $data, 'POST');
+        $res = json_decode($resJson, true);
+        if ($res['code'] != 200){
+            Log::error("创建门店失败：{$resJson}");
+            throw new Exception("创建门店失败:{$resJson}");
+        }
+        return  $res['data']['shopId'];
+    }
+
+    /**
+     * 更新门店信息
+     * @param $content
+     * @return false|mixed
+     */
+    public function shopUpdate($content){
+        $url = $this->baseUlr . '/api/v1/shop/update';
+        $data = $this->setParma($content);
+        $resJson = $this->utils->httpRequest($url, $data, 'POST');
+        $res = json_decode($resJson, true);
+        if ($res['code'] != 200){
+            Log::error("更新门店失败：{$resJson}");
+            return false;
+        }else{
+            return  $res['data']['shopId'];
+        }
+
+    }
+
+    /**
+     * 平台支持运力列表
+     * @throws Exception
+     */
+    public function supplier(){
+        $url = $this->baseUlr . '/api/v1/supplier/query';
+        $data = $this->setParma([]);
+        $resJson = $this->utils->httpRequest($url, $data, 'POST');
+        $res = json_decode($resJson, true);
+        if ($res['code'] != 200){
+            Log::error("查询运力失败：{$resJson}");
+            throw new Exception("查询运力失败:{$resJson}");
+        }
+        Log::info(['运力列表' => $res]);
+        return array_column($res['data'], 'deliveryCode');
+    }
+
+    /**
+     * 查询门店运力审核状态
+     * @param $content
+     * @return mixed
+     */
+    public function shopSupplierStatus($content){
+        $url = $this->baseUlr . '/api/v1/shop/supplier/query';
+        $data = $this->setParma($content);
+        $resJson = $this->utils->httpRequest($url, $data, 'POST');
+        return json_decode($resJson, true);
+    }
+
+    /**
      * 获取快递价格
      * @param array $content
      * @return mixed
@@ -59,8 +127,10 @@ class WanLi
         // 组装参数
         $parma = [
             "outOrderNo"=> $orders['out_trade_no'], // 接入方平台订单号
+            "shopId"=> $orders['shop_id'], // 接入方平台订单号
             "estimatePrice"=> $orders['freight'] * 100, // 比价金额  单位分,用来校验金额有没有发生变化
             "supplierCode" => $orders['channel_id'],
+            "outShopCode" => $orders['out_trade_no'],
             "fromSenderName"=> $orders['sender'], //发货人姓名(点到点模式下必填)
             "fromMobile"=> $orders['sender_mobile'], //发货人手机号(点到点模式下必填)
             "fromLng" => @$senderCoordinate[0],

@@ -1,0 +1,9 @@
+[2023-05-23T11:41:59+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.002490s ]
+[ info ] [ LOG ] INIT File
+info
+[2023-05-23T11:41:59+08:00][ info ] [ CACHE ] INIT File
+info
+[2023-05-23T11:41:59+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.003519s ]
+info
+[2023-05-23T11:41:59+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.000867s ]
+info

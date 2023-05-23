@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\common\business\WanLi;
 use app\common\library\R;
 use app\web\model\Admin;
 use think\Controller;
@@ -67,6 +68,16 @@ class Test extends Controller
             return $access_token['access_token'];
         }
 
+    }
+
+    /**
+     *  查询门店运力审核状态
+     * @param WanLi $wanLi
+     * @return mixed
+     */
+    function shopSupplierStatus(WanLi $wanLi){
+        $res = $wanLi->shopSupplierStatus(input());
+        return R::ok($res);
     }
 
 }

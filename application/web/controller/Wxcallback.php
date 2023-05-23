@@ -2366,7 +2366,7 @@ class Wxcallback extends Controller
                         'pay_status'=>2,
                         'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                         'yy_fail_reason'=>$result['message'],
-                        'order_status'=>'下单失败咨询客服',
+                        'order_status'=>$result['message'],
                         'out_refund_no'=>$out_refund_no,
                     ];
                     $data = [

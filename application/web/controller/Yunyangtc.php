@@ -2,10 +2,12 @@
 
 namespace app\web\controller;
 
+use app\admin\model\User;
 use app\common\business\WanLi;
 use app\common\library\R;
 use app\common\model\Order;
 use app\web\model\Couponlist;
+use app\web\model\UsersAddress;
 use think\Controller;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -42,10 +44,13 @@ class Yunyangtc extends Controller
             exit(json(['status' => 100, 'data' => '', 'msg' => $e->getMessage()])->send());
         }
     }
+
     /**
      * 添加|编辑  地址 带经纬度
+     * @param WanLi $wanLi
+     * @return Json
      */
-    public function add_address(): Json
+    public function add_address(WanLi $wanLi): Json
     {
         $param=$this->request->param();
         try {
@@ -61,6 +66,7 @@ class Yunyangtc extends Controller
             $address="";
             $logo="";
             $issave=0;
+            $location = str_replace(PHP_EOL, '', $param['location']);
             if(!empty($param["logo"])){
                 $logo =$param["logo"];
             }
@@ -70,8 +76,27 @@ class Yunyangtc extends Controller
             if(!empty($param["issave"])){
                 $issave =$param["issave"];
             }
+
+            // 可以运力列表（万利用）
+            $deliverySupplierList = $wanLi->supplier();
+            // 组装门店参数
+            $shopParam = [
+                "contactName"=> $param['name'], //联系人姓名
+                "shopName"=>  $param['name'], //门店名称
+                "shopAddress"=>  $param['address'], //门店地址
+                "cityName"=>  $param['city'], //所在城市
+                "industryType"=>  9, //"行业类型 1:餐饮 \n" +
+                "deliverySupplierList"=>  $deliverySupplierList, //门店所选接入运力编码集合
+                "shopLng"=>  $param['addlgt'], //地理位置经度（目前只支持百度坐标）
+                "shopLat"=>  $param['addlat'], //地理位置纬度（目前只支持百度坐标）
+                "contactPhone"=>  $param['mobile'], //联系人电话
+                "shopAddressDetail"=>  $param['location'], //门牌号
+            ];
+
             if (!empty($param['id'])){
-                db('users_address')->where('id',$param['id'])->update([
+                $addressModel = UsersAddress::find($param['id']);
+                $updateData = [
+                    'id' => $param['id'],
                     'name'=>$param['name'],
                     'mobile'=>$param['mobile'],
                     'province'=>$param['province'],
@@ -79,19 +104,40 @@ class Yunyangtc extends Controller
                     'county'=>$param['county'],
                     'lat'=>$param['addlat'],
                     'lng'=>$param['addlgt'],
-                    'location'=>str_replace(PHP_EOL, '', $param['location']),
+                    'location'=>$location,
                     'address'=>$address,
                     'logo'=>$logo,
+                ];
 
-                ]);
+                if ($addressModel->shop_id){
+                    // 更新门店信息
+                    $shopParam["outShopId"] = $addressModel->out_shop_id;
+                    $wanLi->shopUpdate($shopParam);
+                }else{
+                    // 创建门店
+                    $shopParam["outShopId"] = $this->common->get_uniqid();
+                    $shopId = $wanLi->shopCreate($shopParam);
+                    $updateData['shop_id'] =  $shopId;
+                    $updateData['out_shop_id'] =  $shopParam["outShopId"];
+                }
+                // 更新门店信息
+                $addressModel->save($updateData);
+
                 $data=[
                     'status'=>200,
                     'data'=>['id'=>$param['id']],
                     'msg'=>'编辑成功'
                 ];
             }else{
+
+                // 创建门店（万利用）
+                $shopParam["outShopId"] = $this->common->get_uniqid();
+                $shopId = $wanLi->shopCreate($shopParam);
+
                 $id=db('users_address')->insertGetId([
                     'user_id'=>$this->user->id,
+                    'shop_id' => $shopId,
+                    'out_shop_id' => $shopParam["outShopId"],
                     'name'=>$param['name'],
                     'mobile'=>$param['mobile'],
                     'province'=>$param['province'],
@@ -101,7 +147,7 @@ class Yunyangtc extends Controller
                     'lng'=>$param['addlgt'],
                     'istcdefault'=>0,
                     'type'=>2,
-                    'location'=>str_replace(PHP_EOL, '', $param['location']),
+                    'location'=>$location,
                     'default_status'=>0,
                     'create_time'=>time(),
                     'address'=>$address,
@@ -223,16 +269,60 @@ class Yunyangtc extends Controller
             if (empty($param['insured'])){
                 $param['insured']=0;
             }
-            $jijian_address=db('users_address')->where('id',$param['jijian_id'])->find();
-            $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
-            if (empty($jijian_address)||empty($shoujian_address)){
+
+            $jijianModel = UsersAddress::where('id', $param['jijian_id'])->find();
+            $shoujianModel = UsersAddress::where('id', $param['shoujian_id'])->find();
+
+//            $jijian_address=db('users_address')->where('id',$param['jijian_id'])->find();
+//            $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
+
+            if (empty($jijianModel)||empty($shoujianModel)){
                 throw new Exception('收件或寄件信息错误');
             }
+
+            $jijian_address = $jijianModel->toArray();
+            $shoujian_address = $shoujianModel->toArray();
+
 //            if ($jijian_address['city']!=$shoujian_address['city']){
 //                return json(['status'=>400,'data'=>'','msg'=>"请选择同城地址"]);
 //            }
-            $out_trade_no='TC'.$this->common->get_uniqid();
+            // 平台运力
+            $deliverySupplierList = $wl->supplier();
+            // 组装门店参数
+            $shopParam = [
+                "contactName"=> $jijian_address['name'], //联系人姓名
+                "shopName"=>  $jijian_address['name'], //门店名称
+                "shopAddress"=>  $jijian_address['address'], //门店地址
+                "cityName"=>  $jijian_address['city'], //所在城市
+                "industryType"=>  9, //"行业类型 1:餐饮 \n" +
+                "deliverySupplierList"=>  $deliverySupplierList, //门店所选接入运力编码集合
+                "shopLng"=>  $jijian_address['lng'], //地理位置经度（目前只支持百度坐标）
+                "shopLat"=>  $jijian_address['lat'], //地理位置纬度（目前只支持百度坐标）
+                "contactPhone"=>  $jijian_address['mobile'], //联系人电话
+                "shopAddressDetail"=>  $jijian_address['location'], //门牌号
+            ];
+
+            if(!$jijian_address['shop_id']){
+                Log::info('创建门店');
+                $out_trade_no='TC'.$this->common->get_uniqid();
+                $shopParam["outShopId"] = $out_trade_no; //外部方门店id
+                // 获取门店id
+                $shopId = $wl->shopCreate($shopParam);
+                $jijianModel->save([
+                    'shop_id' => $shopId,
+                    'out_shop_id' => $out_trade_no,
+                ]);
+            }else{
+                Log::info('更新门店');
+                $shopId = $jijian_address['shop_id'];
+                $out_trade_no = $jijian_address['out_shop_id'];
+                // 更新门店
+                $shopParam["outShopId"] = $out_trade_no; //外部方门店id
+                $wl->shopUpdate($shopParam);
+            }
+            Log::info('门店ID：'.$shopId);
             $content=[
+                "shopId"=> $shopId,
                 "fromSenderName"=> $jijian_address['name'],
                 "fromMobile"=>$jijian_address['mobile'],
                 "fromLng" => $jijian_address['lng'],
@@ -250,13 +340,9 @@ class Yunyangtc extends Controller
                 "goodType"=>9,
                 "weight"=>$param['weight'],
             ];
-
-
+            // 查询价格
             $res = $wl->getPrice($content);
-//            $url = config('site.wanli_url') .'/api/v1/order/billing' ;// 'https://testapi.wlhulian.com/api/v1/order/billing';
-//            $data = $wl->setParma($content);
-////        dump(json_encode($param));exit;
-//            $res = $this->common->httpRequest($url, $data, 'POST');
+            Log::info('渠道查询：'.$res);
             $res = json_decode($res,true);
             if ($res['code'] != 200) throw new Exception($res['message']);
             $channelList = $res['data']['billingDetailList'];
@@ -270,6 +356,7 @@ class Yunyangtc extends Controller
                 $agent_tc_ratio=($agent_info["agent_tc_ratio"]??0)/100;//代理商上浮百分比 默认为0
                 $users_price= number_format($agent_price+$agent_price*$agent_tc_ratio, 2, '.', '') ; // 用户需要付的价格（元）
 
+                $channel['shopId']= $shopId;// 平台方门店编号
                 $channel['price']= $price/100;//用户支付总价
                 $channel['final_price']=$users_price;//用户支付总价
                 $channel['admin_shouzhong']=0;//平台首重
@@ -434,7 +521,7 @@ class Yunyangtc extends Controller
     {
 
         //**********************
-//        $order = Order::get(32775);
+//        $order = Order::get(50007);
 //        $r = $wanLi->createOrder($order->toArray());
 //
 ////        $par = $wanLi->setParma(input());
@@ -486,7 +573,7 @@ class Yunyangtc extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
         }
         $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
-        $out_trade_no='TC'.$this->common->get_uniqid();
+        $out_trade_no ='TC'.$this->common->get_uniqid();
 
         $data=[
             'user_id'=>$this->user->id,
@@ -495,6 +582,7 @@ class Yunyangtc extends Controller
             'channel_tag'=>$info['channel_tag'],
             'insert_id'=>$param['insert_id'],
             'out_trade_no'=>$out_trade_no,
+            'shop_id'=> $check_channel_intellect['shopId'],
             'freight'=>$check_channel_intellect['price'],
             'channel_id'=>$check_channel_intellect['deliveryCode'],
             'tag_type'=>$check_channel_intellect['deliveryChannelName'],
@@ -931,5 +1019,7 @@ class Yunyangtc extends Controller
         $res = $wanLi->detail(input('outOrderNo'));
         return R::ok(json_decode($res));
     }
+
+
 
 }
