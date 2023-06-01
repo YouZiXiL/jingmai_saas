@@ -40,6 +40,8 @@ return [
     'Pay_status 3'              => '支付成功未下单',
     'Pay_status 4'              => '取消成功未退款',
     'Pay_status 5'              => '退款中',
+    'Pay_status 6'              => '支付中',
+    'Pay_status 7'              => '智能下单',
     'Order_status'            => '运单状态',
     'Overload_status'         => '超重状态',
     'Overload_status 0'         => '无',

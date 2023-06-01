@@ -23,6 +23,8 @@ class YunYang{
         $requestId = str_shuffle($timeStamp); // 唯一请求标识
         $appid = config('site.yy_appid');
         $secret = config('site.yy_secret_key');
+//        $appid = 'F553A7BAA2F14B57922A96481B442D81';
+//        $secret = 'd640e956-cc04-46da-ab24-221d03d42619';
         $sign=md5($appid . $requestId . $timeStamp . $secret);
         return [
             'serviceCode'=>$serviceCode,
@@ -42,7 +44,7 @@ class YunYang{
     public function getPrice(array $content){
         $data = $this->setParma('CHECK_CHANNEL_INTELLECT', $content);
         $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
-        return json_decode($res);
+        return json_decode($res, true);
     }
 
     /**
@@ -53,6 +55,6 @@ class YunYang{
     public function createOrder(array $content){
         $data = $this->setParma('ADD_BILL_INTELLECT', $content);
         $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
-        return json_decode($res);
+        return json_decode($res, true);
     }
 }

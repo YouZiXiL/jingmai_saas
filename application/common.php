@@ -525,13 +525,7 @@ if(!function_exists('root_path')){
 if(!function_exists('dd')){
     function dd($args)
     {
-        if (is_array($args)){
-            foreach ($args as $x) {
-                is_array($x)?print_r($x):dump($x);
-            }
-        }else{
-            dump($args);
-        }
+        dump($args);
         die(1);
     }
 }

@@ -82,12 +82,13 @@ class Orderslist extends Backend
             ->where('pay_status','<>',0)
             ->where('channel_tag','<>','同城')
             ->with([
-                'usersinfo'=>function($query){
-                $query->WithField('mobile');
-            },
-                'wxauthinfo'=>function($query){
-                    $query->where('auth_type',2)->WithField('name');
-                }])
+                    'usersinfo'=>function($query){
+                        $query->WithField('mobile');
+                    },
+                    'wxauthinfo'=>function($query){
+                        $query->where('auth_type',2)->WithField('name');
+                    }
+                ])
             ->order($sort, $order)
             ->paginate($limit);
 

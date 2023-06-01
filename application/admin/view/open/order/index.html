@@ -2,141 +2,260 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <!-- import CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
     <style>
         [v-cloak] {
             display: none;
+        }
+        .title-tag{
+            padding: 3px 20px 3px 10px;
+            background: #ecf5ff;
+            color: #409eff;
+            border: 1px solid #d9ecff;
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
         }
     </style>
 </head>
 <body>
 <div id="app" v-cloak>
+    <div class="p-3 mb-2 bg-white">
+        <el-avatar class="mr-2" :size="70" src="__CDN__/assets/img/express/sf.png"></el-avatar>
+        <el-avatar class="mr-2" :size="70" src="__CDN__/assets/img/express/db.png"></el-avatar>
+        <el-avatar class="mr-2" :size="70" src="__CDN__/assets/img/express/jd.png"></el-avatar>
+        <el-avatar class="mr-2" :size="70" src="__CDN__/assets/img/express/jt.png"></el-avatar>
+        <el-avatar class="mr-2" :size="70" src="__CDN__/assets/img/express/sto.png"></el-avatar>
+        <el-avatar class="mr-2" :size="70" src="__CDN__/assets/img/express/yd.png"></el-avatar>
+        <el-avatar class="mr-2" :size="70" src="__CDN__/assets/img/express/yt.png"></el-avatar>
+        <el-avatar class="mr-2" :size="70" src="__CDN__/assets/img/express/zt.png"></el-avatar>
+    </div>
     <el-form label-position="right" :model="formData" :rules="rules" ref="ruleForm" label-width="80px" >
         <el-row :gutter="10">
             <el-col :span="12">
                 <el-card class="box-card" shadow="never">
                     <div slot="header" class="clearfix">
-                        <span>寄件人</span>
-                        <el-button style="float: right; padding: 3px 0" type="text">地址簿</el-button>
+                        <span class="title-tag">寄件人</span>
+                        <el-button style="float: right; padding: 3px 0" type="text"  @click="openAddress('sender')">地址簿</el-button>
                     </div>
                     <div class="grid-content bg-white">
-                    <el-form-item label-width="0" >
-                    <el-input
-                            type="textarea"
-                            :rows="2"
-                            placeholder="粘贴如：浙江省杭州市西湖区西湖名胜风景区，王美丽，136xxxx8866"
-                            v-model="senderInfo">
-                    </el-input>
-                    </el-form-item>
-                    <el-form-item label="姓名" prop="sender">
-                        <el-input v-model="formData.sender"></el-input>
-                    </el-form-item>
-                    </el-form-item>
-                    <el-form-item label="联系方式" prop="senderMobile">
-                        <el-input v-model="formData.senderMobile"></el-input>
-                    </el-form-item>
-                    <el-form-item label="省市区" prop="senderPlace">
-                        <el-input v-model="formData.senderPlace"></el-input>
-                    </el-form-item>
-                    <el-form-item label="详细地址" prop="senderLocation">
-                        <el-input v-model="formData.senderLocation"></el-input>
-                    </el-form-item>
+                        <el-form-item label-width="0" >
+                        <el-input
+                                type="textarea"
+                                @input="parseSender"
+                                :rows="2"
+                                placeholder="粘贴如：浙江省杭州市西湖区西湖名胜风景区，王美丽，13838383388"
+                                v-model="senderContent">
+                        </el-input>
+                        </el-form-item>
+                        <el-form-item label="姓名" prop="sender.name">
+                            <el-input placeholder="寄件人姓名" v-model="formData.sender.name"></el-input>
+                        </el-form-item>
+                        </el-form-item>
+                        <el-form-item label="联系方式" prop="sender.mobile">
+                            <el-input placeholder="寄件人手机号码或电话号码" v-model="formData.sender.mobile"></el-input>
+                        </el-form-item>
+                        <el-form-item label="省市区" prop="sender.county" >
+                            <el-cascader
+                                    class="w-100"
+                                    placeholder="寄件人的省市区"
+                                    v-model="sender"
+                                    :options="provinceList"
+                                    :props="props"
+                                    @change="changeSender">
+                            </el-cascader>
+                        </el-form-item>
+                        <el-form-item label="详细地址" prop="sender.location">
+                            <el-input placeholder="寄件人详细地址" v-model="formData.sender.location"></el-input>
+                        </el-form-item>
+                    </div>
+                    <div class="d-flex j-end">
+                        <el-checkbox v-model="isAddSender">下单后加入地址簿</el-checkbox>
+                    </div>
 
-                </div>
                 </el-card>
             </el-col>
             <el-col :span="12">
                 <el-card class="box-card" shadow="never">
                     <div slot="header" class="clearfix">
-                        <span>收件人</span>
-                        <el-button style="float: right; padding: 3px 0" type="text">地址簿</el-button>
+                        <span class="title-tag">收件人</span>
+                        <el-button style="float: right; padding: 3px 0" type="text" @click="openAddress('receiver')">地址簿</el-button>
                     </div>
                     <div class="grid-content bg-white">
-                    <el-form-item label-width="0" >
-                        <el-input
-                                type="textarea"
-                                :rows="2"
-                                placeholder="粘贴如：浙江省杭州市西湖区西湖名胜风景区，王美丽，136xxxx8866"
-                                v-model="senderInfo">
-                        </el-input>
-                    </el-form-item>
-                    <el-form-item label="姓名" prop="receiver">
-                        <el-input v-model="formData.receiver"></el-input>
-                    </el-form-item>
-                    <el-form-item label="联系方式" prop="receiverMobile">
-                        <el-input v-model="formData.receiverMobile"></el-input>
-                    </el-form-item>
-                    <el-form-item label="省市区" prop="receiverPlace">
-                        <el-input v-model="formData.receiverPlace"></el-input>
-                    </el-form-item>
-                    <el-form-item required label="详细地址" prop="receiverLocation">
-                        <el-input v-model="formData.receiverLocation"></el-input>
-                    </el-form-item>
-
-                </div>
+                        <el-form-item label-width="0" >
+                            <el-input
+                                    type="textarea"
+                                    :rows="2"
+                                    @input="parseReceiver"
+                                    placeholder="粘贴如：浙江省杭州市西湖区西湖名胜风景区，王美丽，13838383388"
+                                    v-model="receiverContent">
+                            </el-input>
+                        </el-form-item>
+                        <el-form-item label="姓名" prop="receiver.name">
+                            <el-input placeholder="收件人姓名" v-model="formData.receiver.name"></el-input>
+                        </el-form-item>
+                        <el-form-item label="联系方式" prop="receiver.mobile">
+                            <el-input placeholder="收件人电话号码或手机号码" v-model="formData.receiver.mobile"></el-input>
+                        </el-form-item>
+                            <el-form-item label="省市区" prop="receiver.county" >
+                                <el-cascader
+                                        class="w-100"
+                                        placeholder="收件人的省市区"
+                                        v-model="receiver"
+                                        :options="provinceList"
+                                        :props="props"
+                                        @change="changeReceiver">
+                                </el-cascader>
+                            </el-form-item>
+                        <el-form-item required label="详细地址" prop="receiver.location">
+                            <el-input placeholder="收件人详细地址" v-model="formData.receiver.location"></el-input>
+                        </el-form-item>
+                    </div>
+                    <div class="d-flex j-end">
+                        <el-checkbox v-model="isAddReceiver">下单后加入地址簿</el-checkbox>
+                    </div>
                 </el-card>
             </el-col>
         </el-row>
 
         <el-card class="box-card mt-2" shadow="never">
             <div slot="header" class="clearfix">
-                <span>快递信息</span>
+                <span class="title-tag">快递信息</span>
             </div>
-            <el-row>
+            <el-row :gutter="5">
                 <el-col :span="6">
-                    <el-form-item label="包裹数量">
-                        <el-input v-model="formData.packageCount" placeholder="包裹数量"></el-input>
+                    <el-form-item label="托寄物" prop="info.itemName">
+                        <el-select v-model="formData.info.itemName" class="w-100" placeholder="托寄物">
+                            <el-option
+                                    v-for="item in goods"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                            </el-option>
+                        </el-select>
                     </el-form-item>
-                    <el-form-item label="寄托物">
-                        <el-input v-model="formData.itemName" placeholder="寄托物"></el-input>
-                    </el-form-item>
-                    <el-form-item label="预约取件">
-                        <el-input v-model="formData.pickupStartTime" placeholder="取件时间"></el-input>
-                    </el-form-item>
-                </el-col>
-                <el-col :span="6">
-                    <el-form-item label="长">
-                        <el-input v-model="formData.vloumLong" placeholder="重量">
-                            <template slot="append">CM</template>
-                        </el-input>
-                    </el-form-item>
-                    <el-form-item label="宽">
-                        <el-input v-model="formData.vloumWidth" placeholder="重量">
-                            <template slot="append">CM</template>
-                        </el-input>
-                    </el-form-item>
-                    <el-form-item label="高">
-                        <el-input v-model="formData.vloumHeight" placeholder="重量">
-                            <template slot="append">CM</template>
-                        </el-input>
-                    </el-form-item>
-                </el-col>
-                <el-col :span="6">
-                    <el-form-item label="重量">
-                        <el-input v-model="formData.weight" placeholder="重量">
+                    <el-form-item label="重量" prop="info.weight">
+                        <el-input type="number" :min="1" v-model="formData.info.weight" placeholder="重量">
                             <template slot="append">KG</template>
                         </el-input>
                     </el-form-item>
-                    <el-form-item label="保价金额">
-                        <el-input v-model="formData.insured" placeholder="审批人"></el-input>
+                    <el-form-item label="包裹数量" prop="info.packageCount">
+                        <el-input type="number" :min="1" v-model="formData.info.packageCount" placeholder="包裹数量"></el-input>
                     </el-form-item>
                 </el-col>
-
+                <el-col :span="6">
+                    <el-form-item label="长" prop="info.vloumLong">
+                        <el-input type="number" :min="1" v-model="formData.info.vloumLong" placeholder="物品长（厘米）">
+                            <template slot="append">CM</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="宽" prop="info.vloumWidth">
+                        <el-input type="number" :min="1" v-model="formData.info.vloumWidth" placeholder="物品宽（厘米）">
+                            <template slot="append">CM</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="高" prop="info.vloumHeight">
+                        <el-input type="number" :min="1" v-model="formData.info.vloumHeight" placeholder="物品高（厘米）">
+                            <template slot="append">CM</template>
+                        </el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="预约取件">
+                        <el-col  :span="11">
+                            <el-date-picker type="date" placeholder="选择日期" v-model="formData.pickupStartTime" style="width: 100%;"></el-date-picker>
+                        </el-col>
+                        <el-col class="line text-center" :span="2">-</el-col>
+                        <el-col class="line" :span="11">
+                            <el-time-picker placeholder="选择时间" v-model="formData.pickupStartTime" style="width: 100%;"></el-time-picker>
+                        </el-col>
+                    </el-form-item>
+                    <el-form-item label="保价金额" prop="info.insured">
+                        <el-input v-model="formData.info.insured" placeholder="保价金额"></el-input>
+                    </el-form-item>
+                    <el-form-item >
+                        <div><el-button style="width: 120px" type="primary"  @click="onChannel"> 提 交 </el-button></div>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item  label="备注" prop="info.billRemark">
+                        <el-input type="textarea" :rows="4" v-model="formData.info.billRemark" placeholder="备注"></el-input>
+                    </el-form-item>
+                </el-col>
             </el-row>
         </el-card>
     </el-form>
+    <el-dialog
+        title="渠道列表"
+        :visible.sync="channelVisible"
+        @close="onClose"
+        width="80%">
+        <div>
+            <div v-for="item in channelList">
+                <div class="mb-2 px-3">
+                    <el-radio v-model="channelId" :label="item.channelId" class="d-flex a-center border px-3 py-1 radius hover-shadow" >
+                        <img class="rounded-50" width="32" height="32" :src="item.channelLogoUrl" />
 
+                        <div class="d-inline-flex a-center">
+                            <span class="mr-2">{{item.tagType}} - 预收</span><span class="text-danger font-xl font-weight">{{item.freight}}</span><span class="px-1">元</span>
+                            <span class="ml-1"> - {{item.channel}}</span>
+                        </div>
+                    </el-radio>
+                </div>
+            </div>
+        </div>
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="channelVisible = false"> 取 消 </el-button>
+            <el-button type="primary" @click="onOrder"> 下 单 </el-button>
+        </span>
+    </el-dialog>
 
-        <button-counter></button-counter>
+    <el-dialog
+            title="地址簿"
+            :visible.sync="addressVisible"
+            @close="closeAddress"
+            width="50%">
+        <el-table
+                ref="singleTable"
+                :data="addressList"
+                highlight-current-row
+                @current-change="handleCurrentChange"
+                style="width: 100%">
+            <el-table-column
+                    prop="name"
+                    label="姓名"
+                    width="100">
+            </el-table-column>
+            <el-table-column
+                    prop="mobile"
+                    label="电话"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    prop="address"
+                    label="地址">
+            </el-table-column>
+            <el-table-column
+                    fixed="right"
+                    label="操作"
+                    width="100">
+                <template slot-scope="scope">
+                    <el-popconfirm
+                        title="确定要删除这个地址么？"
+                        @confirm = delAddress(scope.row)
+                    >
+                        <el-button slot="reference" @click.stop type="text" size="small"> 删 除 </el-button>
+                    </el-popconfirm>
+
+                </template>
+            </el-table-column>
+        </el-table>
+        <span slot="footer" class="dialog-footer">
+            <el-button type="primary" @click="addressVisible = false"> 确 定 </el-button>
+        </span>
+    </el-dialog>
 
 </div>
 </body>
 
-<!-- import Vue before Element -->
-<script src="https://unpkg.com/vue@2/dist/vue.js"></script>
-<!-- import JavaScript -->
-<script src="https://unpkg.com/element-ui/lib/index.js"></script>
 
 <script type="module">
 
@@ -158,57 +277,307 @@
         components: c,
         data: function() {
             return {
+                channelVisible: false, // 模态框
+                addressVisible: false, // 模态框
+                sender: [], // 发件人省市区
+                receiver: [], // 发件人省市区
+                provinceList: [],
+                addressList: [],
+                currentType: '', // 当前打开的address框。'sender'||'receiver'
+                goods: [{
+                    value: '日用品',
+                    label: '日用品'
+                }, {
+                    value: '服装',
+                    label: '服装'
+                }, {
+                    value: '鞋',
+                    label: '鞋'
+                }, {
+                    value: '电子产品',
+                    label: '电子产品'
+                }, {
+                    value: '酒水',
+                    label: '酒水'
+                }],
                 formData: {
-                    sender: '',
-                    senderMobile: '',
-                    senderPlace: '',
-                    senderLocation: '',
-                    receiver: '',
-                    receiverMobile: '',
-                    receiverPlace: '',
-                    receiverLocation: '',
-                    packageCount:'', // 包裹数量
-                    itemName:'', // 寄件物品
-                    weight:1, // 重量
-                    vloumLong:'', // 长
-                    vloumWidth:'', // 宽
-                    vloumHeight:'', // 高
-                    pickupStartTime:'', // 预约取件时间
-                    billRemark:'', // 备注
-                    insured:'', // 保价金额
+                    sender:{
+                        name: '',
+                        mobile: '',
+                        province: '',
+                        city: '',
+                        county: '',
+                        location: '',
+                    },
+                    receiver:{
+                        name: '',
+                        mobile: '',
+                        province: '',
+                        city: '',
+                        county: '',
+                        location: '',
+                    },
+                    info:{
+                        packageCount: 1,    // 包裹数量
+                        itemName:'日用品',        // 寄件物品
+                        weight:1,           // 重量
+                        vloumLong:'',       // 长
+                        vloumWidth:'',      // 宽
+                        vloumHeight:'',     // 高
+                        pickupStartTime:'', // 预约取件时间
+                        billRemark:'',      // 备注
+                        insured:'',         // 保价金额
+                    },
+
                 },
-                senderInfo:'',
+                senderContent:'',
+                receiverContent:'',
+                props:{value:'name', label:'name'},
+                channelList: [],        // 渠道列表
+                channelId: '',          // 被选渠道
+                requireId: '',
+                isAddSender: false,
+                isAddReceiver: false,
                 rules: {
-                    sender: [
-                        { required: true, message: '请输入活动名称', trigger: 'blur' },
-                        { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+                    'sender.name': [
+                        { required: true, message: '请输入寄件人姓名', trigger: ['change'] },
+                        { min: 2, max: 5, message: '长度在 2 到 8 个字符', trigger: ['change'] }
                     ],
-                    senderMobile: [
-                        { required: true, message: '请选择活动区域', trigger: 'change' }
+                    'sender.mobile': [
+                        { required: true, message: '请输入寄件人手机或电话号码', trigger: 'change' },
+                        { pattern: /^1[3456789]\d{9}$|^0\d{2,3}-?\d{7,8}$/, message: '手机号格式不正确', trigger: 'change' }
                     ],
-                    senderPlace: [
-                        { type: 'date', required: true, message: '请选择日期', trigger: 'change' }
+                    'sender.county': [
+                        { required: true, message: '选择寄件人省市区', trigger: ['change','blur'] },
                     ],
-                    senderLocation: [
-                        { type: 'date', required: true, message: '请选择时间', trigger: 'change' }
+                    'sender.location': [
+                        {   required: true, message: '请填写寄件人详细地址', trigger: 'change' }
                     ],
-                    receiver: [
-                        { type: 'array', required: true, message: '请至少选择一个活动性质', trigger: 'change' }
+                    'receiver.name': [
+                        { required: true, message: '请输入收件人姓名', trigger: ['change'] },
+                        { min: 2, max: 5, message: '长度在 2 到 8 个字符', trigger: ['change'] }
                     ],
-                    receiverMobile: [
-                        { required: true, message: '请选择活动资源', trigger: 'change' }
+                    'receiver.mobile': [
+                        { required: true, message: '请输入收件人手机或电话号码', trigger: 'change' },
+                        { pattern: /^1[3456789]\d{9}$|^0\d{2,3}-?\d{7,8}$/, message: '手机号格式不正确', trigger: 'change' }
+
                     ],
-                    receiverPlace: [
-                        { required: true, message: '请填写活动形式', trigger: 'blur' }
-                    ]
+                    'receiver.county': [
+                        { required: true, message: '选择收件人省市区', trigger: 'change' }
+                    ],
+                    'receiver.location': [
+                        {  required: true, message: '请填写收件人详细地址', trigger: 'change' }
+                    ],
+                    'info.packageCount': [
+                        {  required: true, message: '请选择包裹数量',trigger: 'change' }
+                    ],
+                    'info.itemName': [
+                        {  required: true, message: '请选择包裹数量',trigger: 'change' }
+                    ],
+                    'info.weight': [
+                        {  required: true, message: '请选择包裹数量',trigger: 'change' }
+                    ],
                 }
             };
+        },
+        created(){
+            this.provinceList = provinceData
         },
         methods:{
             btnClick(){
                 console.log('点击事件')
                 this.visible = true
+            },
+            // 解析地址
+            parseSender(text){
+                const result = AddressParse.parse(text)
+                if(result.length<=0) return
+                let res = result[0]
+                this.sender = [res.province , res.city , res.area]
+                this.formData.sender.name =  res.name
+                this.formData.sender.mobile = res.mobile || res.phone
+                this.formData.sender.province = res.province
+                this.formData.sender.city = res.city
+                this.formData.sender.county = res.area
+                this.formData.sender.location = res.details
+
+            },
+            // 解析地址
+            parseReceiver(text){
+                const result = AddressParse.parse(text)
+                if(result.length<=0) return
+                let res = result[0]
+                this.receiver = [res.province , res.city , res.area]
+                this.formData.receiver.name =  res.name
+                this.formData.receiver.mobile = res.mobile || res.phone
+                this.formData.receiver.province = res.province
+                this.formData.receiver.city = res.city
+                this.formData.receiver.county = res.area
+                this.formData.receiver.location = res.details
+            },
+            // 选择寄件人省市区
+            changeSender(value){
+                this.formData.sender.province = value[0]
+                this.formData.sender.city = value[1]
+                this.formData.sender.county = value[2]
+            },
+            // 选择收件人省市区
+            changeReceiver(value){
+                this.formData.receiver.province = value[0]
+                this.formData.receiver.city = value[1]
+                this.formData.receiver.county = value[2]
+            },
+
+            // 查询渠道
+            onChannel(){
+                this.$refs['ruleForm'].validate((valid) => {
+                    if (valid) {
+                        Fast.api.ajax({
+                            url: 'open/order/query',
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            data: JSON.stringify({
+                                ...this.formData
+                            })
+                        },  (data) => { //success
+                            console.log(data)
+                            let list = data.list
+                            this.channelVisible = true
+                            this.requireId = data.requireId
+                            this.channelList = data.list.sort((a,b)=>a.freight - b.freight)
+                            return false
+                        }, (data,ret) => { //error
+                            return true;
+                        });
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                })
+            },
+
+
+            // 下单
+            onOrder(){
+                Fast.api.ajax({
+                    url: 'open/order/create',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    data: JSON.stringify({
+                        requireId: this.requireId,
+                        channelId: this.channelId,
+                    })
+                }, (data) => { //success
+                    console.log(data)
+                    if (this.isAddSender){
+                        this.saveAddress(this.formData.sender)
+                    }
+                    if (this.isAddReceiver){
+                        this.saveAddress(this.formData.receiver)
+                    }
+                    return true;
+                }, (data,ret) => { //error
+                    console.log('data', data)
+                    console.log('ret', ret)
+                    return true;
+                });
+                this.channelVisible = false
+            },
+
+            // 关闭模态框的回调
+            onClose(){
+                this.channelList = []
+                this.channelId = ''
+            },
+
+            // 获取地址簿
+            getAddress(){
+                Fast.api.ajax({
+                    url: 'open/agent_address/index',
+                    method: 'get',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }, (data) => { //success
+                    console.log(data)
+                    this.addressList = data
+                    return false;
+                }, (data,ret) => { //error
+                    console.log('data', data)
+                    console.log('ret', ret)
+                    return true;
+                });
+            },
+
+
+            // 保存通讯录
+            saveAddress(address){
+                Fast.api.ajax({
+                    url: 'open/agent_address/create',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    data: JSON.stringify({
+                        address,
+                    })
+                }, (data) => { //success
+                    return false;
+                }, (data,ret) => { //error
+                    console.log('data', data)
+                    console.log('ret', ret)
+                    return true;
+                });
+            },
+
+            /**
+             * 打开地址簿
+             */
+            openAddress(type){
+                this.addressVisible = true;
+                this.currentType = type
+                if(this.addressList.length === 0){
+                    this.getAddress()
+                }
+            },
+
+            // 关闭地址模态框
+            closeAddress(){
+                this.$refs['singleTable'].setCurrentRow();
+            },
+
+
+            // 选中地址
+            handleCurrentChange(row) {
+                if (!row) return
+                let address = Object.assign({}, row)
+                delete address.id
+                this[this.currentType] = [address.province , address.city , address.county]
+                this.formData[this.currentType] = address
+            },
+
+            // 删除地址
+            delAddress(row){
+                Fast.api.ajax({
+                    url: `open/agent_address/delete?id=${row.id}`,
+                    method: 'delete',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }, (data) => { //success
+                    this.getAddress()
+                    return true;
+                }, (data,ret) => { //error
+                    console.log('data', data)
+                    console.log('ret', ret)
+                    return true;
+                });
             }
+
         }
     })
 
@@ -222,9 +591,6 @@
         },
         template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
     })
-
-
-
 
 </script>
 </html>

@@ -98,7 +98,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                         {field: 'receiver', title: __('Receiver'), operate: false},
                         {field: 'receiver_mobile', title: __('Receiver_mobile'), operate: 'LIKE'},
                         {field: 'tag_type', title: __('Tag_type'), operate: 'LIKE'},
-                        {field: 'pay_status', title: __('Pay_status'), searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1'),"2":__('Pay_status 2'),"3":__('Pay_status 3'),"4":__('Pay_status 4'),"5":__('Pay_status 5')}, formatter: Table.api.formatter.normal},
+                        {field: 'pay_status', title: __('Pay_status'), searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1'),"2":__('Pay_status 2'),"3":__('Pay_status 3'),"4":__('Pay_status 4'),"5":__('Pay_status 5'),"6":__('Pay_status 6'),"7":__('Pay_status 7')}, formatter: Table.api.formatter.normal},
                         {field: 'order_status', title: __('Order_status'), operate: 'LIKE',formatter: Table.api.formatter.normal},
                         {field: 'overload_status', title: __('Overload_status'), searchList: {"0":__('Overload_status 0'),"1":__('Overload_status 1'),"2":__('Overload_status 2')},events:{
                                 'click .btn-overload_status': function (e, value, row) {

@@ -2,6 +2,7 @@
 
 namespace app\admin\model\orders;
 
+use app\admin\model\Admin;
 use app\admin\model\users\Agentlist;
 use app\admin\model\wxauth\Authlist;
 use app\web\model\Users;
@@ -48,7 +49,16 @@ class Orderslist extends Model
     
     public function getPayStatusList()
     {
-        return ['0' => __('Pay_status 0'), '1' => __('Pay_status 1'), '2' => __('Pay_status 2'), '3' => __('Pay_status 3'), '4' => __('Pay_status 4'), '5' => __('Pay_status 5')];
+        return [
+            '0' => __('Pay_status 0'),
+            '1' => __('Pay_status 1'),
+            '2' => __('Pay_status 2'),
+            '3' => __('Pay_status 3'),
+            '4' => __('Pay_status 4'),
+            '5' => __('Pay_status 5'),
+            '6' => __('Pay_status 6'),
+            '7' => __('Pay_status 7'),
+        ];
     }
 
     public function getOverloadStatusList()
@@ -103,6 +113,10 @@ class Orderslist extends Model
 
     function wxauthinfo(){
         return $this->belongsTo(Authlist::class,'agent_id','agent_id', [], 'LEFT')->setEagerlyType(0);
+    }
+
+    function agent(){
+        return $this->belongsTo(Admin::class, 'agent_id');
     }
 
 

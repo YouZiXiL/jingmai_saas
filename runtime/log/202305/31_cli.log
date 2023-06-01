@@ -1,0 +1,27 @@
+[2023-05-31T10:54:49+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.002473s ]
+[ info ] [ LOG ] INIT File
+info
+[2023-05-31T10:54:49+08:00][ info ] [ CACHE ] INIT File
+info
+[2023-05-31T10:54:49+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.004141s ]
+info
+[2023-05-31T10:54:49+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.000817s ]
+info
+[2023-05-31T11:41:02+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000945s ]
+[ info ] [ LOG ] INIT File
+info
+[2023-05-31T11:41:02+08:00][ info ] [ CACHE ] INIT File
+info
+[2023-05-31T11:41:02+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.002472s ]
+info
+[2023-05-31T11:41:02+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.000649s ]
+info
+[2023-05-31T11:41:10+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000125s ]
+[ info ] [ LOG ] INIT File
+info
+[2023-05-31T11:41:10+08:00][ info ] [ CACHE ] INIT File
+info
+[2023-05-31T11:41:10+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.002668s ]
+info
+[2023-05-31T11:41:10+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.000386s ]
+info

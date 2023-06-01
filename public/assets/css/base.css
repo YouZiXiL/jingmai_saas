@@ -22,9 +22,7 @@ body{
 .p-1{
     padding: 10px;
 }
-.p-2{
-    padding: 20px;
-}
+.p-2{  padding: 20px !important; }
 .p-3{
     padding: 30px;
 }
@@ -242,6 +240,12 @@ body{
     background-color: #f5f8fd;
     border: 1px solid #c4d3fa;
 }
+.hover-shadow{
+    transition: all 0.2s ease-in-out;
+}
+.hover-shadow:hover{
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+}
 
 .line-h0{ line-height: 0!important; }
 .line-h{ line-height: 1!important; }
@@ -339,6 +343,7 @@ body{
 
 .font-sm{ font-size: 14px; }
 .font-lg{ font-size: 20px; }
+.font-xl{ font-size: 26px;;}
 .cursor-pointer{
     cursor: pointer;
 }
