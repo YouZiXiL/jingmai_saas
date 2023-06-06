@@ -4,6 +4,7 @@
 namespace app\common\library;
 
 
+use app\common\model\PushNotice;
 use think\Log;
 use app\web\controller\Common;
 
@@ -33,18 +34,22 @@ class KD100Sms
      */
     public function overload(array $order){
         $out_trade_no=$this->utils->get_uniqid();
-        $content=json_encode(['发收人姓名'=>$order['sender'],'快递单号'=>$order['waybill']]);
-        $this->send($content, $out_trade_no, $order,7762);
-        db('agent_sms')->insert([
-            'agent_id'=>$order['agent_id'],
-            'type'=>0,
-            'status'=>0,
-            'phone'=>$order['sender_mobile'],
-            'waybill'=>$order['waybill'],
-            'out_trade_no'=>$out_trade_no,
-            'content'=>$content,
-            'create_time'=>time()
-        ]);
+        $agentCode = $this->utils->generateShortCode($order['agent_id']);
+        $orderCode = $this->utils->generateShortCode($order['id']);
+        $link = request()->host() . "/cz/{$agentCode}/{$orderCode}";
+        $content=json_encode(['发收人姓名'=>$order['sender'],'快递单号'=>$order['waybill'], '补缴链接'=>$link]);
+        $resJson = $this->send($content, $out_trade_no, $order,7762);
+        $this->pushLog($resJson, $order, 1);
+//        db('agent_sms')->insert([
+//            'agent_id'=>$order['agent_id'],
+//            'type'=>0,
+//            'status'=>0,
+//            'phone'=>$order['sender_mobile'],
+//            'waybill'=>$order['waybill'],
+//            'out_trade_no'=>$out_trade_no,
+//            'content'=>$content,
+//            'create_time'=>time()
+//        ]);
     }
 
     /**
@@ -53,18 +58,23 @@ class KD100Sms
      */
     public function material(array $order){
         $out_trade_no=$this->utils->get_uniqid();
-        $content=json_encode(['发收人姓名'=>$order['sender'],'快递单号'=>$order['waybill']]);
-        $this->send($content, $out_trade_no, $order,7769);
-        db('agent_sms')->insert([
-            'agent_id'=>$order['agent_id'],
-            'type'=>1,
-            'status'=>0,
-            'phone'=>$order['sender_mobile'],
-            'waybill'=>$order['waybill'],
-            'out_trade_no'=>$out_trade_no,
-            'content'=>$content,
-            'create_time'=>time()
-        ]);
+        $agentCode = $this->utils->generateShortCode($order['agent_id']);
+        $orderCode = $this->utils->generateShortCode($order['id']);
+        $link = request()->host() . "/hc/{$agentCode}/{$orderCode}";
+        $content=json_encode(['发收人姓名'=>$order['sender'],'快递单号'=>$order['waybill'], '补缴链接'=>$link]);
+        $resJson = $this->send($content, $out_trade_no, $order,7769);
+        $this->pushLog($resJson, $order, 2);
+
+//        db('agent_sms')->insert([
+//            'agent_id'=>$order['agent_id'],
+//            'type'=>1,
+//            'status'=>0,
+//            'phone'=>$order['sender_mobile'],
+//            'waybill'=>$order['waybill'],
+//            'out_trade_no'=>$out_trade_no,
+//            'content'=>$content,
+//            'create_time'=>time()
+//        ]);
     }
 
     /**
@@ -88,8 +98,32 @@ class KD100Sms
             'callback'=> $this->domain.'/web/wxcallback/send_sms'
         ],'POST',['Content-Type: application/x-www-form-urlencoded']);
         Log::info('发送短信：'.$res);
-        $res=json_decode($res,true);
-        if($res['status']!=1) Log::error('发送短信失败'.$order['waybill']);
-        return $res['status'];
+        return $res;
+    }
+
+    /**
+     * @param $res string 短信发送结果
+     * @param $order array 订单
+     * @param $type int 发送类型 1：超重，2：耗材
+     */
+    public function pushLog(string $res, array $order, int $type){
+        $pushData = [
+            'user_id' => $order['user_id'],
+            'agent_id' => $order['agent_id'],
+            'name' => $order['sender'],
+            'mobile' => $order['sender_mobile'],
+            'order_no' => $order['out_trade_no'],
+            'waybill' => $order['waybill'],
+            'channel' => 1,
+            'type' => $type,
+            'comment' => $res,
+        ];
+        if( json_decode($res, true)['status']!=1) {
+            Log::error('发送短信失败'.$order['waybill']);
+            $pushData['status'] = 2;
+        }else{
+            $pushData['status'] = 1;
+        }
+        PushNotice::create($pushData);
     }
 }

@@ -4,6 +4,7 @@ namespace app\web\controller;
 
 use app\common\business\WanLi;
 use app\common\library\R;
+use app\common\model\PushNotice;
 use app\web\model\Admin;
 use think\Controller;
 use think\Request;
@@ -80,4 +81,63 @@ class Test extends Controller
         return R::ok($res);
     }
 
+
+    /**
+     * 小程序订阅推送
+     */
+    public function miniPush(){
+        $ordersId = 45884;
+        $agentId = 44;
+        $orders=db('orders')->where('id',$ordersId)->find();
+        $users=db('users')->where('id',$orders['user_id'])->find();
+        $agentAuth=db('agent_auth')
+            ->where('agent_id',$agentId)
+            ->where('wx_auth',1)
+            ->where('auth_type',2)
+            ->find();
+
+        $xcx_access_token=$this->utils->get_authorizer_access_token($agentAuth['app_id']);
+
+        $result = $this->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
+            'touser'=>$users['open_id'],  //接收者openid
+            'template_id'=>$agentAuth['material_template'],
+            'page'=>'pages/informationDetail/haocai/haocai?id='.$orders['id'],  //模板跳转链接
+            'data'=>[
+                'character_string7'=>['value'=>$orders['waybill']],
+                'phone_number4'=>['value'=>$orders['sender_mobile']],
+                'amount2'=>['value'=>100],
+                'thing6'=>['value'=>'产生包装费用'],
+                'thing5'  =>['value'=>'点击补缴运费，以免对您的运单造成影响',]
+            ],
+            'miniprogram_state'=>'formal',
+            'lang'=>'zh_CN'
+        ],'POST');
+        dd($result);
+        //发送小程序超重订阅消息
+//        $result =  $this->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
+//            'touser'=>$users['open_id'],  //接收者openid
+//            'template_id'=>$agentAuth['pay_template'],
+//            'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],  //模板跳转链接
+//            'data'=>[
+//                'character_string6'=>['value'=>$orders['waybill']],
+//                'thing5'=>['value'=>100],
+//                'amount11'=>['value'=>100],
+//                'thing2'=>['value'=>'站点核重超出下单重量'],
+//                'thing7'  =>['value'=>'点击补缴运费，以免对您的运单造成影响',]
+//            ],
+//            'miniprogram_state'=>'formal',
+//            'lang'=>'zh_CN'
+//        ],'POST');
+//        PushNotice::create([
+//            'user_id' => $orders['user_id'],
+//            'agent_id' => $orders['agent_id'],
+//            'name' => $orders['sender'],
+//            'mobile' => $orders['sender_mobile'],
+//            'order_no' => $orders['out_trade_no'],
+//            'waybill' => $orders['waybill'],
+//            'channel' => 2,
+//            'type' => 1,
+//            'comment' => $result,
+//        ]);
+    }
 }

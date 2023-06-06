@@ -2,6 +2,7 @@
 namespace app\common\business;
 
 use app\web\controller\Common;
+use think\Log;
 
 class YunYang{
     public Common $utils;
@@ -9,7 +10,8 @@ class YunYang{
 
     public function __construct(){
         $this->utils = new Common();
-        $this->baseUlr =  'https://api.yunyangwl.com/api/sandbox/openService'; //'https://api.yunyangwl.com/api/wuliu/openService';
+        // $this->baseUlr =  'https://api.yunyangwl.com/api/sandbox/openService';
+        $this->baseUlr =  'https://api.yunyangwl.com/api/wuliu/openService';
     }
 
     /**
@@ -55,6 +57,18 @@ class YunYang{
     public function createOrder(array $content){
         $data = $this->setParma('ADD_BILL_INTELLECT', $content);
         $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
+        return json_decode($res, true);
+    }
+
+    /**
+     * 获取物流轨迹
+     * @param array $content
+     * @return mixed
+     */
+    public function queryTrail(array $content){
+        $data = $this->setParma('QUERY_TRANCE', $content);
+        $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
+        file_put_contents('express-trail.txt',"京东物流轨迹-{$content['waybill']}：{$res}".PHP_EOL,FILE_APPEND);
         return json_decode($res, true);
     }
 }

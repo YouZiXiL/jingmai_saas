@@ -95,4 +95,23 @@ ASt4V0K4Pn6cd84Eq0qxH2BbSg==
     'wanli_url' => 'https://testapi.wlhulian.com',
 
     'mini_appid' => 'wx20a0814c2c7feb3d', // 番茄快递小程序appid
+
+    'mini_subscribe' => [ // 小程序订阅通知 （番茄惠递）
+        'material' => ['id' => '9lh-7cZq1JKk4D1UTSrcKb9CHr01EgobtyOLITEgaHI', 'code' => 22092], // 耗材补交通知
+        /*
+            快递单号{{character_string7.DATA}}
+            联系电话{{phone_number4.DATA}}
+            待补差价{{amount2.DATA}}
+            原因{{thing6.DATA}}
+            温馨提示{{thing5.DATA}}
+         */
+        'weight' => ['id' => 'v6fWyztb7jku_Q5oRkzd1yXL1BzHjknwseEhD9FNS0o', 'code' => 19713], // 超重补交通知
+        /*
+            快递公司{{thing1.DATA}}
+            运单号{{character_string2.DATA}}
+            收货人{{thing3.DATA}}
+            网点称重{{number4.DATA}}
+            补交金额{{amount5.DATA}}
+         */
+    ]
 );

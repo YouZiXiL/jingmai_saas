@@ -6,8 +6,9 @@ use app\common\business\WanLi;
 use app\common\library\alipay\Alipay;
 use app\common\library\KD100Sms;
 use app\common\model\Order;
+use app\common\model\PushNotice;
 use app\web\aes\WxBizMsgCrypt;
-
+use app\common\business\YunYang;
 use app\web\model\Admin;
 use app\web\model\Agent_couponlist;
 use app\web\model\AgentAuth;
@@ -60,7 +61,6 @@ class Wxcallback extends Controller
     public function wxcall(){
         $param = $this->request->param();
         $encryptMsg = file_get_contents('php://input');
-
         $kaifang_token=config('site.kaifang_token');
         $encoding_aeskey=config('site.encoding_aeskey');
         $kaifang_appid=config('site.kaifang_appid');
@@ -68,7 +68,7 @@ class Wxcallback extends Controller
 
         //获取到微信推送过来post数据（xml格式）
         $msg = '';
-        $errCode=$pc->decryptMsg($param['msg_signature'], $param['timestamp'], $param['nonce'], $encryptMsg,$msg);
+        $errCode=$pc->decryptMsg($param['signature'], $param['timestamp'], $param['nonce'], $encryptMsg,$msg);
         if($errCode == 0) {
             //处理消息类型，并设置回复类型和内容
             $postObj = simplexml_load_string($msg, 'SimpleXMLElement', LIBXML_NOCDATA);
@@ -139,9 +139,9 @@ class Wxcallback extends Controller
         $parm=json_decode($param['parm'],true);
 
         $authorization_info=json_decode($res,true)['authorization_info'];
+        Log::info(['微信授权信息' => $authorization_info]);
         //更新授权APPIDS
         //获取公众号基本信息
-
         $getAccountBasicInfo=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/component/api_get_authorizer_info?access_token='.$common->get_component_access_token(),[
             'component_appid'=>$kaifang_appid,
             'authorizer_appid'=>$authorization_info['authorizer_appid']
@@ -159,7 +159,7 @@ class Wxcallback extends Controller
         }
         $is_set=db('agent_auth')->where('agent_id','<>',$parm['agent_id'])->where('app_id',$authorization_info['authorizer_appid'])->find();
         if ($is_set){
-            exit('该app_id已被授权过');
+             exit('该app_id已被授权过');
         }
         $data=[
             'app_id'=>$authorization_info['authorizer_appid'],
@@ -186,14 +186,15 @@ class Wxcallback extends Controller
             if ($res['errcode']!=0){
                 exit('配置小程序服务器域名配置失败'.$res['errmsg']);
             }
-            $res=$common->httpRequest('https://api.weixin.qq.com/wxa/setwebviewdomain?access_token='.$authorization_info['authorizer_access_token'],[
-                'action'=>'set',
-                'webviewdomain'=>[$this->request->domain(),'https://apis.map.qq.com']
-            ],'POST');
-            $res=json_decode($res,true);
-            if ($res['errcode']!=0){
-                exit('配置小程序业务域名配置失败'.$res['errmsg']);
-            }
+//            $res=$common->httpRequest('https://api.weixin.qq.com/wxa/setwebviewdomain?access_token='.$authorization_info['authorizer_access_token'],[
+//                'action'=>'set',
+//                'webviewdomain'=>[$this->request->domain(),'https://apis.map.qq.com']
+//            ],'POST');
+//            $res=json_decode($res,true);
+//            if ($res['errcode']!=0){
+//                Log::error(['配置小程序业务域名配置失败' => $res]);
+//                 exit('配置小程序业务域名配置失败'.$res['errmsg']);
+//            }
             $res=$common->httpRequest('https://api.weixin.qq.com/wxa/changewxasearchstatus?access_token='.$authorization_info['authorizer_access_token'],[
                 'status'=>0,
             ],'POST');
@@ -226,7 +227,7 @@ class Wxcallback extends Controller
             ],'POST');
             $yundan=json_decode($yundan,true);
             if ($yundan['errcode']!=0){
-                exit('配置小程序运单状态通知失败'.PHP_EOL.$yundan['errmsg']);
+                exit('小程序运单状态模板订阅失败'.PHP_EOL.$yundan['errmsg']);
             }
 
             $bukuan=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
@@ -236,12 +237,25 @@ class Wxcallback extends Controller
             ],'POST');
             $bukuan=json_decode($bukuan,true);
             if ($bukuan['errcode']!=0){
-                exit('配置小程序运费补款通知失败'.PHP_EOL.$bukuan['errmsg']);
+                exit('小程序超重补缴模板订阅失败'.PHP_EOL.$bukuan['errmsg']);
+            }
+
+            $material=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
+                'tid'=>'22092',
+                'kidList'=>[7,4,2,6,5],
+                'sceneDesc'=>'运单耗材补交通知'
+            ],'POST');
+            Log::info("运单耗材补交通知{$material}");
+            $material=json_decode($material,true);
+            Log::error(['运单耗材补交通知' => $material]);
+            if ($material['errcode']!=0){
+                exit('小程序耗材补交模板订阅失败'.PHP_EOL.$material['errmsg']);
             }
 
 
-            $data['waybill_template']=$yundan['priTmplId'];
-            $data['pay_template']=$bukuan['priTmplId'];
+            $data['waybill_template']=$yundan['priTmplId']; // 小程序运单状态模板
+            $data['pay_template']=$bukuan['priTmplId']; // 小程序超重补交模板
+            $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
 
 
         }else{
@@ -294,6 +308,7 @@ class Wxcallback extends Controller
         }
         $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->find();
 
+        Log::error(['代理商域名' => $agent_auth]);
 
         if ($agent_auth){
             db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->update($data);
@@ -348,9 +363,13 @@ class Wxcallback extends Controller
 
             if ($orderModel){
                 $orders = $orderModel->toArray();
-
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
+                }
+                if($orders['tag_type'] == '京东'){
+                    // 获取物流轨迹
+                    $yy = new YunYang();
+                    $yy->queryTrail(['waybill' => $pamar['waybill'], 'shopbill' => $pamar['shopbill']]);
                 }
                 if($orders['pay_type'] == '2'){
                     // 支付宝支付
@@ -360,7 +379,11 @@ class Wxcallback extends Controller
 
                 }else{
                     // 微信支付
-                    $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+                    $agent_auth_xcx=db('agent_auth')
+                        ->where('agent_id',$orders['agent_id'])
+                        ->where('wx_auth',1)
+                        ->where('auth_type',2)
+                        ->find();
                     $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
                     $users=db('users')->where('id',$orders['user_id'])->find();
                     $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
@@ -853,7 +876,8 @@ class Wxcallback extends Controller
                         $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
                     }
                     // 将该任务推送到消息队列，等待对应的消费者去执行
-                    Queue::push(DoJob::class, $data,'way_type');
+                   Queue::push(DoJob::class, $data,'way_type');
+
                     // 发送超重短信
                     KD100Sms::run()->overload($orders);
                 }
@@ -864,10 +888,16 @@ class Wxcallback extends Controller
                         'type'=>2,
                         'freightHaocai' =>$pamar['freightHaocai'],
                         'order_id' => $orders['id'],
+                        'xcx_access_token'=>$xcx_access_token,
+                        'open_id'=>$users['open_id'],
+                        'template_id'=>$agent_auth_xcx['material_template'],
                     ];
                     $rebatelistdata["state"]=2;
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
+
+                    // 发送耗材短信
+                    KD100Sms::run()->material($orders);
                 }
 
                 if($pamar['type']=='已取消'&&$orders['pay_status']!=2){
@@ -1047,7 +1077,11 @@ class Wxcallback extends Controller
                     ];
                     $orderModel->isUpdate(true)->save($ordersUpdate);
                 }
-                $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+                $agent_auth_xcx=db('agent_auth')
+                    ->where('agent_id',$orders['agent_id'])
+                    ->where('wx_auth',1)
+                    ->where('auth_type',2)
+                    ->find();
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
                 $users=db('users')->where('id',$orders['user_id'])->find();
                 $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
@@ -1229,7 +1263,7 @@ class Wxcallback extends Controller
                                 $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["imm_rate"]??0)/100,2);
                                 $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
                             }
-                            Log::info(['超重推送' => $data]);
+                            Log::info('超重推送');
                             // 将该任务推送到消息队列，等待对应的消费者去执行
                             Queue::push(DoJob::class, $data,'way_type');
                             // 发送超重短信
@@ -1238,9 +1272,9 @@ class Wxcallback extends Controller
                     }
 
                     //更改耗材状态
-                    if ($result['orderEvent']['packageServicePrice']!=0
-                        || $result['orderEvent']['insurancePrice']!=0
-                        || $result['orderEvent']['deliveryPrice']!=0
+                    if (
+                        ($result['orderEvent']['packageServicePrice']!=0 || $result['orderEvent']['insurancePrice']!=0 || $result['orderEvent']['deliveryPrice']!=0)
+                        && empty($orders['consume_time'])
                     ){
                         $up_data['haocai_freight'] = (
                             $result['orderEvent']['packageServicePrice']
@@ -1250,7 +1284,10 @@ class Wxcallback extends Controller
                         $data = [
                             'type'=>2,
                             'freightHaocai' => $up_data['haocai_freight'],
+                            'template_id'=>$agent_auth_xcx['material_template'],
+                            'xcx_access_token'=>$xcx_access_token,
                             'order_id' => $orders['id'],
+                            'open_id'=>$users['open_id'],
                         ];
                         $rebatelistdata["state"]=2;
                         // 将该任务推送到消息队列，等待对应的消费者去执行

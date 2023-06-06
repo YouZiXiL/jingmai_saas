@@ -664,7 +664,7 @@ class Yunyangtc extends Controller
             $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
             //获取小程序通知模版
 
-            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template')->find();
+            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template, material_template')->find();
 
             $prepay_id=json_decode($resp->getBody(),true);
             if (!array_key_exists('prepay_id',$prepay_id)){
@@ -683,6 +683,7 @@ class Yunyangtc extends Controller
                 'signType' => 'RSA',
                 'waybill_template'=>$template['waybill_template'],
                 'pay_template'=>$template['pay_template'],
+                'material_template'=>$template['material_template'],
             ];
 //            if(!empty($couponinfo)){
 //                $couponinfo["state"]=2;
@@ -836,7 +837,7 @@ class Yunyangtc extends Controller
             $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
             //获取小程序通知模版
 
-            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template')->find();
+            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template,material_template')->find();
 
             $prepay_id=json_decode($resp->getBody(),true);
             if (!array_key_exists('prepay_id',$prepay_id)){

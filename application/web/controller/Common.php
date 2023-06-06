@@ -250,6 +250,7 @@ class Common
             $authorizer_token= $this->httpRequest('https://api.weixin.qq.com/cgi-bin/component/api_authorizer_token?component_access_token='.$this->get_component_access_token(),$data,'POST');
 
             $authorizer_token=json_decode($authorizer_token,true);
+            Log::error(['$authorizer_token' => $authorizer_token]);
             db('access_token')->insert(['access_token'=>$authorizer_token['authorizer_access_token'],'app_id'=>$app_id,'create_time'=>time()]);
             return $authorizer_token['authorizer_access_token'];
         }else{
@@ -441,13 +442,72 @@ class Common
         exit("生成链接失败：agentId = {$agentId}");
     }
 
+    /**
+     * 小程序超重链接
+     * @return Redirect
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function miniOverloadLink(){
+
+        $agentId = $this->decodeShortCode(input('agentCode'));
+        $orderId = $this->decodeShortCode(input('orderCode'));
+        $agent = Admin::find($agentId);
+        if(!$agent) exit('代理商不存在');
+        $appId=db('agent_auth')
+            ->where('agent_id',$agentId)
+            ->where('auth_type', 2)
+            ->value('app_id' );
+        if (!$appId) exit('代理商没配置APPID');
+        $accessToken = $this->get_authorizer_access_token($appId);
+        $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
+        $resJson = $this->httpRequest($url,[
+            "path" => "/pages/informationDetail/overload/overload",
+            "query" =>  "id={$orderId}",
+        ],'post');
+        $res = json_decode($resJson, true);
+        if (@$res['errcode'] == 0)  return redirect($res['url_link']);
+        Log::error("生成超重链接失败：orderId = {$orderId}，详情：{$resJson}");
+        exit("超重-进入小程序失败：orderId = {$orderId}");
+    }
+
+    /**
+     * 小程序耗材链接
+     * @return Redirect
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function miniMaterialLink(){
+        $agentId = $this->decodeShortCode(input('agentCode'));
+        $orderId = $this->decodeShortCode(input('orderCode'));
+        $agent = Admin::find($agentId);
+        if(!$agent) exit('代理商不存在');
+        $appId=db('agent_auth')
+            ->where('agent_id',$agentId)
+            ->where('auth_type', 2)
+            ->value('app_id' );
+        if (!$appId) exit('代理商没配置APPID');
+        $accessToken = $this->get_authorizer_access_token($appId);
+        $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
+        $resJson = $this->httpRequest($url,[
+            "path" => "/pages/informationDetail/haocai/haocai",
+            "query" =>  "id={$orderId}",
+        ],'post');
+        $res = json_decode($resJson, true);
+        if (@$res['errcode'] == 0)  return redirect($res['url_link']);
+        Log::error("生成耗材链接失败：orderId = {$orderId}，详情：{$resJson}");
+        exit("耗材-进入小程序失败：orderId = {$orderId}");
+    }
+
 
     /**
      * 生成短链接码
      * @param $id
      * @return string
      */
-    function generateShortCode($id) {
+    public function generateShortCode($id) {
         $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $base = 62;
         $result = '';
@@ -461,10 +521,10 @@ class Common
 
     /**
      * 解析短链接码
-     * @param $id
+     * @param $shortCode
      * @return string
      */
-    function decodeShortCode($shortCode) {
+    public function decodeShortCode($shortCode) {
         $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $base = 62;
         $id = 0;
