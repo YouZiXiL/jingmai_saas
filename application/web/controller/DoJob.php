@@ -55,7 +55,7 @@ class DoJob
                     //代理商减少余额  代理超重
                     $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['agent_overload_amt'],4,'运单号：'.$orders['waybill'].' 超重扣除金额：'.$data['agent_overload_amt'].'元');
                     //发送小程序超重订阅消息
-                    $result = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
+                    $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
                         'touser'=>$data['open_id'],  //接收者openid
                         'template_id'=>$data['template_id'],
                         'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],  //模板跳转链接
@@ -69,6 +69,7 @@ class DoJob
                         'miniprogram_state'=>'formal',
                         'lang'=>'zh_CN'
                     ],'POST');
+                    $result = json_decode($resultJson, true);
                     PushNotice::create([
                         'user_id' => $orders['user_id'],
                         'agent_id' => $orders['agent_id'],
@@ -78,7 +79,8 @@ class DoJob
                         'waybill' => $orders['waybill'],
                         'channel' => 2,
                         'type' => 1,
-                        'comment' => $result,
+                        'status'=>$result['errcode'] == 0?1:2,
+                        'comment' => $resultJson,
                     ]);
                     db('orders')->where('id',$orders['id'])->update([
                         'final_weight_time'=>time(),
@@ -93,7 +95,7 @@ class DoJob
                     $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'运单号：'.$orders['waybill'].' 耗材扣除金额：'.$data['freightHaocai'].'元');
                     //发送小程序耗材订阅消息
                     if ($data['template_id']){
-                        $result = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
+                        $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
                             'touser'=>$data['open_id'],  //接收者openid
                             'template_id'=>$data['template_id'],
                             'page'=>'pages/informationDetail/haocai/haocai?id='.$orders['id'],  //模板跳转链接
@@ -107,6 +109,7 @@ class DoJob
                             'miniprogram_state'=>'formal',
                             'lang'=>'zh_CN'
                         ],'POST');
+                        $result = json_decode($resultJson, true);
                         PushNotice::create([
                             'user_id' => $orders['user_id'],
                             'agent_id' => $orders['agent_id'],
@@ -116,7 +119,8 @@ class DoJob
                             'waybill' => $orders['waybill'],
                             'channel' => 2,
                             'type' => 2,
-                            'comment' => $result,
+                            'status'=>$result['errcode'] == 0?1:2,
+                            'comment' => $resultJson,
                         ]);
                     }
 

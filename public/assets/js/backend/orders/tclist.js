@@ -78,6 +78,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         //{field: 'users_shouzhong', title: __('Users_shouzhong'), operate:'BETWEEN'},
                         {field: 'users_xuzhong', title: __('Users_xuzhong'), operate:'BETWEEN'},
                         //{field: 'agent_price', title: __('Agent_price'), operate:'BETWEEN'},
+                        {
+                            field: 'profit', title: __('利润'), operate: false, formatter: function (value) {
+                                return '<span ">'+value+'元</span>';
+                            }
+                        },
                         {field: 'overload_price', title: __('Overload_price'), operate:'BETWEEN'},
                         {field: 'wxauthinfo.name', title: __('归属账号'), operate: false},
                         //{field: 'agent_overload_price', title: __('Agent_overload_price'), operate:'BETWEEN'},

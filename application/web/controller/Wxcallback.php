@@ -366,11 +366,15 @@ class Wxcallback extends Controller
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
                 }
-                if($orders['tag_type'] == '京东'){
-                    // 获取物流轨迹
-                    $yy = new YunYang();
-                    $yy->queryTrail(['waybill' => $pamar['waybill'], 'shopbill' => $pamar['shopbill']]);
-                }
+//                if($orders['tag_type'] == '京东'){
+//                    // 获取物流轨迹
+//                    $yy = new YunYang();
+//                    $trail =  $yy->queryTrail(['waybill' => $pamar['waybill'], 'shopbill' => $pamar['shopbill']]);
+//                    file_put_contents('express-trail.txt',@$trail['result'][0] .PHP_EOL,FILE_APPEND);
+//                    $pattern = '/揽收任务已分配给快递员(.+?)联系电话(.+?)。/';
+//                    preg_match($pattern, @$trail['result'][0], $matches);
+//                    print_r($matches);
+//                }
                 if($orders['pay_type'] == '2'){
                     // 支付宝支付
                     $agent_auth_xcx = AgentAuth::where('agent_id',$orders['agent_id'])
@@ -1013,7 +1017,7 @@ class Wxcallback extends Controller
 
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
-            file_put_contents('way_type.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
+            file_put_contents('way_type.txt','云洋回调接口' . $e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
             return json(['code'=>0, 'message'=>'推送失败']);
         }
     }
@@ -1032,7 +1036,8 @@ class Wxcallback extends Controller
                 return json(['code'=>0, 'message'=>'传来的数据为空']);
             }
             $common= new Common();
-            $data=[
+
+            $content=[
                 'expressCode'=>$result['expressCode']??null,
                 'orderId'=>$result['orderId']??null,
                 'orderStatusCode'=>$result['orderStatusCode']??null,
@@ -1055,7 +1060,7 @@ class Wxcallback extends Controller
                 'comments'=>$result['orderEvent']['comments']??null,
                 'create_time'=> time()
             ];
-            db('fhd_callback')->strict(false)->insert($data);
+            db('fhd_callback')->strict(false)->insert($content);
             Log::info("风火递---订单ID：" . $result['orderId']);
             $orderModel = Order::where('out_trade_no',$result['orderId'])->find();
 
@@ -1139,8 +1144,11 @@ class Wxcallback extends Controller
                     "updatetime"=>time()
                 ];
                 $up_data = [];
+                if (isset($content['courierPhone'])){
+                    $up_data['comments'] = "快递员姓名：" . @$content['courierName'] . "，联系电话：{$content['courierPhone']}";
+                }
                 if (isset($result['orderEvent']['comments'])){
-                    $up_data['comments'] = $result['orderEvent']['comments'];
+                    $up_data['yy_fail_reason'] = $result['orderEvent']['comments'];
                 }
                 if (@$result['orderStatusCode']=='GOT'){
                     if ($result['orderEvent']['calculateWeight']/1000<$result['orderEvent']['totalVolume']*1000/6000){
@@ -1312,9 +1320,9 @@ class Wxcallback extends Controller
                  * */
                 if(
                     (
-                        $result['orderStatusCode']=='GOBACK'
-                        || $result['orderStatusCode']=='CANCEL'
-                        || $result['orderStatusCode']=='INVALID'
+                        @$result['orderStatusCode']=='GOBACK'
+                        || @$result['orderStatusCode']=='CANCEL'
+                        || @$result['orderStatusCode']=='INVALID'
                     )
                     &&$orders['pay_status']!=2
                 ){
@@ -1467,7 +1475,6 @@ class Wxcallback extends Controller
             Queue::push(DoJob::class, $data,'way_type');
         }else{
             isset($body['thirdPartyOrderNo']) && $updateOrder['waybill'] = $body['thirdPartyOrderNo']; // 运单号
-            isset($body['remarks'])  &&  $updateOrder['comments'] = $body['remarks']; // 备注
             isset($body['cancelMessage'])  &&  $updateOrder['yy_fail_reason'] = $body['cancelMessage']; // 取消原因
             if(isset($body['courierName'] )||isset($body['courierMobile']))    $updateOrder['comments'] = "快递员姓名：{$body['courierName']}，电话：{$body['courierMobile']}";
             isset($body['discountLastMoney'])  &&  $updateOrder['final_freight'] = ceil($body['discountLastMoney']) /100; // 商户成本
