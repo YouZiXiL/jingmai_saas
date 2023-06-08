@@ -13,6 +13,7 @@ use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
 use Exception;
 use think\exception\DbException;
+use think\Log;
 use think\Response;
 use think\response\Json;
 
@@ -258,11 +259,12 @@ class Authlist extends Backend
             case 'online': // 上架
                 $cancelResult = $open->miniVersionOnline($version, $appAuthToken);
                 if($cancelResult->code == 10000){
-                    $this->success("操作成功");
                     $agentAuth->save([
                         'user_version' => $version,
                         'xcx_audit' => 5
                     ]);
+                    $this->success("操作成功");
+
                 }
                 $this->error($cancelResult->sub_msg);
                 break;
@@ -283,7 +285,6 @@ class Authlist extends Backend
         $row = $this->model->get($ids);
 
         $common=new Common();
-
         $xcx_access_token=$common->get_authorizer_access_token($row['app_id']);
 
         //$common->httpRequest('https://api.weixin.qq.com/wxa/get_qrcode?access_token='.$xcx_access_token);exit;
@@ -362,6 +363,7 @@ class Authlist extends Backend
         $res=$common->httpRequest('https://api.weixin.qq.com/wxa/submit_audit?access_token='.$xcx_access_token,[
             'item_list'=>$get_category['category_list'],
         ],'POST');
+        Log::info("审核代码{$res}"); // {"errcode":0,"errmsg":"ok","auditid":499143417}
         $res=json_decode($res,true);
 
         if ($res['errcode']!=0){
@@ -371,15 +373,36 @@ class Authlist extends Backend
         $this->success('成功');
     }
 
+    /**
+     * 查看审核状态
+     * @return void
+     */
+    function audit_status($ids){
+        $row = $this->model->get($ids);
+        $common=new Common();
+
+        $xcx_access_token=$common->get_authorizer_access_token($row['app_id']);
+
+
+        $res=$common->httpRequest('https://api.weixin.qq.com/wxa/get_auditstatus?access_token='.$xcx_access_token,[
+            'access_token'=> '',
+            'audit_id'=>''
+        ],'POST');
+        $res=json_decode($res,true);
+
+        if ($res['errcode']!=0){
+            $this->error($res['errmsg']);
+        }
+    }
+
     function release_app($ids=null){
         $row = $this->model->get($ids);
         $common=new Common();
         $xcx_access_token=$common->get_authorizer_access_token($row['app_id']);
-        $res=$common->httpRequest('https://api.weixin.qq.com/wxa/release?access_token='.$xcx_access_token,[],'POST');
-        $res=json_decode($res,true);
-
+        $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/release?access_token='.$xcx_access_token,[],'POST');
+        $res=json_decode($resJson,true);
         if ($res['errcode']!=0){
-            $this->error('发布小程序失败');
+            $this->error("发布小程序失败：{$resJson}");
         }
         $row->save(['xcx_audit'=>5]);
         $this->success('发布小程序成功');

@@ -7,6 +7,7 @@ use app\admin\model\users\Userslist;
 use app\common\controller\Backend;
 use app\web\controller\Common;
 use app\web\model\Admin;
+use app\web\model\Couponlist;
 use app\web\model\Users;
 use think\Db;
 use think\Exception;
@@ -166,7 +167,7 @@ class Orderslist extends Backend
             if ($res['rcode']!=0){
                 $this->error($res['errorMsg']);
             }
-        }else{
+        }else if($row['channel_tag']=='智能'){
             $content=[
                 'shopbill'=>$row['shopbill']
             ];
@@ -174,9 +175,28 @@ class Orderslist extends Backend
             if ($res['code']!=1){
                 $this->error($res['message']);
             }
+        }else if($row['channel_tag']=='顺丰'){
+            $content=[
+                "genre"=>1,
+                'orderNo'=>$row['shopbill']
+            ];
+            $res=$common->shunfeng_api("http://api.wanhuida888.com/openApi/doCancel",$content);
+            if ($res['code']!=0){
+                $this->error($res['msg']);
+            }
+        }else{
+            $this->error('没有相关渠道');
         }
 
         $row->allowField(true)->save(['cancel_time'=>time()]);
+        // 退还优惠券
+        if(!empty($row["couponid"])){
+            $coupon=Couponlist::get($row["couponid"]);
+            if(!empty($coupon)){
+                $coupon["state"]=1;
+                $coupon->save();
+            }
+        }
         $this->success('取消成功');
 
     }

@@ -6,6 +6,7 @@ namespace app\web\controller;
 use Alipay\EasySDK\Kernel\Factory;
 use app\admin\model\appinfo\Orders;
 use app\common\library\alipay\Alipay;
+use app\common\library\R;
 use app\common\library\Upload;
 use app\web\library\ali\AliConfig;
 use app\web\model\Admin;
@@ -1044,12 +1045,11 @@ class Yunyang extends Controller
             ];
             $res=$this->common->fhd_api('cancelExpressOrder',$content);
             file_put_contents('order_cancel.txt',$res .PHP_EOL,FILE_APPEND);
-            file_put_contents('order_cancel.txt',22222 .PHP_EOL,FILE_APPEND);
             $res=json_decode($res,true);
             if (!$res['data']['result']){
                 return json(['status'=>400,'data'=>'','msg'=>'取消失败请联系客服']);
             }
-        }else{
+        }else if($row['channel_tag']=='智能'){
             $content=[
                 'shopbill'=>$row['shopbill']
             ];
@@ -1057,10 +1057,25 @@ class Yunyang extends Controller
             if ($res['code']!=1){
                 return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
             }
+        }else if ($row['channel_tag']=='顺丰'){
+            $content=[
+                "genre"=>1,
+                'orderNo'=>$row['shopbill']
+            ];
+            $res=$this->common->shunfeng_api("http://api.wanhuida888.com/openApi/doCancel",$content);
+            if ($res['code']!=0){
+                return R::error($res['msg']);
+            }
+        }else{
+            return R::error('没有该渠道');
         }
-
-
-        db('orders')->where('id',$id)->where('user_id',$this->user->id)->update(['cancel_time'=>time()]);
+        db('orders')
+            ->where('id',$id)
+            ->where('user_id',$this->user->id)
+            ->update([
+                'order_status'=>'退款中',
+                'cancel_time'=>time(),
+            ]);
         // 退还优惠券
         if(!empty($row["couponid"])){
             $coupon=Couponlist::get($row["couponid"]);

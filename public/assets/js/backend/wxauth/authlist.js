@@ -126,7 +126,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     name: 'version',
                                     text: __('版本管理'),
                                     title: __('版本管理'),
-                                    classname: 'btn btn-xs btn-primary btn-dialog',
+                                    classname: 'btn btn-xs btn-info btn-dialog',
                                     icon: 'fa fa-list',
                                     url: 'wxauth/authlist/version_ali',
                                     callback: function (data) {
@@ -225,7 +225,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     visible: function (row) {
                                         if(row.wx_auth === '2'){
                                             return false;
-                                        }else if (row.xcx_audit==='1'){
+                                        }else if (row.xcx_audit==='1' || row.xcx_audit==='4'){
                                             return true;
                                         }else{
                                             return false;

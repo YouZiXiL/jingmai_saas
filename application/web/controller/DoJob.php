@@ -178,7 +178,7 @@ class DoJob
             }elseif ($data['type']==4){
                     $row=db('orders')->where('id',$data['order_id'])->find();
                     $totalAmount=$row['aftercoupon']??$row['final_price'];
-                    $refoundAmount = $data['refund']??$row['final_price'];
+                    $refoundAmount = $data['refund']??$totalAmount;
 
                     if ($row['pay_status']!=2){
                         // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名

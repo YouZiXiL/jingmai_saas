@@ -60,6 +60,7 @@ class Wxcallback extends Controller
      */
     public function wxcall(){
         $param = $this->request->param();
+        file_put_contents('wx-callback.txt', '微信回调参数：'.json_encode($param) .PHP_EOL,FILE_APPEND);
         $encryptMsg = file_get_contents('php://input');
         $kaifang_token=config('site.kaifang_token');
         $encoding_aeskey=config('site.encoding_aeskey');
@@ -69,12 +70,17 @@ class Wxcallback extends Controller
         //获取到微信推送过来post数据（xml格式）
         $msg = '';
         $errCode=$pc->decryptMsg($param['signature'], $param['timestamp'], $param['nonce'], $encryptMsg,$msg);
+        file_put_contents('wx-callback.txt', '微信回调参数解析：'.$errCode .PHP_EOL,FILE_APPEND);
         if($errCode == 0) {
             //处理消息类型，并设置回复类型和内容
             $postObj = simplexml_load_string($msg, 'SimpleXMLElement', LIBXML_NOCDATA);
+            file_put_contents('wx-callback.txt', '微信回调类型：'.$postObj->MsgType .PHP_EOL,FILE_APPEND);
+
             //判断该数据包是否是订阅（用户关注）的事件推送
             if (strtolower($postObj->MsgType) == 'event') {
                 $toUsername = $postObj->ToUserName;//小程序原始id
+                file_put_contents('wx-callback.txt', '微信回调$toUsername：'.$toUsername .PHP_EOL,FILE_APPEND);
+                file_put_contents('wx-callback.txt', '微信回调事件：'.$postObj->Event .PHP_EOL,FILE_APPEND);
                 //小程序审核成功
                 if (strtolower($postObj->Event == 'weapp_audit_success')) {
                     db('agent_auth')->where('yuanshi_id', $toUsername)->update([
@@ -364,7 +370,7 @@ class Wxcallback extends Controller
             if ($orderModel){
                 $orders = $orderModel->toArray();
                 if ($orders['order_status']=='已取消'){
-                    throw new Exception('订单已取消');
+                    throw new Exception('订单已取消：'. $orders['out_trade_no']);
                 }
 //                if($orders['tag_type'] == '京东'){
 //                    // 获取物流轨迹
@@ -755,8 +761,6 @@ class Wxcallback extends Controller
                 //超轻处理
                 $weight=floor($orders['weight']-$pamar['calWeight']);
                 if ($weight>0&&$pamar['calWeight']!=0&&empty($orders['final_weight_time'])){
-
-
                     $tralight_weight=$weight;//超轻重量
                     if ($orders['tag_type']=='顺丰'){
                         $tralight_amt=$orders['freight']-$pamar['freight'];//超轻金额
@@ -1017,7 +1021,12 @@ class Wxcallback extends Controller
 
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
-            file_put_contents('way_type.txt','云洋回调接口' . $e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
+            file_put_contents('way_type.txt','云洋回调接口'
+                . $e->getMessage().PHP_EOL
+                .$e->getLine().PHP_EOL
+                .date('Y-m-d H:i:s', time()).PHP_EOL
+                ,FILE_APPEND
+            );
             return json(['code'=>0, 'message'=>'推送失败']);
         }
     }
@@ -3458,7 +3467,7 @@ class Wxcallback extends Controller
      * 顺丰微信下单支付回调
      */
     function wx_sforder_pay(){
-
+        Log::info('Q必达顺丰微信回调');
         $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
         $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
         $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
@@ -3493,10 +3502,12 @@ class Wxcallback extends Controller
             $inBodyResource = AesGcm::decrypt($ciphertext, $agent_info['wx_mchprivatekey'], $nonce, $aad);
             // 把解密后的文本转换为PHP Array数组
             $inBodyResourceArray = json_decode($inBodyResource, true);
+            Log::info(['Q必达微信解密' => $inBodyResourceArray]);
             if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
                 throw new Exception('未支付');
             }
             $orders=db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->find();
+            Log::info(['顺丰微信回调' => $orders]);
             if(!$orders){
                 throw new Exception('找不到指定订单');
             }
@@ -3527,6 +3538,7 @@ class Wxcallback extends Controller
             !empty($orders['vloum_height']) &&($content['height'] = $orders['vloum_height']);
             !empty($orders['bill_remark']) &&($content['remark'] = $orders['bill_remark']);
             $data=$Common->shunfeng_api('http://api.wanhuida888.com/openApi/doOrder',$content);
+            Log::info(['Q必达下单结果' => $data]);
             if (!empty($data['code'])){
                 Log::error('Q必达下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
                 $out_refund_no=$Common->get_uniqid();//下单退款订单号
@@ -3555,7 +3567,6 @@ class Wxcallback extends Controller
                 }
 
             }else{
-
                 //支付成功下单成功
                 $result=$data['data'];
                 $update=[
@@ -3569,10 +3580,9 @@ class Wxcallback extends Controller
                     $couponinfo->state=2;
                     $couponinfo->save();
                 }
-                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybillNo'].' 下单支付成功');
             }
             db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($update);
-
             exit('success');
         }catch (\Exception $e){
             exit('fail');

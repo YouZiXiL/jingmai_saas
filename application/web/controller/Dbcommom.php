@@ -6,6 +6,7 @@ use app\web\model\Admin;
 use app\web\model\AgentAssets;
 use app\web\model\AgentAuth;
 use think\Db;
+use think\Log;
 
 class Dbcommom
 {
@@ -14,7 +15,7 @@ class Dbcommom
      * @param $id //代理商id
      * @param $setType //改变类型 setInc增加  setDec减少
      * @param $amount  //改变金额
-     * @param $logType //资金类型 0订单支付 1订单退款 2系统加款 3系统扣款 4超重补款 5账户充值 6订单结算 7短信扣款 8耗材扣款
+     * @param $logType //资金类型 0：订单支付 1：订单退款 2：系统加款 3：系统扣款 4：超重补交 5：账户充值 6：订单结算 7：短信扣款 8：耗材扣款
      * @param $remark  //备注
      * @return bool
      */
@@ -34,7 +35,7 @@ class Dbcommom
                 exception('改变余额失败');
             }
             $AgentAssets= new AgentAssets();
-            $AgentAssets->save([
+            $res = $AgentAssets->save([
                 'agent_id'=>$id,
                 'type'=>$logType,
                 'amount'=>$amount,
@@ -67,6 +68,7 @@ class Dbcommom
             Db::commit();
             return true;
         }catch (\Exception $e){
+            Log::error('改变代理商余额-错误：'. $e->getMessage());
             file_put_contents('set_agent_amount.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
             // 回滚事务
             Db::rollback();

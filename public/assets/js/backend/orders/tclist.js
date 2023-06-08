@@ -67,8 +67,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'consume_status', title: __('Consume_status'), searchList: {"0":__('Consume_status 0'),"1":__('Consume_status 1'),"2":__('Consume_status 2')}, formatter: Table.api.formatter.status},
                         //{field: 'tralight_status', title: __('Tralight_status'), searchList: {"0":__('Tralight_status 0'),"1":__('Tralight_status 1'),"2":__('Tralight_status 2'),"3":__('Tralight_status 3'),"4":__('Tralight_status 4')}, formatter: Table.api.formatter.status},
                         {field: 'final_price', title: __('Final_price'), operate:'BETWEEN'},
-                        {field: 'freight', title: __('Freight'), operate:'BETWEEN'},
-                        {field: 'final_freight', title: __('Final_freight'), operate:'BETWEEN'},
+                        {field: 'agent_price', title: __('Agent_price'), operate:'BETWEEN'},
+                        // {field: 'freight', title: __('Freight'), operate:'BETWEEN'},
+                        // {field: 'final_freight', title: __('Final_freight'), operate:'BETWEEN'},
                         {field: 'final_weight', title: __('Final_weight'), operate:'BETWEEN'},
                         {field: 'haocai_freight', title: __('Haocai_freight'), operate:'BETWEEN'},
                         //{field: 'admin_shouzhong', title: __('Admin_shouzhong'), operate:'BETWEEN'},
@@ -77,7 +78,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         //{field: 'agent_xuzhong', title: __('Agent_xuzhong'), operate:'BETWEEN'},
                         //{field: 'users_shouzhong', title: __('Users_shouzhong'), operate:'BETWEEN'},
                         {field: 'users_xuzhong', title: __('Users_xuzhong'), operate:'BETWEEN'},
-                        //{field: 'agent_price', title: __('Agent_price'), operate:'BETWEEN'},
                         {
                             field: 'profit', title: __('利润'), operate: false, formatter: function (value) {
                                 return '<span ">'+value+'元</span>';

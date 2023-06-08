@@ -177,6 +177,8 @@ class Afterlist extends Backend
                 //下单退款
                 $out_refund_no=$common->get_uniqid();//下单退款订单号
                 $wx_pay=$common->wx_pay($orders['wx_mchid'],$orders['wx_mchcertificateserial']);
+                $totalAmount=$orders['aftercoupon']??$orders['final_price'];
+                $refoundAmount = $data['refund']??$totalAmount;
                 $wx_pay
                     ->chain('v3/refund/domestic/refunds')
                     ->post(['json' => [
@@ -184,8 +186,8 @@ class Afterlist extends Backend
                         'out_refund_no'=>$out_refund_no,
                         'reason'=>'现结/到付',
                         'amount'       => [
-                            'refund'   => (int)bcmul($orders['final_price'],100),
-                            'total'    =>(int)bcmul($orders['final_price'],100),
+                            'refund'   => (int)bcmul($refoundAmount,100),
+                            'total'    =>(int)bcmul($totalAmount,100),
                             'currency' => 'CNY'
                         ],
                     ]]);

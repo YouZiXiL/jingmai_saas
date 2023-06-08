@@ -6,6 +6,7 @@ use app\web\model\Couponlist;
 use think\Controller;
 use think\Exception;
 use think\exception\DbException;
+use think\Log;
 use think\Request;
 use think\response\Json;
 use WeChatPay\Crypto\Rsa;
@@ -15,7 +16,7 @@ use function fast\e;
 class Shunfeng extends Controller
 {
     protected $user;
-    protected $common;
+    protected Common $common;
 
     public function _initialize()
     {
@@ -87,9 +88,11 @@ class Shunfeng extends Controller
             $agent_info=db('admin')->field('agent_db_ratio,sf_agent_ratio,sf_users_ratio,qudao_close')->where('id',$this->user->agent_id)->find();
 
             $result = $this->common->shunfeng_api("http://api.wanhuida888.com/openApi/getPriceList",$content);
+            Log::error(['顺丰查询价格' => $result]);
             if (!empty($result['code'])){
                 throw new Exception('收件或寄件信息错误,请仔细填写');
             }
+
             $qudao_close=explode('|', $agent_info['qudao_close']);
             $arr=[];
             $time=time();
@@ -97,14 +100,14 @@ class Shunfeng extends Controller
 //                if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
 //                    unset($result['result'][$k]);
 //                    continue;
-//                }
+//                }15226052986
                 if(empty($v["limitWeight"])){
 
                 }
                 else{
-                    $v["agent_price"]=number_format($v["originalFee"]*($v["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$v["guarantFee"],2);
-                    $v["users_price"]=number_format($v["originalFee"]*($v["discount"]/10+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
-                    $v["final_price"]=number_format( $v["users_price"]+$v["guarantFee"],2);
+                    $v["agent_price"]=number_format($v["originalFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$v["guarantFee"],2);
+                    $v["users_price"]=number_format($v["originalFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
+                    $v["final_price"]=number_format( (int)$v["users_price"] + $v["guarantFee"],2);
                     $v["insured"]=$param['insured'];
                     $v['jijian_id']=$param['jijian_id'];//寄件id
                     $v['shoujian_id']=$param['shoujian_id'];//收件id
@@ -343,7 +346,7 @@ class Shunfeng extends Controller
             'out_trade_no'=>$out_trade_no,
             'freight'=>$check_channel_intellect['channelFee'],//渠道价格
             'serviceCharge'=>$check_channel_intellect['serviceCharge'],//服务费
-            'channel_id'=>$check_channel_intellect['type'],
+            'channel_id'=>$check_channel_intellect['productCode'],
             'tag_type'=>$info['channel_tag'],
             'admin_shouzhong'=>0,
             'admin_xuzhong'=>0,
@@ -351,7 +354,7 @@ class Shunfeng extends Controller
             'agent_xuzhong'=>0,
             'users_shouzhong'=>0,
             'users_xuzhong'=>0,
-            'agent_price'=>0,
+            'agent_price'=>$check_channel_intellect['agent_price'],
             'insured_price'=>$check_channel_intellect["guarantFee"],//专享保价费用
             'comments'=>'无',
             'wx_mchid'=>$agent_info['wx_mchid'],
@@ -480,7 +483,6 @@ class Shunfeng extends Controller
      */
     function order_cancel(): Json
     {
-
         $id=$this->request->param('id');
         if (empty($id)){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
