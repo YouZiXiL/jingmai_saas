@@ -37,7 +37,9 @@
         "alipaysdk/easysdk": "^2.0",
         "firebase/php-jwt": "^6.4",
         "alibabacloud/dysmsapi-20170525": "^2.0",
-      "ext-openssl": "*"
+      "ext-openssl": "*",
+      "ext-dom": "*",
+      "ext-libxml": "*"
     },
     "config": {
         "preferred-install": "dist",

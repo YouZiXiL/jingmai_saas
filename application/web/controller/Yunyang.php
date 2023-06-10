@@ -1073,7 +1073,6 @@ class Yunyang extends Controller
             ->where('id',$id)
             ->where('user_id',$this->user->id)
             ->update([
-                'order_status'=>'退款中',
                 'cancel_time'=>time(),
             ]);
         // 退还优惠券

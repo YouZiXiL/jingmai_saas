@@ -281,7 +281,7 @@ class Authlist extends Backend
      */
     public function uploads_app($ids=null){
 
-        
+
         $row = $this->model->get($ids);
 
         $common=new Common();
@@ -305,7 +305,7 @@ class Authlist extends Backend
         ],'POST');
         $res=json_decode($res,true);
         if ($res['errcode']!=0){
-            exit('设置小程序用户隐私保护指引失败');
+            $this->error('设置小程序用户隐私保护指引失败');
         }
         $res=$common->httpRequest('https://api.weixin.qq.com/wxa/gettemplatelist?access_token='.$common->get_component_access_token().'&template_type=0');
         $res=json_decode($res,true);

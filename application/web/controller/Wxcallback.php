@@ -60,27 +60,24 @@ class Wxcallback extends Controller
      */
     public function wxcall(){
         $param = $this->request->param();
-        file_put_contents('wx-callback.txt', '微信回调参数：'.json_encode($param) .PHP_EOL,FILE_APPEND);
         $encryptMsg = file_get_contents('php://input');
         $kaifang_token=config('site.kaifang_token');
         $encoding_aeskey=config('site.encoding_aeskey');
         $kaifang_appid=config('site.kaifang_appid');
+
         $pc = new WxBizMsgCrypt($kaifang_token,$encoding_aeskey, $kaifang_appid);
 
         //获取到微信推送过来post数据（xml格式）
         $msg = '';
-        $errCode=$pc->decryptMsg($param['signature'], $param['timestamp'], $param['nonce'], $encryptMsg,$msg);
-        file_put_contents('wx-callback.txt', '微信回调参数解析：'.$errCode .PHP_EOL,FILE_APPEND);
+        $errCode=$pc->decryptMsg($param['msg_signature'], $param['timestamp'], $param['nonce'], $encryptMsg,$msg);
         if($errCode == 0) {
             //处理消息类型，并设置回复类型和内容
             $postObj = simplexml_load_string($msg, 'SimpleXMLElement', LIBXML_NOCDATA);
-            file_put_contents('wx-callback.txt', '微信回调类型：'.$postObj->MsgType .PHP_EOL,FILE_APPEND);
 
             //判断该数据包是否是订阅（用户关注）的事件推送
             if (strtolower($postObj->MsgType) == 'event') {
                 $toUsername = $postObj->ToUserName;//小程序原始id
-                file_put_contents('wx-callback.txt', '微信回调$toUsername：'.$toUsername .PHP_EOL,FILE_APPEND);
-                file_put_contents('wx-callback.txt', '微信回调事件：'.$postObj->Event .PHP_EOL,FILE_APPEND);
+
                 //小程序审核成功
                 if (strtolower($postObj->Event == 'weapp_audit_success')) {
                     db('agent_auth')->where('yuanshi_id', $toUsername)->update([

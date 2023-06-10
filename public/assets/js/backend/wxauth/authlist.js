@@ -225,7 +225,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     visible: function (row) {
                                         if(row.wx_auth === '2'){
                                             return false;
-                                        }else if (row.xcx_audit==='1' || row.xcx_audit==='4'){
+                                        }else if (row.xcx_audit==='1'){
                                             return true;
                                         }else{
                                             return false;

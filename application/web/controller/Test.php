@@ -4,9 +4,11 @@ namespace app\web\controller;
 
 use app\common\business\WanLi;
 use app\common\library\R;
-use app\common\model\PushNotice;
+use app\common\library\wechat\crypt\WXBizMsgCrypt;
 use app\web\model\Admin;
+use DOMDocument;
 use think\Controller;
+use think\Log;
 use think\Request;
 
 class Test extends Controller
@@ -31,12 +33,12 @@ class Test extends Controller
         $agentId = input('id');
         $agent = Admin::find($agentId);
         if(!$agent) exit('没有该用户');
-        $appId=db('agent_auth')
+        $kaifang_appid=db('agent_auth')
             ->where('agent_id',$agentId)
             ->where('auth_type', 2)
             ->value('app_id' );
-        if (!$appId) $appId = config('site.mini_appid');
-        $accessToken = $this->get_authorizer_access_token($appId);
+        if (!$kaifang_appid) $kaifang_appid = config('site.mini_appid');
+        $accessToken = $this->get_authorizer_access_token($kaifang_appid);
         $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
         $resJson = $this->utils->httpRequest($url,[
             "path" => "/pages/homepage/homepage",
@@ -46,8 +48,105 @@ class Test extends Controller
         return R::ok($res);
     }
 
+    /**
+     * 第三方获取小程序access_token
+     * @param $kaifang_appid
+     * @return void
+     */
+    public function open_access_token($kaifang_appid){
+        $xcx_access_token=$this->utils->get_authorizer_access_token($kaifang_appid);
+        dd($xcx_access_token);
+    }
 
-    function get_authorizer_access_token($app_id){
+    /**
+     * 服务商上传小程序代码
+     * @return void
+     */
+    public function open_upload(){
+        $agentId = input('agent_id');
+        $agent=db('agent_auth')
+            ->where('agent_id',$agentId)
+            ->where('auth_type', 2)
+            ->find();
+        $xcx_access_token=$this->utils->get_authorizer_access_token($agent['app_id']);
+        Log::info("小程序令牌：$xcx_access_token");
+        $res=$this->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/component/setprivacysetting?access_token='.$xcx_access_token,[
+            'setting_list'=>[['privacy_key'=>'Album','privacy_text'=>'订单详情上传图片'],['privacy_key'=>'PhoneNumber','privacy_text'=>'推送提醒'],['privacy_key'=>'AlbumWriteOnly','privacy_text'=>'海报保存']],
+            'owner_setting'=>['contact_email'=>'1037124449@qq.com','notice_method'=>'通过弹窗提醒用户'],
+
+        ],'POST');
+        $res=json_decode($res,true);
+        if ($res['errcode']!=0){
+            exit('设置小程序用户隐私保护指引失败');
+        }
+        $res=$this->utils->httpRequest('https://api.weixin.qq.com/wxa/gettemplatelist?access_token='.$this->utils->get_component_access_token().'&template_type=0');
+        $res=json_decode($res,true);
+        if ($res['errcode']!=0){
+            $this->error('获取模版库失败');
+        }
+        $edit = array_column($res['template_list'],'draft_id');
+        array_multisort($edit,SORT_DESC,$res['template_list']);
+        $template_list=array_shift($res['template_list']);
+
+        $res=$this->utils->httpRequest('https://api.weixin.qq.com/wxa/commit?access_token='.$xcx_access_token,[
+            'template_id'=>$template_list['template_id'],
+            'ext_json'=>json_encode([
+                'extAppid'=>$agent['app_id'],
+                'ext'=>[
+                    'name'=>$agent['name'], //小程序名称
+                    'avatar'=>$agent['avatar'], //小程序头像
+                ]
+            ]),
+            'user_version'=>$template_list['user_version'],
+            'user_desc'=>$template_list['user_desc'],
+        ],'POST');
+        $res=json_decode($res,true);
+        dd($res);
+    }
+
+    /**
+     * 微信消息回调
+     * @return void
+     */
+    public function wx_msg_callback(){
+        $param = input();
+        // 第三方发送消息给公众平台
+        $timeStamp = $param['timestamp'];
+        $nonce = $param['nonce'];
+
+        $encryptMsg = file_get_contents('php://input');
+        $msgSignature = $param['msg_signature'];
+        $signature = $param['signature'];
+
+        $kaifang_token=config('site.kaifang_token');
+        $encoding_aeskey=config('site.encoding_aeskey');
+        $kaifang_appid=config('site.kaifang_appid');
+
+        $encryptMsg = "<xml><ToUserName><![CDATA[gh_75e0d2915e5f]]></ToUserName><Encrypt><![CDATA[t5E23AExH1y2LbETXkfTAnRRzaHfpB4tY0phOy8S3vSfOYCqAdsc6GujNuIRa4DRk/n80EMs3rPpOxQZqipBS2Xa1rJyBZBvL4PV3VC2OP86UIIkHKQmm06fN1bUaLPwxGYj+58qYw9pwDj/r/vdo/eBL0a/UL+kXq3UNz6BmSQ27BnQHdPc8su86QDM1b2v5EXoIcQxRdORVDVXjdZQACk7eqwWS1YFk1OoOC7+JfMjNkkN1bkzLn+OXNNgp6aHdto5C9YtPk+nIIBkJ2ubyRRqb81/qrZ+w0a2KxDCKNS5Xpk3UKAGn+fTfHgbmpb0Ixo5g+QirDD3rFBQf+l4I4TZbex2jt/lMpHX/kwvdjCJ7Mav6Tvcg9DNNxUyDLwFqY8ZbMP9bkVg6IYHwL4JUPJDwHzvQnjpkwUB9snh6K6DDkHF5X08WV1lY8iGc/ejG+UCV9xKY+pa/7Hx+JA9Qt96Pnuf2dC6Nnl0holw2I5uwIZ3+3ue4OEnh+s/XTDh]]></Encrypt></xml>";
+
+        $pc = new WXBizMsgCrypt($kaifang_token, $encoding_aeskey, $kaifang_appid);
+
+
+        $xml_tree = new DOMDocument();
+        $xml_tree->loadXML($encryptMsg);
+        $array_e = $xml_tree->getElementsByTagName('Encrypt');
+//        $array_s = $xml_tree->getElementsByTagName('MsgSignature');
+        $encrypt = $array_e->item(0)->nodeValue;
+//        $msg_sign = $array_s->item(0)->nodeValue;
+        $format = "<xml><ToUserName><![CDATA[toUser]]></ToUserName><Encrypt><![CDATA[%s]]></Encrypt></xml>";
+        $from_xml = sprintf($format, $encrypt);
+        $msg = '';
+        $errCode = $pc->decryptMsg($msgSignature, $timeStamp, $nonce, $from_xml, $msg);
+        if ($errCode == 0) {
+            print("解密后: " . $msg . "\n");
+        } else {
+            print($errCode . "\n");
+        }
+        $postObj = simplexml_load_string($msg, 'SimpleXMLElement', LIBXML_NOCDATA);
+        dd($postObj->MsgType);
+    }
+
+    private function get_authorizer_access_token($app_id){
         $time=time()-6600;
         $kaifang_appid=config('site.kaifang_appid');
         $access_token=db('access_token')->where('app_id',$app_id)->order('id','desc')->find();

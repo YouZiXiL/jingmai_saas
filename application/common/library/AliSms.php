@@ -3,8 +3,6 @@
 
 namespace app\common\library;
 
-namespace AlibabaCloud\SDK\Sample;
-
 use Darabonba\OpenApi\OpenApiClient;
 
 use Darabonba\OpenApi\Models\Config;
