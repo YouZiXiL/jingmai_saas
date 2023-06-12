@@ -214,7 +214,17 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                         {field: 'profit', title: __('利润'), operate: false, formatter: function (value) {
                                 return '<span ">'+value+'元</span>';
                             }},
-                        {field: 'wxauthinfo.name', title: __('归属账号'), operate: false},
+                        {field: 'auth.name', title: __('归属账号'), operate: false},
+                        {field: 'auth.wx_auth', title: __('授权平台'), operate: false,formatter: function (value, row) {
+                                if (value==='1'){
+                                    return '<buttons class="btn btn-xs btn-success">微信</buttons>';
+                                }else if(value==='2'){
+                                    return '<buttons class="btn btn-xs btn-info">支付宝</buttons>';
+                                }else{
+                                    return '<buttons class="btn btn-xs">未授权</buttons>';
+                                }
+
+                        }},
                         {field: 'create_time', title: __('Create_time'),operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
 
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,

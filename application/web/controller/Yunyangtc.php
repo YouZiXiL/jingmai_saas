@@ -6,6 +6,7 @@ use app\admin\model\User;
 use app\common\business\WanLi;
 use app\common\library\R;
 use app\common\model\Order;
+use app\web\model\AgentAuth;
 use app\web\model\Couponlist;
 use app\web\model\UsersAddress;
 use think\Controller;
@@ -573,11 +574,19 @@ class Yunyangtc extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
         }
         $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
+
+        $agentAuthModel=AgentAuth::where('app_id',$this->user->app_id)
+            ->field('id,waybill_template,pay_template,material_template')
+            ->find();
+        if (!$agentAuthModel) return R::error('该小程序没被授权');
+        $agentAuth = $agentAuthModel->toArray();
+
         $out_trade_no ='TC'.$this->common->get_uniqid();
 
         $data=[
             'user_id'=>$this->user->id,
             'agent_id'=>$this->user->agent_id,
+            'auth_id' => $agentAuth['id'],
             'channel'=>$check_channel_intellect['deliveryChannelName'],
             'channel_tag'=>$info['channel_tag'],
             'insert_id'=>$param['insert_id'],
@@ -664,8 +673,6 @@ class Yunyangtc extends Controller
             $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
             //获取小程序通知模版
 
-            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template, material_template')->find();
-
             $prepay_id=json_decode($resp->getBody(),true);
             if (!array_key_exists('prepay_id',$prepay_id)){
                 throw new Exception('拉取支付错误');
@@ -681,9 +688,9 @@ class Yunyangtc extends Controller
                     Formatter::joinedByLineFeed(...array_values($params)),
                     $merchantPrivateKeyInstance),
                 'signType' => 'RSA',
-                'waybill_template'=>$template['waybill_template'],
-                'pay_template'=>$template['pay_template'],
-                'material_template'=>$template['material_template'],
+                'waybill_template'=>$agentAuth['waybill_template'],
+                'pay_template'=>$agentAuth['pay_template'],
+                'material_template'=>$agentAuth['material_template'],
             ];
 //            if(!empty($couponinfo)){
 //                $couponinfo["state"]=2;
@@ -750,10 +757,18 @@ class Yunyangtc extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
         }
         $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
+
+        $agentAuthModel=AgentAuth::where('app_id',$this->user->app_id)
+            ->field('id,waybill_template,pay_template,material_template')
+            ->find();
+        if (!$agentAuthModel) return R::error('该小程序没被授权');
+        $agentAuth = $agentAuthModel->toArray();
+
         $out_trade_no='TC'.$this->common->get_uniqid();
         $data=[
             'user_id'=>$this->user->id,
             'agent_id'=>$this->user->agent_id,
+            'auth_id' => $agentAuth['id'],
             'channel'=>$check_channel_intellect['third_logistics_name'],
             'channel_tag'=>$info['channel_tag'],
             'insert_id'=>$param['insert_id'],
@@ -835,9 +850,6 @@ class Yunyangtc extends Controller
 
             $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
             $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
-            //获取小程序通知模版
-
-            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template,material_template')->find();
 
             $prepay_id=json_decode($resp->getBody(),true);
             if (!array_key_exists('prepay_id',$prepay_id)){
@@ -854,8 +866,8 @@ class Yunyangtc extends Controller
                     Formatter::joinedByLineFeed(...array_values($params)),
                     $merchantPrivateKeyInstance),
                 'signType' => 'RSA',
-                'waybill_template'=>$template['waybill_template'],
-                'pay_template'=>$template['pay_template'],
+                'waybill_template'=>$agentAuth['waybill_template'],
+                'pay_template'=>$agentAuth['pay_template'],
             ];
 //            if(!empty($couponinfo)){
 //                $couponinfo["state"]=2;

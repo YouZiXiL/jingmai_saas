@@ -6,9 +6,7 @@ use app\common\business\WanLi;
 use app\common\library\alipay\Alipay;
 use app\common\library\KD100Sms;
 use app\common\model\Order;
-use app\common\model\PushNotice;
 use app\web\aes\WxBizMsgCrypt;
-use app\common\business\YunYang;
 use app\web\model\Admin;
 use app\web\model\Agent_couponlist;
 use app\web\model\AgentAuth;
@@ -64,7 +62,7 @@ class Wxcallback extends Controller
         $kaifang_token=config('site.kaifang_token');
         $encoding_aeskey=config('site.encoding_aeskey');
         $kaifang_appid=config('site.kaifang_appid');
-
+        file_put_contents("wx-callback.txt",json_encode($param) .PHP_EOL,FILE_APPEND);
         $pc = new WxBizMsgCrypt($kaifang_token,$encoding_aeskey, $kaifang_appid);
 
         //获取到微信推送过来post数据（xml格式）
@@ -174,7 +172,7 @@ class Wxcallback extends Controller
             'refresh_token'=>$authorization_info['authorizer_refresh_token'],
             'auth_type'=>$parm['auth_type']
         ];
-        if($parm['auth_type']==2){
+        if($parm['auth_type']==2){ // 小程序
             $res=$common->httpRequest('https://api.weixin.qq.com/wxa/modify_domain?access_token='.$authorization_info['authorizer_access_token'],[
                 'action'=>'set',
                 'requestdomain'=>[$this->request->domain()],
@@ -261,7 +259,7 @@ class Wxcallback extends Controller
             $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
 
 
-        }else{
+        }else{ // 公众号
             $res=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token='.$authorization_info['authorizer_access_token']);
             $res=json_decode($res,true);
 
@@ -311,16 +309,10 @@ class Wxcallback extends Controller
         }
         $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->find();
 
-        Log::error(['代理商域名' => $agent_auth]);
-
         if ($agent_auth){
             db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->update($data);
         }else{
-            if ($parm['auth_type']==2){
-                $data['xcx_audit']=0;
-            }else{
-                $data['xcx_audit']=5;
-            }
+            $data['xcx_audit'] = $parm['auth_type'] == 2?0:5;
             $data['agent_id']=$parm['agent_id'];
             $data['app_id']=$getAccountBasicInfo['authorization_info']['authorizer_appid'];
             db('agent_auth')->insert($data);
@@ -3659,10 +3651,13 @@ class Wxcallback extends Controller
             exit('success');
         }
     }
+
+
     //Q必达回调
     //pushType推送状态 1状态变更 2计费变更 3快递员变更 4订单变更
     function q_callback(){
         $params = $this->request->param();
+        Log::info('Q必达回调');
         if(empty($params["pushType"])){
             return "error";
         }
@@ -3670,15 +3665,18 @@ class Wxcallback extends Controller
             try {
 
                 // 返回参数
-                $data=[
-                    'thirdOrderNo'=>$params['thirdOrderNo'],
-                    'waybillNo'=>$params['waybillNo'],
-                    'orderNo'=>$params['orderNo'],
-                    'type'=>$params['type'],
-                    "pushType"=>$params['pushType'],
-                    'data'=>json_encode($params['data'])
-                ];
-                db('q_callback')->insert($data);
+//                $data=[
+//                    'thirdOrderNo'=>$params['thirdOrderNo'],
+//                    'waybillNo'=>$params['waybillNo'],
+//                    'orderNo'=>$params['orderNo'],
+//                    'type'=>$params['type'],
+//                    "pushType"=>$params['pushType'],
+//                    'data'=>json_encode($params['data'])
+//                ];
+                $content = $params;
+                $content['data'] = json_encode($params['data']);
+                Log::info(['Q必达回调' => $content]);
+                db('q_callback')->insert($content);
                 $common= new Common();
                 $orders=db('orders')->where('out_trade_no',$params['thirdOrderNo'])->find();
                 //判断具体返回信息后可改为等号
@@ -3821,34 +3819,34 @@ class Wxcallback extends Controller
 
                 }
                 elseif ($params["pushType"]==2){
-
-
                     $up_data=[
                         'final_freight'=>$params["data"]['totalFee']
                     ];
                     if ($orders['final_weight']==0){
                         $up_data['final_weight']=$params["data"]['weightFee'];
                     }
-                    $haocai=0;
+                    $up_data['haocai_freight'] = 0;
+                    $haocai = 0;
                     foreach ($params["data"]["feeList"] as $fee){
-
                         //耗材
                         if($fee["type"]==3 ||$fee["type"]==7){
-
-                            $up_data['haocai_freight']+=$fee["fee"];
-                            $data = [
-                                'type'=>2,
-                                'freightHaocai' =>$fee['fee'],
-                                'order_id' => $orders['id'],
-                            ];
-                            $haocai=$up_data['haocai_freight'];
-                            // 将该任务推送到消息队列，等待对应的消费者去执行
-                            Queue::push(DoJob::class, $data,'way_type');
-                            // 发送超重短信
-                            KD100Sms::run()->material($orders);
-
+                            $haocai+=$fee["fee"];
                         }
                     }
+                    if($haocai){
+                        $data = [
+                            'type'=>2,
+                            'freightHaocai' =>$haocai,
+                            'order_id' => $orders['id'],
+                        ];
+                        $up_data['haocai_freight'] = $haocai;
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
+                        // 发送耗材短信
+                        KD100Sms::run()->material($orders);
+                    }
+
+
                     $pamar=$params["data"];
                     //超轻处理
                     $weight=floor($orders['weight']-$pamar['weightFee']);
@@ -3952,7 +3950,7 @@ class Wxcallback extends Controller
                 exit("SUCCESS");
             }
             catch (Exception $exception){
-                file_put_contents('q_callback.txt',$exception->getMessage().PHP_EOL.json_encode($params).PHP_EOL,FILE_APPEND);
+                file_put_contents('q_callback.txt',$exception->getMessage().PHP_EOL.$exception->getLine().PHP_EOL.json_encode($params).PHP_EOL,FILE_APPEND);
                 exit("fail");
             }
         }

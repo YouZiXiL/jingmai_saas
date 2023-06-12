@@ -555,8 +555,8 @@ class Yunyang extends Controller
         if(empty($param['insert_id'])||empty($param['item_name'])){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
-
         $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
+        AgentAuth::where('id',$this->user->agent_id)->value('id');
         if ($agent_info['status']=='hidden'){
             return json(['status'=>400,'data'=>'','msg'=>'该商户已禁止使用']);
         }
@@ -592,6 +592,13 @@ class Yunyang extends Controller
 
         $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
 
+
+        $agentAuthModel=AgentAuth::where('app_id',$this->user->app_id)
+            ->field('id,waybill_template,pay_template,material_template')
+            ->find();
+        if (!$agentAuthModel) return R::error('该小程序没被授权');
+        $agentAuth = $agentAuthModel->toArray();
+
         $out_trade_no='XD'.$this->common->get_uniqid();
         $data=[
             'db_type'=>$check_channel_intellect['db_type']??null,
@@ -599,6 +606,7 @@ class Yunyang extends Controller
             'send_end_time'=>$check_channel_intellect['send_end_time']??null,
             'user_id'=>$this->user->id,
             'agent_id'=>$this->user->agent_id,
+            'auth_id' => $agentAuth['id'],
             'channel'=>$check_channel_intellect['channel'],
             'channel_tag'=>$info['channel_tag'],
             'insert_id'=>$param['insert_id'],
@@ -625,6 +633,7 @@ class Yunyang extends Controller
             'tralight_price'=>0,//超轻金额
             'agent_tralight_price'=>0,//代理商超轻金额
             'final_weight'=>0,
+            'pay_type'=> '1',
             'haocai_freight'=>0,
             'overload_status'=>0,
             'consume_status'=>0,
@@ -690,9 +699,6 @@ class Yunyang extends Controller
 
             $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
             $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
-            //获取小程序通知模版
-
-            $template=db('agent_auth')->where('app_id',$this->user->app_id)->field('waybill_template,pay_template,material_template')->find();
 
             $prepay_id=json_decode($resp->getBody(),true);
             if (!array_key_exists('prepay_id',$prepay_id)){
@@ -709,9 +715,9 @@ class Yunyang extends Controller
                     Formatter::joinedByLineFeed(...array_values($params)),
                     $merchantPrivateKeyInstance),
                 'signType' => 'RSA',
-                'waybill_template'=>$template['waybill_template'],
-                'pay_template'=>$template['pay_template'],
-                'material_template'=>$template['material_template'],
+                'waybill_template'=>$agentAuth['waybill_template'],
+                'pay_template'=>$agentAuth['pay_template'],
+                'material_template'=>$agentAuth['material_template'],
             ];
             if(!empty($couponinfo)){
 //                $couponinfo["state"]=2;
@@ -796,11 +802,19 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
         }
         $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
+
+        $agentAuthModel=AgentAuth::where('app_id',$this->user->app_id)
+            ->field('id,waybill_template,pay_template,material_template')
+            ->find();
+        if (!$agentAuthModel) return R::error('该小程序没被授权');
+        $agentAuth = $agentAuthModel->toArray();
+
         $out_trade_no='XD'.$this->common->get_uniqid();
 
         $data=[
             'user_id'=>$this->user->id,
             'agent_id'=>$this->user->agent_id,
+            'auth_id' => $agentAuth['id'],
             'channel'=>$check_channel_intellect['channel'],
             'channel_tag'=>$info['channel_tag'],
             'insert_id'=> input('insert_id'),

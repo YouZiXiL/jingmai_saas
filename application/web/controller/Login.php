@@ -117,7 +117,7 @@ class Login extends Controller
             }
             $s=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
             $user_id=$user_info->id;
-            $phone = @$data['mobile'];
+            $phone =  $data['mobile']??null;
         }
 
         if ($s){

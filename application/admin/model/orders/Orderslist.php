@@ -115,6 +115,10 @@ class Orderslist extends Model
         return $this->belongsTo(Authlist::class,'agent_id','agent_id', [], 'LEFT')->setEagerlyType(0);
     }
 
+    function auth(){
+        return $this->belongsTo(Authlist::class, 'auth_id', 'id', [], 'LEFT')->setEagerlyType(0);
+    }
+
     function agent(){
         return $this->belongsTo(Admin::class, 'agent_id');
     }

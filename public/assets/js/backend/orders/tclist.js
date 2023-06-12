@@ -84,7 +84,17 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             }
                         },
                         {field: 'overload_price', title: __('Overload_price'), operate:'BETWEEN'},
-                        {field: 'wxauthinfo.name', title: __('归属账号'), operate: false},
+                        {field: 'auth.name', title: __('归属账号'), operate: false},
+                        {field: 'auth.wx_auth', title: __('授权平台'), operate: false,formatter: function (value, row) {
+                                if (value==='1'){
+                                    return '<buttons class="btn btn-xs btn-success">微信</buttons>';
+                                }else if(value==='2'){
+                                    return '<buttons class="btn btn-xs btn-info">支付宝</buttons>';
+                                }else{
+                                    return '<buttons class="btn btn-xs">未授权</buttons>';
+                                }
+
+                        }},
                         //{field: 'agent_overload_price', title: __('Agent_overload_price'), operate:'BETWEEN'},
                         //{field: 'tralight_price', title: __('Tralight_price'), operate:'BETWEEN'},
                         //{field: 'agent_tralight_price', title: __('Agent_tralight_price'), operate:'BETWEEN'},
