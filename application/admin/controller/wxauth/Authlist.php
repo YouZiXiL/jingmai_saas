@@ -75,11 +75,14 @@ class Authlist extends Backend
         }
         $list = $list
             ->where($where)
-            ->with(['admininfo'=>function($query){
-                $query->WithField('agent_expire_time');
-            }])
+            ->with([
+                'admininfo'=>function($query){
+                    $query->WithField('nickname,agent_expire_time');
+                },
+            ])
             ->order($sort, $order)
             ->paginate($limit);
+
 
         $result = ['total' => $list->total(), 'rows' => $list->items()];
 

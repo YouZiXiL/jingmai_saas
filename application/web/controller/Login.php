@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\common\library\alipay\AliConfigB;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\web\library\BaseException;
@@ -165,9 +166,11 @@ class Login extends Controller
 
         if (empty($user)){
             // 解密手机号
-            $op = AliConfigC::options($appid);
-            $phoneData = $op->util()->aes()->decrypt($response);
+            $op = AliConfigB::options();
+            $phoneData = $op->util()->aes()->agent($appAuthToken)->decrypt($response);
+
             $phoneData = json_decode($phoneData);
+
             $mobile = $phoneData->mobile;
 
             $record['nick_name'] = $mobile;

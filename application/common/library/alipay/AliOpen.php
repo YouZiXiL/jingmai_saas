@@ -249,7 +249,6 @@ class AliOpen
         $request->setSecondScreenShot("@".root_path('public/assets/img/image/ali-2.jpg'));
         try {
             $result = $this->aop->execute($request, null, $appAuthToken);
-
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
             $resultCode = $result->$responseNode->code;
             if(!empty($resultCode)){
@@ -260,7 +259,7 @@ class AliOpen
             }
         } catch (Exception $e) {
             Log::error( "提交审核失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
-            throw new Exception('提交审核失败');
+            throw new Exception("提交审核失败:" . $e->getMessage());
         }
 
 

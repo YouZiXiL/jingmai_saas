@@ -87,6 +87,11 @@ class KD100Sms
      */
     public function send(string $content, string $out_trade_no, array $order,  int $tid){
 
+        $agent_info=db('admin')->where('id',$order['agent_id'])->find();
+        if ($agent_info['agent_sms']<=0){
+            return false;
+        }
+
         $res=$this->utils->httpRequest('https://apisms.kuaidi100.com/sms/send.do',[
             'sign'=>strtoupper(md5($this->key.$this->userid)),
             'userid'=>$this->userid,

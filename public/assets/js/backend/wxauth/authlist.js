@@ -88,6 +88,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         //{field: 'admin_id', title: __('Admin_id')},
                         {field: 'name', title: __('Name'), operate: 'LIKE'},
                         {field: 'avatar', title: __('Avatar'),events: Table.api.events.image, formatter: Table.api.formatter.image},
+                        {field: 'admininfo.nickname', title: __('代理商'), operate: 'LIKE'},
                         {field: 'app_id', title: __('App_id'), operate: 'LIKE'},
                         {field: 'wx_auth', title: __('Wx_auth'), searchList: {"0":__('Wx_auth 0'),"1":__('Wx_auth 1'),"2":__('Wx_auth 2')}, formatter: Table.api.formatter.normal},
                         {field: 'yuanshi_id', title: __('Yuanshi_id')},

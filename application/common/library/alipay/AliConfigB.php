@@ -10,14 +10,13 @@ class AliConfigB
     public static $alipayCertPath;
     public static $util;
 
-    public static function options($APPID): Factory
+    public static function options(): Factory
     {
-        return Factory::setOptions(self::getOptions($APPID));
+        return Factory::setOptions(self::getOptions());
     }
 
-    private static function getOptions($aesKey): Config
+    private static function getOptions(): Config
     {
-        $aesKey = $aesKey??'uUu+jCQjwZjf1SmWKkk02Q==';
         $options = new Config();
         $options->protocol = 'https';
         $options->gatewayHost = 'openapi.alipay.com';
@@ -30,13 +29,12 @@ class AliConfigB
         $options->alipayRootCertPath = root_path('extend/alipay/provider/alipayRootCert.crt');
         // 应用公钥证书
         $options->merchantCertPath = root_path('extend/alipay/provider/appCertPublicKey_2021003176656290.crt');
-
         //注：如果采用非证书模式，则无需赋值上面的三个证书路径，改为赋值如下的支付宝公钥字符串即可
         // $options->alipayPublicKey = '<-- 请填写您的支付宝公钥，例如：MIIBIjANBg... -->';
         //可设置异步通知接收服务地址（可选）
         $options->notifyUrl = request()->domain() . '/web/notice/ali';
         // 秘钥
-        $options->encryptKey = $aesKey;
+        $options->encryptKey = 'uUu+jCQjwZjf1SmWKkk02Q==';
 
         // 应用公钥：MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAl9swb+iHKmL0F2ho7hu9mWiTTQibrBD3f63uknQQzbNYfey9KBmtbyljaQNRXhGi7ZoX6cGIvskWWrk1Nxd2yqN8rD4+eNBj11ZDIFpnduKPb7FTZMvOuIni+/8EvG5Yynj1LAUwAh5+OnM0tDtMrfr3Ak3XDyV57wjz//rx9vph8TcSVOkT+TfzUQVCLDtG7IaC1eMP8q25D5igRWGpdM7OeG6c0hBF+CQzV6hWGPIpt/2BW91YTr5mT8A7L6F4J4AIv47MKYVijFSKxvYFaeFa4iEzOe2dlwc4UfwJJz+PxiUWPzcN/9OpFW9+vGb12D1hTHTrWuqsTia9KO8zjwIDAQAB
         // 支付宝公钥：MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAheWyEYj64iDCClDnWuyYdypueUBEq325c3fQRTFdMOzaTzeCfBOJnUPfrX6gAbDMqQaZJ/6Fg7edmPJ/DsWQMuMn3h4aVctG/azAFVF1mVx6kLMjttY2TNg4KmNVR+icWNQccmxG+bSW/Cm//Ww58A8hYqtA3L6zQc12HLDm2gF14kS7rZCc00hAXD61gy9ju1t4jer1bl86w8faNRQCY744HG+gdA+2yG2MhFkcuUhZYWn96FwBzL9uKqc0qGin3782dVWT+2o3vNVigwou0ejZarJhL/X9DODVSpkFPz/gOTZaVBQmpP1HXFPuRWqCOTLyp5bZX/DXLkvN4gWy3wIDAQAB

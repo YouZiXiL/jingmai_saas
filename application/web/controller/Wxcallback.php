@@ -53,69 +53,78 @@ class Wxcallback extends Controller
     /**
      * 微信第三方消息回调
      * @return void
-     * @throws Exception
-     * @throws \think\exception\PDOException
      */
     public function wxcall(){
         $param = $this->request->param();
         $encryptMsg = file_get_contents('php://input');
-        $kaifang_token=config('site.kaifang_token');
-        $encoding_aeskey=config('site.encoding_aeskey');
-        $kaifang_appid=config('site.kaifang_appid');
-        file_put_contents("wx-callback.txt",json_encode($param) .PHP_EOL,FILE_APPEND);
-        $pc = new WxBizMsgCrypt($kaifang_token,$encoding_aeskey, $kaifang_appid);
+        try {
+            $kaifang_token=config('site.kaifang_token');
+            $encoding_aeskey=config('site.encoding_aeskey');
+            $kaifang_appid=config('site.kaifang_appid');
+            file_put_contents("wx-callback.txt",json_encode($param) .PHP_EOL,FILE_APPEND);
+            $pc = new WxBizMsgCrypt($kaifang_token,$encoding_aeskey, $kaifang_appid);
 
-        //获取到微信推送过来post数据（xml格式）
-        $msg = '';
-        $errCode=$pc->decryptMsg($param['msg_signature'], $param['timestamp'], $param['nonce'], $encryptMsg,$msg);
-        if($errCode == 0) {
-            //处理消息类型，并设置回复类型和内容
-            $postObj = simplexml_load_string($msg, 'SimpleXMLElement', LIBXML_NOCDATA);
+            //获取到微信推送过来post数据（xml格式）
+            $msg = '';
+            $errCode=$pc->decryptMsg($param['msg_signature'], $param['timestamp'], $param['nonce'], $encryptMsg,$msg);
+            if($errCode == 0) {
+                //处理消息类型，并设置回复类型和内容
+                $postObj = simplexml_load_string($msg, 'SimpleXMLElement', LIBXML_NOCDATA);
 
-            //判断该数据包是否是订阅（用户关注）的事件推送
-            if (strtolower($postObj->MsgType) == 'event') {
-                $toUsername = $postObj->ToUserName;//小程序原始id
+                //判断该数据包是否是订阅（用户关注）的事件推送
+                if (strtolower($postObj->MsgType) == 'event') {
+                    $toUsername = $postObj->ToUserName;//小程序原始id
 
-                //小程序审核成功
-                if (strtolower($postObj->Event == 'weapp_audit_success')) {
-                    db('agent_auth')->where('yuanshi_id', $toUsername)->update([
-                        'xcx_audit' => 1
-                    ]);
-                }
-                //小程序审核失败
-                if (strtolower($postObj->Event == 'weapp_audit_fail')) {
-                    db('agent_auth')->where('yuanshi_id', $toUsername)->update([
-                        'xcx_audit' => 2,
-                        'reason'=>$postObj->Reason
-                    ]);
-                }
-                //小程序审核延迟
-                if (strtolower($postObj->Event == 'weapp_audit_delay')) {
-                    db('agent_auth')->where('yuanshi_id', $toUsername)->update([
-                        'xcx_audit' => 3
-                    ]);
-                }
-                //公众号关注
-                if (strtolower($postObj->Event == 'subscribe')) {
-                    if ($postObj->EventKey=='qrscene_get_openid'){
-                        $agent_id=db('agent_auth')->where(['yuanshi_id'=>$toUsername,'auth_type' => 1])->value('agent_id');
-                        db('admin')->where('id',$agent_id)->update([
-                            'open_id'=>$postObj->FromUserName
+                    //小程序审核成功
+                    if (strtolower($postObj->Event == 'weapp_audit_success')) {
+                        db('agent_auth')->where('yuanshi_id', $toUsername)->update([
+                            'xcx_audit' => 1
                         ]);
                     }
-                }
-
-                if (strtolower($postObj->Event == 'SCAN')){
-                    if ($postObj->EventKey=='get_openid'){
-                        $agent_id=db('agent_auth')->where(['yuanshi_id'=>$toUsername,'auth_type' => 1])->value('agent_id');
-                        db('admin')->where('id',$agent_id)->update([
-                            'open_id'=>$postObj->FromUserName
+                    //小程序审核失败
+                    if (strtolower($postObj->Event == 'weapp_audit_fail')) {
+                        db('agent_auth')->where('yuanshi_id', $toUsername)->update([
+                            'xcx_audit' => 2,
+                            'reason'=>$postObj->Reason
                         ]);
+                    }
+                    //小程序审核延迟
+                    if (strtolower($postObj->Event == 'weapp_audit_delay')) {
+                        db('agent_auth')->where('yuanshi_id', $toUsername)->update([
+                            'xcx_audit' => 3
+                        ]);
+                    }
+                    //公众号关注
+                    if (strtolower($postObj->Event == 'subscribe')) {
+                        if ($postObj->EventKey=='qrscene_get_openid'){
+                            $agent_id=db('agent_auth')->where(['yuanshi_id'=>$toUsername,'auth_type' => 1])->value('agent_id');
+                            db('admin')->where('id',$agent_id)->update([
+                                'open_id'=>$postObj->FromUserName
+                            ]);
+                        }
+                    }
+
+                    if (strtolower($postObj->Event == 'SCAN')){
+                        if ($postObj->EventKey=='get_openid'){
+                            $agent_id=db('agent_auth')->where(['yuanshi_id'=>$toUsername,'auth_type' => 1])->value('agent_id');
+                            db('admin')->where('id',$agent_id)->update([
+                                'open_id'=>$postObj->FromUserName
+                            ]);
+                        }
                     }
                 }
             }
+            exit('success');
+        }catch (Exception $e){
+            file_put_contents('wx-callback.txt','微信回调：'
+                . $e->getMessage().PHP_EOL
+                .$e->getLine().PHP_EOL
+                .json_encode($param)
+                .$encryptMsg
+                .date('Y-m-d H:i:s', time()).PHP_EOL
+                ,FILE_APPEND
+            );
         }
-        exit('success');
     }
 
 
@@ -1453,8 +1462,17 @@ class Wxcallback extends Controller
             /*
              取消给用户退款，配送异常看下原因，根据原因决定是否给用户取消退款
              */
-            // 罚金
-            isset($body['punishAmount']) && $updateOrder['punish_price'] = ceil($body['punishAmount'])/100 ;
+
+            $returnPrice=$orders['aftercoupon']??$orders['final_price'];
+            if($body['punishAmount']){
+                // 罚金
+                $updateOrder['punish_price'] = ceil($body['punishAmount'])/100;
+                if($returnPrice>$updateOrder['punish_price']){
+                    $returnPrice = $returnPrice - $updateOrder['punish_price'];
+                }
+
+            }
+
 
             // 退优惠券
             if(!empty($orders["couponid"])){
@@ -1463,11 +1481,11 @@ class Wxcallback extends Controller
                 $couponinfo->save();
             }
 
-            // 订单已取消
+            // 取消订单
             $data = [
                 'type'=>4,
                 'order_id' => $orders['id'],
-                'refund' => ceil($body['returnPrice'])/100,
+                'refund' => $returnPrice,
             ];
             // 将该任务推送到消息队列，等待对应的消费者去执行
             Queue::push(DoJob::class, $data,'way_type');
@@ -3675,8 +3693,9 @@ class Wxcallback extends Controller
 //                ];
                 $content = $params;
                 $content['data'] = json_encode($params['data']);
-                Log::info(['Q必达回调' => $content]);
+
                 db('q_callback')->insert($content);
+                Log::info(['Q必达回调' => $params]);
                 $common= new Common();
                 $orders=db('orders')->where('out_trade_no',$params['thirdOrderNo'])->find();
                 //判断具体返回信息后可改为等号
@@ -3838,6 +3857,8 @@ class Wxcallback extends Controller
                             'type'=>2,
                             'freightHaocai' =>$haocai,
                             'order_id' => $orders['id'],
+                            'openid' => $users['open_id'],
+                            'template_id' => $agent_auth_xcx['material_template']
                         ];
                         $up_data['haocai_freight'] = $haocai;
                         // 将该任务推送到消息队列，等待对应的消费者去执行
@@ -3851,21 +3872,15 @@ class Wxcallback extends Controller
                     //超轻处理
                     $weight=floor($orders['weight']-$pamar['weightFee']);
                     if ($weight>0&&$pamar['weightFee']!=0&&empty($orders['final_weight_time'])){
-
                         $tralight_weight=$weight;//超轻重量
-
                         $weightprice=$orders["final_price"]-($pamar["totalFee"]-$haocai);
-
                         if($weightprice>0){
                             $dicount=number_format($orders["freight"]/$orders['originalFee'],2);
-
                             $up_data['tralight_status']=1;
                             $up_data['final_weight_time']=time();
                             $up_data['tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
                             $up_data['agent_tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);
-
                             $rebatelistdata["payinback"]=-$up_data['tralight_price'];
-
                             if(!empty($users["rootid"])){
                                 $root_tralight_amt=$tralight_weight*($dicount+$agent_info["sf_agent_ratio"]/100);
                                 $root_default_tralight_amt=$tralight_weight*($dicount+$agent_info["sf_agent_default_ratio"]/100);
@@ -3883,16 +3898,13 @@ class Wxcallback extends Controller
                                 $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["imm_rate"]??0)/100,2);
                                 $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["midd_rate"]??0)/100,2);
                             }
-
                         }
-
                     }
 
-
                     //更改超重状态
-                    if ($orders['weight']<$pamar['calWeight']&&empty($orders['final_weight_time'])){
+                    if ($orders['weight']<$pamar['weightFee']&&empty($orders['final_weight_time'])){
                         $up_data['overload_status']=1;
-                        $overload_weight=ceil($pamar['calWeight']-$orders['weight']);//超出重量
+                        $overload_weight=ceil($pamar['weightFee']-$orders['weight']);//超出重量
 
                         $weightprice=$pamar["totalFee"]-$haocai-$orders["final_price"];
 
@@ -3901,16 +3913,7 @@ class Wxcallback extends Controller
 
                         $up_data['overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);//用户超重金额
                         $up_data['agent_overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);//代理商超重金额
-                        $data = [
-                            'type'=>1,
-                            'agent_overload_amt' =>$up_data['agent_overload_price'],
-                            'order_id' => $orders['id'],
-                            'xcx_access_token'=>$xcx_access_token,
-                            'open_id'=>$users['open_id'],
-                            'template_id'=>$agent_auth_xcx['pay_template'],
-                            'cal_weight'=>$overload_weight .'kg',
-                            'users_overload_amt'=>$up_data['agent_overload_price'].'元'
-                        ];
+
 
                         if(!empty($users["rootid"])){
                             $root_tralight_amt=$weightprice*($dicount+$agent_info["sf_agent_ratio"]/100);
@@ -3934,6 +3937,17 @@ class Wxcallback extends Controller
                         $rebatelistdata["payinback"]=$up_data['overload_price'];
 
                         $rebatelistdata["state"]=2;
+
+                        $data = [
+                            'type'=>1,
+                            'agent_overload_amt' =>$up_data['agent_overload_price'],
+                            'order_id' => $orders['id'],
+                            'xcx_access_token'=>$xcx_access_token,
+                            'open_id'=>$users['open_id'],
+                            'template_id'=>$agent_auth_xcx['pay_template'],
+                            'cal_weight'=>$overload_weight .'kg',
+                            'users_overload_amt'=>$up_data['agent_overload_price'].'元'
+                        ];
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
                         // 发送超重短信
