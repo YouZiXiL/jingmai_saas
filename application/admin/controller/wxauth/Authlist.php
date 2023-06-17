@@ -5,6 +5,7 @@ namespace app\admin\controller\wxauth;
 use app\admin\model\Admin;
 use app\admin\model\cdk\Cdklist;
 use app\common\controller\Backend;
+use app\common\library\alipay\AliConfig;
 use app\common\library\alipay\Alipay;
 use app\web\controller\Common;
 use app\web\model\AgentAuth;
@@ -214,14 +215,17 @@ class Authlist extends Backend
         $ids = input('ids');
         $type = input('type');
         $v = input('v');
-        $agentAuth = AgentAuth::field('auth_token')->find($ids);
-        if(!$agentAuth)  $this->error("未找到授权版本");
-        $appAuthToken = $agentAuth->auth_token;
+
         if ($type && $v){
-            $this->versionManager($agentAuth, $type, $v);
+            $this->versionManager($ids, $type, $v);
         }else{
+//            $template = AgentAuth::field('auth_token')->where('app_id', AliConfig::$templateId)->find();
+            $template = AgentAuth::field('auth_token')->find($ids);
+
+            if(!$template)  $this->error("模板未授权");
+            $templateAuthToken = $template->auth_token;
             $open = Alipay::start()->open();
-            $version = $open->getMiniVersionList($appAuthToken);
+            $version = $open->getMiniVersionList($templateAuthToken);
             //      * INIT: 开发中, AUDITING: 审核中, AUDIT_REJECT: 审核驳回, WAIT_RELEASE: 待上架, BASE_AUDIT_PASS: 准入不可营销, GRAY: 灰度中, RELEASE: 已上架, OFFLINE: 已下架, AUDIT_OFFLINE: 已下架;
             $name=  [
                 'INIT'  => '开发中',
@@ -238,16 +242,20 @@ class Authlist extends Backend
 
     /**
      * 支付宝版本管理
-     * @param object $agentAuth
+     * @param int $ids
      * @param string $type 操作类型
      * @param string $version 版本
      * @throws Exception
      */
-    public function versionManager($agentAuth, string $type, string $version){
+    public function versionManager(int $ids, string $type, string $version){
+        $agentAuth = AgentAuth::field('auth_token')->find($ids);
+        if(!$agentAuth)  $this->error("未找到授权版本");
         $appAuthToken = $agentAuth->auth_token;
         $open = Alipay::start()->open();
 
         switch ($type){
+            case 'upload': // 上传代码
+                $open->versionUpload($version, $appAuthToken);
             case 'back': $open->miniVersionAuditedCancel($version, $appAuthToken); break;  // 退回快发
             case 'audit': // 提交审核
                 $auditResult = $open->setMiniVersionAudit($version, $appAuthToken);
@@ -280,13 +288,14 @@ class Authlist extends Backend
      * 上传代码
      * @param $ids
      * @return void
-     * @throws DbException
+     * @throws Exception
      */
     public function uploads_app($ids=null){
-
-
         $row = $this->model->get($ids);
-
+        if ($row['wx_auth'] == 2){
+            $this->aliUpload($row);
+            return;
+        }
         $common=new Common();
         $xcx_access_token=$common->get_authorizer_access_token($row['app_id']);
 
@@ -423,5 +432,22 @@ class Authlist extends Backend
         $row->save(['xcx_audit'=>0]);
         $this->success('撤销成功');
     }
+
+    /**
+     * 支付宝上传代码
+     * @return void
+     * @throws Exception
+     */
+    function aliUpload($agentAuth){
+        // 模板app_auth_token
+        $templateAuthToken = AgentAuth::where('app_id', AliConfig::$templateId)->value('auth_token');
+        if (!$templateAuthToken) $this->error('模板不存在');
+        $open = Alipay::start()->open();
+        $version = $open->getMiniVersionNumber($templateAuthToken);
+        $result = $open->versionUpload($version,$agentAuth['auth_token']);
+        if ($result->code != 10000)  $this->error($result->sub_msg);
+        $this->success();
+    }
+
 
 }

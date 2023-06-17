@@ -27,7 +27,10 @@
         <td>状态</td>
         {switch name="$vo:version_status" }
             {case value="RELEASE"}
-                <td  class="text-success" >{$name[$vo:version_status]}</td>
+                <td  class="text-success" >
+                    {$name[$vo:version_status]}
+                    <button class="btn btn-success btn-upload btn-xs ml-4">上传代码</button>
+                </td>
             {/case}
             {case value="AUDITING"}
                 <td class="text-warning">
@@ -36,7 +39,7 @@
                 </td>
             {/case}
             {case value="INIT"}
-                <td class="text-info">
+                <td class="text-light-blue">
                     {$name[$vo:version_status]}
                     <button class="btn btn-success btn-audit btn-xs ml-4">提交审核</button>
                 </td>

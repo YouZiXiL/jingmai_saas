@@ -3,6 +3,7 @@
 
 namespace app\common\library\alipay;
 
+use app\common\library\alipay\aop\AopCertClient;
 use app\common\library\alipay\aop\request\AlipaySystemOauthTokenRequest;
 use app\common\library\alipay\aop\request\AlipayTradeCreateRequest;
 use app\common\library\alipay\aop\request\AlipayTradeRefundRequest;
@@ -13,7 +14,7 @@ use think\Log;
 
 class AliBase
 {
-    private $aop;
+    private AopCertClient $aop;
     public function __construct(){
         $this->aop = AliConfig::options();
     }

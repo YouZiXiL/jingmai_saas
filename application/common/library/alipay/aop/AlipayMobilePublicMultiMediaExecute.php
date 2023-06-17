@@ -6,7 +6,7 @@
  * @version $Id: AlipayMobilePublicMultiMediaExecute.php, v 0.1 Aug 15, 2014 10:19:01 AM yuanwai.wang Exp $
  */
 
-//namespace alipay\api ;
+namespace app\common\library\alipay\aop;
 
 
 class AlipayMobilePublicMultiMediaExecute

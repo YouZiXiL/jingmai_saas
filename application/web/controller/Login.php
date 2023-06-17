@@ -4,6 +4,7 @@ namespace app\web\controller;
 
 use app\common\library\alipay\AliConfigB;
 use app\common\library\alipay\Alipay;
+use app\common\library\alipay\aop\AopUtils;
 use app\common\library\R;
 use app\web\library\BaseException;
 use app\web\model\AgentAuth;
@@ -149,12 +150,11 @@ class Login extends Controller
         $appid = input('appid');
         $code = input('code');
         $response = input('response');
-        $agent = AgentAuth::field('agent_id,auth_token')->where('app_id', $appid)->find();
-        if (empty($agent))  return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+        $agent = AgentAuth::field('agent_id,auth_token,aes')->where('app_id', $appid)->find();
+        if (empty($agent))  return R::error("未授权此小程序");
         $agent_id = $agent->agent_id;
-        $clientEsk = 'W15T4J+wA/JPnMaPTMypLw==';
         $appAuthToken = $agent->auth_token;
-
+        $aes = $agent->aes;
         // 获取user_id, access_token;
         $result = Alipay::start()->base()->getOauthToken($code, $appAuthToken);
         $openid = $result->user_id;
@@ -166,10 +166,18 @@ class Login extends Controller
 
         if (empty($user)){
             // 解密手机号
-            $op = AliConfigB::options();
-            $phoneData = $op->util()->aes()->agent($appAuthToken)->decrypt($response);
+            $op = AliConfigB::options($aes);
+            $dataJson = $op->util()->aes()->agent($appAuthToken)->decrypt($response);
 
-            $phoneData = json_decode($phoneData);
+//            $utils = new AopUtils();
+//            $dataJson = $utils -> decrypt($response, $appAuthToken);
+
+            $phoneData = json_decode($dataJson);
+
+            if(!$phoneData || $phoneData->code != 0){
+                Log::error("获取手机号失败：{$dataJson}");
+                return R::error('获取手机号失败');
+            }
 
             $mobile = $phoneData->mobile;
 

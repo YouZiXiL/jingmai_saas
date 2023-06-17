@@ -43,4 +43,22 @@ class R
 
         return json($result);
     }
+
+    public static function code($code, $message='error', $data=null): \think\response\Json
+    {
+        if(empty($data)){
+            $result = [
+                'status' => $code,
+                'msg' => $message,
+            ];
+        }else{
+            $result = [
+                'status' => $code,
+                'msg' => $message,
+                'data' => $data
+            ];
+        }
+
+        return json($result);
+    }
 }

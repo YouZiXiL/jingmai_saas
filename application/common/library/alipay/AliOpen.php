@@ -3,6 +3,10 @@
 
 namespace app\common\library\alipay;
 
+use app\common\library\alipay\aop\AopCertClient;
+use app\common\library\alipay\aop\request\AlipayOpenAppApiQueryRequest;
+use app\common\library\alipay\aop\request\AlipayOpenAppApiFieldApplyRequest;
+use app\common\library\alipay\aop\request\AlipayOpenAppApiSceneQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAuthAppAesGetRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAuthAppAesSetRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAuthTokenAppRequest;
@@ -16,15 +20,18 @@ use app\common\library\alipay\aop\request\AlipayOpenMiniVersionBuildQueryRequest
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionDetailQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionListQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionOnlineRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniVersionUploadRequest;
 use Exception;
 use stdClass;
 use think\Log;
 
 class AliOpen
 {
-    private $aop;
+    private AopCertClient $aop;
+    private string $templateId;
     public function __construct(){
         $this->aop = AliConfig::options();
+        $this->templateId = AliConfig::$templateId;
     }
 
     /**
@@ -58,10 +65,10 @@ class AliOpen
     /**
      * alipay.open.auth.app.aes.get(授权应用aes密钥查询)
      * @param $appid @desc 商户appid
-     * @return string
+     * @return string|null
      * @throws Exception
      */
-    public function getAes($appid): string
+    public function getAes($appid): ?string
     {
         $request = new AlipayOpenAuthAppAesGetRequest();
         $request->setBizContent("{" .
@@ -72,7 +79,7 @@ class AliOpen
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
             $resultCode = $result->$responseNode->code;
             if(!empty($resultCode)&&$resultCode == 10000){
-                return $result->$responseNode->aes_key??'';
+                return $result->$responseNode->aes_key??null;
             } else {
                 Log::error( ["授权应用aes密钥查询失败：" =>  $result->$responseNode]);
                 throw new Exception('授权应用aes密钥查询失败');
@@ -187,7 +194,7 @@ class AliOpen
      * @return mixed
      * @throws Exception
      */
-    public function getMiniVersionList($appAuthToken, $versionStatus = "INIT,AUDITING,AUDIT_REJECT,WAIT_RELEASE,RELEASE")
+    public function getMiniVersionList($appAuthToken, string $versionStatus = "INIT,AUDITING,AUDIT_REJECT,WAIT_RELEASE,RELEASE")
     {
         $request = new AlipayOpenMiniVersionListQueryRequest ();
         $object = new stdClass();
@@ -231,6 +238,18 @@ class AliOpen
     }
 
     /**
+     * 获取当前小程序版本号（已上架）
+     * @param $appAuthToken
+     * @return mixed
+     * @throws Exception
+     */
+    public function getMiniVersionNumber($appAuthToken){
+        $release = $this->getMiniVersionList($appAuthToken, "RELEASE");
+        if (!$release) return null;
+        return $release[0]->app_version;
+    }
+
+    /**
      * 提交审核 alipay.open.mini.version.audit.apply
      * @param $version
      * @param $appAuthToken
@@ -239,7 +258,7 @@ class AliOpen
      */
     public function setMiniVersionAudit($version,$appAuthToken){
         $request = new AlipayOpenMiniVersionAuditApplyRequest ();
-        $request->setVersionDesc("本次版本更新优化了程序功能，修复了若干BUG");
+        $request->setVersionDesc("鲸喜物流-聚合快递SaaS系统，为更多想从事快递行业，提供更优惠的小程序系统");
         $request->setRegionType("CHINA");
         $request->setAppVersion($version);
 
@@ -439,8 +458,106 @@ class AliOpen
             Log::error( "小程序上架失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
             throw new Exception('小程序上架失败');
         }
+    }
 
 
+    /**
+     * alipay.open.app.api.query(查询应用可申请的接口出参敏感字段列表)
+     * @return void
+     * @throws Exception
+     */
+    public function apiQuery($appAuthToken){
+        $request = new AlipayOpenAppApiQueryRequest ();
+        $result = $this->aop->execute ($request, null, $appAuthToken);
+        $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+        $resultCode = $result->$responseNode->code;
+        if(!empty($resultCode)&&$resultCode == 10000){
+            if(isset($result->$responseNode->apis)){
+                dd($result->$responseNode->apis);
+            }else{
+                throw new Exception('请申请获取手机号能力');
+            }
+            echo "成功";
+        } else {
+            echo "失败";
+        }
+    }
+
+    /**
+     * 查询接口字段场景值
+     * @return void
+     * @throws Exception
+     */
+    public function getScene($appAuthToken){
+        $request = new AlipayOpenAppApiSceneQueryRequest ();
+        $object = new stdClass();
+        $object->field_name = "mobile";
+        $object->api_name = "getPhoneNumber";
+        $request->setBizContent(json_encode($object));
+
+        $result = $this->aop->execute ($request,null,$appAuthToken);
+dd($result);
+        $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+        $resultCode = $result->$responseNode->code;
+        if(!empty($resultCode)&&$resultCode == 10000){
+            echo "成功";
+        } else {
+            echo "失败";
+        }
+    }
+
+    /**
+     * alipay.open.app.api.field.apply(申请获取接口用户敏感信息字段)
+     * @return void
+     * @throws Exception
+     */
+    public function fieldApply($appAuthToken){
+        $request = new AlipayOpenAppApiFieldApplyRequest ();
+        $request->setPicture1("@".root_path('public/assets/img/image/ali-1.jpg'));
+        $request->setPicture2("@".root_path('public/assets/img/image/ali-2.jpg'));
+        $authFieldApply = new stdClass();
+        $authFieldApply->api_name = "getPhoneNumber";
+        $authFieldApply->field_name = "mobile";
+        $authFieldApply->package_code = "20180927110154092444";
+        $authFieldApply->scene_code = "14";
+        $authFieldApply->qps_answer = "预计接口秒级调用量峰值：200 QPS";
+        $authFieldApply->customer_answer = "有自己的客服团队3人，能够及时响应并处理舆能力";
+        $authFieldApply->memo = "获取手机号码的用途：收发快递联系人";
+        //当为使用使用模板的小程序申请时,可传入所使用的小程序模板id
+        $authFieldApply->tiny_app_template_id = $this->templateId;
+        $request->setAuthFieldApply(json_encode($authFieldApply)) ;
+
+        $result = $this->aop->execute ($request,null,$appAuthToken);
+dd($result);
+        $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+        $resultCode = $result->$responseNode->code;
+        if(!empty($resultCode)&&$resultCode == 10000){
+            echo "成功";
+        } else {
+            echo "失败";
+        }
+    }
+
+    /**
+     * alipay.open.mini.version.upload(小程序基于模板上传版本)
+     * @return mixed
+     * @throws Exception
+     */
+    public function versionUpload($version, $appAuthToken){
+        $request = new AlipayOpenMiniVersionUploadRequest ();
+        $obj = new stdClass();
+        $obj->template_version= $version;
+        $obj->template_id= $this->templateId;
+        $obj->app_version= $version;
+        $request->setBizContent(json_encode($obj));
+        try {
+            $result = $this->aop->execute($request, null, $appAuthToken);
+            $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            return $result->$responseNode;
+        } catch (Exception $e) {
+            Log::error( "代码上传失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
+            throw new Exception('代码上传失败');
+        }
 
     }
 }

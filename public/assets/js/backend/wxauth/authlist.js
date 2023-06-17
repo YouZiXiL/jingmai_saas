@@ -169,7 +169,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         return false;
                                     },
                                     visible: function (row) {
-                                        if (row.xcx_audit==='4'||row.auth_type==='1' || row.wx_auth === '2'){
+                                        if (row.xcx_audit==='4'||row.auth_type==='1'){
                                             return false;
                                         }else{
                                             return true;
@@ -316,6 +316,18 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             }
         },
         version_ali: function () {
+
+            $(document).on('click', '.btn-upload', function () {
+                // 上传代码
+                // Fast.api.close($("input[name=callback]").val());
+                var ids = $("input[name=RELEASE]").val();
+                var version = $("code[name=RELEASE]").text();
+                Fast.api.ajax({
+                    url: `wxauth/authlist/version_ali?ids=${ids}&type=upload&v=${version}`
+                }, function (data,ret) { //success
+                }, function (data,ret) { //error
+                });
+            });
             $(document).on('click', '.btn-back', function () {
                 // Fast.api.close($("input[name=callback]").val());
                 var ids = $("input[name=AUDIT_REJECT]").val();

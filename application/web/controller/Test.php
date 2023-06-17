@@ -3,9 +3,12 @@
 namespace app\web\controller;
 
 use app\common\business\WanLi;
+use app\common\library\alipay\AliOpen;
+use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\wechat\crypt\WXBizMsgCrypt;
 use app\web\model\Admin;
+use app\web\model\AgentAuth;
 use DOMDocument;
 use think\Controller;
 use think\Log;
@@ -212,31 +215,23 @@ class Test extends Controller
             'lang'=>'zh_CN'
         ],'POST');
         dd($result);
-        //发送小程序超重订阅消息
-//        $result =  $this->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
-//            'touser'=>$users['open_id'],  //接收者openid
-//            'template_id'=>$agentAuth['pay_template'],
-//            'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],  //模板跳转链接
-//            'data'=>[
-//                'character_string6'=>['value'=>$orders['waybill']],
-//                'thing5'=>['value'=>100],
-//                'amount11'=>['value'=>100],
-//                'thing2'=>['value'=>'站点核重超出下单重量'],
-//                'thing7'  =>['value'=>'点击补缴运费，以免对您的运单造成影响',]
-//            ],
-//            'miniprogram_state'=>'formal',
-//            'lang'=>'zh_CN'
-//        ],'POST');
-//        PushNotice::create([
-//            'user_id' => $orders['user_id'],
-//            'agent_id' => $orders['agent_id'],
-//            'name' => $orders['sender'],
-//            'mobile' => $orders['sender_mobile'],
-//            'order_no' => $orders['out_trade_no'],
-//            'waybill' => $orders['waybill'],
-//            'channel' => 2,
-//            'type' => 1,
-//            'comment' => $result,
-//        ]);
+    }
+
+    /**
+     * 阿里接口调用
+     * @return void
+     * @throws \Exception
+     */
+    public function apiQuery(){
+
+        $auth_id = input('id');
+        $agentAuth = AgentAuth::field('auth_token')->where('id', $auth_id)->find();
+
+        $appAuthToken = $agentAuth->auth_token;
+
+        $ali = Alipay::start()->open();
+//        $ali->apiQuery($appAuthToken);
+//        $ali->getScene($appAuthToken);
+        $ali->fieldApply($appAuthToken);
     }
 }

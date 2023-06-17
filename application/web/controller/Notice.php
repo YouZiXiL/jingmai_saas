@@ -177,13 +177,8 @@ class Notice extends Controller
             $aliOpen = Alipay::start()->open();
             $authInfo = $aliOpen->getAuthToken($code);
             $miniProgram = $aliOpen->getMiniBaseInfo($authInfo->app_auth_token);
-            Log::error(['小程序基本信息' => $miniProgram]);
-            $version = $aliOpen->getMiniVersionCur($authInfo->app_auth_token);
-            Log::error(['小程序版本' => $version]);
-            $vn = isset($version)?$version->app_version:null;
-            Log::error(['小程序版本$vn' => $version]);
+            $vn = $aliOpen->getMiniVersionNumber($authInfo->app_auth_token);
             $aes = $aliOpen->getAes($authInfo->auth_app_id)??$aliOpen->setAes($authInfo->auth_app_id);
-            Log::error(['aes加密秘钥' => $version]);
             $data = [
                 'agent_id' => $agent_id,
                 'app_id' => $authInfo->auth_app_id,

@@ -61,7 +61,6 @@ class Wxcallback extends Controller
             $kaifang_token=config('site.kaifang_token');
             $encoding_aeskey=config('site.encoding_aeskey');
             $kaifang_appid=config('site.kaifang_appid');
-            file_put_contents("wx-callback.txt",json_encode($param) .PHP_EOL,FILE_APPEND);
             $pc = new WxBizMsgCrypt($kaifang_token,$encoding_aeskey, $kaifang_appid);
 
             //获取到微信推送过来post数据（xml格式）
@@ -882,7 +881,7 @@ class Wxcallback extends Controller
                         $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
                     }
                     // 将该任务推送到消息队列，等待对应的消费者去执行
-                   Queue::push(DoJob::class, $data,'way_type');
+                    Queue::push(DoJob::class, $data,'way_type');
 
                     // 发送超重短信
                     KD100Sms::run()->overload($orders);
@@ -1019,9 +1018,10 @@ class Wxcallback extends Controller
 
             return json(['code'=>1, 'message'=>'推送成功']);
         }catch (\Exception $e){
-            file_put_contents('way_type.txt','云洋回调接口'
-                . $e->getMessage().PHP_EOL
+            file_put_contents('way_type.txt',PHP_EOL.'云洋回调接口'
+                .$e->getMessage().PHP_EOL
                 .$e->getLine().PHP_EOL
+                .$e->getTraceAsString().PHP_EOL
                 .date('Y-m-d H:i:s', time()).PHP_EOL
                 ,FILE_APPEND
             );
@@ -1278,7 +1278,7 @@ class Wxcallback extends Controller
                                 $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["imm_rate"]??0)/100,2);
                                 $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
                             }
-                            Log::info('超重推送');
+
                             // 将该任务推送到消息队列，等待对应的消费者去执行
                             Queue::push(DoJob::class, $data,'way_type');
                             // 发送超重短信
@@ -1844,7 +1844,7 @@ class Wxcallback extends Controller
                     break;
 
                 case '智能':
-                    Log::info('云洋下单：'.$orders['out_trade_no']);
+                    Log::info('云洋下单：'. json_encode($orders));
                     $content=[
                         'channelId'=> $orders['channel_id'],
                         'channelTag'=>$orders['channel_tag'],
@@ -3695,7 +3695,6 @@ class Wxcallback extends Controller
                 $content['data'] = json_encode($params['data']);
 
                 db('q_callback')->insert($content);
-                Log::info(['Q必达回调' => $params]);
                 $common= new Common();
                 $orders=db('orders')->where('out_trade_no',$params['thirdOrderNo'])->find();
                 //判断具体返回信息后可改为等号
@@ -3857,7 +3856,8 @@ class Wxcallback extends Controller
                             'type'=>2,
                             'freightHaocai' =>$haocai,
                             'order_id' => $orders['id'],
-                            'openid' => $users['open_id'],
+                            'open_id' => $users['open_id'],
+                            'xcx_access_token'=>$xcx_access_token,
                             'template_id' => $agent_auth_xcx['material_template']
                         ];
                         $up_data['haocai_freight'] = $haocai;

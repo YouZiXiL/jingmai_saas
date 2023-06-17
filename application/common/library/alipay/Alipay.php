@@ -6,9 +6,10 @@ namespace app\common\library\alipay;
 
 class Alipay
 {
-    private static $base = null;
-    private static $open = null;
-    private static $instance = null;
+    private static AliBase $base;
+    private static AliOpen $open;
+    private static ?Alipay $instance = null;
+
     public static function start(): Alipay
     {
         if(!self::$instance instanceof Alipay){

@@ -123,7 +123,8 @@ class KD100Sms
             'type' => $type,
             'comment' => $res,
         ];
-        if( json_decode($res, true)['status']!=1) {
+        $result = json_decode($res, true);
+        if( @$result['status']!=1) {
             Log::error('发送短信失败'.$order['waybill']);
             $pushData['status'] = 2;
         }else{
