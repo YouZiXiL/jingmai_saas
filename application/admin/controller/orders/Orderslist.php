@@ -14,6 +14,7 @@ use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
 use think\exception\ValidateException;
+use think\Log;
 use think\response\Json;
 
 /**
@@ -79,7 +80,7 @@ class Orderslist extends Backend
         }
         $list = $list
             ->where($where)
-            ->field('id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,overload_price,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
+            ->field('id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,overload_price,pay_type,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
             ->where('pay_status','<>',0)
             ->where('channel_tag','<>','同城')
             ->with([
@@ -155,7 +156,7 @@ class Orderslist extends Backend
         if (is_array($adminIds) && !in_array($row[$this->dataLimitField], $adminIds)) {
             $this->error(__('You have no permission'));
         }
-        if ($row['pay_status']!=1){
+        if ($row['pay_status']!=1 && $row['pay_type'] != 3){
             $this->error(__('此订单已取消'));
         }
         if ($row['channel_tag']=='重货'){
@@ -165,14 +166,13 @@ class Orderslist extends Backend
                 'reason'=>'不要了'
             ];
             $res=$common->fhd_api('cancelExpressOrder',$content);
-
             $res=json_decode($res,true);
             if ($res['rcode']!=0){
                 $this->error($res['errorMsg']);
             }
         }else if($row['channel_tag']=='智能'){
             $content=[
-                'shopbill'=>$row['shopbill']
+                'shopbill'=>$row['shopbill'],
             ];
             $res=$common->yunyang_api('CANCEL',$content);
             if ($res['code']!=1){

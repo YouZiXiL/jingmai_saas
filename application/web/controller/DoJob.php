@@ -56,33 +56,35 @@ class DoJob
                         //代理商减少余额  代理超重
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['agent_overload_amt'],4,'运单号：'.$orders['waybill'].' 超重扣除金额：'.$data['agent_overload_amt'].'元');
                         //发送小程序超重订阅消息
-                        $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
-                            'touser'=>$data['open_id'],  //接收者openid
-                            'template_id'=>$data['template_id'],
-                            'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],  //模板跳转链接
-                            'data'=>[
-                                'character_string6'=>['value'=>$orders['waybill']],
-                                'thing5'=>['value'=>$data['cal_weight']],
-                                'amount11'=>['value'=>$data['users_overload_amt']],
-                                'thing2'=>['value'=>'站点核重超出下单重量'],
-                                'thing7'  =>['value'=>'点击补缴运费，以免对您的运单造成影响',]
-                            ],
-                            'miniprogram_state'=>'formal',
-                            'lang'=>'zh_CN'
-                        ],'POST');
-                        $result = json_decode($resultJson, true);
-                        PushNotice::create([
-                            'user_id' => $orders['user_id'],
-                            'agent_id' => $orders['agent_id'],
-                            'name' => $orders['sender'],
-                            'mobile' => $orders['sender_mobile'],
-                            'order_no' => $orders['out_trade_no'],
-                            'waybill' => $orders['waybill'],
-                            'channel' => 2,
-                            'type' => 1,
-                            'status'=>$result['errcode'] == 0?1:2,
-                            'comment' => $resultJson,
-                        ]);
+                        if($orders['pay_type'] == 1 && @$data['template_id']){
+                            $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
+                                'touser'=>$data['open_id'],  //接收者openid
+                                'template_id'=>$data['template_id'],
+                                'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],  //模板跳转链接
+                                'data'=>[
+                                    'character_string6'=>['value'=>$orders['waybill']],
+                                    'thing5'=>['value'=>$data['cal_weight']],
+                                    'amount11'=>['value'=>$data['users_overload_amt']],
+                                    'thing2'=>['value'=>'站点核重超出下单重量'],
+                                    'thing7'  =>['value'=>'点击补缴运费，以免对您的运单造成影响',]
+                                ],
+                                'miniprogram_state'=>'formal',
+                                'lang'=>'zh_CN'
+                            ],'POST');
+                            $result = json_decode($resultJson, true);
+                            PushNotice::create([
+                                'user_id' => $orders['user_id'],
+                                'agent_id' => $orders['agent_id'],
+                                'name' => $orders['sender'],
+                                'mobile' => $orders['sender_mobile'],
+                                'order_no' => $orders['out_trade_no'],
+                                'waybill' => $orders['waybill'],
+                                'channel' => 2,
+                                'type' => 1,
+                                'status'=>$result['errcode'] == 0?1:2,
+                                'comment' => $resultJson,
+                            ]);
+                        }
                         db('orders')->where('id',$orders['id'])->update([
                             'final_weight_time'=>time(),
                         ]);
@@ -102,7 +104,7 @@ class DoJob
                         //代理商减少余额  耗材
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'运单号：'.$orders['waybill'].' 耗材扣除金额：'.$data['freightHaocai'].'元');
                         //发送小程序耗材订阅消息
-                        if (@$data['template_id']){
+                        if ($orders['pay_type'] == 1 && @$data['template_id']){
                             $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
                                 'touser'=>$data['open_id'],  //接收者openid
                                 'template_id'=>$data['template_id'],
@@ -156,43 +158,41 @@ class DoJob
                 }
 
             }elseif ($data['type']==3){
-
-                    $orders=db('orders')->where('id',$data['order_id'])->find();
-
+                $orders=db('orders')->where('id',$data['order_id'])->find();
                 try {
+                    if( $orders['pay_type'] == 1 ){
+                        $refoundAmount=$orders['aftercoupon']??$orders['final_price'];
 
-
-                    $refoundAmount=$orders['aftercoupon']??$orders['final_price'];
-
-                    // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
-                    $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$orders['wx_mchid'].'.pem');
-                    $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
-                    // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
-                    $platformCertificateFilePath =file_get_contents('./public/uploads/platform_key/'.$orders['wx_mchid'].'.pem');
-                    $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
-                    // 从「微信支付平台证书」中获取「证书序列号」
-                    $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
-                    // 构造一个 APIv3 客户端实例
-                    $wx_pay=Builder::factory([
-                        'mchid'      => $orders['wx_mchid'],
-                        'serial'     => $orders['wx_mchcertificateserial'],
-                        'privateKey' => $merchantPrivateKeyInstance,
-                        'certs'      => [
-                            $platformCertificateSerial => $platformPublicKeyInstance,
-                        ],
-                    ]);
-                    $wx_pay
-                    ->chain('v3/refund/domestic/refunds')
-                    ->post(['json' => [
-                        'out_trade_no' => $orders['out_trade_no'],
-                        'out_refund_no'=>$data['out_refund_no'],
-                        'reason'=>$data['reason'],
-                        'amount'       => [
-                            'refund'   => (int)bcmul($refoundAmount,100),
-                            'total'    =>(int)bcmul($refoundAmount,100),
-                            'currency' => 'CNY'
-                        ],
-                    ]]);
+                        // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
+                        $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$orders['wx_mchid'].'.pem');
+                        $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+                        // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
+                        $platformCertificateFilePath =file_get_contents('./public/uploads/platform_key/'.$orders['wx_mchid'].'.pem');
+                        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+                        // 从「微信支付平台证书」中获取「证书序列号」
+                        $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
+                        // 构造一个 APIv3 客户端实例
+                        $wx_pay=Builder::factory([
+                            'mchid'      => $orders['wx_mchid'],
+                            'serial'     => $orders['wx_mchcertificateserial'],
+                            'privateKey' => $merchantPrivateKeyInstance,
+                            'certs'      => [
+                                $platformCertificateSerial => $platformPublicKeyInstance,
+                            ],
+                        ]);
+                        $wx_pay
+                            ->chain('v3/refund/domestic/refunds')
+                            ->post(['json' => [
+                                'out_trade_no' => $orders['out_trade_no'],
+                                'out_refund_no'=>$data['out_refund_no'],
+                                'reason'=>$data['reason'],
+                                'amount'       => [
+                                    'refund'   => (int)bcmul($refoundAmount,100),
+                                    'total'    =>(int)bcmul($refoundAmount,100),
+                                    'currency' => 'CNY'
+                                ],
+                            ]]);
+                    }
                 }catch (\Exception $e){
                     Log::error("队列：退款错误-". $e->getMessage() . PHP_EOL
                         . "订单：" . $orders['out_trade_no'].PHP_EOL
@@ -207,106 +207,109 @@ class DoJob
                     $refoundAmount = $data['refund']??$totalAmount;
                     if($totalAmount == 0 || $refoundAmount ==0 ) return true;
                     if ($row['pay_status']!=2){
-                        // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
-                        $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$row['wx_mchid'].'.pem');
-                        $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
-                        // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
-                        $platformCertificateFilePath =file_get_contents('./public/uploads/platform_key/'.$row['wx_mchid'].'.pem');
-                        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
-                        // 从「微信支付平台证书」中获取「证书序列号」
-                        $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
-                        // 构造一个 APIv3 客户端实例
-                        $wx_pay=Builder::factory([
-                            'mchid'      => $row['wx_mchid'],
-                            'serial'     => $row['wx_mchcertificateserial'],
-                            'privateKey' => $merchantPrivateKeyInstance,
-                            'certs'      => [
-                                $platformCertificateSerial => $platformPublicKeyInstance,
-                            ],
-                        ]);
-                        //下单退款
-                        $out_refund_no=$common->get_uniqid();//下单退款订单号
-                        $wx_pay
-                            ->chain('v3/refund/domestic/refunds')
-                            ->post(['json' => [
-                                'transaction_id' => $row['wx_out_trade_no'],
-                                'out_refund_no'=>$out_refund_no,
-                                'reason'=>'自助取消',
-                                'amount'       => [
-                                    'refund'   => (int)bcmul($refoundAmount,100),
-                                    'total'    =>(int)bcmul($totalAmount,100),
-                                    'currency' => 'CNY'
-                                ],
-                            ]]);
-                        $up_data['out_refund_no']=$out_refund_no;
-                        //超重退款
-                        if($row['overload_status']==2&&$row['wx_out_overload_no']){
+                        if($row['pay_type'] == 1 ){
                             // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
-                            $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$row['cz_mchid'].'.pem');
+                            $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$row['wx_mchid'].'.pem');
                             $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
                             // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
-                            $platformCertificateFilePath =file_get_contents('./public/uploads/platform_key/'.$row['cz_mchid'].'.pem');
+                            $platformCertificateFilePath =file_get_contents('./public/uploads/platform_key/'.$row['wx_mchid'].'.pem');
                             $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
                             // 从「微信支付平台证书」中获取「证书序列号」
                             $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
                             // 构造一个 APIv3 客户端实例
                             $wx_pay=Builder::factory([
-                                'mchid'      => $row['cz_mchid'],
-                                'serial'     => $row['cz_mchcertificateserial'],
+                                'mchid'      => $row['wx_mchid'],
+                                'serial'     => $row['wx_mchcertificateserial'],
                                 'privateKey' => $merchantPrivateKeyInstance,
                                 'certs'      => [
                                     $platformCertificateSerial => $platformPublicKeyInstance,
                                 ],
                             ]);
-                            $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
+                            //下单退款
+                            $out_refund_no=$common->get_uniqid();//下单退款订单号
                             $wx_pay
                                 ->chain('v3/refund/domestic/refunds')
                                 ->post(['json' => [
-                                    'transaction_id' => $row['wx_out_overload_no'],
-                                    'out_refund_no'=>$out_overload_refund_no,
-                                    'reason'=>'超重退款',
+                                    'transaction_id' => $row['wx_out_trade_no'],
+                                    'out_refund_no'=>$out_refund_no,
+                                    'reason'=>'自助取消',
                                     'amount'       => [
-                                        'refund'   => (int)bcmul($row['overload_price'],100),
-                                        'total'    =>(int)bcmul($row['overload_price'],100),
+                                        'refund'   => (int)bcmul($refoundAmount,100),
+                                        'total'    =>(int)bcmul($totalAmount,100),
                                         'currency' => 'CNY'
                                     ],
                                 ]]);
-                            $up_data['out_overload_refund_no']=$out_overload_refund_no;
-                        }
-                        //耗材退款
-                        if ($row['consume_status']==2&&$row['wx_out_haocai_no']){
-                            // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
-                            $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$row['hc_mchid'].'.pem');
-                            $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
-                            // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
-                            $platformCertificateFilePath =file_get_contents('./public/uploads/platform_key/'.$row['hc_mchid'].'.pem');
-                            $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
-                            // 从「微信支付平台证书」中获取「证书序列号」
-                            $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
-                            // 构造一个 APIv3 客户端实例
-                            $wx_pay=Builder::factory([
-                                'mchid'      => $row['hc_mchid'],
-                                'serial'     => $row['hc_mchcertificateserial'],
-                                'privateKey' => $merchantPrivateKeyInstance,
-                                'certs'      => [
-                                    $platformCertificateSerial => $platformPublicKeyInstance,
-                                ],
-                            ]);
-                            $out_haocai_refund_no=$common->get_uniqid();//耗材退款订单号
-                            $wx_pay
-                                ->chain('v3/refund/domestic/refunds')
-                                ->post(['json' => [
-                                    'transaction_id' => $row['wx_out_haocai_no'],
-                                    'out_refund_no'=>$out_haocai_refund_no,
-                                    'reason'=>'耗材退款',
-                                    'amount'       => [
-                                        'refund'   => (int)bcmul($row['haocai_freight'],100),
-                                        'total'    => (int)bcmul($row['haocai_freight'],100),
-                                        'currency' => 'CNY'
+                            $up_data['out_refund_no']=$out_refund_no;
+                            //超重退款
+                            if($row['overload_status']==2&&$row['wx_out_overload_no']){
+                                // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
+                                $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$row['cz_mchid'].'.pem');
+                                $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+                                // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
+                                $platformCertificateFilePath =file_get_contents('./public/uploads/platform_key/'.$row['cz_mchid'].'.pem');
+                                $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+                                // 从「微信支付平台证书」中获取「证书序列号」
+                                $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
+                                // 构造一个 APIv3 客户端实例
+                                $wx_pay=Builder::factory([
+                                    'mchid'      => $row['cz_mchid'],
+                                    'serial'     => $row['cz_mchcertificateserial'],
+                                    'privateKey' => $merchantPrivateKeyInstance,
+                                    'certs'      => [
+                                        $platformCertificateSerial => $platformPublicKeyInstance,
                                     ],
-                                ]]);
-                            $up_data['out_haocai_refund_no']=$out_haocai_refund_no;
+                                ]);
+                                $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
+                                $wx_pay
+                                    ->chain('v3/refund/domestic/refunds')
+                                    ->post(['json' => [
+                                        'transaction_id' => $row['wx_out_overload_no'],
+                                        'out_refund_no'=>$out_overload_refund_no,
+                                        'reason'=>'超重退款',
+                                        'amount'       => [
+                                            'refund'   => (int)bcmul($row['overload_price'],100),
+                                            'total'    =>(int)bcmul($row['overload_price'],100),
+                                            'currency' => 'CNY'
+                                        ],
+                                    ]]);
+                                $up_data['out_overload_refund_no']=$out_overload_refund_no;
+                            }
+                            //耗材退款
+                            if ($row['consume_status']==2&&$row['wx_out_haocai_no']){
+                                // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
+                                $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$row['hc_mchid'].'.pem');
+                                $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+                                // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
+                                $platformCertificateFilePath =file_get_contents('./public/uploads/platform_key/'.$row['hc_mchid'].'.pem');
+                                $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+                                // 从「微信支付平台证书」中获取「证书序列号」
+                                $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
+                                // 构造一个 APIv3 客户端实例
+                                $wx_pay=Builder::factory([
+                                    'mchid'      => $row['hc_mchid'],
+                                    'serial'     => $row['hc_mchcertificateserial'],
+                                    'privateKey' => $merchantPrivateKeyInstance,
+                                    'certs'      => [
+                                        $platformCertificateSerial => $platformPublicKeyInstance,
+                                    ],
+                                ]);
+                                $out_haocai_refund_no=$common->get_uniqid();//耗材退款订单号
+                                $wx_pay
+                                    ->chain('v3/refund/domestic/refunds')
+                                    ->post(['json' => [
+                                        'transaction_id' => $row['wx_out_haocai_no'],
+                                        'out_refund_no'=>$out_haocai_refund_no,
+                                        'reason'=>'耗材退款',
+                                        'amount'       => [
+                                            'refund'   => (int)bcmul($row['haocai_freight'],100),
+                                            'total'    => (int)bcmul($row['haocai_freight'],100),
+                                            'currency' => 'CNY'
+                                        ],
+                                    ]]);
+                                $up_data['out_haocai_refund_no']=$out_haocai_refund_no;
+                            }
                         }
+
                         //处理退款完成 更改退款状态
                         $up_data['pay_status']=2;
                         $up_data['overload_status']=0;
@@ -314,7 +317,6 @@ class DoJob
                         $up_data['order_status']='已取消';
                         //代理商增加余额  退款
                         //代理结算金额 代理运费+保价金+耗材+超重
-
                         $Dbcommon->set_agent_amount($row['agent_id'],'setInc',$row['agent_price'],1,'运单号：'.$row['waybill'].' 已取消并退款');
 
                         db('orders')->where('id',$data['order_id'])->update($up_data);

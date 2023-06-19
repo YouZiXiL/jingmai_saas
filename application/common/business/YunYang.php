@@ -56,6 +56,7 @@ class YunYang{
      */
     public function createOrder(array $content){
         $data = $this->setParma('ADD_BILL_INTELLECT', $content);
+        Log::info(['智能下单yy' => json_encode($data)]);
         $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
         return json_decode($res, true);
     }

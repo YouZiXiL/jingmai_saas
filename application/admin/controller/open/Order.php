@@ -43,12 +43,12 @@ class Order extends Backend
         $agent_info=db('admin')->where('id',$this->auth->id)->find();
         if ($agent_info['status']=='hidden')  $this->error('商户已禁止使用');
 
-        if ($agent_info['agent_expire_time']<=time()){
-            $this->error('商户已过期');
-        }
-        if (empty($agent_info['wx_mchid'])||empty($agent_info['wx_mchcertificateserial'])){
-            $this->error('商户没有配置微信支付');
-        }
+//        if ($agent_info['agent_expire_time']<=time()){
+//            $this->error('商户已过期');
+//        }
+//        if (empty($agent_info['wx_mchid'])||empty($agent_info['wx_mchcertificateserial'])){
+//            $this->error('商户没有配置微信支付');
+//        }
 
         $channel = '';
         foreach ($channelList as $item){
@@ -147,10 +147,10 @@ class Order extends Backend
             'senderAddress'=>$addressBook['senderProvince'].$addressBook['senderCity'].$addressBook['senderCounty'].$addressBook['senderLocation'],
             'receiver'=>$addressBook['receiver'],
             'receiverMobile'=>$addressBook['receiverMobile'],
-            'receiveProvince'=>$addressBook['senderProvince'],
-            'receiveCity'=>$addressBook['senderCity'],
-            'receiveCounty'=>$addressBook['senderCounty'],
-            'receiveLocation'=>$addressBook['senderLocation'],
+            'receiveProvince'=>$addressBook['receiveProvince'],
+            'receiveCity'=>$addressBook['receiveCity'],
+            'receiveCounty'=>$addressBook['receiveCounty'],
+            'receiveLocation'=>$addressBook['receiveLocation'],
             'receiveAddress'=>$addressBook['receiveProvince'].$addressBook['receiveCity'].$addressBook['receiveCounty'].$addressBook['receiveLocation'],
 
             'channelId'=> $channelId,
@@ -168,12 +168,14 @@ class Order extends Backend
         $result = $yunYang->createOrder($content);
         if ($result['code'] != 1) {
             Log::error('智能下单失败：'.$out_trade_no.PHP_EOL.json_encode($result).PHP_EOL);
-            $this->error('智能下单失败');
             $updateOrder=[
                 'id' => $orderInfo->id,
+                'pay_status'=>0,
                 'yy_fail_reason'=>$result['message'],
                 'order_status'=>'下单失败咨询客服',
             ];
+            $orderInfo->isUpdate(true)->save($updateOrder);
+            $this->error('智能下单失败');
         }else{
             $res = $result['result'];
             $db= new Dbcommom();
@@ -209,14 +211,13 @@ class Order extends Backend
             'senderLocation' => $sender['location'],
             'senderAddress' => $sender['province'] . $sender['city'] .$sender['county'] .$sender['location'] ,
             'receiver' => $receiver['name'],
-            'receiverMobile' => $sender['mobile'],
-            'receiveProvince' => $sender['province'],
-            'receiveCity' => $sender['city'],
-            'receiveCounty' => $sender['county'],
-            'receiveLocation' => $sender['location'],
+            'receiverMobile' => $receiver['mobile'],
+            'receiveProvince' => $receiver['province'],
+            'receiveCity' => $receiver['city'],
+            'receiveCounty' => $receiver['county'],
+            'receiveLocation' => $receiver['location'],
             'receiveAddress' => $receiver['province'] . $receiver['city'] .$receiver['county'] .$receiver['location'] ,
         ];
-
         $content =  $address  + $paramData['info'];
         $content['channelTag'] = '智能';
         $data = $yunYang->getPrice($content);

@@ -198,33 +198,69 @@ class Yunyang extends Controller
                 throw new Exception('收件或寄件信息错误');
             }
             $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
-            $time=time();
-            if ($param['channel_tag']=='智能'){
-                $content=[
-                    'channelTag'=>$param['channel_tag'], // 智能|重货
-                    'sender'=> $jijian_address['name'],
-                    'senderMobile'=>$jijian_address['mobile'],
-                    'senderProvince'=>$jijian_address['province'],
-                    'senderCity'=>$jijian_address['city'],
-                    'senderCounty'=>$jijian_address['county'],
-                    'senderLocation'=>$jijian_address['location'],
-                    'senderAddress'=>$jijian_address['province'].$jijian_address['city'].$jijian_address['county'].$jijian_address['location'],
-                    'receiver'=>$shoujian_address['name'],
-                    'receiverMobile'=>$shoujian_address['mobile'],
-                    'receiveProvince'=>$shoujian_address['province'],
-                    'receiveCity'=>$shoujian_address['city'],
-                    'receiveCounty'=>$shoujian_address['county'],
-                    'receiveLocation'=>$shoujian_address['location'],
-                    'receiveAddress'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
-                    'weight'=>$param['weight'],
-                    'packageCount'=>$param['package_count'],
-                ];
 
-                !empty($param['insured']) &&($content['insured'] = $param['insured']);
-                !empty($param['vloum_long']) &&($content['vloumLong'] = $param['vloum_long']);
-                !empty($param['vloum_width']) &&($content['vloumWidth'] = $param['vloum_width']);
-                !empty($param['vloum_height']) &&($content['vloumHeight'] = $param['vloum_height']);
-                $data=$this->common->yunyang_api('CHECK_CHANNEL_INTELLECT',$content);
+            $time=time();
+            $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
+            $transportType = ''; // 运输类型（风火递参数）
+            $yyContent = [
+                'channelTag'=>$param['channel_tag'], // 智能|重货
+                'sender'=> $jijian_address['name'],
+                'senderMobile'=>$jijian_address['mobile'],
+                'senderProvince'=>$jijian_address['province'],
+                'senderCity'=>$jijian_address['city'],
+                'senderCounty'=>$jijian_address['county'],
+                'senderLocation'=>$jijian_address['location'],
+                'senderAddress'=>$jijian_address['province'].$jijian_address['city'].$jijian_address['county'].$jijian_address['location'],
+                'receiver'=>$shoujian_address['name'],
+                'receiverMobile'=>$shoujian_address['mobile'],
+                'receiveProvince'=>$shoujian_address['province'],
+                'receiveCity'=>$shoujian_address['city'],
+                'receiveCounty'=>$shoujian_address['county'],
+                'receiveLocation'=>$shoujian_address['location'],
+                'receiveAddress'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
+                'weight'=>$param['weight'],
+                'packageCount'=>$param['package_count'],
+            ];
+
+            $fhdContent = [
+                'expressCode'=>'DBKD',
+                'orderInfo'=>[
+                    'orderId'=>$this->common->get_uniqid(),
+                    'sendStartTime'=>date("Y-m-d H:i:s",$time),
+                    'sendEndTime'=>date("Y-m-d H:i:s",$sendEndTime),
+                    'sender'=>[
+                        'name'=>$jijian_address['name'],
+                        'mobile'=>$jijian_address['mobile'],
+                        'address'=>[
+                            'province'=>$jijian_address['province'],
+                            'city'=>$jijian_address['city'],
+                            'district'=>$jijian_address['county'],
+                            'detail'=>$jijian_address['location'],
+                        ],
+                    ],
+                    'receiver'=>[
+                        'name'=>$shoujian_address['name'],
+                        'mobile'=>$shoujian_address['mobile'],
+                        'address'=>[
+                            'province'=>$shoujian_address['province'],
+                            'city'=>$shoujian_address['city'],
+                            'district'=>$shoujian_address['county'],
+                            'detail'=>$shoujian_address['location'],
+                        ],
+                    ],
+                ],
+                'packageInfo'=>[
+                    'weight'=>$param['weight']*1000,
+                    'volume'=>'0',
+                ],
+            ];
+
+            if ($param['channel_tag']=='智能'){
+                !empty($param['insured']) &&($yyContent['insured'] = $param['insured']);
+                !empty($param['vloum_long']) &&($yyContent['vloumLong'] = $param['vloum_long']);
+                !empty($param['vloum_width']) &&($yyContent['vloumWidth'] = $param['vloum_width']);
+                !empty($param['vloum_height']) &&($yyContent['vloumHeight'] = $param['vloum_height']);
+                $data=$this->common->yunyang_api('CHECK_CHANNEL_INTELLECT',$yyContent);
                 if ($data['code']!=1){
                     throw new Exception('收件或寄件信息错误,请仔细填写');
                 }
@@ -350,50 +386,16 @@ class Yunyang extends Controller
                 $arrs=array_values($arr);
 
             }else{
-                $time=time();
-                $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
-                $content=[
-                    'expressCode'=>'DBKD',
-                    'orderInfo'=>[
-                        'orderId'=>$this->common->get_uniqid(),
-                        'sendStartTime'=>date("Y-m-d H:i:s",$time),
-                        'sendEndTime'=>date("Y-m-d H:i:s",$sendEndTime),
-                        'sender'=>[
-                            'name'=>$jijian_address['name'],
-                            'mobile'=>$jijian_address['mobile'],
-                            'address'=>[
-                                'province'=>$jijian_address['province'],
-                                'city'=>$jijian_address['city'],
-                                'district'=>$jijian_address['county'],
-                                'detail'=>$jijian_address['location'],
-                            ],
-                        ],
-                        'receiver'=>[
-                            'name'=>$shoujian_address['name'],
-                            'mobile'=>$shoujian_address['mobile'],
-                            'address'=>[
-                                'province'=>$shoujian_address['province'],
-                                'city'=>$shoujian_address['city'],
-                                'district'=>$shoujian_address['county'],
-                                'detail'=>$shoujian_address['location'],
-                            ],
-                        ],
+                $fhdContent['serviceInfoList'] = [
+                    [
+                        'code'=>'INSURE','value'=>$param['insured']*100,
                     ],
-                    'packageInfo'=>[
-                        'weight'=>$param['weight']*1000,
-                        'volume'=>'0',
-                    ],
-                    'serviceInfoList'=>[
-                       [
-                           'code'=>'INSURE','value'=>$param['insured']*100,
-                       ],
-                        [
-                            'code'=>'TRANSPORT_TYPE','value'=>'JZQY_LONG',
-                        ]
+                    [
+                        'code'=>'TRANSPORT_TYPE','value'=>'JZQY_LONG',
                     ]
                 ];
-                $res=$this->common->fhd_api('predictExpressOrder',$content);
-                file_put_contents('check_channel_intellect.txt',json_encode($content).PHP_EOL,FILE_APPEND);
+                $res=$this->common->fhd_api('predictExpressOrder',$fhdContent);
+                file_put_contents('check_channel_intellect.txt',json_encode($fhdContent).PHP_EOL,FILE_APPEND);
 
                 $res=json_decode($res,true);
                 foreach ($res['data']['predictInfo']['detail'] as $k=>$v){
@@ -442,50 +444,16 @@ class Yunyang extends Controller
                 $arrs[0]['insert_id']=$insert_id;
                 $arrs[0]['tag_type']=$res['channel'];
 
-
-
-                $content=[
-                    'expressCode'=>'DBKD',
-                    'orderInfo'=>[
-                        'orderId'=>$this->common->get_uniqid(),
-                        'sendStartTime'=>date("Y-m-d H:i:s",$time),
-                        'sendEndTime'=>date("Y-m-d H:i:s",$sendEndTime),
-                        'sender'=>[
-                            'name'=>$jijian_address['name'],
-                            'mobile'=>$jijian_address['mobile'],
-                            'address'=>[
-                                'province'=>$jijian_address['province'],
-                                'city'=>$jijian_address['city'],
-                                'district'=>$jijian_address['county'],
-                                'detail'=>$jijian_address['location'],
-                            ],
-                        ],
-                        'receiver'=>[
-                            'name'=>$shoujian_address['name'],
-                            'mobile'=>$shoujian_address['mobile'],
-                            'address'=>[
-                                'province'=>$shoujian_address['province'],
-                                'city'=>$shoujian_address['city'],
-                                'district'=>$shoujian_address['county'],
-                                'detail'=>$shoujian_address['location'],
-                            ],
-                        ],
+                $fhdContent['serviceInfoList'] = [
+                    [
+                        'code'=>'INSURE','value'=>$param['insured']*100,
                     ],
-                    'packageInfo'=>[
-                        'weight'=>$param['weight']*1000,
-                        'volume'=>'0',
-                    ],
-                    'serviceInfoList'=>[
-                        [
-                            'code'=>'INSURE','value'=>$param['insured']*100,
-                        ],
-                        [
-                            'code'=>'TRANSPORT_TYPE','value'=>'JZKH',
-                        ]
+                    [
+                        'code'=>'TRANSPORT_TYPE','value'=>'JZKH',
                     ]
                 ];
-                $res=$this->common->fhd_api('predictExpressOrder',$content);
-                file_put_contents('check_channel_intellect.txt',json_encode($content).PHP_EOL,FILE_APPEND);
+                $res=$this->common->fhd_api('predictExpressOrder',$fhdContent);
+                file_put_contents('check_channel_intellect.txt',json_encode($fhdContent).PHP_EOL,FILE_APPEND);
 
                 $res=json_decode($res,true);
                 foreach ($res['data']['predictInfo']['detail'] as $k=>$v){
