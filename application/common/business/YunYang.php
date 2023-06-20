@@ -2,7 +2,14 @@
 namespace app\common\business;
 
 use app\web\controller\Common;
+use app\web\controller\DoJob;
+use app\web\model\Couponlist;
+use app\web\model\Rebatelist;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
+use think\exception\DbException;
 use think\Log;
+use think\Queue;
 
 class YunYang{
     public Common $utils;
@@ -71,5 +78,44 @@ class YunYang{
         $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
         file_put_contents('express-trail.txt',"京东物流轨迹-{$content['waybill']}：{$res}".PHP_EOL,FILE_APPEND);
         return json_decode($res, true);
+    }
+
+
+    /**
+     * 支付成功时的下单逻辑
+     * @param $orders
+     * @return mixed
+     */
+    public function createOrderHandle($orders){
+        Log::info('云洋下单：'. json_encode($orders));
+        $content=[
+            'channelId'=> $orders['channel_id'],
+            'channelTag'=>$orders['channel_tag'],
+            'sender'=> $orders['sender'],
+            'senderMobile'=>$orders['sender_mobile'],
+            'senderProvince'=>$orders['sender_province'],
+            'senderCity'=>$orders['sender_city'],
+            'senderCounty'=>$orders['sender_county'],
+            'senderLocation'=>$orders['sender_location'],
+            'senderAddress'=>$orders['sender_address'],
+            'receiver'=>$orders['receiver'],
+            'receiverMobile'=>$orders['receiver_mobile'],
+            'receiveProvince'=>$orders['receive_province'],
+            'receiveCity'=>$orders['receive_city'],
+            'receiveCounty'=>$orders['receive_county'],
+            'receiveLocation'=>$orders['receive_location'],
+            'receiveAddress'=>$orders['receive_address'],
+            'weight'=>$orders['weight'],
+            'packageCount'=>$orders['package_count'],
+            'itemName'=>$orders['item_name']
+        ];
+        !empty($orders['insured']) &&($content['insured'] = $orders['insured']);
+        !empty($orders['vloum_long']) &&($content['vloumLong'] = $orders['vloum_long']);
+        !empty($orders['vloum_width']) &&($content['vloumWidth'] = $orders['vloum_width']);
+        !empty($orders['vloum_height']) &&($content['vloumHeight'] = $orders['vloum_height']);
+        !empty($orders['bill_remark']) &&($content['billRemark'] = $orders['bill_remark']);
+        $result = $this->utils->yunyang_api('ADD_BILL_INTELLECT',$content);
+        Log::info('云洋下单结果：'.json_encode($result));
+        return $result;
     }
 }

@@ -356,7 +356,7 @@ class Yunyangtc extends Controller
                 $agent_price= ceil($price+$price*$agent_tc)/100; // 代理商价格 （元）
                 $agent_tc_ratio=($agent_info["agent_tc_ratio"]??0)/100;//代理商上浮百分比 默认为0
                 $users_price= number_format($agent_price+$agent_price*$agent_tc_ratio, 2, '.', '') ; // 用户需要付的价格（元）
-
+                $channel['channel_merchant'] = 'wanli';
                 $channel['shopId']= $shopId;// 平台方门店编号
                 $channel['price']= $price/100;//用户支付总价
                 $channel['final_price']=$users_price;//用户支付总价
@@ -594,6 +594,7 @@ class Yunyangtc extends Controller
             'shop_id'=> $check_channel_intellect['shopId'],
             'freight'=>$check_channel_intellect['price'],
             'channel_id'=>$check_channel_intellect['deliveryCode'],
+            'channel_merchant'=>$check_channel_intellect['channel_merchant'],
             'tag_type'=>$check_channel_intellect['deliveryChannelName'],
             'admin_shouzhong'=>0,
             'admin_xuzhong'=>0,
@@ -901,7 +902,6 @@ class Yunyangtc extends Controller
      */
     function order_cancel(WanLi $wanLi): Json
     {
-
         $id=$this->request->param('id');
         if (empty($id)){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);

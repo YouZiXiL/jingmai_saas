@@ -91,7 +91,6 @@ class Shunfeng extends Controller
             $agent_info=db('admin')->field('agent_db_ratio,sf_agent_ratio,sf_users_ratio,qudao_close')->where('id',$this->user->agent_id)->find();
 
             $result = $this->common->shunfeng_api("http://api.wanhuida888.com/openApi/getPriceList",$content);
-            Log::error(['顺丰查询价格' => $result]);
             if (!empty($result['code'])){
                 throw new Exception('收件或寄件信息错误,请仔细填写');
             }
@@ -120,6 +119,7 @@ class Shunfeng extends Controller
                     $v["final_price"]=number_format( $v["users_price"] + $v["guarantFee"],2);
 
                     $v["insured"]=$param['insured'];
+                    $v["channel_merchant"]='QBD';
                     $v['jijian_id']=$param['jijian_id'];//寄件id
                     $v['shoujian_id']=$param['shoujian_id'];//收件id
                     $v['weight']=$param['weight'];//重量
@@ -369,6 +369,7 @@ class Shunfeng extends Controller
             'auth_id' => $agentAuth['id'],
             'channel'=>$check_channel_intellect['channelName'],
             'channel_tag'=>$info['channel_tag'],
+            'channel_merchant'=>$check_channel_intellect['channel_merchant'],
             'insert_id'=>$param['insert_id'],
             'out_trade_no'=>$out_trade_no,
             'freight'=>$check_channel_intellect['channelFee'],//渠道价格

@@ -16,12 +16,15 @@ class FengHuoDi
     }
 
     /**
-     * @param $fhdResult array  查询价格返回的结果
+     * 查询价格处理函数
+     * @param array $content 查询价格所需参数
      * @param $agent_info array 代理商
      * @param $param array 前端传来的参数
      * @return array 返回前端需要的参数
      */
-    public function handle(array $fhdResult, array $agent_info, array $param){
+    public function queryPriceHandle(array $content, array $agent_info, array $param){
+        $jsonResult=$this->utils->fhd_api('predictExpressOrder',$content);
+        $fhdResult=json_decode($jsonResult,true);
         $time=time();
         $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
 
@@ -56,7 +59,8 @@ class FengHuoDi
         $fhdResult['weight']=$param['weight'];//重量
         $fhdResult['package_count']=$param['package_count'];//包裹数量
         $fhdResult['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
-        $fhdResult['channel']='德邦-大件快递360';
+        $fhdResult['channel_merchant'] = 'FHD';
+        $fhdResult['channel']='德邦快递';
         $fhdResult['freight']=sprintf("%.2f",$total['fright']*0.68);
         $fhdResult['send_start_time']=$time;
         $fhdResult['send_end_time']=$sendEndTime;
@@ -72,5 +76,67 @@ class FengHuoDi
             'insert_id'=>$insert_id,
             'tag_type'=>$fhdResult['channel'], // 快递类型
         ];
+    }
+
+    /**
+     * 快递下单处理函数
+     * @param $orders array 订单详情
+     * @param $expressCode string 快递代号 DBKD：德邦
+     * @return mixed
+     */
+    public function createOrderHandle(array $orders, string $expressCode = 'DBKD'){
+        $content=[
+            'expressCode'=> $expressCode,
+            'orderInfo'=>[
+                'orderId'=>$orders['out_trade_no'],
+                'sendStartTime'=>date("Y-m-d H:i:s",time()+5),
+                'sendEndTime'=>date("Y-m-d H:i:s",$orders['send_end_time']),
+                'sender'=>[
+                    'name'=>$orders['sender'],
+                    'mobile'=>$orders['sender_mobile'],
+                    'address'=>[
+                        'province'=>$orders['sender_province'],
+                        'city'=>$orders['sender_city'],
+                        'district'=>$orders['sender_county'],
+                        'detail'=>$orders['sender_location'],
+                    ]
+                ],
+                'receiver'=>[
+                    'name'=>$orders['receiver'],
+                    'mobile'=>$orders['receiver_mobile'],
+                    'address'=>[
+                        'province'=>$orders['receive_province'],
+                        'city'=>$orders['receive_city'],
+                        'district'=>$orders['receive_county'],
+                        'detail'=>$orders['receive_location'],
+                    ]
+                ],
+            ],
+            'packageInfo'=>[
+                'weight'=>$orders['weight']*1000,
+                'volume'=>'0',
+                'remark'=>$orders['bill_remark']??'',
+                'goodsDescription'=>$orders['item_name'],
+                'packageCount'=>$orders['package_count'],
+                'items'=>[
+                    [
+                        'count'=>$orders['package_count'],
+                        'name'=>$orders['item_name'],
+                    ]
+                ]
+            ],
+            'serviceInfoList'=>[
+                [
+                    'code'=>'INSURE','value'=>$orders['insured']*100,
+                ],
+                [
+                    'code'=>'TRANSPORT_TYPE','value'=>$orders['db_type'],
+                ]
+            ]
+
+        ];
+        file_put_contents('wx_order_pay.txt',json_encode($content).PHP_EOL,FILE_APPEND);
+        $resultJson = $this->utils->fhd_api('createExpressOrder',$content);
+        return json_decode($resultJson,true);
     }
 }

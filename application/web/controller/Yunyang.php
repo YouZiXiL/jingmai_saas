@@ -2,20 +2,15 @@
 
 namespace app\web\controller;
 
-
-use Alipay\EasySDK\Kernel\Factory;
-use app\admin\model\appinfo\Orders;
 use app\common\business\FengHuoDi;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\Upload;
-use app\web\library\ali\AliConfig;
 use app\web\model\Admin;
 use app\web\model\AgentAuth;
 use app\web\model\Couponlist;
 use stdClass;
 use think\Controller;
-use think\Env;
 use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
@@ -261,10 +256,6 @@ class Yunyang extends Controller
                 !empty($param['vloum_long']) &&($yyContent['vloumLong'] = $param['vloum_long']);
                 !empty($param['vloum_width']) &&($yyContent['vloumWidth'] = $param['vloum_width']);
                 !empty($param['vloum_height']) &&($yyContent['vloumHeight'] = $param['vloum_height']);
-                $data=$this->common->yunyang_api('CHECK_CHANNEL_INTELLECT',$yyContent);
-                if ($data['code']!=1){
-                    throw new Exception('收件或寄件信息错误,请仔细填写');
-                }
 
                 $fhdContent['serviceInfoList'] = [
                     [
@@ -274,13 +265,17 @@ class Yunyang extends Controller
                         'code'=>'TRANSPORT_TYPE','value'=>'RCP',
                     ]
                 ];
-                $jsonResult=$this->common->fhd_api('predictExpressOrder',$fhdContent);
-                $fhdResult=json_decode($jsonResult,true);
 
                 $fengHuoDi = new FengHuoDi();
-                $fhdArr = $fengHuoDi->handle($fhdResult, $agent_info, $param);
+                $fhdArr = $fengHuoDi->queryPriceHandle($fhdContent, $agent_info, $param);
 
+                $data=$this->common->yunyang_api('CHECK_CHANNEL_INTELLECT',$yyContent);
+                if ($data['code']!=1){
+                    Log::error('云洋查询价格错误'. json_encode($data));
+                    throw new Exception('收件或寄件信息错误,请仔细填写');
+                }
                 $qudao_close=explode('|', $agent_info['qudao_close']);
+                $qudao_close[] = '德邦'; // 云洋禁用德邦
                 foreach ($data['result'] as $k=>&$v){
                     if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
                         unset($data['result'][$k]);
@@ -387,6 +382,7 @@ class Yunyang extends Controller
                     $v['jijian_id']=$param['jijian_id'];//寄件id
                     $v['shoujian_id']=$param['shoujian_id'];//收件id
                     $v['weight']=$param['weight'];//重量
+                    $v['channel_merchant'] = 'YY';
                     $v['package_count']=$param['package_count'];//包裹数量
                     !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价费用
                     !empty($param['vloum_long']) &&($v['vloumLong'] = $param['vloum_long']);//货物长度
@@ -399,6 +395,9 @@ class Yunyang extends Controller
                 }
                 $arrs=array_values($arr);
                 $arrs[] = $fhdArr;
+                usort($arrs, function ($a, $b){
+                    return $a['final_price'] <=> $b['final_price'];
+                });
             }else{
                 $fhdContent['serviceInfoList'] = [
                     [
@@ -444,6 +443,7 @@ class Yunyang extends Controller
                 $res['package_count']=$param['package_count'];//包裹数量
                 $res['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
                 $res['channel']='德邦-精准汽运';
+                $res['channel_merchant'] = 'FHD';
                 $res['freight']=sprintf("%.2f",$total['fright']*0.68);
                 $res['send_start_time']=$time;
                 $res['send_end_time']=$sendEndTime;
@@ -560,7 +560,6 @@ class Yunyang extends Controller
         if ($agent_info['amount']<=100){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
         }
-
         $check_channel_intellect=json_decode($info['content'],true);
         if ($agent_info['amount']<$check_channel_intellect['agent_price']){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,无法下单']);
@@ -591,6 +590,7 @@ class Yunyang extends Controller
             'auth_id' => $agentAuth['id'],
             'channel'=>$check_channel_intellect['channel'],
             'channel_tag'=>$info['channel_tag'],
+            'channel_merchant'=>$check_channel_intellect['channel_merchant'],
             'insert_id'=>$param['insert_id'],
             'out_trade_no'=>$out_trade_no,
             'freight'=>$check_channel_intellect['freight'],
