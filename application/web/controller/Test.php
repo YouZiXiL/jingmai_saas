@@ -234,4 +234,12 @@ class Test extends Controller
 //        $ali->getScene($appAuthToken);
         $ali->fieldApply($appAuthToken);
     }
+
+    // 用户补交运费情况
+    public function bujiao(){
+        $bujiao=db('orders')->where('user_id',271)->where('agent_id',17)->where('pay_status',1)->where('overload_status|consume_status',1)->find();
+        return R::ok($bujiao);
+
+    }
+
 }

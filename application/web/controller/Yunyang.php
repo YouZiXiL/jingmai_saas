@@ -5,6 +5,7 @@ namespace app\web\controller;
 
 use Alipay\EasySDK\Kernel\Factory;
 use app\admin\model\appinfo\Orders;
+use app\common\business\FengHuoDi;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\Upload;
@@ -264,9 +265,22 @@ class Yunyang extends Controller
                 if ($data['code']!=1){
                     throw new Exception('收件或寄件信息错误,请仔细填写');
                 }
-                $qudao_close=explode('|', $agent_info['qudao_close']);
-                $arr=[];
 
+                $fhdContent['serviceInfoList'] = [
+                    [
+                        'code'=>'INSURE','value'=>$param['insured']*100,
+                    ],
+                    [
+                        'code'=>'TRANSPORT_TYPE','value'=>'RCP',
+                    ]
+                ];
+                $jsonResult=$this->common->fhd_api('predictExpressOrder',$fhdContent);
+                $fhdResult=json_decode($jsonResult,true);
+
+                $fengHuoDi = new FengHuoDi();
+                $fhdArr = $fengHuoDi->handle($fhdResult, $agent_info, $param);
+
+                $qudao_close=explode('|', $agent_info['qudao_close']);
                 foreach ($data['result'] as $k=>&$v){
                     if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
                         unset($data['result'][$k]);
@@ -384,7 +398,7 @@ class Yunyang extends Controller
                     $arr[$k]['tag_type']=$v['tagType'];
                 }
                 $arrs=array_values($arr);
-
+                $arrs[] = $fhdArr;
             }else{
                 $fhdContent['serviceInfoList'] = [
                     [

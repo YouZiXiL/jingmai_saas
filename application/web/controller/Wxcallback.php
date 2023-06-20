@@ -3829,9 +3829,7 @@ class Wxcallback extends Controller
                 $up_data=[
                     'final_freight'=>$params["data"]['totalFee']
                 ];
-                if ($orders['final_weight']==0){
-                    $up_data['final_weight']=$params["data"]['weightFee'];
-                }
+                $up_data['final_weight']=$params["data"]['weightFee'];
                 $up_data['haocai_freight'] = 0;
                 $haocai = 0;
                 foreach ($params["data"]["feeList"] as $fee){

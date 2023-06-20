@@ -341,7 +341,7 @@
                 rules: {
                     'sender.name': [
                         { required: true, message: '请输入寄件人姓名', trigger: ['change'] },
-                        { min: 2, max: 5, message: '长度在 2 到 8 个字符', trigger: ['change'] }
+                        { max: 32, message: '名字过长', trigger: ['change'] }
                     ],
                     'sender.mobile': [
                         { required: true, message: '请输入寄件人手机或电话号码', trigger: 'change' },
@@ -355,7 +355,7 @@
                     ],
                     'receiver.name': [
                         { required: true, message: '请输入收件人姓名', trigger: ['change'] },
-                        { min: 2, max: 5, message: '长度在 2 到 8 个字符', trigger: ['change'] }
+                        { max: 32, message: '名字过长', trigger: ['change'] }
                     ],
                     'receiver.mobile': [
                         { required: true, message: '请输入收件人手机或电话号码', trigger: 'change' },

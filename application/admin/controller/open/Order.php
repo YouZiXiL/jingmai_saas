@@ -58,6 +58,9 @@ class Order extends Backend
         }
         if(!$channel) $this->error('选择渠道有误');
 
+        if ($agent_info['amount']<100){
+            $this->error('该商户余额不足100元,请充值后下单');
+        }
 
         if ($agent_info['amount']<$channel['agent_price']){
             $this->error('该商户余额不足,无法下单');
@@ -68,6 +71,8 @@ class Order extends Backend
             ->where('agent_id',$this->auth->id)
             ->where('mobile',$addressBook['senderMobile'])->find();
         if ($blacklist)  $this->error('此手机号无法下单');
+
+        file_put_contents('check_channel_intellect.txt',json_encode($channel).PHP_EOL,FILE_APPEND);
 
         $out_trade_no='AUTO'.$yunYang->utils->get_uniqid();
 
@@ -323,7 +328,6 @@ class Order extends Backend
         }
         // 缓存所需下单参数
         $requireId = $data['id'];
-        file_put_contents('check_channel_intellect.txt',json_encode(compact('channel','content')).PHP_EOL,FILE_APPEND);
         cache($requireId, json_encode(compact('channel','content')), 1800);
         $list=array_values($list);
 

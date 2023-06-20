@@ -473,7 +473,7 @@ var provinceData = [
                     },
                     {
                         "code": "130503",
-                        "name": "桥西区"
+                        "name": "信都区"
                     },
                     {
                         "code": "130521",

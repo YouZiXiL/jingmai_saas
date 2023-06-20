@@ -590,8 +590,6 @@ class Orderslist extends Backend
 
     function detail($ids = null){
         $row = $this->model->find($ids);
-
-
         if (!$row) {
             $this->error(__('No Results were found'));
         }
@@ -601,10 +599,10 @@ class Orderslist extends Backend
         $users=new Userslist();
         $row['users_mobile']=$users->where('id',$row['user_id'])->value('mobile');
 
-        if (in_array(2,$this->auth->getGroupIds())) {
-            $row['sender_address']=$row['sender_province'].$row['sender_city'];
-            $row['receive_address']=$row['receive_province'].$row['receive_city'];
-        }
+//        if (in_array(2,$this->auth->getGroupIds())) {
+//            $row['sender_address']=$row['sender_province'].$row['sender_city'];
+//            $row['receive_address']=$row['receive_province'].$row['receive_city'];
+//        }
         $this->view->assign("row", $row->toArray());
 
         return $this->view->fetch();
