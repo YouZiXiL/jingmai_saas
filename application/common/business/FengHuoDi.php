@@ -20,7 +20,7 @@ class FengHuoDi
      * @param array $content 查询价格所需参数
      * @param $agent_info array 代理商
      * @param $param array 前端传来的参数
-     * @return array 返回前端需要的参数
+     * @return array|null 返回前端需要的参数
      */
     public function queryPriceHandle(array $content, array $agent_info, array $param){
         $jsonResult=$this->utils->fhd_api('predictExpressOrder',$content);
@@ -36,6 +36,7 @@ class FengHuoDi
                 $total['fb']=$v['caculateFee']; // 包装费
             }
         }
+        if (empty($total)) return null;
         $agent_price= $total['fright']*0.68+$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
         $users_price= $agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
         $admin_shouzhong=0;//平台首重

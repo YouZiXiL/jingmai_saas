@@ -394,7 +394,7 @@ class Yunyang extends Controller
                     $arr[$k]['tag_type']=$v['tagType'];
                 }
                 $arrs=array_values($arr);
-                $arrs[] = $fhdArr;
+                isset($fhdArr) && $arrs[] = $fhdArr;
                 usort($arrs, function ($a, $b){
                     return $a['final_price'] <=> $b['final_price'];
                 });
@@ -522,12 +522,8 @@ class Yunyang extends Controller
 
             return json(['status'=>200,'data'=>$arrs,'msg'=>'成功']);
         }catch (\Exception $e){
-            file_put_contents(
-                'check_channel_intellect.txt',
-                '寄快递error：'.PHP_EOL
-                .$e->getMessage().PHP_EOL
-                .$e->getTraceAsString().PHP_EOL,
-                FILE_APPEND);
+            $content = date('H:i:s', time()) . $e->getLine().'：'.$e->getMessage().$e->getTraceAsString().PHP_EOL;
+            recordLog("yy-channel-price", $content);
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
     }

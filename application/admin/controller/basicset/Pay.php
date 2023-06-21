@@ -9,6 +9,7 @@ use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
 use think\exception\ValidateException;
+use think\Log;
 use think\response\Json;
 
 /**
@@ -126,6 +127,7 @@ class Pay extends Backend
             Db::commit();
         } catch (ValidateException|PDOException|Exception $e) {
             Db::rollback();
+            Log::error('支付配置err：'.$e->getLine().":" . $e->getMessage().$e->getTraceAsString());
             $this->error($e->getMessage());
         }
         if (false === $result) {
