@@ -43,13 +43,6 @@ class Order extends Backend
         $agent_info=db('admin')->where('id',$this->auth->id)->find();
         if ($agent_info['status']=='hidden')  $this->error('商户已禁止使用');
 
-//        if ($agent_info['agent_expire_time']<=time()){
-//            $this->error('商户已过期');
-//        }
-//        if (empty($agent_info['wx_mchid'])||empty($agent_info['wx_mchcertificateserial'])){
-//            $this->error('商户没有配置微信支付');
-//        }
-
         $channel = '';
         foreach ($channelList as $item){
             if ($item['channelId'] == $channelId) {
@@ -190,7 +183,7 @@ class Order extends Backend
             ];
         }
         $orderInfo->isUpdate(true)->save($updateOrder);
-        $this->success('下单成功');
+        $this->success('下单成功',null, $orderInfo);
     }
 
     /**
