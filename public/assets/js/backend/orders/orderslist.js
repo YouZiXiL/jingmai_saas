@@ -214,7 +214,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                         {field: 'profit', title: __('利润'), operate: false, formatter: function (value) {
                                 return '<span ">'+value+'元</span>';
                             }},
-                        {field: 'auth.name', title: __('归属账号'), operate: false},
+                        {field: 'auth.name', title: __('归属账号'), operate: false, formatter:function(value, row){
+                                return value?value:'智能下单'
+                            }},
                         {field: 'auth.wx_auth', title: __('授权平台'), operate: false,formatter: function (value, row) {
                                 if (value==='1'){
                                     return '<buttons class="btn btn-xs btn-success">微信</buttons>';

@@ -597,7 +597,9 @@ class Orderslist extends Backend
             $this->success("Ajax请求成功", null, ['id' => $ids]);
         }
         $users=new Userslist();
-        $row['users_mobile']=$users->where('id',$row['user_id'])->value('mobile');
+        $row['users_mobile']=$users->where('id',$row['user_id'])->value('mobile')
+            ?? db('admin')->where('id',$row['agent_id'])->value('mobile');
+
 
 //        if (in_array(2,$this->auth->getGroupIds())) {
 //            $row['sender_address']=$row['sender_province'].$row['sender_city'];

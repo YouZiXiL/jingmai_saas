@@ -74,7 +74,7 @@ class Order extends Backend
             'wx_mchid'=>$agent_info['wx_mchid'],
             'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
             'final_freight'=>0,// 平台运费
-            'pay_status'=>7, // 支付状态
+            'pay_status'=>1, // 支付状态
             'pay_type'=>3,  // 支付类型
             'order_status'=>'派单中',
             'overload_price'=>0,//超重金额
