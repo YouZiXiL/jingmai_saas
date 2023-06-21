@@ -71,9 +71,7 @@ class Order extends Backend
             ->where('agent_id',$this->auth->id)
             ->where('mobile',$addressBook['senderMobile'])->find();
         if ($blacklist)  $this->error('此手机号无法下单');
-
-        file_put_contents('check_channel_intellect.txt',json_encode($channel).PHP_EOL,FILE_APPEND);
-
+        recordLog('auto-order', json_encode($channel, JSON_UNESCAPED_UNICODE));
         $out_trade_no='AUTO'.$yunYang->utils->get_uniqid();
 
         $orderData=[

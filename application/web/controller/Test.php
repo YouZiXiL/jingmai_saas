@@ -237,6 +237,10 @@ class Test extends Controller
 
     // 用户补交运费情况
     public function bujiao(){
+        $name = 'erh';
+        $content = '记录日志：测试？？？？'.PHP_EOL.PHP_EOL;
+        recordLog($name, $content);
+        dd(123);
         $bujiao=db('orders')->where('user_id',271)->where('agent_id',17)->where('pay_status',1)->where('overload_status|consume_status',1)->find();
         return R::ok($bujiao);
 

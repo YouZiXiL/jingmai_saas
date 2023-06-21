@@ -529,3 +529,24 @@ if(!function_exists('dd')){
         die(1);
     }
 }
+
+if(!function_exists('recordLog')){
+    /**
+     * @param string $name 文件名（不带后缀）
+     * @param string $content 记录内容
+     * @return void
+     */
+    function recordLog(string $name, string $content){
+        $date = date('y/m',time());
+        $day = date('d',time());
+        $path = root_path("runtime/log/{$name}/{$date}");
+        $file = "{$path}/{$day}.log";
+        if(!file_exists($path)){
+            mkdir($path,0755,true);
+        }
+        if(!is_file($file)){
+            fopen($file, "w",true);
+        }
+        file_put_contents( $file, $content, FILE_APPEND);
+    }
+}
