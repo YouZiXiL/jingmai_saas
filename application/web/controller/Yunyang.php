@@ -522,7 +522,12 @@ class Yunyang extends Controller
 
             return json(['status'=>200,'data'=>$arrs,'msg'=>'成功']);
         }catch (\Exception $e){
-            file_put_contents('check_channel_intellect.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
+            file_put_contents(
+                'check_channel_intellect.txt',
+                '寄快递error：'.PHP_EOL
+                .$e->getMessage().PHP_EOL
+                .$e->getTraceAsString().PHP_EOL,
+                FILE_APPEND);
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
     }

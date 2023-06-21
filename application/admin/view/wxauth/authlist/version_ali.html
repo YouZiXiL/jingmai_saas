@@ -10,7 +10,7 @@
     }
 </style>
 
-{volist name="version" id="vo"  }
+{volist name="version" id="vo" key="key" }
 <table class="table">
     <thead>
     <tr>
@@ -30,30 +30,35 @@
                 <td  class="text-success" >
                     {$name[$vo:version_status]}
                     <button class="btn btn-success btn-upload btn-xs ml-4">上传代码</button>
+                    <input class="form-control hidden" value={$vo:app_version} />
                 </td>
             {/case}
             {case value="AUDITING"}
                 <td class="text-warning">
                     {$name[$vo:version_status]}
                     <button class="btn btn-success btn-cancel btn-xs ml-4">取消审核</button>
+                    <input class="form-control hidden" value={$vo:app_version} />
                 </td>
             {/case}
             {case value="INIT"}
                 <td class="text-light-blue">
                     {$name[$vo:version_status]}
                     <button class="btn btn-success btn-audit btn-xs ml-4">提交审核</button>
+                    <input class="form-control hidden" value={$vo:app_version} />
                 </td>
             {/case}
             {case value="AUDIT_REJECT"}
                 <td class="text-danger" style="word-break: break-all;">
                     {$name[$vo:version_status]}
                     <button class="btn btn-success btn-back btn-xs ml-4">退回开发</button>
+                    <input class="form-control hidden" value={$vo:app_version} />
                 </td>
             {/case}
             {case value="WAIT_RELEASE"}
                 <td class="text-info" >
                     {$name[$vo:version_status]}
                     <button class="btn btn-success btn-online btn-xs ml-4">待上架</button>
+                    <input class="form-control hidden" value={$vo:app_version} />
                 </td>
             {/case}
             {default /} <td style="word-break: break-all;">{$name[$vo:version_status]}</td>

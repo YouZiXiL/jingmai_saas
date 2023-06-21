@@ -341,7 +341,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             $(document).on('click', '.btn-audit', function () {
                 // 提交审核
                 var ids = $("input[name=INIT]").val();
-                var version = $("code[name=INIT]").text();
+                var version = $(this).siblings("input.form-control").val();
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=audit&v=${version}`
                 }, function (data,ret) { //success

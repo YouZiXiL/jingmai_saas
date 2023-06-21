@@ -31,20 +31,18 @@ class AopUtils{
 
     /**
      * 解密方法
-     * @param string $str
-     * @return string
+     * @param string $content 加密内容
+     * @param string $escKey 加密内容
+     * @return string 解密后的内容
      */
-    function decrypt($str, $screct_key)
+    function decrypt(string $content, string $escKey)
     {
-        //AES, 128 模式加密数据 CBC
-        $str = base64_decode($str);
-        $screct_key = base64_decode($screct_key);
-
-        //设置全0的IV
-        $iv = str_repeat("\0", 16);
-        $decrypt_str = openssl_decrypt($str, 'aes-128-cbc', $screct_key, OPENSSL_NO_PADDING, $iv);
-        $decrypt_str = stripPKSC7Padding($decrypt_str);
-        return $decrypt_str;
+        return openssl_decrypt(
+            base64_decode($content),
+            'AES-128-CBC',
+            base64_decode($escKey),
+            OPENSSL_RAW_DATA
+        );
     }
 
     /**

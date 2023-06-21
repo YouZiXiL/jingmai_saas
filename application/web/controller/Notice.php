@@ -178,7 +178,7 @@ class Notice extends Controller
             $authInfo = $aliOpen->getAuthToken($code);
             $miniProgram = $aliOpen->getMiniBaseInfo($authInfo->app_auth_token);
             $vn = $aliOpen->getMiniVersionNumber($authInfo->app_auth_token);
-            $aes = $aliOpen->getAes($authInfo->auth_app_id)??$aliOpen->setAes($authInfo->auth_app_id);
+            $aes = $aliOpen->setAes($authInfo->auth_app_id);
             $data = [
                 'agent_id' => $agent_id,
                 'app_id' => $authInfo->auth_app_id,
@@ -209,40 +209,15 @@ class Notice extends Controller
             exit('授权失败');
         }
     }
+
+
+    /**
+     * 支付宝应用网关
+     * @return true
+     */
+    public function gateway(){
+        file_put_contents('ali-gateway.txt',json_encode(input()));
+        return true;
+    }
 }
 
-/*
- array (
-  '阿里支付回调' =>
-  array (
-    'gmt_create' => '2023-04-07 11:21:25',
-    'charset' => 'UTF-8',
-    'seller_email' => 'jingmai365@163.com',
-    'subject' => '快递下单-XD1680837684890104716',
-    'sign' => 'YWt6RJZJJTmTGh0uZ+44EDolzJMx2ceBhWQOA1ZzCh2OYqu4ICxYAUbUq7dAhZ8tK/6yjxdK3xBOmhS+RGFwDpalYRQ8lhwtwXmNHGUxuXs8xFFD0hZDIase/aSHIhtIdptbMrQyrS/ffbuyR8nidDjn2sNXmGDi3HM5Hu8KGCe6l+v8cv/Nfk3jl0TjFE41PfSD7tUzqaOHow7OPjFkJCps/UlyRRzV8YzxKhoE25kvwFuzdLjiO382MBgEfLreyaos6Qjjt+9UuDKDkB5GCIFQBVWIrvzp0Da57Z94ZMOq80irSnIlY8Dar2+sul000LhsmD7MHUQ47XyS/YT5wQ==',
-    'buyer_id' => '2088802593608751',
-    'invoice_amount' => '0.01',
-    'notify_id' => '2023040701222112144008751499009623',
-    'fund_bill_list' => '[{"amount":"0.01","fundChannel":"ALIPAYACCOUNT"}]',
-    'notify_type' => 'trade_status_sync',
-    'trade_status' => 'TRADE_SUCCESS',
-    'receipt_amount' => '0.01',
-    'buyer_pay_amount' => '0.01',
-    'app_id' => '2021003182686889',
-    'sign_type' => 'RSA2',
-    'seller_id' => '2088541665287163',
-    'gmt_payment' => '2023-04-07 11:21:44',
-    'notify_time' => '2023-04-07 11:21:45',
-    'version' => '1.0',
-    'out_trade_no' => 'XD1680837684890104716',
-    'total_amount' => '0.01',
-    'trade_no' => '2023040722001408751443405922',
-    'auth_app_id' => '2021003182686889',
-    'buyer_logon_id' => 'ooi***@live.com',
-    'point_amount' => '0.00',
-  ),
-)
-
-
-
-*/
