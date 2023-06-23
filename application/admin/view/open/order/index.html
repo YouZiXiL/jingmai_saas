@@ -344,7 +344,7 @@
                     ],
                     'sender.mobile': [
                         { required: true, message: '请输入寄件人手机或电话号码', trigger: 'change' },
-                        { pattern: /^1[3456789]\d{9}$|^0\d{2,3}-?\d{7,8}$/, message: '手机号格式不正确', trigger: 'change' }
+                        { pattern: /^1[3456789]\d{9}$|^0\d{2,3}-?\d{7,8}$|^400\d{7}$|^400(-\d{3,4}){2,3}$/, message: '手机号格式不正确', trigger: 'change' }
                     ],
                     'sender.county': [
                         { required: true, message: '选择寄件人省市区', trigger: ['change','blur'] },
@@ -358,7 +358,7 @@
                     ],
                     'receiver.mobile': [
                         { required: true, message: '请输入收件人手机或电话号码', trigger: 'change' },
-                        { pattern: /^1[3456789]\d{9}$|^0\d{2,3}-?\d{7,8}$/, message: '手机号格式不正确', trigger: 'change' }
+                        { pattern: /^1[3456789]\d{9}$|^0\d{2,3}-?\d{7,8}$|^400\d{7}$|^400(-\d{3,4}){2,3}$/, message: '手机号格式不正确', trigger: 'change' }
 
                     ],
                     'receiver.county': [

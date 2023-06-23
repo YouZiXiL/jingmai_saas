@@ -175,61 +175,67 @@ class Afterlist extends Backend
                 }
 
                 //下单退款
-                $out_refund_no=$common->get_uniqid();//下单退款订单号
-                $wx_pay=$common->wx_pay($orders['wx_mchid'],$orders['wx_mchcertificateserial']);
-                $totalAmount=$orders['aftercoupon']??$orders['final_price'];
-                $refoundAmount = $data['refund']??$totalAmount;
-                $wx_pay
-                    ->chain('v3/refund/domestic/refunds')
-                    ->post(['json' => [
-                        'transaction_id' => $orders['wx_out_trade_no'],
-                        'out_refund_no'=>$out_refund_no,
-                        'reason'=>'现结/到付',
-                        'amount'       => [
-                            'refund'   => (int)bcmul($refoundAmount,100),
-                            'total'    =>(int)bcmul($totalAmount,100),
-                            'currency' => 'CNY'
-                        ],
-                    ]]);
-                $up_data['out_refund_no']=$out_refund_no;
-
-                //超重退款
-                if($orders['overload_status']==2&&$orders['wx_out_overload_no']){
-                    $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
-                    $wx_pay=$common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
+                if($orders['pay_type'] == 1) {
+                    $out_refund_no = $common->get_uniqid();//下单退款订单号
+                    $wx_pay = $common->wx_pay($orders['wx_mchid'], $orders['wx_mchcertificateserial']);
+                    $totalAmount = $orders['aftercoupon'] ?? $orders['final_price'];
+                    $refoundAmount = $data['refund'] ?? $totalAmount;
                     $wx_pay
                         ->chain('v3/refund/domestic/refunds')
                         ->post(['json' => [
-                            'transaction_id' => $orders['wx_out_overload_no'],
-                            'out_refund_no'=>$out_overload_refund_no,
-                            'reason'=>'超重退款',
-                            'amount'       => [
-                                'refund'   => (int)bcmul($orders['overload_price'],100),
-                                'total'    =>(int)bcmul($orders['overload_price'],100),
+                            'transaction_id' => $orders['wx_out_trade_no'],
+                            'out_refund_no' => $out_refund_no,
+                            'reason' => '现结/到付',
+                            'amount' => [
+                                'refund' => (int)bcmul($refoundAmount, 100),
+                                'total' => (int)bcmul($totalAmount, 100),
                                 'currency' => 'CNY'
                             ],
                         ]]);
-                    $up_data['out_overload_refund_no']=$out_overload_refund_no;
+                    $up_data['out_refund_no'] = $out_refund_no;
+                }
+                //超重退款
+                if($orders['overload_status']==2&&$orders['wx_out_overload_no']){
+                    if($orders['pay_type'] == 1){
+                        $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
+                        $wx_pay=$common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
+                        $wx_pay
+                            ->chain('v3/refund/domestic/refunds')
+                            ->post(['json' => [
+                                'transaction_id' => $orders['wx_out_overload_no'],
+                                'out_refund_no'=>$out_overload_refund_no,
+                                'reason'=>'超重退款',
+                                'amount'       => [
+                                    'refund'   => (int)bcmul($orders['overload_price'],100),
+                                    'total'    =>(int)bcmul($orders['overload_price'],100),
+                                    'currency' => 'CNY'
+                                ],
+                            ]]);
+                        $up_data['out_overload_refund_no']=$out_overload_refund_no;
+                    }
+
                     $up_data['overload_price']=0;
                 }
 
                 //耗材退款
                 if ($orders['consume_status']==2&&$orders['wx_out_haocai_no']){
-                    $out_haocai_refund_no=$common->get_uniqid();//耗材退款订单号
-                    $wx_pay=$common->wx_pay($orders['hc_mchid'],$orders['hc_mchcertificateserial']);
-                    $wx_pay
-                        ->chain('v3/refund/domestic/refunds')
-                        ->post(['json' => [
-                            'transaction_id' => $orders['wx_out_haocai_no'],
-                            'out_refund_no'=>$out_haocai_refund_no,
-                            'reason'=>'耗材退款',
-                            'amount'       => [
-                                'refund'   => (int)bcmul($orders['haocai_freight'],100),
-                                'total'    => (int)bcmul($orders['haocai_freight'],100),
-                                'currency' => 'CNY'
-                            ],
-                        ]]);
-                    $up_data['out_haocai_refund_no']=$out_haocai_refund_no;
+                    if($orders['pay_type'] == 1) {
+                        $out_haocai_refund_no = $common->get_uniqid();//耗材退款订单号
+                        $wx_pay = $common->wx_pay($orders['hc_mchid'], $orders['hc_mchcertificateserial']);
+                        $wx_pay
+                            ->chain('v3/refund/domestic/refunds')
+                            ->post(['json' => [
+                                'transaction_id' => $orders['wx_out_haocai_no'],
+                                'out_refund_no' => $out_haocai_refund_no,
+                                'reason' => '耗材退款',
+                                'amount' => [
+                                    'refund' => (int)bcmul($orders['haocai_freight'], 100),
+                                    'total' => (int)bcmul($orders['haocai_freight'], 100),
+                                    'currency' => 'CNY'
+                                ],
+                            ]]);
+                        $up_data['out_haocai_refund_no'] = $out_haocai_refund_no;
+                    }
                     $up_data['haocai_freight']=0;
                 }
 
@@ -344,6 +350,7 @@ class Afterlist extends Backend
             Db::commit();
         } catch (ValidateException|PDOException|\Exception $e) {
             Db::rollback();
+            Log::error("异常反馈有误：" . $e->getMessage() . $e->getTraceAsString());
             $this->error($e->getMessage());
         }
         if (false === $result) {
