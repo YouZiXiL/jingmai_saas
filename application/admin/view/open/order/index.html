@@ -257,7 +257,23 @@
 
 
 <script type="module">
+    import AddressParse from '/assets/js/address-parse/src/parse/index.js';
 
+    /*
+    {
+      'province': '福建省',
+      'city': '福州市',
+      'area': '福清市',
+      'details': '石竹街道义明综合楼3F',
+      'name': 'asseek',
+      'code': '350181',
+      '__type': 'parseByProvince',     //结果解析使用函数 parseByProvince parseByCity parseByArea
+      '__parse': 4,                    //数值越高 可信度越高
+      'mobile': '15000000000',
+      'zip_code': '',
+      'phone': '',
+    };
+    */
     const c = {
         // 局部注册名为 'my-component' 的子组件
         'button-counter': {
@@ -393,6 +409,7 @@
                 if(result.length<=0) return
                 let res = result[0]
                 this.sender = [res.province , res.city , res.area]
+                console.log('sender',this.sender)
                 this.formData.sender.name =  res.name
                 this.formData.sender.mobile = res.mobile || res.phone
                 this.formData.sender.province = res.province

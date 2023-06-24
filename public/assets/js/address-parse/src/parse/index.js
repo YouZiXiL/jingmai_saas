@@ -3,9 +3,9 @@
  * MIT License
  * By www.asseek.com
  */
-import AREA from '../area';
-import Utils from './utils';
-import ParseArea from './parse-area';
+import AREA from '../area.js';
+import Utils from './utils.js';
+import ParseArea from './parse-area.js';
 
 class ParseAddress {
 
@@ -37,7 +37,6 @@ class ParseAddress {
         zip_code: '',
         phone: ''
       };
-
       this.address = address;
       this.replace();
       this.parseMobile();
@@ -165,7 +164,9 @@ class ParseAddress {
         if (index !== 0) continue;
         result.details = result.details.substr(result[key].length);
       }
+      console.log('ary1', ary)
     }
+
   }
 
 }

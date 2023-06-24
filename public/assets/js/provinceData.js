@@ -1,7 +1,7 @@
 var provinceData = [
     {
         "code": "11",
-        "name": "北京市",
+        "name": "北京",
         "children": [
             {
                 "code": "1101",
@@ -77,7 +77,7 @@ var provinceData = [
     },
     {
         "code": "12",
-        "name": "天津市",
+        "name": "天津",
         "children": [
             {
                 "code": "1201",
@@ -3509,7 +3509,7 @@ var provinceData = [
     },
     {
         "code": "31",
-        "name": "上海市",
+        "name": "上海",
         "children": [
             {
                 "code": "3101",
@@ -4146,6 +4146,10 @@ var provinceData = [
                     {
                         "code": "330113",
                         "name": "临平区"
+                    },
+                    {
+                        "code": "330114",
+                        "name": "钱塘区"
                     },
                     {
                         "code": "330122",

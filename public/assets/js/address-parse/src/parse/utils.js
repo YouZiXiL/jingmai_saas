@@ -3,7 +3,7 @@
  * MIT License
  * By www.asseek.com
  */
-import AREA from '../area';
+import AREA from '../area.js';
 
 /**
  * 通过地区编码返回省市区对象

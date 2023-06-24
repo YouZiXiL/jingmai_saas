@@ -3,8 +3,8 @@
  * MIT License
  * By www.asseek.com
  */
-import AREA from '../area';
-import Utils from './utils';
+import AREA from '../area.js';
+import Utils from './utils.js';
 
 const ProvinceKeys = [
   '特别行政区', '古自治区', '维吾尔自治区', '壮族自治区', '回族自治区', '自治区', '省省直辖', '省', '市'
