@@ -130,39 +130,41 @@ class Afterlist extends Backend
                     $final_price = $orders['final_price']; // 支付金额
                     $Dbcommon= new Dbcommom();
                     $Common=new Common();
-                    $orders->allowField(true)->save(['tralight_status'=>2]);
                     //代理商增加余额  代理超轻
                     $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'运单号：'.$orders['waybill'].' 超轻增加金额：'.$agent_tralight_amt.'元');
-                    //退款时对优惠券判定
-                    if(!empty($orders->couponid)){
-                       $coupon = Couponlist::get($orders->couponid);
-                        if(($orders->final_price-$users_tralight_amt)<$coupon->uselimits || $coupon->uselimits == 0){
-                            $users_tralight_amt-=$coupon->money;
-                            if($users_tralight_amt<0){
-                                throw new Exception('退款后实付金额 小于优惠券使用门槛');
+                    if($orders->pay_type == 1){
+                        //退款时对优惠券判定
+                        if(!empty($orders->couponid)){
+                            $coupon = Couponlist::get($orders->couponid);
+                            if(($orders->final_price-$users_tralight_amt)<$coupon->uselimits || $coupon->uselimits == 0){
+                                $users_tralight_amt-=$coupon->money;
+                                if($users_tralight_amt<0){
+                                    throw new Exception('退款后实付金额 小于优惠券使用门槛');
+                                }
+                                $final_price = $orders->aftercoupon; // 实际支付金额
+                                $coupon["state"]=1;
+                                $coupon->save();
                             }
-                            $final_price = $orders->aftercoupon; // 实际支付金额
-                            $coupon["state"]=1;
-                            $coupon->save();
                         }
-                    }
 
-                    $wx_pay=$Common->wx_pay($orders['wx_mchid'],$orders['wx_mchcertificateserial']);
-                    $out_tralight_no=$Common->get_uniqid();//超轻退款订单号
-                    //下单退款
-                    $wx_pay
-                        ->chain('v3/refund/domestic/refunds')
-                        ->post(['json' => [
-                            'out_trade_no' => $orders['out_trade_no'],
-                            'out_refund_no'=>$out_tralight_no,
-                            'reason'=>'超轻订单：运单号 '.$orders['waybill'],
-                            'amount'       => [
-                                'refund'   => (int)bcmul($users_tralight_amt,100),
-                                'total'    =>(int)bcmul($final_price,100),
-                                'currency' => 'CNY'
-                            ],
-                        ]]);
-                    $remark='超轻退回金额：'.$agent_tralight_amt.'元';
+                        $wx_pay=$Common->wx_pay($orders['wx_mchid'],$orders['wx_mchcertificateserial']);
+                        $out_tralight_no=$Common->get_uniqid();//超轻退款订单号
+                        //下单退款
+                        $wx_pay
+                            ->chain('v3/refund/domestic/refunds')
+                            ->post(['json' => [
+                                'out_trade_no' => $orders['out_trade_no'],
+                                'out_refund_no'=>$out_tralight_no,
+                                'reason'=>'超轻订单：运单号 '.$orders['waybill'],
+                                'amount'       => [
+                                    'refund'   => (int)bcmul($users_tralight_amt,100),
+                                    'total'    =>(int)bcmul($final_price,100),
+                                    'currency' => 'CNY'
+                                ],
+                            ]]);
+                        $remark='超轻退回金额：'.$agent_tralight_amt.'元';
+                    }
+                    $orders->allowField(true)->save(['tralight_status'=>2]);
                 }else{
                     $orders->allowField(true)->save(['tralight_status'=>4]);
                 }

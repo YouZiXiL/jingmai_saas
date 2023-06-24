@@ -234,22 +234,24 @@ class Orderslist extends Backend
             $this->error(__('Parameter %s can not be empty', ''));
         }
         if ($Afterlist){
-            $this->error(__('不能重复反馈'));
+            $this->error(__('此订单已反馈超轻，待客服核实'));
         }
         if ($row['pay_status']!=1){
             $this->error(__('此订单不能反馈'));
         }
         $params = $this->preExcludeFields($params);
         if ($params['salf_type']==2){
-
             if ($row['tralight_status']!=1){
                 $this->error(__('此订单没有超轻'));
             }
             $row->allowField(true)->save(['tralight_status'=>3]);
         }
-        $agentModel = Admin::field('nickname')->find($row['agent_id'])->toArray();
+
+        $agentModel = Admin::field('nickname')->find($row['agent_id']);
+        if(!$agentModel) $this->error('代理商不存在');
+        $agent = $agentModel->toArray();
         $content = [
-            'user' => "代理商（{$agentModel['nickname']}）", // 反馈人
+            'user' => "代理商（{$agent['nickname']}）", // 反馈人
             'waybill' => $row['waybill'],          // 运单号
             'item_name' => $row['item_name'],      // 物品名称
             'body' => $params['salf_content'],  // 反馈内容
@@ -258,7 +260,6 @@ class Orderslist extends Backend
             'img' => '',  // 图片地址
         ];
 
-        if (!empty($params['pic']))$img=$this->request->domain().$params['pic'];
         //超重反馈
         if ($params['salf_type']==1){
             $weight=ceil($row['final_weight']-$row['weight']);
@@ -272,7 +273,7 @@ class Orderslist extends Backend
 //                'checkWeight'=>$params['salf_weight'],
 //                'checkVolume'=>$params['salf_volume'],
 //            ];
-            $common->wxrobot_exception_msg($content);
+
 
 //            $data=$common->yunyang_api('AFTER_SALE',$content);
 //            if ($data['code']!=1){
@@ -281,7 +282,6 @@ class Orderslist extends Backend
         }
         //取消订单反馈
         if ($params['salf_type']==0){
-            $common->wxrobot_exception_msg($content);
 //            $content=[
 //                'subType'=>'3',
 //                'waybill'=>$row['waybill'],
@@ -294,7 +294,6 @@ class Orderslist extends Backend
         }
         //现结/到付反馈
         if ($params['salf_type']==3){
-            $common->wxrobot_exception_msg($content);
 //            $content=[
 //                'subType'=>'3',
 //                'waybill'=>$row['waybill'],
@@ -307,7 +306,7 @@ class Orderslist extends Backend
 //            }
         }
 
-
+        $common->wxrobot_exception_msg($content);
 
         $result = false;
         Db::startTrans();
