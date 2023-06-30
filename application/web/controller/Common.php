@@ -42,9 +42,6 @@ class Common
         $res=$this->httpRequest('https://api.yunyangwl.com/api/wuliu/openService',$data ,'POST');
 
         return json_decode($res,true);
-
-
-
     }
     function yunyangtc_api($serviceCode,$content){
         $requestId=$this->get_uniqid();
@@ -135,6 +132,7 @@ class Common
         curl_close($curl);
         return $result;
     }
+
     //http请求
     //$data  数组
     function httpRequest($url, $data='', $method='GET',$header=['Content-Type: application/json; charset=utf-8']){
@@ -164,6 +162,57 @@ class Common
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         $result = curl_exec($curl);
         curl_close($curl);
+        return $result;
+    }
+
+
+    /**
+     * @param array ...$requests 请求参数
+     */
+    function multiRequest(array ...$requests){
+        $curlGroup = [];
+        foreach ($requests as $item) {
+            $curl = curl_init();
+            curl_setopt($curl, CURLOPT_URL, $item['url']);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']??'');
+            curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1);
+            curl_setopt($curl, CURLOPT_AUTOREFERER, 1);
+            curl_setopt($curl, CURLOPT_POST, 1);
+            curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+            if (empty($item['data'])){
+                curl_setopt($curl, CURLOPT_POSTFIELDS,'{}' );
+            }else{
+                if(empty($item['header'])){
+                    $data=json_encode($item['data'],JSON_UNESCAPED_UNICODE);
+                    curl_setopt($curl, CURLOPT_POSTFIELDS,$data );
+                    curl_setopt($curl, CURLOPT_HTTPHEADER,['Content-Type: application/json; charset=utf-8']);
+                }else{
+                    curl_setopt($curl, CURLOPT_POSTFIELDS,http_build_query($item['data']) );
+                    curl_setopt($curl, CURLOPT_HTTPHEADER,$item['header']);
+                }
+            }
+            $curlGroup[] = $curl;
+        }
+
+        $mh = curl_multi_init();
+        foreach ($curlGroup as $curl){
+            curl_multi_add_handle($mh, $curl);
+        }
+
+        $running = null;
+        do {
+            curl_multi_exec($mh, $running);
+        } while ($running);
+
+        $result = [];
+        foreach ($curlGroup as $curl){
+            $result[] = curl_multi_getcontent($curl);
+            curl_multi_remove_handle($mh, $curl);
+        }
+        curl_multi_close($mh);
         return $result;
     }
 

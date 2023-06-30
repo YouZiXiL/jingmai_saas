@@ -190,7 +190,7 @@
         <div>
             <div v-for="item in channelList">
                 <div class="mb-2 px-3">
-                    <el-radio v-model="channelId" :label="item.channelId" class="d-flex a-center border px-3 py-1 radius hover-shadow" >
+                    <el-radio v-model="requireId" :label="item.requireId" class="d-flex a-center border px-3 py-1 radius hover-shadow" >
                         <img class="rounded-50" width="32" height="32" :src="item.channelLogoUrl" />
 
                         <div class="d-inline-flex a-center">
@@ -349,8 +349,7 @@
                 receiverContent:'',
                 props:{value:'name', label:'name'},
                 channelList: [],        // 渠道列表
-                channelId: '',          // 被选渠道
-                requireId: '',
+                requireId: '',          // 被选渠道
                 isAddSender: false,
                 isAddReceiver: false,
                 rules: {
@@ -461,8 +460,7 @@
                             console.log(data)
                             let list = data.list
                             this.channelVisible = true
-                            this.requireId = data.requireId
-                            this.channelList = data.list.sort((a,b)=>a.freight - b.freight)
+                            this.channelList = data.sort((a,b)=>a.freight - b.freight)
                             return false
                         }, (data,ret) => { //error
                             return true;
@@ -485,7 +483,6 @@
                     },
                     data: JSON.stringify({
                         requireId: this.requireId,
-                        channelId: this.channelId,
                     })
                 }, (data) => { //success
                     if (this.isAddSender){

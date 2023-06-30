@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\common\business\FengHuoDi;
+use app\common\business\JiLu;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\Upload;
@@ -168,7 +169,6 @@ class Yunyang extends Controller
     public function check_channel_intellect(): Json
     {
         try {
-
             $param=$this->request->param();
             if($param['weight']<=0){
                 throw new Exception('参数错误');
@@ -251,151 +251,66 @@ class Yunyang extends Controller
                 ],
             ];
 
+            $jlContent = [
+                "actualWeight"=> $param['weight'],
+                "fromCity"=> $jijian_address['city'],
+                "fromCounty"=> $jijian_address['county'],
+                "fromDetails"=> $jijian_address['location'],
+                "fromName"=> $jijian_address['name'],
+                "fromPhone"=> $jijian_address['mobile'],
+                "fromProvince"=> $jijian_address['province'],
+                "toCity"=> $shoujian_address['city'],
+                "toCounty"=> $shoujian_address['county'],
+                "toDetails"=> $shoujian_address['location'],
+                "toName"=> $shoujian_address['name'],
+                "toPhone"=> $shoujian_address['mobile'],
+                "toProvince"=> $shoujian_address['province']
+            ];
+
             if ($param['channel_tag']=='智能'){
                 !empty($param['insured']) &&($yyContent['insured'] = $param['insured']);
                 !empty($param['vloum_long']) &&($yyContent['vloumLong'] = $param['vloum_long']);
                 !empty($param['vloum_width']) &&($yyContent['vloumWidth'] = $param['vloum_width']);
                 !empty($param['vloum_height']) &&($yyContent['vloumHeight'] = $param['vloum_height']);
 
-                $fhdContent['serviceInfoList'] = [
-                    [
-                        'code'=>'INSURE','value'=>$param['insured']*100,
-                    ],
-                    [
-                        'code'=>'TRANSPORT_TYPE','value'=>'RCP',
-                    ]
+                $jiLu = new JiLu();
+                $jiluParams = [
+                    'url' => $jiLu->baseUlr,
+                    'data' => $jiLu->setParma('PRICE_ORDER', $jlContent),
                 ];
 
+                // $jiluPackage = $jiLu->queryPriceHandle($jlContent, $agent_info, $param);
+
+                $fhdContent['serviceInfoList'] = [
+                    [ 'code'=>'INSURE','value'=>$param['insured']*100, ],
+                    [ 'code'=>'TRANSPORT_TYPE','value'=>'RCP', ]
+                ];
+
+
+
                 $fengHuoDi = new FengHuoDi();
-                $fhdArr = $fengHuoDi->queryPriceHandle($fhdContent, $agent_info, $param);
+                $fhdParams = [
+                    'url' => $fengHuoDi->baseUlr.'predictExpressOrder',
+                    'data' => $fengHuoDi->setParam($fhdContent),
+                    'header' => ['Content-Type = application/x-www-form-urlencoded; charset=utf-8']
+                ];
+                // $fhdArr = $fengHuoDi->queryPriceHandle($fhdContent, $agent_info, $param);
 
-                $data=$this->common->yunyang_api('CHECK_CHANNEL_INTELLECT',$yyContent);
-                if ($data['code']!=1){
-                    Log::error('云洋查询价格错误'. json_encode($data));
-                    throw new Exception('收件或寄件信息错误,请仔细填写');
-                }
-                $qudao_close=explode('|', $agent_info['qudao_close']);
-                $qudao_close[] = '德邦'; // 云洋禁用德邦
-                foreach ($data['result'] as $k=>&$v){
-                    if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
-                        unset($data['result'][$k]);
-                        continue;
-                    }
-                    if ($v['tagType']=='顺丰'){
-                        $agent_price=$v['freight']+$v['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
-                        $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
-                        $admin_shouzhong=0;//平台首重
-                        $admin_xuzhong=0;//平台续重
-                        $agent_shouzhong=0;//代理商首重
-                        $agent_xuzhong=0;//代理商续重
-                        $users_shouzhong=0;//用户首重
-                        $users_xuzhong=0;//用户续重
-                    }elseif ($v['tagType']=='德邦'){
+                $yunYang = new \app\common\business\YunYang();
+                $yyParams = [
+                    'url' => $yunYang->baseUlr,
+                    'data' => $yunYang->setParma('CHECK_CHANNEL_INTELLECT',$yyContent),
+                ];
+                // $yyPackage= $yunYang->queryPriceHandle($yyContent, $agent_info, $param);
 
-                        $agent_price=$v['freight']+$v['freight']*$agent_info['agent_db_ratio']/100;//代理商价格
-                        $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
-                        $admin_shouzhong=@$v['discountPriceOne'];//平台首重
-                        $admin_xuzhong=@$v['discountPriceMore'];//平台续重
-                        $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_db_ratio']/100;//代理商首重
-                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
-                        $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
-                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
-                    }elseif ($v['tagType']=='京东'){
-                        $agent_price=$v['freight']+$v['freight']*$agent_info['agent_jd_ratio']/100;//代理商价格
-                        $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
-                        $admin_shouzhong=@$v['discountPriceOne'];//平台首重
-                        $admin_xuzhong=@$v['discountPriceMore'];//平台续重
-                        $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_jd_ratio']/100;//代理商首重
-                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_jd_ratio']/100;//代理商续重
-                        $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
-                        $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
-                    }elseif ($v['tagType']=='圆通'){
+                $response =  $this->common->multiRequest($jiluParams, $fhdParams, $yyParams);
+                $jiluPackage = $jiLu->queryPriceHandle($response[0], $agent_info, $param);
+                $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
+                $yyPackage = $yunYang->queryPriceHandle($response[2], $agent_info, $param);
 
-                        $admin_shouzhong=$v['price']['priceOne'];//平台首重
-                        $admin_xuzhong=$v['price']['priceMore'];//平台续重
-                        $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                        $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                        $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                        $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                        $weight=$param['weight']-1;//续重重量
-                        $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                        $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                        $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                    }elseif ($v['tagType']=='申通'){
-                        $admin_shouzhong=$v['price']['priceOne'];//平台首重
-                        $admin_xuzhong=$v['price']['priceMore'];//平台续重
-                        $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                        $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                        $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                        $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                        $weight=$param['weight']-1;//续重重量
-                        $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                        $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                        $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                    }elseif ($v['tagType']=='极兔'){
-                        $admin_shouzhong=$v['price']['priceOne'];//平台首重
-                        $admin_xuzhong=$v['price']['priceMore'];//平台续重
-                        $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                        $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                        $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                        $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                        $weight=$param['weight']-1;//续重重量
-                        $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                        $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                        $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                    }elseif ($v['tagType']=='中通'){
-                        $admin_shouzhong=$v['priceOne'];//平台首重
-                        $admin_xuzhong=$v['priceMore'];//平台续重
-                        $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                        $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                        $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                        $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                        $weight=$param['weight']-1;//续重重量
-                        $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                        $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                        $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                    }elseif ($v['tagType']=='韵达'){
-
-                        $admin_shouzhong=$v['priceOne'];//平台首重
-                        $admin_xuzhong=$v['priceMore'];//平台续重
-                        $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                        $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                        $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                        $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                        $weight=$param['weight']-1;//续重重量
-                        $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                        $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                        $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-                    }else{
-                        continue;
-                    }
-                    if(isset($v['extFreightFlag'])) $users_price = $users_price + $v['extFreight'];
-                    $finalPrice=sprintf("%.2f",$users_price+$v['freightInsured']);//用户拿到的价格=用户运费价格+保价费
-                    $v['final_price']=$finalPrice;//用户支付总价
-                    $v['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
-                    $v['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
-                    $v['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
-                    $v['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
-                    $v['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
-                    $v['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                    $v['agent_price']=sprintf("%.2f",$agent_price+$v['freightInsured']);//代理商结算
-                    $v['jijian_id']=$param['jijian_id'];//寄件id
-                    $v['shoujian_id']=$param['shoujian_id'];//收件id
-                    $v['weight']=$param['weight'];//重量
-                    $v['channel_merchant'] = 'YY';
-                    $v['package_count']=$param['package_count'];//包裹数量
-                    !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价费用
-                    !empty($param['vloum_long']) &&($v['vloumLong'] = $param['vloum_long']);//货物长度
-                    !empty($param['vloum_width']) &&($v['vloumWidth'] = $param['vloum_width']);//货物宽度
-                    !empty($param['vloum_height']) &&($v['vloumHeight'] = $param['vloum_height']);//货物高度
-                    $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
-                    $arr[$k]['final_price']=$finalPrice;
-                    $arr[$k]['insert_id']=$insert_id;
-                    $arr[$k]['tag_type']=$v['tagType'];
-                }
-                $arrs=array_values($arr);
-                isset($fhdArr) && $arrs[] = $fhdArr;
-                usort($arrs, function ($a, $b){
+                $packageList = $jiluPackage + $yyPackage;
+                isset($fhdDb) && $packageList[] = $fhdDb;
+                usort($packageList, function ($a, $b){
                     return $a['final_price'] <=> $b['final_price'];
                 });
             }else{
@@ -454,9 +369,9 @@ class Yunyang extends Controller
                 !empty($param['vloum_width']) &&($res['vloumWidth'] = $param['vloum_width']);//货物宽度
                 !empty($param['vloum_height']) &&($res['vloumHeight'] = $param['vloum_height']);//货物高度
                 $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($res,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
-                $arrs[0]['final_price']=$finalPrice;
-                $arrs[0]['insert_id']=$insert_id;
-                $arrs[0]['tag_type']=$res['channel'];
+                $packageList[0]['final_price']=$finalPrice;
+                $packageList[0]['insert_id']=$insert_id;
+                $packageList[0]['tag_type']=$res['channel'];
 
                 $fhdContent['serviceInfoList'] = [
                     [
@@ -512,18 +427,20 @@ class Yunyang extends Controller
                 !empty($param['vloum_width']) &&($res['vloumWidth'] = $param['vloum_width']);//货物宽度
                 !empty($param['vloum_height']) &&($res['vloumHeight'] = $param['vloum_height']);//货物高度
                 $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($res,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
-                $arrs[1]['final_price']=$finalPrice;
-                $arrs[1]['insert_id']=$insert_id;
-                $arrs[1]['tag_type']=$res['channel'];
+                $packageList[1]['final_price']=$finalPrice;
+                $packageList[1]['insert_id']=$insert_id;
+                $packageList[1]['tag_type']=$res['channel'];
             }
-            if (empty($arrs)){
+            if (empty($packageList)){
                 throw new Exception('没有指定快递渠道请联系客服');
             }
 
-            return json(['status'=>200,'data'=>$arrs,'msg'=>'成功']);
+            return json(['status'=>200,'data'=>$packageList,'msg'=>'成功']);
         }catch (\Exception $e){
-            $content = date('H:i:s', time()) . $e->getLine().'：'.$e->getMessage().$e->getTraceAsString().PHP_EOL;
-            recordLog("yy-channel-price", $content);
+            $content = date('H:i:s', time())
+                . $e->getLine().'：'.$e->getMessage().PHP_EOL
+                . $e->getTraceAsString().PHP_EOL.PHP_EOL;
+            recordLog("channel-price-err", $content);
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
     }
@@ -594,7 +511,7 @@ class Yunyang extends Controller
             'channel_merchant'=>$check_channel_intellect['channel_merchant'],
             'insert_id'=>$param['insert_id'],
             'out_trade_no'=>$out_trade_no,
-            'freight'=>$check_channel_intellect['freight'],
+            'freight'=>$check_channel_intellect['freight']??0,
             'channel_id'=>$check_channel_intellect['channelId']??0,
             'tag_type'=>$check_channel_intellect['tagType'],
             'admin_shouzhong'=>$check_channel_intellect['admin_shouzhong'],
@@ -603,12 +520,14 @@ class Yunyang extends Controller
             'agent_xuzhong'=>$check_channel_intellect['agent_xuzhong'],
             'users_shouzhong'=>$check_channel_intellect['users_shouzhong'],
             'users_xuzhong'=>$check_channel_intellect['users_xuzhong'],
-            'agent_price'=>$check_channel_intellect['agent_price'],
+            'final_freight'=>$check_channel_intellect['payPrice']??0, //平台支付的费用
+            'agent_price'=>$check_channel_intellect['agent_price'], // 代理商支付费用
+            'final_price'=>$check_channel_intellect['final_price'], // 用户支付费用
             'insured_price'=>$check_channel_intellect['freightInsured'],//保价费用
             'comments'=>'无',
             'wx_mchid'=>$agent_info['wx_mchid'],
             'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
-            'final_freight'=>0,//云洋最终运费
+
             'pay_status'=>0,
             'order_status'=>'派单中',
             'overload_price'=>0,//超重金额
@@ -621,7 +540,6 @@ class Yunyang extends Controller
             'overload_status'=>0,
             'consume_status'=>0,
             'tralight_status'=>0,
-            'final_price'=>$check_channel_intellect['final_price'],
             'sender'=> $jijian_address['name'],
             'sender_mobile'=>$jijian_address['mobile'],
             'sender_province'=>$jijian_address['province'],

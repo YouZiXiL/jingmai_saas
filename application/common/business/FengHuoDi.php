@@ -12,28 +12,55 @@ class FengHuoDi
 
     public function __construct(){
         $this->utils = new Common();
-        $this->baseUlr = '';
+        $this->baseUlr = 'https://openapi.fhd001.com/express/';
+    }
+
+
+    /**
+     * 参数组装
+     * @param array $content
+     * @return array
+     */
+    public function setParam(array $content){
+        $pid=13513;
+        list($msec, $sec) = explode(' ', microtime());
+        $timeStamp= (float)sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
+        $time=$timeStamp;
+        $nonceStr=$this->utils->get_uniqid();
+        $psecret='2edbc05b02ce2cac0c235082ee400ac3';
+        $params=json_encode($content);
+        $sign=hash_hmac('md5', $psecret . "nonceStr" . $nonceStr . "params" . $params . "pid" . $pid . "time" . $time . $psecret, $psecret);
+        return [
+            'pid'=>$pid,
+            'time'=>$time,
+            'nonceStr'=>$nonceStr,
+            'params'=>$params,
+            'sign'=>$sign
+        ];
     }
 
     /**
      * 查询价格处理函数
-     * @param array $content 查询价格所需参数
+     * @param  $content string
      * @param $agent_info array 代理商
      * @param $param array 前端传来的参数
      * @return array|null 返回前端需要的参数
      */
-    public function queryPriceHandle(array $content, array $agent_info, array $param){
-        $jsonResult=$this->utils->fhd_api('predictExpressOrder',$content);
-        $fhdResult=json_decode($jsonResult,true);
+    public function queryPriceHandle(string $content, array $agent_info, array $param){
+        $result=json_decode($content,true);
+        if($result['rcode'] != 0 || $result['scode'] != 0) {
+            recordLog('channel-price-err','风火递' . $content. PHP_EOL);
+            return [];
+        }
+
         $time=time();
         $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
-
-        foreach ($fhdResult['data']['predictInfo']['detail'] as $k=>$v){
-            if ($v['priceEntryCode']=='FRT'){
-                $total['fright']=$v['caculateFee'];  // 基础运费
+        foreach ($result['data']['predictInfo']['detail'] as $item){
+            if ($item['priceEntryCode']=='FRT'){
+                $total['fright']=$item['caculateFee'];  // 基础运费
             }
-            if ($v['priceEntryCode']=='BF'){
-                $total['fb']=$v['caculateFee']; // 包装费
+            if ($item['priceEntryCode']=='BF'){
+                $total['fb']=$item['caculateFee']; // 包装费
             }
         }
         if (empty($total)) return null;
@@ -83,7 +110,7 @@ class FengHuoDi
      * 快递下单处理函数
      * @param $orders array 订单详情
      * @param $expressCode string 快递代号 DBKD：德邦
-     * @return mixed
+     * @return bool|string
      */
     public function createOrderHandle(array $orders, string $expressCode = 'DBKD'){
         $content=[
@@ -134,10 +161,7 @@ class FengHuoDi
                     'code'=>'TRANSPORT_TYPE','value'=>$orders['db_type'],
                 ]
             ]
-
         ];
-        file_put_contents('wx_order_pay.txt',json_encode($content).PHP_EOL,FILE_APPEND);
-        $resultJson = $this->utils->fhd_api('createExpressOrder',$content);
-        return json_decode($resultJson,true);
+        return $this->utils->fhd_api('createExpressOrder',$content);
     }
 }

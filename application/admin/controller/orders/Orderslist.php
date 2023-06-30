@@ -454,6 +454,7 @@ class Orderslist extends Backend
      * 拉黑用户
      */
     function blacklist($ids=null,$remark=null){
+
         $data=[];
         $row = $this->model->get(['id'=>$ids]);
         if (!$row) {
@@ -461,24 +462,29 @@ class Orderslist extends Backend
         }
         $Blacklist=new Blacklist();
         $blacklistinfo=$Blacklist->get(['mobile'=>$row['sender_mobile']]);
-        $UsersInfo=new Userslist();
-        $UsersInfo=$UsersInfo->get(['id'=>$row['user_id']]);
-        $blackUserinfo=$Blacklist->get(['mobile'=>$UsersInfo['mobile']]);
+        $UsersInfo = new Userslist();
+        if($row['pay_type'] != 3){
+            $UsersInfo = $UsersInfo->get(['id'=>$row['user_id']]);
+            $mobile = $UsersInfo['mobile'];
+        }else{
+            $mobile = $row['sender_mobile'];
+        }
+        $blackUserinfo=$Blacklist->get(['mobile'=>$mobile]);
 
 
         if (!$blacklistinfo){
             $data[]= [
-                    'agent_id'=>$row['agent_id'],
-                    'mobile'=>$row['sender_mobile'],
-                    'name'=>$row['sender'],
-                    'remark'=>$remark,
-                    'create_time'=>time()
-                ];
+                'agent_id'=>$row['agent_id'],
+                'mobile'=>$row['sender_mobile'],
+                'name'=>$row['sender'],
+                'remark'=>$remark,
+                'create_time'=>time()
+            ];
         }
         if (!$blackUserinfo){
             $data[]= [
                 'agent_id'=>$row['agent_id'],
-                'mobile'=>$UsersInfo['mobile'],
+                'mobile'=>$mobile,
                 'name'=>$row['sender'],
                 'remark'=>$remark,
                 'create_time'=>time()
@@ -486,6 +492,9 @@ class Orderslist extends Backend
         }
         $Blacklist->saveAll($data);
         $this->success('成功');
+
+
+
 
 
     }
@@ -600,10 +609,11 @@ class Orderslist extends Backend
             ?? db('admin')->where('id',$row['agent_id'])->value('mobile');
 
 
-//        if (in_array(2,$this->auth->getGroupIds())) {
+        if (in_array(2,$this->auth->getGroupIds())) {
+            $row['channel'] = '';
 //            $row['sender_address']=$row['sender_province'].$row['sender_city'];
 //            $row['receive_address']=$row['receive_province'].$row['receive_city'];
-//        }
+        }
         $this->view->assign("row", $row->toArray());
 
         return $this->view->fetch();

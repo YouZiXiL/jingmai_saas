@@ -154,55 +154,58 @@ class Login extends Controller
         $appid = AliConfig::$templateId;
         $agent = AgentAuth::field('agent_id,auth_token,aes')->where('app_id', $appid)->find();
         if (empty($agent))  return R::error("未授权此小程序");
-        $agent_id = $agent->agent_id;
-        $appAuthToken = $agent->auth_token;
-        $aes = $agent->aes;
-        // 获取user_id, access_token;
-        $aliOpen = Alipay::start()->open();
-        $result = $aliOpen->getOauthToken($code, $appAuthToken);
-        $openid = $result->user_id;
-        $accessToken = $result->access_token;
-        $time = time();
-        $token = $this->common->get_uniqid();
-        $user = Users::where(['open_id' => $openid, 'agent_id'=>$agent_id])->find();
-        $record = ['agent_id' => $agent_id, 'token' => $token, 'login_time' => $time];
+        try {
+            $agent_id = $agent->agent_id;
+            $appAuthToken = $agent->auth_token;
+            $aes = $agent->aes;
+            // 获取user_id, access_token;
+            $aliOpen = Alipay::start()->open();
+            $result = $aliOpen->getOauthToken($code, $appAuthToken);
+            $openid = $result->user_id;
+            $accessToken = $result->access_token;
+            $time = time();
+            $token = $this->common->get_uniqid();
+            $user = Users::where(['open_id' => $openid, 'agent_id'=>$agent_id])->find();
+            $record = ['agent_id' => $agent_id, 'token' => $token, 'login_time' => $time];
 
-        if (empty($user)){
+            if (empty($user)){
 
-            // 解密手机号
-            $utils = new AopUtils();
-            $decrypt = $utils -> decrypt($response, $aes);
-            $phoneData = json_decode($decrypt);
-            if(!$phoneData || $phoneData->code != 10000){
-                Log::error("获取手机号失败：{$decrypt}");
-                return R::error('获取手机号失败');
+                // 解密手机号
+                $utils = new AopUtils();
+                $decrypt = $utils -> decrypt($response, $aes);
+                $phoneData = json_decode($decrypt);
+                if(!$phoneData || $phoneData->code != 10000){
+                    Log::error("获取手机号失败：{$decrypt}");
+                    return R::error('获取手机号失败');
+                }
+                $mobile = $phoneData->mobile;
+                $record['nick_name'] = $mobile;
+                $record['open_id'] = $openid;
+                $record['mobile'] = $mobile;
+                $record['create_time'] = $time;
+                $user = Users::create($record);
+            }else{
+                $record['id'] = $user->id;
+                $record['login_time'] = $time;
+                $record['agent_id'] = $agent_id;
+
+                Users::update($record);
             }
-
-            $mobile = $phoneData->mobile;
-
-            $record['nick_name'] = $mobile;
-            $record['open_id'] = $openid;
-            $record['mobile'] = $mobile;
-            $record['create_time'] = $time;
-            $user = Users::create($record);
-        }else{
-            $record['id'] = $user->id;
-            $record['login_time'] = $time;
-            $record['agent_id'] = $agent_id;
-
-            Users::update($record);
+            $data=['status'=>200,'data'=>$token,'msg'=>'登录成功'];
+            $session=[
+                'id' => $user->id,
+                'mobile' => $user->mobile,
+                'agent_id'=>$agent_id,
+                'app_id' => input('appid'),
+                'open_id'=> $openid,
+                'session_key'=>$accessToken
+            ];
+            cache($token,$session,3600*24*25);
+            return json($data);
+        }catch (\Exception $exception){
+            Log::error("支付宝登录失败：" .$exception->getLine() . $exception->getMessage() .$exception->getTraceAsString());
+            return R::error('登录失败');
         }
-        $data=['status'=>200,'data'=>$token,'msg'=>'登录成功'];
-        $session=[
-            'id' => $user->id,
-            'mobile' => $user->mobile,
-            'agent_id'=>$agent_id,
-            'app_id' => input('appid'),
-            'open_id'=> $openid,
-            'session_key'=>$accessToken
-        ];
-        cache($token,$session,3600*24*25);
-        return json($data);
     }
 
     /**

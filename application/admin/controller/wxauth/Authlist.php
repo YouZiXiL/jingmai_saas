@@ -361,27 +361,32 @@ class Authlist extends Backend
 
         $xcx_access_token=$common->get_authorizer_access_token($row['app_id']);
 
-        $res=$common->httpRequest('https://api.weixin.qq.com/wxa/security/get_code_privacy_info?access_token='.$xcx_access_token);
-        $res=json_decode($res,true);
+        $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/security/get_code_privacy_info?access_token='.$xcx_access_token);
+        $res=json_decode($resJson,true);
         if ($res['errcode']!=0){
-            $this->error($res['errmsg']);
+            $this->error($resJson);
         }
-        $get_category=$common->httpRequest('https://api.weixin.qq.com/wxa/get_category?access_token='.$xcx_access_token);
-        $get_category=json_decode($get_category,true);
-        if ($get_category['errcode']!=0){
+        $getCategoryJson=$common->httpRequest('https://api.weixin.qq.com/wxa/get_category?access_token='.$xcx_access_token);
+        $getCategory=json_decode($getCategoryJson,true);
+        if ($getCategory['errcode']!=0){
             $this->error('获取小程序类目失败');
         }
 
-        $res=$common->httpRequest('https://api.weixin.qq.com/wxa/submit_audit?access_token='.$xcx_access_token,[
-            'item_list'=>$get_category['category_list'],
+        $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/submit_audit?access_token='.$xcx_access_token,[
+            'item_list'=>$getCategory['category_list'],
         ],'POST');
-        Log::info("审核代码{$res}"); // {"errcode":0,"errmsg":"ok","auditid":499143417}
-        $res=json_decode($res,true);
+
+        $res=json_decode($resJson,true);
 
         if ($res['errcode']!=0){
-            $this->error($res['errmsg']);
+            if($res['errcode'] == 85023){
+                $this->error('小程序填写的类目数不在 1-5 以内'. $resJson);
+            }
+            $this->error('提交审核失败：' . $resJson);
         }
         $row->save(['xcx_audit'=>4]);
+
+
         $this->success('成功');
     }
 

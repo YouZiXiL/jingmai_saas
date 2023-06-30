@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\common\business\JiLu;
 use app\common\business\WanLi;
 use app\common\library\alipay\AliOpen;
 use app\common\library\alipay\Alipay;
@@ -234,6 +235,12 @@ class Test extends Controller
 //        $ali->apiQuery($appAuthToken);
 //        $ali->getScene($appAuthToken);
         $ali->fieldApply($appAuthToken);
+    }
+
+
+    public function jl_create_order(){
+        $jiLu = new JiLu();
+        $jiLu->createOrderHandle(input());
     }
 
     // 用户补交运费情况

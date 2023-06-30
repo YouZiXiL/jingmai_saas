@@ -7,6 +7,7 @@ use app\web\model\Couponlist;
 use app\web\model\Rebatelist;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
+use think\Exception;
 use think\exception\DbException;
 use think\Log;
 use think\Queue;
@@ -80,6 +81,140 @@ class YunYang{
         return json_decode($res, true);
     }
 
+    /**
+     * 查询渠道价格
+     * @param string $content
+     * @param array $agent_info
+     * @param array $param
+     * @return array
+     * @throws Exception
+     */
+    public function queryPriceHandle(string $content, array $agent_info, array $param){
+        $data= json_decode($content, true);
+        if ($data['code']!=1){
+            recordLog('channel-price-err','云洋' . $content. PHP_EOL);
+            throw new Exception('收件或寄件信息错误,请仔细填写');
+        }
+        $qudao_close=explode('|', $agent_info['qudao_close']);
+        $qudao_close[] = '德邦'; // 云洋禁用德邦
+        foreach ($data['result'] as $k=>&$v){
+            if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
+                unset($data['result'][$k]);
+                continue;
+            }
+            if ($v['tagType']=='顺丰'){
+                $agent_price=$v['freight']+$v['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
+                $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
+                $admin_shouzhong=0;//平台首重
+                $admin_xuzhong=0;//平台续重
+                $agent_shouzhong=0;//代理商首重
+                $agent_xuzhong=0;//代理商续重
+                $users_shouzhong=0;//用户首重
+                $users_xuzhong=0;//用户续重
+            }elseif ($v['tagType']=='德邦'){
+                $agent_price=$v['freight']+$v['freight']*$agent_info['agent_db_ratio']/100;//代理商价格
+                $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
+                $admin_shouzhong=@$v['discountPriceOne'];//平台首重
+                $admin_xuzhong=@$v['discountPriceMore'];//平台续重
+                $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_db_ratio']/100;//代理商首重
+                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
+                $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
+                $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+            }elseif ($v['tagType']=='京东'){
+                $agent_price=$v['freight']+$v['freight']*$agent_info['agent_jd_ratio']/100;//代理商价格
+                $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
+                $admin_shouzhong=@$v['discountPriceOne'];//平台首重
+                $admin_xuzhong=@$v['discountPriceMore'];//平台续重
+                $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_jd_ratio']/100;//代理商首重
+                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_jd_ratio']/100;//代理商续重
+                $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
+                $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+            }elseif ($v['tagType']=='圆通'){
+
+                $admin_shouzhong=$v['price']['priceOne'];//平台首重
+                $admin_xuzhong=$v['price']['priceMore'];//平台续重
+                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
+                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
+                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
+                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
+                $weight=$param['weight']-1;//续重重量
+                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
+                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
+                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+            }elseif ($v['tagType']=='申通'){
+                $admin_shouzhong=$v['price']['priceOne'];//平台首重
+                $admin_xuzhong=$v['price']['priceMore'];//平台续重
+                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
+                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
+                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
+                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
+                $weight=$param['weight']-1;//续重重量
+                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
+                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
+                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+            }elseif ($v['tagType']=='极兔'){
+                $admin_shouzhong=$v['price']['priceOne'];//平台首重
+                $admin_xuzhong=$v['price']['priceMore'];//平台续重
+                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
+                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
+                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
+                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
+                $weight=$param['weight']-1;//续重重量
+                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
+                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
+                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+            }elseif ($v['tagType']=='中通'){
+                $admin_shouzhong=$v['priceOne'];//平台首重
+                $admin_xuzhong=$v['priceMore'];//平台续重
+                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
+                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
+                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
+                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
+                $weight=$param['weight']-1;//续重重量
+                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
+                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
+                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+            }elseif ($v['tagType']=='韵达'){
+
+                $admin_shouzhong=$v['priceOne'];//平台首重
+                $admin_xuzhong=$v['priceMore'];//平台续重
+                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
+                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
+                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
+                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
+                $weight=$param['weight']-1;//续重重量
+                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
+                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
+                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+            }else{
+                continue;
+            }
+            if(isset($v['extFreightFlag'])) $users_price = $users_price + $v['extFreight'];
+            $finalPrice=sprintf("%.2f",$users_price+$v['freightInsured']);//用户拿到的价格=用户运费价格+保价费
+            $v['final_price']=$finalPrice;//用户支付总价
+            $v['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
+            $v['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
+            $v['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
+            $v['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
+            $v['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
+            $v['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
+            $v['agent_price']=sprintf("%.2f",$agent_price+$v['freightInsured']);//代理商结算
+            $v['jijian_id']=$param['jijian_id'];//寄件id
+            $v['shoujian_id']=$param['shoujian_id'];//收件id
+            $v['weight']=$param['weight'];//重量
+            $v['channel_merchant'] = 'YY';
+            $v['package_count']=$param['package_count'];//包裹数量
+            !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价费用
+            !empty($param['vloum_long']) &&($v['vloumLong'] = $param['vloum_long']);//货物长度
+            !empty($param['vloum_width']) &&($v['vloumWidth'] = $param['vloum_width']);//货物宽度
+            !empty($param['vloum_height']) &&($v['vloumHeight'] = $param['vloum_height']);//货物高度
+            $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
+            $yyArr[$k]['final_price']=$finalPrice;
+            $yyArr[$k]['insert_id']=$insert_id;
+            $yyArr[$k]['tag_type']=$v['tagType'];
+        }
+        return isset($yyArr)?array_values($yyArr):[];
+    }
 
     /**
      * 支付成功时的下单逻辑

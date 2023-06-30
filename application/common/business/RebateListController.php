@@ -188,11 +188,52 @@ class RebateListController
     }
 
     /**
-     * 超级B返佣
-     * @return
+     * 计算返佣
      */
-    public function rootBRebate(){
+    public function handle($orders, $superB, $users){
+        // 返佣
+        $rebateModal=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
 
+        if (!$rebateModal) return false;
+        $rebate=[
+            "user_id"=>0,
+            "invitercode"=>'',
+            "fainvitercode"=>'',
+            "out_trade_no"=>$orders["out_trade_no"],
+            "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
+            "payinback"=>0,
+            "state"=>1,
+            "rebate_amount"=>$orders["user_id"],
+            "createtime"=>time(),
+            "updatetime"=>time()
+        ];
+        if($users){
+            $rebate["user_id"] = $users["id"];
+            $rebate["invitercode"] = $users["invitercode"];
+            $rebate["fainvitercode"] = $users["fainvitercode"];
+        }
+        if($superB){
+            $agent_price=$orders["final_freight"] + $orders["final_freight"] * $superB["yt_agent_ratio"]/100;
+            $agent_default_price = $agent_price;
+            $rebate["root_price"]=number_format($agent_price,2);
+            $rebate["root_defaultprice"]=$rebate["root_price"];
+
+            $rebate["imm_rebate"]=number_format(($rebate["final_price"])*($superB["imm_rate"]??0)/100,2);
+            $rebate["mid_rebate"]=number_format(($rebate["final_price"])*($superB["midd_rate"]??0)/100,2);
+
+            $rebate["root_vip_rebate"]=number_format($rebate["final_price"]-$rebate["root_price"]-$rebate["imm_rebate"]-$rebate["mid_rebate"],2);
+            $rebate["root_default_rebate"]=number_format($rebate["final_price"]-$agent_default_price-$rebate["imm_rebate"]-$rebate["mid_rebate"],2);
+        } else{
+            $rebate["root_price"]=0;
+            $rebate["root_defaultprice"]=0;
+            $rebate["imm_rebate"]=number_format(($rebate["final_price"])*($agent_info["imm_rate"]??0)/100,2);
+            $rebate["mid_rebate"]=number_format(($rebate["final_price"])*($agent_info["midd_rate"]??0)/100,2);
+
+            $rebate["root_vip_rebate"]=0;
+            $rebate["root_default_rebate"]=0;
+
+        }
+        $rebateModal->isUpdate()->save($rebate);
+        return true;
     }
-
 }

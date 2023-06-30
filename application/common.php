@@ -547,6 +547,12 @@ if(!function_exists('recordLog')){
         if(!is_file($file)){
             fopen($file, "w",true);
         }
-        file_put_contents( $file, $content, FILE_APPEND);
+        file_put_contents( $file, $content.PHP_EOL.'-------------'. PHP_EOL, FILE_APPEND);
+    }
+}
+
+if (!function_exists('getId')){
+    function getId(){
+        return (strtotime(date('YmdHis', time()))) . substr(microtime(), 2, 6) . sprintf('%03d', rand(0, 999));
     }
 }

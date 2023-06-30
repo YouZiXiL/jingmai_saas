@@ -3,6 +3,8 @@
 namespace app\web\controller;
 
 use app\common\business\FengHuoDi;
+use app\common\business\JiLu;
+use app\common\business\OrderBusiness;
 use app\common\business\RebateListController;
 use app\common\business\WanLi;
 use app\common\library\alipay\Alipay;
@@ -24,6 +26,7 @@ use think\exception\DbException;
 use think\Log;
 use think\Queue;
 use think\Request;
+use think\response\Json;
 use WeChatPay\Crypto\Rsa;
 use WeChatPay\Crypto\AesGcm;
 use WeChatPay\Formatter;
@@ -143,61 +146,66 @@ class Wxcallback extends Controller
         $param=$this->request->param();
         $common=new Common();
         $kaifang_appid=config('site.kaifang_appid');
-
-        $res=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/component/api_query_auth?component_access_token='.$common->get_component_access_token(), [
-            'component_appid'=>$kaifang_appid,
-            'authorization_code'=>$param['auth_code'],
-        ],'POST');
-        $parm=json_decode($param['parm'],true);
-
-        $authorization_info=json_decode($res,true)['authorization_info'];
-        Log::info(['微信授权信息' => $authorization_info]);
-        //更新授权APPIDS
-        //获取公众号基本信息
-        $getAccountBasicInfo=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/component/api_get_authorizer_info?access_token='.$common->get_component_access_token(),[
-            'component_appid'=>$kaifang_appid,
-            'authorizer_appid'=>$authorization_info['authorizer_appid']
-        ],'POST');
-        $getAccountBasicInfo=json_decode($getAccountBasicInfo,true);
-        //判断头像为空
-        if (empty($getAccountBasicInfo['authorizer_info']['head_img'])){
-            exit('头像未设置');
-        }
-        if ($getAccountBasicInfo['authorizer_info']['verify_type_info']['id']!=0){
-            exit('该账号未进行微信认证');
-        }
-        if (!in_array($parm['auth_type'],[1,2])){
-            exit('授权类型错误');
-        }
-        $is_set=db('agent_auth')->where('agent_id','<>',$parm['agent_id'])->where('app_id',$authorization_info['authorizer_appid'])->find();
-        if ($is_set){
-             exit('该app_id已被授权过');
-        }
-        $data=[
-            'app_id'=>$authorization_info['authorizer_appid'],
-            'name'=>$getAccountBasicInfo['authorizer_info']['nick_name'],
-            'avatar'=>$getAccountBasicInfo['authorizer_info']['head_img'],
-            'wx_auth'=>1,
-            'yuanshi_id'=>$getAccountBasicInfo['authorizer_info']['user_name'],
-            'body_name'=>$getAccountBasicInfo['authorizer_info']['principal_name'],
-            'refresh_token'=>$authorization_info['authorizer_refresh_token'],
-            'auth_type'=>$parm['auth_type']
-        ];
-        if($parm['auth_type']==2){ // 小程序
-            $res=$common->httpRequest('https://api.weixin.qq.com/wxa/modify_domain?access_token='.$authorization_info['authorizer_access_token'],[
-                'action'=>'set',
-                'requestdomain'=>[$this->request->domain()],
-                'wsrequestdomain'=>['wss://'.$_SERVER['HTTP_HOST']],
-                'uploaddomain'=>[$this->request->domain()],
-                'downloaddomain'=>[$this->request->domain()],
-                'udpdomain'=>['udp://'.$_SERVER['HTTP_HOST']],
-                'tcpdomain'=>['tcp://'.$_SERVER['HTTP_HOST']],
-
+        try {
+            $res=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/component/api_query_auth?component_access_token='.$common->get_component_access_token(), [
+                'component_appid'=>$kaifang_appid,
+                'authorization_code'=>$param['auth_code'],
             ],'POST');
-            $res=json_decode($res,true);
-            if ($res['errcode']!=0){
-                exit('配置小程序服务器域名配置失败'.$res['errmsg']);
+            recordLog('wx-shouquan', "微信授权信息" . $res . PHP_EOL);
+            $parm=json_decode($param['parm'],true);
+            $authorization_info=json_decode($res,true)['authorization_info'];
+            //更新授权APPIDS
+            //获取授权帐号详情
+            $getAccountBasicInfoJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/component/api_get_authorizer_info?access_token='.$common->get_component_access_token(),[
+                'component_appid'=>$kaifang_appid,
+                'authorizer_appid'=>$authorization_info['authorizer_appid']
+            ],'POST');
+            $getAccountBasicInfo=json_decode($getAccountBasicInfoJson,true);
+
+            //判断头像为空
+            if (empty($getAccountBasicInfo['authorizer_info']['head_img'])){
+                recordLog('wx-shouquan', "头像未设置" . $getAccountBasicInfoJson . PHP_EOL);
+                exit('头像未设置');
             }
+            if ($getAccountBasicInfo['authorizer_info']['verify_type_info']['id']!=0){
+                recordLog('wx-shouquan', "该账号未进行微信认证" . $getAccountBasicInfoJson . PHP_EOL);
+                exit( '该账号未进行微信认证');
+            }
+            if (!in_array($parm['auth_type'],[1,2])){
+                recordLog('wx-shouquan', "授权类型错误" . $getAccountBasicInfoJson . PHP_EOL);
+                exit('授权类型错误');
+            }
+            $is_set=db('agent_auth')->where('agent_id','<>',$parm['agent_id'])->where('app_id',$authorization_info['authorizer_appid'])->find();
+            if ($is_set){
+                recordLog('wx-shouquan', "该app_id已被授权过" . $getAccountBasicInfoJson . PHP_EOL);
+                exit('该app_id已被授权过');
+            }
+            $data=[
+                'app_id'=>$authorization_info['authorizer_appid'],
+                'name'=>$getAccountBasicInfo['authorizer_info']['nick_name'],
+                'avatar'=>$getAccountBasicInfo['authorizer_info']['head_img'],
+                'wx_auth'=>1,
+                'yuanshi_id'=>$getAccountBasicInfo['authorizer_info']['user_name'],
+                'body_name'=>$getAccountBasicInfo['authorizer_info']['principal_name'],
+                'refresh_token'=>$authorization_info['authorizer_refresh_token'],
+                'auth_type'=>$parm['auth_type']
+            ];
+            if($parm['auth_type']==2){ // 小程序
+                $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/modify_domain?access_token='.$authorization_info['authorizer_access_token'],[
+                    'action'=>'set',
+                    'requestdomain'=>[$this->request->domain()],
+                    'wsrequestdomain'=>['wss://'.$_SERVER['HTTP_HOST']],
+                    'uploaddomain'=>[$this->request->domain()],
+                    'downloaddomain'=>[$this->request->domain()],
+                    'udpdomain'=>['udp://'.$_SERVER['HTTP_HOST']],
+                    'tcpdomain'=>['tcp://'.$_SERVER['HTTP_HOST']],
+
+                ],'POST');
+                $res=json_decode($resJson,true);
+                if ($res['errcode']!=0){
+                    recordLog('wx-shouquan', "配置小程序服务器域名配置失败" . $resJson . PHP_EOL);
+                    exit('配置小程序服务器域名配置失败'.$res['errmsg']);
+                }
 //            $res=$common->httpRequest('https://api.weixin.qq.com/wxa/setwebviewdomain?access_token='.$authorization_info['authorizer_access_token'],[
 //                'action'=>'set',
 //                'webviewdomain'=>[$this->request->domain(),'https://apis.map.qq.com']
@@ -207,128 +215,147 @@ class Wxcallback extends Controller
 //                Log::error(['配置小程序业务域名配置失败' => $res]);
 //                 exit('配置小程序业务域名配置失败'.$res['errmsg']);
 //            }
-            $res=$common->httpRequest('https://api.weixin.qq.com/wxa/changewxasearchstatus?access_token='.$authorization_info['authorizer_access_token'],[
-                'status'=>0,
-            ],'POST');
-            $res=json_decode($res,true);
-            if ($res['errcode']!=0){
-                exit('设置小程序搜索状态失败');
-            }
+                $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/changewxasearchstatus?access_token='.$authorization_info['authorizer_access_token'],[
+                    'status'=>0,
+                ],'POST');
+                $res=json_decode($resJson,true);
+                if ($res['errcode']!=0){
+                    recordLog('wx-shouquan', "设置小程序搜索状态失败" . $resJson . PHP_EOL);
+                    exit('设置小程序搜索状态失败');
+                }
 
-            $res=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/gettemplate?access_token='.$authorization_info['authorizer_access_token']);
-            $res=json_decode($res,true);
-            if ($res['errcode']!=0){
-                exit('获取个人模板列表失败');
-            }
-            if (!empty($res['data'])){
-                foreach ($res['data'] as $k=>$v){
-                    $res=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/deltemplate?access_token='.$authorization_info['authorizer_access_token'],[
-                        'priTmplId'=>$v['priTmplId'],
-                    ],'POST');
-                    $res=json_decode($res,true);
-                    if ($res['errcode']!=0){
-                        exit('删除个人模版失败');
+                $resJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/gettemplate?access_token='.$authorization_info['authorizer_access_token']);
+                $res=json_decode($resJson,true);
+                if ($res['errcode']!=0){
+                    recordLog('wx-shouquan', "获取个人模板列表失败" . $resJson . PHP_EOL);
+                    exit('获取个人模板列表失败');
+                }
+                if (!empty($res['data'])){
+                    foreach ($res['data'] as $k=>$v){
+                        $resJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/deltemplate?access_token='.$authorization_info['authorizer_access_token'],[
+                            'priTmplId'=>$v['priTmplId'],
+                        ],'POST');
+                        $res=json_decode($resJson,true);
+                        if ($res['errcode']!=0){
+                            recordLog('wx-shouquan', "删除个人模版失败" . $resJson . PHP_EOL);
+                            exit('删除个人模版失败');
+                        }
                     }
                 }
-            }
 
-            $yundan=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
-                'tid'=>'3666',
-                'kidList'=>[13,9,10,3,8],
-                'sceneDesc'=>'运单状态通知'
-            ],'POST');
-            $yundan=json_decode($yundan,true);
-            if ($yundan['errcode']!=0){
-                exit('小程序运单状态模板订阅失败'.PHP_EOL.$yundan['errmsg']);
-            }
+                $yundanJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
+                    'tid'=>'3666',
+                    'kidList'=>[13,9,10,3,8],
+                    'sceneDesc'=>'运单状态通知'
+                ],'POST');
+                $yundan=json_decode($yundanJson,true);
+                if ($yundan['errcode']!=0){
+                    recordLog('wx-shouquan', "小程序运单状态模板订阅失败" . $yundanJson . PHP_EOL);
+                    exit('小程序运单状态模板订阅失败'.PHP_EOL.$yundan['errmsg']);
+                }
 
-            $bukuan=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
-                'tid'=>'783',
-                'kidList'=>[6,5,11,2,7],
-                'sceneDesc'=>'运单超重补缴通知'
-            ],'POST');
-            $bukuan=json_decode($bukuan,true);
-            if ($bukuan['errcode']!=0){
-                exit('小程序超重补缴模板订阅失败'.PHP_EOL.$bukuan['errmsg']);
-            }
+                $bukuanJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
+                    'tid'=>'783',
+                    'kidList'=>[6,5,11,2,7],
+                    'sceneDesc'=>'运单超重补缴通知'
+                ],'POST');
+                $bukuan=json_decode($bukuanJson,true);
+                if ($bukuan['errcode']!=0){
+                    recordLog('wx-shouquan', "小程序超重补缴模板订阅失败" . $bukuanJson . PHP_EOL);
+                    exit('小程序超重补缴模板订阅失败'.PHP_EOL.$bukuan['errmsg']);
+                }
 
-            $material=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
-                'tid'=>'22092',
-                'kidList'=>[7,4,2,6,5],
-                'sceneDesc'=>'运单耗材补交通知'
-            ],'POST');
-            Log::info("运单耗材补交通知{$material}");
-            $material=json_decode($material,true);
-            Log::error(['运单耗材补交通知' => $material]);
-            if ($material['errcode']!=0){
-                exit('小程序耗材补交模板订阅失败'.PHP_EOL.$material['errmsg']);
-            }
-
-
-            $data['waybill_template']=$yundan['priTmplId']; // 小程序运单状态模板
-            $data['pay_template']=$bukuan['priTmplId']; // 小程序超重补交模板
-            $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
+                $materialJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
+                    'tid'=>'22092',
+                    'kidList'=>[7,4,2,6,5],
+                    'sceneDesc'=>'运单耗材补交通知'
+                ],'POST');
+                $material=json_decode($materialJson,true);
+                if ($material['errcode']!=0){
+                    recordLog('wx-shouquan', "小程序耗材补交模板订阅失败" . $materialJson . PHP_EOL);
+                    exit('小程序耗材补交模板订阅失败'.PHP_EOL.$material['errmsg']);
+                }
 
 
-        }else{ // 公众号
-            $res=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token='.$authorization_info['authorizer_access_token']);
-            $res=json_decode($res,true);
+                $data['waybill_template']=$yundan['priTmplId']; // 小程序运单状态模板
+                $data['pay_template']=$bukuan['priTmplId']; // 小程序超重补交模板
+                $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
 
-            if (!array_key_exists('template_list',$res)){
-                exit('获取消息模版失败');
-            }
-            if (!empty($res['template_list'])){
-                foreach ($res['template_list'] as $k=>$v){
-                    $res=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/del_private_template?access_token='.$authorization_info['authorizer_access_token'],[
-                        'template_id'=>$v['template_id'],
-                    ],'POST');
-                    $res=json_decode($res,true);
-                    if ($res['errcode']!=0){
-                        exit('删除消息模版失败');
+
+            }else{ // 公众号
+                $resJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token='.$authorization_info['authorizer_access_token']);
+                $res=json_decode($resJson,true);
+
+                if (!array_key_exists('template_list',$res)){
+                    recordLog('wx-shouquan', "获取消息模版失败" . $resJson . PHP_EOL);
+                    exit('获取消息模版失败');
+                }
+                if (!empty($res['template_list'])){
+                    foreach ($res['template_list'] as $k=>$v){
+                        $resJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/del_private_template?access_token='.$authorization_info['authorizer_access_token'],[
+                            'template_id'=>$v['template_id'],
+                        ],'POST');
+                        $res=json_decode($resJson,true);
+                        if ($res['errcode']!=0){
+                            recordLog('wx-shouquan', "删除消息模版失败" . $resJson . PHP_EOL);
+                            exit('删除消息模版失败');
+                        }
                     }
                 }
+
+                $yundanJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
+                    'template_id_short'=>'OPENTM407358422'  //添加 运单状态通知模板
+                ],'POST');
+                $yundan=json_decode($yundanJson,true);
+                if ($yundan['errcode']!=0){
+                    recordLog('wx-shouquan', "添加运单状态通知模板失败" . $yundanJson . PHP_EOL);
+                    exit('添加运单状态通知模板失败'.PHP_EOL.$yundan['errmsg']);
+                }
+
+                $fankuiJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
+                    'template_id_short'=>'OPENTM415535685'  //添加 反馈结果通知模板
+                ],'POST');
+                $fankui=json_decode($fankuiJson,true);
+                if ($fankui['errcode']!=0){
+                    recordLog('wx-shouquan', "添加反馈结果通知模板失败" . $fankuiJson . PHP_EOL);
+                    exit('添加反馈结果通知模板失败'.PHP_EOL.$fankui['errmsg']);
+                }
+
+                $bukuanJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
+                    'template_id_short'=>'OPENTM416996427'  //添加 运费补款通知模板
+                ],'POST');
+                $bukuan=json_decode($bukuanJson,true);
+                if ($bukuan['errcode']!=0){
+                    recordLog('wx-shouquan', "添加运费补款通知模板失败" . $bukuanJson . PHP_EOL);
+                    exit('添加运费补款通知模板失败'.PHP_EOL.$bukuan['errmsg']);
+                }
+
+                $data['waybill_template']=$yundan['template_id'];
+                $data['after_template']=$fankui['template_id'];
+                $data['pay_template']=$bukuan['template_id'];
+
             }
+            $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->find();
 
-            $yundan=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
-                'template_id_short'=>'OPENTM407358422'  //添加 运单状态通知模板
-            ],'POST');
-            $yundan=json_decode($yundan,true);
-            if ($yundan['errcode']!=0){
-                exit('添加运单状态通知模板失败'.PHP_EOL.$yundan['errmsg']);
+            if ($agent_auth){
+                db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->update($data);
+            }else{
+                $data['xcx_audit'] = $parm['auth_type'] == 2?0:5;
+                $data['agent_id']=$parm['agent_id'];
+                $data['app_id']=$getAccountBasicInfo['authorization_info']['authorizer_appid'];
+                db('agent_auth')->insert($data);
             }
-
-            $fankui=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
-                'template_id_short'=>'OPENTM415535685'  //添加 反馈结果通知模板
-            ],'POST');
-            $fankui=json_decode($fankui,true);
-            if ($fankui['errcode']!=0){
-                exit('添加反馈结果通知模板失败'.PHP_EOL.$fankui['errmsg']);
-            }
-
-            $bukuan=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
-                'template_id_short'=>'OPENTM416996427'  //添加 运费补款通知模板
-            ],'POST');
-            $bukuan=json_decode($bukuan,true);
-            if ($bukuan['errcode']!=0){
-                exit('添加运费补款通知模板失败'.PHP_EOL.$bukuan['errmsg']);
-            }
-
-            $data['waybill_template']=$yundan['template_id'];
-            $data['after_template']=$fankui['template_id'];
-            $data['pay_template']=$bukuan['template_id'];
-
+            exit('授权成功');
+        }catch (\Exception $e){
+            recordLog('wx-shouquan', '授权失败' . $e->getLine()
+                .PHP_EOL . $e->getMessage()
+                .PHP_EOL . $e->getTraceAsString()
+                .PHP_EOL . date('H:i:s', time())
+                .PHP_EOL
+            );
+            exit('授权失败');
         }
-        $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->find();
 
-        if ($agent_auth){
-            db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->update($data);
-        }else{
-            $data['xcx_audit'] = $parm['auth_type'] == 2?0:5;
-            $data['agent_id']=$parm['agent_id'];
-            $data['app_id']=$getAccountBasicInfo['authorization_info']['authorizer_appid'];
-            db('agent_auth')->insert($data);
-        }
-        exit('授权成功');
     }
 
     /**
@@ -686,9 +713,9 @@ class Wxcallback extends Controller
             return json(['code'=>1, 'message'=>'ok']);
         }catch (\Exception $e){
             recordLog('yy-callback',
-                'msg：'.$e->getMessage().PHP_EOL
-                .'line：'.$e->getLine().PHP_EOL
-                .'trace：'.$e->getTraceAsString()
+                'msg：  '.$e->getMessage().PHP_EOL
+                .'line： '.$e->getLine().PHP_EOL
+                .'trace：'.$e->getTraceAsString().PHP_EOL
                 .'param：'.json_encode($pamar).PHP_EOL
                 .date('Y-m-d H:i:s', time()).PHP_EOL.PHP_EOL );
             return json(['code'=>0, 'message'=>'推送失败']);
@@ -700,14 +727,13 @@ class Wxcallback extends Controller
      * 风火递
      */
     function fhd_callback(){
-        Log::info('风火递---fhd_callback：' . json_encode(input()));
         $pamar=$this->request->post();
         file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
-        $result= $pamar['message'];
         try {
             if (empty($pamar)){
                 return json(['code'=>0, 'message'=>'传来的数据为空']);
             }
+            $result= $pamar['message'];
             $common= new Common();
 
             $content=[
@@ -1083,14 +1109,12 @@ class Wxcallback extends Controller
             Log::info("风火递---处理成功");
             return json(['code'=>0, 'message'=>'推送成功']);
         }catch (\Exception $e){
-            $errData = "-------"
-                .PHP_EOL."风火递回调："
-                .PHP_EOL.date('y-m-d h:i:s', time())
-                .PHP_EOL.$e->getMessage()
-                .PHP_EOL.$e->getLine()
-                .PHP_EOL.$e->getFile()
-                .PHP_EOL;
-            file_put_contents('way_type.txt', $errData , FILE_APPEND);
+            recordLog('fhd-callback',
+                'msg：  '.$e->getMessage().PHP_EOL
+                .'line： '.$e->getLine().PHP_EOL
+                .'trace：'.$e->getTraceAsString().PHP_EOL
+                .'param：'.json_encode($pamar).PHP_EOL
+                .date('Y-m-d H:i:s', time()).PHP_EOL.PHP_EOL );
             return json(['code'=>1, 'message'=>$e->getMessage()]);
         }
     }
@@ -1099,94 +1123,96 @@ class Wxcallback extends Controller
     /**
      * 万利回调
      * @param WanLi $wanLi
-     * @throws Exception
-     * @throws DataNotFoundException
-     * @throws ModelNotFoundException
-     * @throws DbException
+     * @return Json|void
      */
     function wanli_callback(WanLi $wanLi){
-        Log::info('万利回调');
         $backData = $this->request->param();
-        $data = json_decode($backData['data'],true);
-        Log::info("万利回调--data:" . $data['param']);
-        $body = json_decode($data['param'],true) ; // 回调参数
-        $body['createTime'] = date('Y-m-d h:i:s', time());
-        db('wanli_callback')->strict(false)->insert($body);
-        $orderModel = Order::where('out_trade_no',$body['outOrderNo'])->find();
-        if (!$orderModel){
-            Log::error('万利回调---订单不存在');
-            return;
-        }
-        $orders = $orderModel->toArray();
-        $updateOrder = [];
-        $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
-        $xcx_access_token=$wanLi->utils->get_authorizer_access_token($agent_auth_xcx['app_id']);
-        $users=db('users')->where('id',$orders['user_id'])->find();
-        Log::info("订单id：{$orders['id']}" );
-        if($body['sendStatus'] == 60 && $orders['pay_status']!=2){
-            Log::info('订单已取消');
-            /*
-             取消给用户退款，配送异常看下原因，根据原因决定是否给用户取消退款
-             */
+        try {
+            $data = json_decode($backData['data'],true);
+            $body = json_decode($data['param'],true) ; // 回调参数
+            $body['createTime'] = date('Y-m-d h:i:s', time());
+            db('wanli_callback')->strict(false)->insert($body);
+            $orderModel = Order::where('out_trade_no',$body['outOrderNo'])->find();
+            if (!$orderModel){
+                Log::error('万利回调---订单不存在');
+                return;
+            }
+            $orders = $orderModel->toArray();
+            $updateOrder = [];
+            $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+            $xcx_access_token=$wanLi->utils->get_authorizer_access_token($agent_auth_xcx['app_id']);
+            $users=db('users')->where('id',$orders['user_id'])->find();
+            if($body['sendStatus'] == 60 && $orders['pay_status']!=2){
+                /*
+                 取消给用户退款，配送异常看下原因，根据原因决定是否给用户取消退款
+                 */
 
-            $returnPrice=$orders['aftercoupon']??$orders['final_price'];
-            if($body['punishAmount']){
-                // 罚金
-                $updateOrder['punish_price'] = ceil($body['punishAmount'])/100;
-                if($returnPrice>$updateOrder['punish_price']){
-                    $returnPrice = $returnPrice - $updateOrder['punish_price'];
+                $returnPrice=$orders['aftercoupon']??$orders['final_price'];
+                if($body['punishAmount']){
+                    // 罚金
+                    $updateOrder['punish_price'] = ceil($body['punishAmount'])/100;
+                    if($returnPrice>$updateOrder['punish_price']){
+                        $returnPrice = $returnPrice - $updateOrder['punish_price'];
+                    }
+
                 }
 
+
+                // 退优惠券
+                if(!empty($orders["couponid"])){
+                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                    $couponinfo->state=1;
+                    $couponinfo->save();
+                }
+
+                // 取消订单
+                $data = [
+                    'type'=>4,
+                    'order_id' => $orders['id'],
+                    'refund' => $returnPrice,
+                ];
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $data,'way_type');
+            }else{
+                isset($body['thirdPartyOrderNo']) && $updateOrder['waybill'] = $body['thirdPartyOrderNo']; // 运单号
+                isset($body['cancelMessage'])  &&  $updateOrder['yy_fail_reason'] = $body['cancelMessage']; // 取消原因
+                if(isset($body['courierName'] )||isset($body['courierMobile']))    $updateOrder['comments'] = "快递员姓名：{$body['courierName']}，电话：{$body['courierMobile']}";
+                isset($body['discountLastMoney'])  &&  $updateOrder['final_freight'] = ceil($body['discountLastMoney']) /100; // 商户成本
+                isset($body['weight'])  &&  $updateOrder['final_weight'] = $body['weight']; // kg
+                isset($body['finishCode'])  &&  $updateOrder['code'] = $body['finishCode']; // 收货码
+                isset($body['sendStatus'])   && $updateOrder['order_status'] = $wanLi->getOrderStatus($body['sendStatus']) ;
+                isset($body['failMessage'])  &&  $updateOrder['yy_fail_reason'] = $body['failMessage']; // 失败原因
+                isset($body['cancelTime'])  &&  $updateOrder['cancel_time'] = strtotime($body['cancelTime']); // 取消时间
             }
 
-
-            // 退优惠券
-            if(!empty($orders["couponid"])){
-                $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                $couponinfo->state=1;
-                $couponinfo->save();
+            //发送小程序订阅消息(运单状态)
+            if ($body['sendStatus'] == 40){ // 配送中
+                $result = $wanLi->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
+                    'touser'=>$users['open_id'],  //接收者openid
+                    'template_id'=>$agent_auth_xcx['waybill_template'],
+                    'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                    'data'=>[
+                        'character_string13'=>['value'=>$orders['waybill']],
+                        'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
+                        'thing10'=>['value'=>$orders['receive_province'].$orders['receive_city']],
+                        'phrase3'=>['value'=>$updateOrder['order_status']],
+                        'thing8'  =>['value'=>'点击查看快递信息与物流详情',]
+                    ],
+                    'miniprogram_state'=>'formal',
+                    'lang'=>'zh_CN'
+                ],'POST');
             }
-
-            // 取消订单
-            $data = [
-                'type'=>4,
-                'order_id' => $orders['id'],
-                'refund' => $returnPrice,
-            ];
-            // 将该任务推送到消息队列，等待对应的消费者去执行
-            Queue::push(DoJob::class, $data,'way_type');
-        }else{
-            isset($body['thirdPartyOrderNo']) && $updateOrder['waybill'] = $body['thirdPartyOrderNo']; // 运单号
-            isset($body['cancelMessage'])  &&  $updateOrder['yy_fail_reason'] = $body['cancelMessage']; // 取消原因
-            if(isset($body['courierName'] )||isset($body['courierMobile']))    $updateOrder['comments'] = "快递员姓名：{$body['courierName']}，电话：{$body['courierMobile']}";
-            isset($body['discountLastMoney'])  &&  $updateOrder['final_freight'] = ceil($body['discountLastMoney']) /100; // 商户成本
-            isset($body['weight'])  &&  $updateOrder['final_weight'] = $body['weight']; // kg
-            isset($body['finishCode'])  &&  $updateOrder['code'] = $body['finishCode']; // 收货码
-            isset($body['sendStatus'])   && $updateOrder['order_status'] = $wanLi->getOrderStatus($body['sendStatus']) ;
-            isset($body['failMessage'])  &&  $updateOrder['yy_fail_reason'] = $body['failMessage']; // 失败原因
-            isset($body['cancelTime'])  &&  $updateOrder['cancel_time'] = strtotime($body['cancelTime']); // 取消时间
-        }
-
-        //发送小程序订阅消息(运单状态)
-        if ($body['sendStatus'] == 40){ // 配送中
-            $result = $wanLi->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
-                'touser'=>$users['open_id'],  //接收者openid
-                'template_id'=>$agent_auth_xcx['waybill_template'],
-                'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
-                'data'=>[
-                    'character_string13'=>['value'=>$orders['waybill']],
-                    'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
-                    'thing10'=>['value'=>$orders['receive_province'].$orders['receive_city']],
-                    'phrase3'=>['value'=>$updateOrder['order_status']],
-                    'thing8'  =>['value'=>'点击查看快递信息与物流详情',]
-                ],
-                'miniprogram_state'=>'formal',
-                'lang'=>'zh_CN'
-            ],'POST');
-        }
-        if (!empty($updateOrder)){
-            Log::info("订单更新成功");
-            $orderModel->save($updateOrder);
+            if (!empty($updateOrder)){
+                $orderModel->save($updateOrder);
+            }
+        }catch (\Exception $e) {
+            recordLog('wanli-callback',
+                'msg：  ' . $e->getMessage() . PHP_EOL
+                . 'line： ' . $e->getLine() . PHP_EOL
+                . 'trace：' . $e->getTraceAsString() . PHP_EOL
+                . 'param：' . json_encode($backData) . PHP_EOL
+                . date('Y-m-d H:i:s', time()) . PHP_EOL . PHP_EOL);
+            return json(['code' => 1, 'message' => $e->getMessage()]);
         }
     }
 
@@ -1399,6 +1425,10 @@ class Wxcallback extends Controller
                     $yy = new \app\common\business\YunYang();
                     $yyResult = $yy->createOrderHandle($orders);
                     if ($yyResult['code']!=1){
+                        recordLog('channel-create-order-err',
+                            '云洋：'. json_decode($yyResult) . PHP_EOL
+                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
+                        );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付成功下单失败  执行退款操作
                         $update=[
@@ -1442,8 +1472,13 @@ class Wxcallback extends Controller
                     break;
                 case 'FHD':
                     $fhd = new FengHuoDi();
-                    $result = $fhd->createOrderHandle($orders);
+                    $resultJson = $fhd->createOrderHandle($orders);
+                    $result = json_decode($resultJson, true);
                     if ($result['rcode']!=0){ // 下单失败
+                        recordLog('channel-create-order-err',
+                            '风火递：'.$resultJson . PHP_EOL
+                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
+                        );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付下单失败  执行退款操作
                         $update=[
@@ -1485,6 +1520,10 @@ class Wxcallback extends Controller
                     $result = json_decode($res,true);
                     Log::info("万利下单结果：". $res);
                     if($result['code'] != 200){
+                        recordLog('channel-create-order-err',
+                            '万利：'.$res . PHP_EOL
+                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
+                        );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付成功下单失败  执行退款操作
                         $update=[
@@ -1526,11 +1565,56 @@ class Wxcallback extends Controller
                     }
                     break;
 
+                case 'JILU':
+                    $jiLu = new JiLu();
+                    $resultJson = $jiLu->createOrderHandle($orders);
+                    $result = json_decode($resultJson, true);
+                    if ($result['code']!=1){ // 下单失败
+                        recordLog('channel-create-order-err',
+                            '极鹭：'.$resultJson . PHP_EOL
+                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
+                        );
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        //支付下单失败  执行退款操作
+                        $update=[
+                            'pay_status'=>2,
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'yy_fail_reason'=>$result['errorMsg'],
+                            'order_status'=>'下单失败咨询客服',
+                            'out_refund_no'=>$out_refund_no,
+                        ];
+                        $data = [
+                            'type'=>3,
+                            'order_id'=>$orders['id'],
+                            'out_refund_no' => $out_refund_no,
+                            'reason'=>$result['errorMsg'],
+                        ];
+
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
+
+                        if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                            //推送企业微信消息
+                            $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                        }
+                    }else{ // 下单成功
+                        $rebateList = new RebateListController();
+                        $rebateList->createRebateByOrder($orders);
+                        $update=[
+                            'waybill'=>$result['data']['expressNo'],
+                            'shopbill'=>$result['data']['expressId'],
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'pay_status'=>1,
+                        ];
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['waybillCode'].' 下单支付成功');
+                    }
+                    break;
                 default:
                     switch ($orders['channel_tag']){
                         case '重货':
                             $fhd = new FengHuoDi();
-                            $result = $fhd->createOrderHandle($orders);
+                            $resultJson = $fhd->createOrderHandle($orders);
+                            $result = json_decode($resultJson, true);
                             if ($result['rcode']!=0){ // 下单失败
                                 $out_refund_no=$Common->get_uniqid();//下单退款订单号
                                 //支付成功下单失败  执行退款操作
@@ -1692,7 +1776,10 @@ class Wxcallback extends Controller
 
             exit('success');
         }catch (\Exception $e){
-            file_put_contents('wx_order_pay.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
+            recordLog('wx-callback-err',
+                $e->getLine() .'-'. $e->getMessage().PHP_EOL
+                    .$e->getTraceAsString()
+            );
             exit('fail1');
         }
     }
@@ -3359,7 +3446,6 @@ class Wxcallback extends Controller
     //pushType推送状态 1状态变更 2计费变更 3快递员变更 4订单变更
     function q_callback(){
         $params = $this->request->param();
-        Log::info('Q必达回调');
         try {
 
             $content = $params;
@@ -3631,9 +3717,180 @@ class Wxcallback extends Controller
             db('orders')->where('waybill',$params['waybillNo'])->update($up_data);
             exit("SUCCESS");
         }
-        catch (Exception $exception){
-            file_put_contents('q_callback.txt',$exception->getMessage().PHP_EOL.$exception->getLine().PHP_EOL.json_encode($params).PHP_EOL,FILE_APPEND);
+        catch (Exception $e){
+            recordLog('channel-callback-err',
+                'Q必达-' . date('H:i:s', time()). PHP_EOL.
+                'msg：  '.$e->getMessage().PHP_EOL
+                .'line： '.$e->getLine().PHP_EOL
+                .'trace：'.$e->getTraceAsString().PHP_EOL
+                .'param：'.json_encode($params)  );
             exit("fail");
+        }
+
+    }
+
+    /**
+     * 极鹭回调
+     */
+    function jilu(){
+        $params = input();
+        $raw = json_encode($params, JSON_UNESCAPED_UNICODE );
+        try {
+            recordLog('channel-callback',
+                '极鹭-' . date('H:i:s', time()). PHP_EOL
+                . $raw
+            );
+            $expressNo = $params['apiDataInfo']['expressNo']; // 运单号
+            $expressId = @$params['apiDataInfo']['expressId']; // 极鹭单号
+            $sendType = $params['sendType']; // 回调类型 trackType-物流轨迹、揽件信息、订单状态，weightType-重量，补差价
+
+
+            // trackType时的参数
+            $expressStatus = null; // -1 待推送，0 待取件，1 运输中，2 已签收，5 已取消
+            $expressTrack = null; // 增量轨迹，揽件信息，取消订单原因
+            // weightType时的参数
+            $actualWeight = 0; // 实际重量（计费重量）
+            $addpriceInfos = []; // 补差价集合 [$addMoney-新增补缴金额 $addType-补缴类型 $addWeight-新增重量]
+            $subpriceInfo = []; // 退款对象
+            $update = []; // 更新订单数据
+            if($sendType == 'trackType'){
+                $expressStatus = $params['apiDataInfo']['expressStatus'];
+                $expressTrack = $params['apiDataInfo']['expressTrack'];
+            }else{
+                $actualWeight = $params['apiDataInfo']['actualWeight'];
+                $addpriceInfos = $params['apiDataInfo']['addpriceInfos']??[];
+                $subpriceInfo = $params['apiDataInfo']['subpriceInfo']??[];
+
+                $update['final_weight'] = $actualWeight;
+            }
+            $compact = compact('expressNo','expressId','sendType','expressStatus',
+                'expressTrack','actualWeight','raw');
+            db('jilu_callback')->insert($compact);
+            $orderModel = Order::where('waybill', $expressNo)->find();
+            if(!$orderModel) return json(['code'=>-1, 'message'=>'没有此订单']);
+            $order = $orderModel->toArray();
+            if($order['order_status'] == '已取消') return json(['code'=>1, 'message'=>'订单已取消']);
+            $jiLu = new JiLu();
+
+            $wxOrder = $order['pay_type'] == 1;
+            $aliOrder = $order['pay_type'] == 2;
+            $autoOrder = $order['pay_type'] == 3;
+
+            $agent_info=db('admin')->where('id',$order['agent_id'])->find();
+            $xcx_access_token = null;
+
+
+            $users= $autoOrder?null:db('users')->where('id',$order['user_id'])->find();
+            if(!empty($users["rootid"])){
+                $superB=Admin::get($users["rootid"]);
+            } else{
+                $superB = null;
+            }
+
+
+
+            if($wxOrder){
+                $agent_auth_xcx=db('agent_auth')
+                    ->where('agent_id',$order['agent_id'])
+                    ->where('wx_auth',1)
+                    ->where('auth_type',2)
+                    ->find();
+                $xcx_access_token=$jiLu->utils->get_authorizer_access_token($agent_auth_xcx['app_id']);
+            }
+
+            if($sendType == 'trackType'){  // 物流轨迹、揽件信息、订单状态
+                $update['order_status'] = $jiLu->getOrderStatus($expressStatus);
+                $update['comments'] = $expressTrack;
+                if($expressStatus == 5 &&$order['pay_status']!=2){ // 已取消
+                    $orderBusiness = new OrderBusiness();
+                    $orderBusiness->refund($orderModel);
+                    return json(['code'=>1, 'message'=>'ok']);
+                }
+                if($expressStatus == 2){ // 已签收
+                    $rebateController = new RebateListController();
+                    $rebateController->handle($order, $superB, $users);
+                }
+
+            }else{ // 重量，补差价
+                // 超重和耗材
+                if(!empty($addpriceInfos)){
+                    $overloadPrice = 0;
+                    $update['haocai_freight'] = 0;
+                    $addWeight = 0;
+                    foreach ($addpriceInfos as $item){
+                        // $item[$addMoney,$addType,$addWeight]
+                        // $addType 1、重量差价；2、耗材费；3、订单退回费用；4、额外费用
+                        if($item['addType'] == 1){
+                            $overloadPrice += $item['addMoney']; // 超重金额
+                            $addWeight += $item['addWeight'];
+                        }else{ // 耗材
+                            $update['haocai_freight'] += $item['addMoney']; // 超重金额
+                        }
+                    }
+                    if($overloadPrice && empty($order['final_weight_time'])){
+                        $update['overload_status'] = 1;
+                        // 代理商超重金额
+                        $update['agent_overload_price'] = $overloadPrice + $agent_info['yt_agent_ratio']/100;
+                        // 用户超重金额
+                        $update['overload_price'] = $update['agent_overload_price'] + $agent_info['yt_agent_ratio']/100;
+
+                        $pushData = [
+                            'type'=>1,
+                            'agent_overload_amt' =>$update['agent_overload_price'],
+                            'order_id' => $order['id'],
+                            'xcx_access_token'=>$xcx_access_token,
+                            'open_id'=>$users?$users['open_id']:'',
+                            'template_id'=>$wxOrder?$agent_auth_xcx['pay_template']:null,
+                            'cal_weight'=>$addWeight .'kg',
+                            'users_overload_amt'=>$update['overload_price'].'元'
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $pushData,'way_type');
+                        // 发送超重短信
+                        KD100Sms::run()->overload($order);
+                    }
+                    if($update['haocai_freight']){
+                        $update['consume_status'] = 1;
+                        $pushData = [
+                            'type'=>2,
+                            'freightHaocai' =>$update['haocai_freight'],
+                            'order_id' => $order['id'],
+                            'xcx_access_token'=>$xcx_access_token,
+                            'open_id'=>$users?$users['open_id']:"",
+                            'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $pushData,'way_type');
+                        // 发送耗材短信
+                        KD100Sms::run()->material($order);
+                    }
+
+                }
+                // 超轻
+                if(!empty($subpriceInfo) && empty($order['final_weight_time']) ){
+                    // 平台超轻金额
+                    $subMemberMoney = $subpriceInfo['subMemberMoney'];
+                    // 代理商超轻金额
+                    $update['agent_tralight_price']=$subMemberMoney + $subMemberMoney*$agent_info['yt_agent_ratio'];
+                    // 用户超轻金额
+                    $update['tralight_price']=$update['agent_tralight_price'] + $update['agent_tralight_price']*$agent_info['yt_user_ratio'];
+                    $update['tralight_status']=1;
+                    $update['final_weight_time']=time();
+                }
+
+            }
+            if (!empty($update)){
+                $orderModel->isUpdate()->save($update);
+            }
+            return json(['code'=>1, 'message'=>'ok']);
+        }catch (Exception $e){
+            recordLog('channel-callback-err',
+                '极鹭-' . date('H:i:s', time()). PHP_EOL
+                .'msg：  '.$e->getMessage().PHP_EOL
+                .'line： '.$e->getLine().PHP_EOL
+                .'trace：'.$e->getTraceAsString().PHP_EOL
+                .'param：'.$raw);
+            return json(['code'=>-1, 'fail']);
         }
 
     }
