@@ -121,14 +121,14 @@ class Wxcallback extends Controller
             }
             exit('success');
         }catch (Exception $e){
-            file_put_contents('wx-callback.txt','微信回调：'
-                . $e->getMessage().PHP_EOL
-                .$e->getLine().PHP_EOL
-                .json_encode($param)
-                .$encryptMsg
-                .date('Y-m-d H:i:s', time()).PHP_EOL
-                ,FILE_APPEND
+            recordLog('wx-callback-msg-err',
+                '微信回调：'
+                .$e->getLine(). $e->getMessage().PHP_EOL
+                .json_encode($param).PHP_EOL
+                .$encryptMsg.PHP_EOL
+                .date('Y-m-d H:i:s', time())
             );
+
         }
     }
 
@@ -713,11 +713,10 @@ class Wxcallback extends Controller
             return json(['code'=>1, 'message'=>'ok']);
         }catch (\Exception $e){
             recordLog('yy-callback',
-                'msg：  '.$e->getMessage().PHP_EOL
-                .'line： '.$e->getLine().PHP_EOL
-                .'trace：'.$e->getTraceAsString().PHP_EOL
-                .'param：'.json_encode($pamar).PHP_EOL
-                .date('Y-m-d H:i:s', time()).PHP_EOL.PHP_EOL );
+                  $e->getLine() . '-' .$e->getMessage().PHP_EOL
+                .$e->getTraceAsString().PHP_EOL
+                .'参数：'.json_encode($pamar).PHP_EOL
+                .date('Y-m-d H:i:s', time()) );
             return json(['code'=>0, 'message'=>'推送失败']);
         }
     }
@@ -1426,7 +1425,7 @@ class Wxcallback extends Controller
                     $yyResult = $yy->createOrderHandle($orders);
                     if ($yyResult['code']!=1){
                         recordLog('channel-create-order-err',
-                            '云洋：'. json_decode($yyResult) . PHP_EOL
+                            '云洋：'. json_encode($yyResult) . PHP_EOL
                             .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
                         );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
@@ -1571,15 +1570,16 @@ class Wxcallback extends Controller
                     $result = json_decode($resultJson, true);
                     if ($result['code']!=1){ // 下单失败
                         recordLog('channel-create-order-err',
-                            '极鹭：'.$resultJson . PHP_EOL
-                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
+                            date('H:i:s', time()) . PHP_EOL .
+                            '订单：'.$orders['out_trade_no']. PHP_EOL .
+                            '极鹭下单失败：'.$resultJson
                         );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付下单失败  执行退款操作
                         $update=[
                             'pay_status'=>2,
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                            'yy_fail_reason'=>$result['errorMsg'],
+                            'yy_fail_reason'=>$result['msg'],
                             'order_status'=>'下单失败咨询客服',
                             'out_refund_no'=>$out_refund_no,
                         ];
@@ -1587,7 +1587,7 @@ class Wxcallback extends Controller
                             'type'=>3,
                             'order_id'=>$orders['id'],
                             'out_refund_no' => $out_refund_no,
-                            'reason'=>$result['errorMsg'],
+                            'reason'=>$result['msg'],
                         ];
 
                         // 将该任务推送到消息队列，等待对应的消费者去执行
@@ -1606,7 +1606,7 @@ class Wxcallback extends Controller
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                             'pay_status'=>1,
                         ];
-                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['waybillCode'].' 下单支付成功');
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['expressNo'].' 下单支付成功');
                     }
                     break;
                 default:

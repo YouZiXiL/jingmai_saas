@@ -7,6 +7,7 @@ use app\common\business\JiLu;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\Upload;
+use app\common\model\Profit;
 use app\web\model\Admin;
 use app\web\model\AgentAuth;
 use app\web\model\Couponlist;
@@ -273,13 +274,13 @@ class Yunyang extends Controller
                 !empty($param['vloum_width']) &&($yyContent['vloumWidth'] = $param['vloum_width']);
                 !empty($param['vloum_height']) &&($yyContent['vloumHeight'] = $param['vloum_height']);
 
+
                 $jiLu = new JiLu();
                 $jiluParams = [
                     'url' => $jiLu->baseUlr,
                     'data' => $jiLu->setParma('PRICE_ORDER', $jlContent),
                 ];
 
-                // $jiluPackage = $jiLu->queryPriceHandle($jlContent, $agent_info, $param);
 
                 $fhdContent['serviceInfoList'] = [
                     [ 'code'=>'INSURE','value'=>$param['insured']*100, ],
@@ -294,21 +295,41 @@ class Yunyang extends Controller
                     'data' => $fengHuoDi->setParam($fhdContent),
                     'header' => ['Content-Type = application/x-www-form-urlencoded; charset=utf-8']
                 ];
-                // $fhdArr = $fengHuoDi->queryPriceHandle($fhdContent, $agent_info, $param);
 
                 $yunYang = new \app\common\business\YunYang();
                 $yyParams = [
                     'url' => $yunYang->baseUlr,
                     'data' => $yunYang->setParma('CHECK_CHANNEL_INTELLECT',$yyContent),
                 ];
-                // $yyPackage= $yunYang->queryPriceHandle($yyContent, $agent_info, $param);
 
-                $response =  $this->common->multiRequest($jiluParams, $fhdParams, $yyParams);
-                $jiluPackage = $jiLu->queryPriceHandle($response[0], $agent_info, $param);
-                $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
-                $yyPackage = $yunYang->queryPriceHandle($response[2], $agent_info, $param);
+                if($this->user->id == 16632){
+                    $response =  $this->common->multiRequest($yyParams, $fhdParams, $jiluParams);
+                }else{
+                    $response =  $this->common->multiRequest( $yyParams, $fhdParams );
+                }
 
-                $packageList = $jiluPackage + $yyPackage;
+                $profit = Profit::where('agent_id',0)
+                    ->where('merchant', '')
+                    ->find()
+                    ->toArray();
+
+                if($this->user->id == 16632){
+                    $yyPackage = $yunYang->queryPriceHandle($response[0], $agent_info, $param);
+                    $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
+                     $jiluPackage = $jiLu->queryPriceHandle($response[2], $agent_info, $param, $profit);
+                }else{
+                    $yyPackage = $yunYang->queryPriceHandle($response[0], $agent_info, $param);
+                    $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
+                }
+
+
+                if($this->user->id == 16632){
+                    $packageList = $jiluPackage + $yyPackage;
+                }else{
+                    $packageList = $yyPackage;
+                }
+
+
                 isset($fhdDb) && $packageList[] = $fhdDb;
                 usort($packageList, function ($a, $b){
                     return $a['final_price'] <=> $b['final_price'];
@@ -514,16 +535,16 @@ class Yunyang extends Controller
             'freight'=>$check_channel_intellect['freight']??0,
             'channel_id'=>$check_channel_intellect['channelId']??0,
             'tag_type'=>$check_channel_intellect['tagType'],
-            'admin_shouzhong'=>$check_channel_intellect['admin_shouzhong'],
-            'admin_xuzhong'=>$check_channel_intellect['admin_xuzhong'],
-            'agent_shouzhong'=>$check_channel_intellect['agent_shouzhong'],
-            'agent_xuzhong'=>$check_channel_intellect['agent_xuzhong'],
-            'users_shouzhong'=>$check_channel_intellect['users_shouzhong'],
-            'users_xuzhong'=>$check_channel_intellect['users_xuzhong'],
+            'admin_shouzhong'=>$check_channel_intellect['admin_shouzhong']??0,
+            'admin_xuzhong'=>$check_channel_intellect['admin_xuzhong']??0,
+            'agent_shouzhong'=>$check_channel_intellect['agent_shouzhong']??0,
+            'agent_xuzhong'=>$check_channel_intellect['agent_xuzhong']??0,
+            'users_shouzhong'=>$check_channel_intellect['users_shouzhong']??0,
+            'users_xuzhong'=>$check_channel_intellect['users_xuzhong']??0,
             'final_freight'=>$check_channel_intellect['payPrice']??0, //平台支付的费用
             'agent_price'=>$check_channel_intellect['agent_price'], // 代理商支付费用
             'final_price'=>$check_channel_intellect['final_price'], // 用户支付费用
-            'insured_price'=>$check_channel_intellect['freightInsured'],//保价费用
+            'insured_price'=>$check_channel_intellect['freightInsured']??0,//保价费用
             'comments'=>'无',
             'wx_mchid'=>$agent_info['wx_mchid'],
             'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],

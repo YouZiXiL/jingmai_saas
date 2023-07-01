@@ -4,6 +4,8 @@ namespace app\admin\controller\orders;
 
 use app\admin\model\users\Blacklist;
 use app\admin\model\users\Userslist;
+use app\common\business\JiLu;
+use app\common\config\Channel;
 use app\common\controller\Backend;
 use app\web\controller\Common;
 use app\web\model\Admin;
@@ -159,7 +161,18 @@ class Orderslist extends Backend
         if ($row['pay_status']!=1 && $row['pay_type'] != 3){
             $this->error(__('此订单已取消'));
         }
-        if ($row['channel_tag']=='重货'){
+        if($row['channel_merchant'] == Channel::$jilu){
+            $content = [
+                'expressChannel' => $row['channel_id'],
+                'expressNo' => $row['waybill'],
+            ];
+            $jiLu = new JiLu();
+            $resultJson = $jiLu->cancelOrder($content);
+            $result = json_decode($resultJson, true);
+            if ($result['code']!=1){
+                $this->error($resultJson);
+            }
+        } else if ($row['channel_tag']=='重货'){
             $content=[
                 'expressCode'=>'DBKD',
                 'orderId'=>$row['out_trade_no'],
@@ -174,6 +187,7 @@ class Orderslist extends Backend
             $content=[
                 'shopbill'=>$row['shopbill'],
             ];
+
             $res=$common->yunyang_api('CANCEL',$content);
             if ($res['code']!=1){
                 $this->error($res['message']);

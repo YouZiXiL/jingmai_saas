@@ -1,6 +1,7 @@
 <?php
 
 namespace app\common\business;
+use app\common\config\Channel;
 use app\web\controller\Common;
 class JiLu
 {
@@ -69,6 +70,15 @@ class JiLu
         return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
     }
 
+    /**
+     * 取消订单
+     * @param $content
+     * @return bool|string
+     */
+    public function cancelOrder($content){
+        $parma = $this->setParma('CANCEL_ORDER', $content);
+        return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
+    }
 
     /**
      * 运单状态
@@ -92,28 +102,31 @@ class JiLu
      * @param string $content
      * @param array $agent_info
      * @param array $param
+     * @param array $profit
      * @return array
      */
-    public function queryPriceHandle(string $content, array $agent_info, array $param){
-        recordLog('channel-price','极鹭-' . $content. PHP_EOL);
+    public function queryPriceHandle(string $content, array $agent_info, array $param ,array $profit){
+        recordLog('channel-price','极鹭-' . $content);
         $result = json_decode($content, true);
         if ($result['code'] != 1){
-            recordLog('channel-price-err','极鹭' . $content. PHP_EOL);
+            recordLog('channel-price-err','极鹭' . $content);
             return [];
         }
+        $weight = $param['weight']; // 下单重量
         foreach ($result['data'] as $index => $item) {
             if($item['expressChannel'] != '5_2') continue;
             // 圆通
-            $agent_price = $item['payPrice'] + $item['payPrice']*$agent_info['yt_agent_ratio']/100;
-            $user_price = $agent_price + $agent_price*$agent_info['yt_user_ratio']/100;
-            $item['tagType'] = '圆通';
+            $agent_price = $item['payPrice'] + $profit['one_weight'] + $profit['more_weight'] * $weight-1;
+            $user_price = $agent_price + $agent_info['users_shouzhong'] + $agent_info['users_xuzhong'] * $weight-1;
+
+            $item['tagType'] = '圆通(YT)';
             $item['channelId'] = $item['expressChannel'];
             $item['agent_price'] = number_format($agent_price, 2);
             $item['final_price']=  number_format($user_price, 2);
             $item['jijian_id']=$param['jijian_id'];//寄件id
             $item['shoujian_id']=$param['shoujian_id'];//收件id
-            $item['weight']=$param['weight'];//重量
-            $item['channel_merchant'] = 'JILU';
+            $item['weight']= $weight;//下单重量
+            $item['channel_merchant'] = Channel::$jilu;
             $item['package_count']=$param['package_count'];//包裹数量
 
             !empty($param['insured']) &&($item['insured'] = $param['insured']);//保价费用

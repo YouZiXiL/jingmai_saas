@@ -1,6 +1,7 @@
 <?php
 namespace app\common\business;
 
+use app\common\config\Channel;
 use app\web\controller\Common;
 use app\web\controller\DoJob;
 use app\web\model\Couponlist;
@@ -90,10 +91,14 @@ class YunYang{
      * @throws Exception
      */
     public function queryPriceHandle(string $content, array $agent_info, array $param){
+        if (empty($content)){
+            recordLog('channel-price-err','云洋-数据不存在' . $content. PHP_EOL);
+            return [];
+        }
         $data= json_decode($content, true);
         if ($data['code']!=1){
-            recordLog('channel-price-err','云洋' . $content. PHP_EOL);
-            throw new Exception('收件或寄件信息错误,请仔细填写');
+            recordLog('channel-price-err','云洋-下单失败' . $content);
+            throw new Exception($data['message']);
         }
         $qudao_close=explode('|', $agent_info['qudao_close']);
         $qudao_close[] = '德邦'; // 云洋禁用德邦
@@ -202,7 +207,7 @@ class YunYang{
             $v['jijian_id']=$param['jijian_id'];//寄件id
             $v['shoujian_id']=$param['shoujian_id'];//收件id
             $v['weight']=$param['weight'];//重量
-            $v['channel_merchant'] = 'YY';
+            $v['channel_merchant'] = Channel::$yy;
             $v['package_count']=$param['package_count'];//包裹数量
             !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价费用
             !empty($param['vloum_long']) &&($v['vloumLong'] = $param['vloum_long']);//货物长度
@@ -222,7 +227,6 @@ class YunYang{
      * @return mixed
      */
     public function createOrderHandle($orders){
-        Log::info('云洋下单：'. json_encode($orders));
         $content=[
             'channelId'=> $orders['channel_id'],
             'channelTag'=>$orders['channel_tag'],
