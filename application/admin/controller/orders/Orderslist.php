@@ -5,8 +5,11 @@ namespace app\admin\controller\orders;
 use app\admin\model\users\Blacklist;
 use app\admin\model\users\Userslist;
 use app\common\business\JiLu;
+use app\common\business\OrderBusiness;
 use app\common\config\Channel;
 use app\common\controller\Backend;
+use app\common\library\R;
+use app\common\model\Order;
 use app\web\controller\Common;
 use app\web\model\Admin;
 use app\web\model\Couponlist;
@@ -147,9 +150,12 @@ class Orderslist extends Backend
      * @throws DbException
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\ModelNotFoundException
+     * @throws Exception
      */
     function cancel_orders($ids = null){
-        $row = $this->model->get(['id'=>$ids]);
+        $orderModel = Order::where('id',$ids)->find();
+        if(!$orderModel) return R::error('没找到该订单');
+        $row = $orderModel->toArray();
         if (!$row) {
             $this->error(__('No Results were found'));
         }
@@ -171,6 +177,11 @@ class Orderslist extends Backend
             $result = json_decode($resultJson, true);
             if ($result['code']!=1){
                 $this->error($resultJson);
+            }
+            if( $row['pay_status']!=2) {
+                // 执行退款操作
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->refund($orderModel);
             }
         } else if ($row['channel_tag']=='重货'){
             $content=[
@@ -205,7 +216,7 @@ class Orderslist extends Backend
             $this->error('没有相关渠道');
         }
 
-        $row->allowField(true)->save(['cancel_time'=>time()]);
+        $orderModel->allowField(true)->save(['cancel_time'=>time()]);
         // 退还优惠券
         if(!empty($row["couponid"])){
             $coupon=Couponlist::get($row["couponid"]);

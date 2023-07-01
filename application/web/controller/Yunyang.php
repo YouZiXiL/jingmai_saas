@@ -4,9 +4,12 @@ namespace app\web\controller;
 
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
+use app\common\business\OrderBusiness;
+use app\common\config\Channel;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\Upload;
+use app\common\model\Order;
 use app\common\model\Profit;
 use app\web\model\Admin;
 use app\web\model\AgentAuth;
@@ -967,8 +970,9 @@ class Yunyang extends Controller
         if ($agent_info['zizhu']==0){
             return json(['status'=>400,'data'=>'','msg'=>'请联系管理员取消订单']);
         }
-        $row=db('orders')->where('id',$id)->where('user_id',$this->user->id)->find();
-
+        $orderModel = Order::where('id',$id)->where('user_id',$this->user->id)->find();
+        if(!$orderModel) return R::error('没找到该订单');
+        $row = $orderModel->toArray();
         if ($row['pay_status']!=1){
             return json(['status'=>400,'data'=>'','msg'=>'此订单已取消']);
         }
@@ -984,6 +988,27 @@ class Yunyang extends Controller
             $res=json_decode($res,true);
             if (!$res['data']['result']){
                 return json(['status'=>400,'data'=>'','msg'=>'取消失败请联系客服']);
+            }
+        }else if($row['channel_merchant'] == Channel::$jilu){
+
+            $content = [
+                'expressChannel' => $row['channel_id'],
+                'expressNo' => $row['waybill'],
+            ];
+            $jiLu = new JiLu();
+            $resultJson = $jiLu->cancelOrder($content);
+            $result = json_decode($resultJson, true);
+            if ($result['code']!=1){
+                recordLog('channel-callback-err',
+                    '极鹭取消订单-' .$resultJson. PHP_EOL .
+                    date('H:i:s', time())
+                 );
+                return R::error($result['msg']);
+            }
+            if( $row['pay_status']!=2) {
+                // 执行退款操作
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->refund($orderModel);
             }
         }else if($row['channel_tag']=='智能'){
             $content=[

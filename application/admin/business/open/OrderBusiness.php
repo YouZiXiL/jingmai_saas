@@ -407,7 +407,7 @@ class OrderBusiness extends Backend
     }
 
     /**
-     * 极鹭代理商价格计算
+     * 风火递代理商价格计算
      * @param string $content
      * @param array $agent_info
      * @param array $param
@@ -487,8 +487,59 @@ class OrderBusiness extends Backend
     /**
      * 风火递下单
      */
-    public function fhdCreateOrder(){
-
+    public function fhdCreateOrder($channel,$agent_info){
+        $sender = $channel['senderInfo'];
+        $receiver = $channel['receiverInfo'];
+        $info = $channel['Info'];
+        $content=[
+            'expressCode'=> $expressCode,
+            'orderInfo'=>[
+                'orderId'=>$orders['out_trade_no'],
+                'sendStartTime'=>date("Y-m-d H:i:s",time()+5),
+                'sendEndTime'=>date("Y-m-d H:i:s",$orders['send_end_time']),
+                'sender'=>[
+                    'name'=>$orders['sender'],
+                    'mobile'=>$orders['sender_mobile'],
+                    'address'=>[
+                        'province'=>$orders['sender_province'],
+                        'city'=>$orders['sender_city'],
+                        'district'=>$orders['sender_county'],
+                        'detail'=>$orders['sender_location'],
+                    ]
+                ],
+                'receiver'=>[
+                    'name'=>$orders['receiver'],
+                    'mobile'=>$orders['receiver_mobile'],
+                    'address'=>[
+                        'province'=>$orders['receive_province'],
+                        'city'=>$orders['receive_city'],
+                        'district'=>$orders['receive_county'],
+                        'detail'=>$orders['receive_location'],
+                    ]
+                ],
+            ],
+            'packageInfo'=>[
+                'weight'=>$orders['weight']*1000,
+                'volume'=>'0',
+                'remark'=>$orders['bill_remark']??'',
+                'goodsDescription'=>$orders['item_name'],
+                'packageCount'=>$orders['package_count'],
+                'items'=>[
+                    [
+                        'count'=>$orders['package_count'],
+                        'name'=>$orders['item_name'],
+                    ]
+                ]
+            ],
+            'serviceInfoList'=>[
+                [
+                    'code'=>'INSURE','value'=>$orders['insured']*100,
+                ],
+                [
+                    'code'=>'TRANSPORT_TYPE','value'=>$orders['db_type'],
+                ]
+            ]
+        ];
     }
 
 
