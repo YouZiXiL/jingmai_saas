@@ -5,6 +5,7 @@ namespace app\admin\controller\auth;
 use app\admin\model\AuthGroup;
 use app\admin\model\AuthGroupAccess;
 use app\common\controller\Backend;
+use app\common\model\Profit;
 use fast\Random;
 use fast\Tree;
 use think\Db;
@@ -135,7 +136,7 @@ class Admin extends Backend
             $this->token();
             $params = $this->request->post("row/a");
             $group = $this->request->post("group/a");
-
+            $profit = $this->request->post("profit/a");
             if ($params) {
                 Db::startTrans();
                 try {
@@ -161,11 +162,20 @@ class Admin extends Backend
                         $params['add_tips']='添加到我的小程序，寄件更方便。'; //添加小程序提示语
                         $params['share_tips']='快递寄件折扣平台,6元寄全国！'; //小程序分享标题
                     }
-                    $result = $this->model->validate('Admin.add')->save($params);
-                    if ($result === false) {
+                    $agentId = $this->model->validate('Admin.add')->insertGetId($params);
+
+                    if (!$agentId) {
                         exception($this->model->getError());
                     }
+                    $profitModal = new Profit();
 
+                    foreach ($profit as &$item) {
+                        $item['agent_id'] = $agentId;
+                        $item['user_one_weight'] = 1.2;
+                        $item['user_more_weight'] = 1.2;
+                    }
+
+                    $profitModal->saveAll($profit);
 
                     //过滤不允许的组别,避免越权
 //                    $group = array_intersect($this->childrenGroupIds, $group);
@@ -175,7 +185,7 @@ class Admin extends Backend
 
                     $dataset = [];
                     foreach ($group as $value) {
-                        $dataset[] = ['uid' => $this->model->id, 'group_id' => $value];
+                        $dataset[] = ['uid' => $agentId, 'group_id' => $value];
                     }
                     model('AuthGroupAccess')->saveAll($dataset);
                     Db::commit();
@@ -187,6 +197,9 @@ class Admin extends Backend
             }
             $this->error(__('Parameter %s can not be empty', ''));
         }
+
+        $profit = Profit::where('agent_id', 0)->select();
+        $this->view->assign('profit', $profit);
         return $this->view->fetch();
     }
 

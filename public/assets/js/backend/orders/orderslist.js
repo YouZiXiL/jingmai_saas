@@ -215,6 +215,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                 return '<span ">'+value+'元</span>';
                             }},
                         {field: 'auth.name', title: __('归属账号'), operate: false, formatter:function(value, row){
+                                console.log('row', row)
                                 return value?value:'智能下单'
                             }},
                         {field: 'auth.wx_auth', title: __('授权平台'), operate: false,formatter: function (value, row) {
@@ -223,7 +224,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                 }else if(value==='2'){
                                     return '<buttons class="btn btn-xs btn-info">支付宝</buttons>';
                                 }else{
-                                    return '<buttons class="btn btn-xs">未授权</buttons>';
+                                    return '<buttons class="btn btn-xs btn-error-light">智能下单</buttons>';
                                 }
 
                         }},

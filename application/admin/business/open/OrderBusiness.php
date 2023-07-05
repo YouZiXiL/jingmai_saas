@@ -2,12 +2,17 @@
 
 namespace app\admin\business\open;
 
+use app\common\business\FengHuoDi;
+use app\common\business\JiLu;
 use app\common\business\YunYang;
+use app\common\config\Channel;
 use app\common\controller\Backend;
 use app\common\library\utils\SnowFlake;
 use app\common\model\Order;
 use app\web\controller\Common;
+use app\web\controller\Dbcommom;
 use think\Exception;
+use think\Model;
 
 class OrderBusiness extends Backend
 {
@@ -19,7 +24,8 @@ class OrderBusiness extends Backend
         $sender = $channel['senderInfo'];
         $receiver = $channel['receiverInfo'];
         $info = $channel['Info'];
-
+        $time=time();
+        $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
         $orderData=[
             'user_id'=>0,
             'agent_id'=>$this->auth->id,
@@ -27,7 +33,7 @@ class OrderBusiness extends Backend
             'wx_mchid'=>$agent_info['wx_mchid'],
             'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
             'final_freight'=>0,// 平台运费
-            'pay_status'=>1, // 支付状态
+            'pay_status'=> 0, // 支付状态
             'pay_type'=>3,  // 支付类型
             'order_status'=>'派单中',
             'overload_price'=>0,//超重金额
@@ -39,7 +45,6 @@ class OrderBusiness extends Backend
             'overload_status'=>0,
             'consume_status'=>0,
             'tralight_status'=>0,
-
             'sender'=> $sender['name'],
             'sender_mobile'=>$sender['mobile'],
             'sender_province'=>$sender['province'],
@@ -56,10 +61,12 @@ class OrderBusiness extends Backend
             'receive_address'=>$receiver['province'].$receiver['city'].$receiver['county'].$receiver['location'],
 
             'channel'=>$channel['channel'],
+            'channel_merchant'=>$channel['channel_merchant'],
             'channel_tag'=>$channel['channel_tag'],
             'freight'=>$channel['freight']??0,
             'channel_id'=>$channel['channelId'],
             'tag_type'=>$channel['tagType'],
+            'db_type'=>$channel['db_type']??'',
             'admin_shouzhong'=> $channel['admin_shouzhong']??0,
             'admin_xuzhong'=>$channel['admin_xuzhong']??0,
             'agent_shouzhong'=>$channel['agent_shouzhong']??0,
@@ -77,7 +84,8 @@ class OrderBusiness extends Backend
             'vloum_width'=>$info['vloumWidth'],
             'vloum_height'=>$info['vloumHeight'],
             'bill_remark'=>$info['billRemark'], // 快递运单备注
-            'send_start_time'=>$info['pickupStartTime']??null, // 取件预约时间
+            'send_start_time'=>$info['pickupStartTime']??$time, // 取件预约时间
+            'send_end_time' =>$sendEndTime,
             'create_time'=>time()
         ];
         $orderInfo = Order::create($orderData);
@@ -225,60 +233,66 @@ class OrderBusiness extends Backend
             $list[$key]['tagType']=$item['tagType'];
             $list[$key]['channelLogoUrl']=$item['channelLogoUrl'];
             $list[$key]['channelId']=$item['channelId'];
-            $list[$key]['channel']=$item['channel'];
+            $list[$key]['channel']='';
             $list[$key]['requireId']= (string) $requireId;
         }
-        return isset($list)?array_values($list):[];
+
+        if(isset($list)){
+            $result = [];
+            // 去除一个价格高的圆通
+            foreach ($list as $i) {
+                if ($i["tagType"] == "圆通") {
+                    if (isset($result["圆通"])) {
+                        if ($i["freight"] < $result["圆通"]["freight"]) {
+                            $result["圆通"] = $i;
+                        }
+                    } else {
+                        $result["圆通"] = $i;
+                    }
+                } else {
+                    $result[] = $i;
+                }
+            }
+            return array_values($result);
+        }else{
+            return [];
+        }
     }
 
-    public function yyCreateOrder($channel,$agent_info){
-
-        $sender = $channel['senderInfo'];
-        $receiver = $channel['receiverInfo'];
-        $info = $channel['Info'];
-
-        $content=[
-            'sender'=> $sender['name'],
-            'sender_mobile'=>$sender['mobile'],
-            'sender_province'=>$sender['province'],
-            'sender_city'=>$sender['city'],
-            'sender_county'=>$sender['county'],
-            'sender_location'=>$sender['location'],
-            'sender_address'=>$sender['province'].$sender['city'].$sender['county'].$sender['location'],
-            'receiver'=>$receiver['name'],
-            'receiver_mobile'=>$receiver['mobile'],
-            'receive_province'=>$receiver['province'],
-            'receive_city'=>$receiver['city'],
-            'receive_county'=>$receiver['county'],
-            'receive_location'=>$receiver['location'],
-            'receive_address'=>$receiver['province'].$receiver['city'].$receiver['county'].$receiver['location'],
-
-
-            'channelId'=> $channel['channelId'],
-            'channelTag'=>$channel['channel_tag'],
-            'weight'=>$info['weight'],
-            'packageCount'=>$info['packageCount'],
-            'itemName'=>$info['itemName'],
-            'insured'=>$info['insured'],
-            'vloumLong'=>$info['vloumLong'],
-            'vloumWidth'=>$info['vloumWidth'],
-            'vloumHeight'=>$info['vloumHeight'],
-            'billRemark'=>$info['billRemark'],
-            'pickupStartTime'=>$info['pickupStartTime']??null, // 取件预约时间
-        ];
+    /**
+     * @param Model $orderInfo
+     * @return void
+     * @throws Exception
+     */
+    public function yyCreateOrder(Model $orderInfo){
+        $orders = $orderInfo->toArray();
         $yunYang = new YunYang();
-        $result = $yunYang->createOrder($content);
+        $result = $yunYang->createOrderHandle($orders);
         if ($result['code'] != 1) {
-            return [
-                'code' => 0,
-                'result' => $result['result'],
+            $updateOrder=[
+                'id' => $orderInfo->id,
+                'pay_status'=> 0,
+                'yy_fail_reason'=>$result['message'],
+                'order_status'=>'下单失败咨询客服',
             ];
+            $orderInfo->isUpdate(true)->save($updateOrder);
+            $this->error($result['message']);
         }else{
-            return [
-                'code' => 1,
-                'result' => $result
+            $res = $result['result'];
+            $db= new Dbcommom();
+            $db->set_agent_amount($orders['agent_id'],'setDec',$orders['agent_price'],0,'运单号：'. $res['waybill'].' 下单支付成功');
+            $updateOrder=[
+                'id' => $orderInfo->id,
+                'pay_status'=> 1,
+                'waybill'=>$res['waybill'],
+                'shopbill'=>$res['shopbill'],
             ];
+
+            $orderInfo->isUpdate(true)->save($updateOrder);
+            $this->success('下单成功',null, $orderInfo);
         }
+
+
     }
 
     /*
@@ -309,22 +323,24 @@ class OrderBusiness extends Backend
      * @param string $content
      * @param array $agent_info
      * @param array $param
+     * @param $profit
      * @return array
      */
-    public function jlPriceHandle(string $content, array $agent_info, array $param){
+    public function jlPriceHandle(string $content, array $agent_info, array $param, array $profit){
         $result = json_decode($content, true);
         if ($result['code'] != 1){
             recordLog('channel-price-err','极鹭' . $content. PHP_EOL);
             return [];
         }
+        $weight = $param['info']['weight'];
+
         foreach ($result['data'] as $index => $item) {
             if($item['expressChannel'] != '5_2') continue;
 
-            // 圆通
-            $agent_price = $item['payPrice'] + $item['payPrice']*$agent_info['yt_agent_ratio']/100;
-            $user_price = $agent_price + $agent_price+$agent_info['yt_user_ratio']/100;
+            $agent_price = $item['payPrice'] + $profit['one_weight'] + $profit['more_weight'] * ($weight-1);
+            $user_price = $agent_price + $profit['user_one_weight'] + $profit['user_more_weight'] * ($weight-1);
 
-            $item['tagType'] = '圆通';
+            $item['tagType'] = '圆通快递';
             $item['channelId'] = $item['expressChannel'];
 
             $item['agent_price'] = number_format($agent_price, 2);
@@ -336,7 +352,7 @@ class OrderBusiness extends Backend
             $item['Info'] = $param['info']; // 其他信息：如物品重量保价费等
 
             $item['channel_tag'] = '智能'; // 渠道类型
-            $item['channel_merchant'] = 'JILU'; // 渠道商
+            $item['channel_merchant'] = Channel::$jilu; // 渠道商
 
             $requireId = SnowFlake::createId();
             cache( $requireId, json_encode($item), $this->ttl);
@@ -358,6 +374,46 @@ class OrderBusiness extends Backend
             $list[$index]['requireId']=(string)$requireId;
         }
         return isset($list) ?array_values($list):[];
+    }
+
+    /**
+     * 极鹭下单
+     * @param Model $orderInfo
+     * @return void
+     * @throws Exception
+     */
+    public function jlCreateOrder(Model $orderInfo){
+        $orders = $orderInfo->toArray();
+        $jiLu = new JiLu();
+        $resultJson = $jiLu->createOrderHandle($orders);
+        $result = json_decode($resultJson, true);
+        if ($result['code']!=1){ // 下单失败
+
+            //支付下单失败  执行退款操作
+            $updateOrder=[
+                'id' => $orderInfo->id,
+                'pay_status'=> 0,
+                'yy_fail_reason'=>$result['msg'],
+                'order_status'=>'下单失败咨询客服',
+            ];
+            $orderInfo->isUpdate()->save($updateOrder);
+            $this->error($resultJson);
+
+
+        }else{ // 下单成功
+            $db= new Dbcommom();
+            $db->set_agent_amount($orders['agent_id'],'setDec',$orders['agent_price'],0,'运单号：'. $result['data']['expressNo'].' 下单支付成功');
+
+            $updateOrder=[
+                'id' => $orderInfo->id,
+                'pay_status'=> 1,
+                'waybill'=>$result['data']['expressNo'],
+                'shopbill'=>$result['data']['expressId'],
+            ];
+            $orderInfo->isUpdate()->save($updateOrder);
+            $this->success('下单成功',null, $orderInfo);
+        }
+
     }
 
 
@@ -451,12 +507,13 @@ class OrderBusiness extends Backend
         $data['agent_price']=sprintf("%.2f",$agent_price+($total['fb']??0));//代理商结算
 
         $data['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
-        $data['channel']='德邦快递';
+        $data['channel']='德邦大件快递360';
         $data['channelId']='';
+        $data['expressCode']='DBKD';
         $data['freight']=sprintf("%.2f",$total['fright']*0.68);
         $data['send_start_time']=$time;
         $data['send_end_time']=$sendEndTime;
-        $data['tagType']='德邦大件快递360';
+        $data['tagType']='德邦快递';
         $data['db_type']='RCP';
 
         $data['senderInfo']=$param['sender'];//寄件人信息
@@ -464,8 +521,7 @@ class OrderBusiness extends Backend
         $data['Info'] = $param['info']; // 其他信息：如物品重量保价费等
 
         $data['channel_tag'] = '智能'; // 渠道类型
-        $data['channel_merchant'] = 'FHD'; // 渠道商
-
+        $data['channel_merchant'] = Channel::$fhd; // 渠道商
         $requireId = SnowFlake::createId();
         cache( $requireId, json_encode($data), $this->ttl);
 
@@ -477,69 +533,48 @@ class OrderBusiness extends Backend
 //            ]);
         return [
             'freight'=>$data['agent_price'], // 用户价格
-            'requireId'=>(string)$requireId,
-            'tagType'=>$data['channel'], // 快递类型
-            'channel'=>$data['tagType'], // 快递类型
+            'requireId'=>(string) $requireId,
+            'tagType'=>$data['tagType'], // 快递类型
+            'channel'=>'',
             'channelLogoUrl'=> 'https://admin.bajiehuidi.com/assets/img/express/db.png', // 快递类型
         ];
     }
 
     /**
      * 风火递下单
+     * @param Model $orderInfo
+     * @return void
+     * @throws Exception
      */
-    public function fhdCreateOrder($channel,$agent_info){
-        $sender = $channel['senderInfo'];
-        $receiver = $channel['receiverInfo'];
-        $info = $channel['Info'];
-        $content=[
-            'expressCode'=> $expressCode,
-            'orderInfo'=>[
-                'orderId'=>$orders['out_trade_no'],
-                'sendStartTime'=>date("Y-m-d H:i:s",time()+5),
-                'sendEndTime'=>date("Y-m-d H:i:s",$orders['send_end_time']),
-                'sender'=>[
-                    'name'=>$orders['sender'],
-                    'mobile'=>$orders['sender_mobile'],
-                    'address'=>[
-                        'province'=>$orders['sender_province'],
-                        'city'=>$orders['sender_city'],
-                        'district'=>$orders['sender_county'],
-                        'detail'=>$orders['sender_location'],
-                    ]
-                ],
-                'receiver'=>[
-                    'name'=>$orders['receiver'],
-                    'mobile'=>$orders['receiver_mobile'],
-                    'address'=>[
-                        'province'=>$orders['receive_province'],
-                        'city'=>$orders['receive_city'],
-                        'district'=>$orders['receive_county'],
-                        'detail'=>$orders['receive_location'],
-                    ]
-                ],
-            ],
-            'packageInfo'=>[
-                'weight'=>$orders['weight']*1000,
-                'volume'=>'0',
-                'remark'=>$orders['bill_remark']??'',
-                'goodsDescription'=>$orders['item_name'],
-                'packageCount'=>$orders['package_count'],
-                'items'=>[
-                    [
-                        'count'=>$orders['package_count'],
-                        'name'=>$orders['item_name'],
-                    ]
-                ]
-            ],
-            'serviceInfoList'=>[
-                [
-                    'code'=>'INSURE','value'=>$orders['insured']*100,
-                ],
-                [
-                    'code'=>'TRANSPORT_TYPE','value'=>$orders['db_type'],
-                ]
-            ]
-        ];
+    public function fhdCreateOrder(Model $orderInfo){
+        $orders = $orderInfo->toArray();
+        $fhd = new FengHuoDi();
+        $resultJson = $fhd->createOrderHandle($orders);
+        $result = json_decode($resultJson, true);
+
+        if ($result['rcode']!=0) {
+            $updateOrder=[
+                'id' => $orderInfo->id,
+                'pay_status'=> 0,
+                'yy_fail_reason'=>$result['errorMsg'],
+                'order_status'=>'下单失败咨询客服',
+            ];
+
+            $orderInfo->isUpdate(true)->save($updateOrder);
+            $this->error($resultJson);
+        }else{
+            $db= new Dbcommom();
+            $db->set_agent_amount($orders['agent_id'],'setDec',$orders['agent_price'],0,'运单号：'. $result['data']['waybillCode'].' 下单支付成功');
+            $updateOrder=[
+                'pay_status'=> 1,
+                'id' => $orderInfo->id,
+                'waybill'=>$result['data']['waybillCode'],
+                'shopbill'=>null,
+            ];
+            $orderInfo->isUpdate(true)->save($updateOrder);
+            $this->success('下单成功',null, $orderInfo);
+        }
+
     }
 
 

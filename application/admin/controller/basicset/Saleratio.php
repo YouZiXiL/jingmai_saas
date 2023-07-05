@@ -3,6 +3,7 @@
 namespace app\admin\controller\basicset;
 
 use app\common\controller\Backend;
+use app\common\model\Profit;
 use app\web\controller\Common;
 use think\Db;
 use think\Exception;
@@ -63,15 +64,24 @@ class Saleratio extends Backend
             $common = new Common();
             $agentCode = $common->generateShortCode($this->auth->id);
             $link =  request()->host() . "/u/" . $agentCode;
+
+            $profit = Profit::where('agent_id', $this->auth->id)->select();
+            if(empty($profit)){
+                $profit = Profit::where('agent_id', 0)->select();
+            }
+            $this->view->assign('agent_id', $this->auth->id);
+            $this->view->assign('profit', $profit);
             $this->view->assign('link', $link);
             $this->view->assign('row', $row);
             return $this->view->fetch();
         }
         $params = $this->request->post('row/a');
+        $profitValue = $this->request->post('profit/a'); // 利润设置
         if (empty($params)) {
             $this->error(__('Parameter %s can not be empty', ''));
         }
         $params = $this->preExcludeFields($params);
+        $profitValue = $this->preExcludeFields($profitValue);
         $result = false;
         Db::startTrans();
         try {
@@ -87,8 +97,11 @@ class Saleratio extends Backend
                 $row->allowField(true);
             }
             $result = $row->save($params);
+
+            $profitModal = new Profit();
+            $profitModal->saveAll($profitValue);
             Db::commit();
-        } catch (ValidateException|PDOException|Exception $e) {
+        } catch (ValidateException|PDOException|\Exception $e) {
             Db::rollback();
             $this->error($e->getMessage());
         }

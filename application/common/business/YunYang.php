@@ -213,11 +213,37 @@ class YunYang{
             !empty($param['vloum_width']) &&($v['vloumWidth'] = $param['vloum_width']);//货物宽度
             !empty($param['vloum_height']) &&($v['vloumHeight'] = $param['vloum_height']);//货物高度
             $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
-            $yyArr[$k]['final_price']=$finalPrice;
-            $yyArr[$k]['insert_id']=$insert_id;
-            $yyArr[$k]['tag_type']=$v['tagType'];
+            $list[$k]['final_price']=$finalPrice;
+            $list[$k]['insert_id']=$insert_id;
+            $list[$k]['tag_type']=$v['tagType'];
         }
-        return isset($yyArr)?array_values($yyArr):[];
+
+
+        if(isset($list)){
+            recordLog('channel-price', '测试数据-'. json_encode($list, JSON_UNESCAPED_UNICODE));
+            $result = [];
+            // 去除一个价格高的圆通
+            foreach ($list as $item) {
+                if ($item["tag_type"] == "圆通") {
+                    if (isset($result["圆通"])) {
+                        if ($item["final_price"] < $result["圆通"]["final_price"]) {
+                            $result["圆通"] = $item;
+                        }
+                    } else {
+                        $result["圆通"] = $item;
+                    }
+                } else {
+                    $result[] = $item;
+                }
+            }
+            recordLog('channel-price', '测试数据222-'. json_encode(array_values($result), JSON_UNESCAPED_UNICODE));
+
+            return array_values($result);
+        }else{
+            recordLog('channel-price', '测试数据-空');
+
+            return [];
+        }
     }
 
     /**
@@ -253,7 +279,11 @@ class YunYang{
         !empty($orders['vloum_height']) &&($content['vloumHeight'] = $orders['vloum_height']);
         !empty($orders['bill_remark']) &&($content['billRemark'] = $orders['bill_remark']);
         $result = $this->utils->yunyang_api('ADD_BILL_INTELLECT',$content);
-        Log::info('云洋下单结果：'.json_encode($result));
+        recordLog('yy-create-order',
+            '['. date('H:i:s', time()) .']'. PHP_EOL
+            .json_encode($result, JSON_UNESCAPED_UNICODE) . PHP_EOL
+            .'订单：'.$orders['out_trade_no']
+        );
         return $result;
     }
 }

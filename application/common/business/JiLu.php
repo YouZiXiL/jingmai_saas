@@ -116,10 +116,10 @@ class JiLu
         foreach ($result['data'] as $index => $item) {
             if($item['expressChannel'] != '5_2') continue;
             // 圆通
-            $agent_price = $item['payPrice'] + $profit['one_weight'] + $profit['more_weight'] * $weight-1;
-            $user_price = $agent_price + $agent_info['users_shouzhong'] + $agent_info['users_xuzhong'] * $weight-1;
+            $agent_price = $item['payPrice'] + $profit['one_weight'] + $profit['more_weight'] * ($weight-1);
+            $user_price = $agent_price + $profit['user_one_weight'] + $profit['user_more_weight'] * ($weight-1);
 
-            $item['tagType'] = '圆通(YT)';
+            $item['tagType'] = '圆通快递';
             $item['channelId'] = $item['expressChannel'];
             $item['agent_price'] = number_format($agent_price, 2);
             $item['final_price']=  number_format($user_price, 2);

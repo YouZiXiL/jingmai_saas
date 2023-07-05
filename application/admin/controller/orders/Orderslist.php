@@ -194,6 +194,22 @@ class Orderslist extends Backend
             if ($res['rcode']!=0){
                 $this->error($res['errorMsg']);
             }
+        }else if($row['channel_merchant'] == Channel::$fhd){
+            $content=[
+                'expressCode'=> $row['db_type'],
+                'orderId'=>$row['out_trade_no'],
+                'reason'=>'不要了'
+            ];
+            $resultJson=$common->fhd_api('cancelExpressOrder',$content);
+            $res=json_decode($resultJson,true);
+            recordLog('cancel-order',
+                '风火递-'.PHP_EOL.
+                '订单-'. $row['out_trade_no']  .PHP_EOL.
+                '返回结果-'. $resultJson
+            );
+            if($res['rcode'] != 0){
+                return R::error('取消失败请联系客服');
+            }
         }else if($row['channel_tag']=='智能'){
             $content=[
                 'shopbill'=>$row['shopbill'],

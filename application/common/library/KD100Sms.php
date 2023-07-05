@@ -5,6 +5,10 @@ namespace app\common\library;
 
 
 use app\common\model\PushNotice;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
+use think\Exception;
+use think\exception\DbException;
 use think\Log;
 use app\web\controller\Common;
 
@@ -31,6 +35,9 @@ class KD100Sms
     /**
      * 发送超重短信
      * @param array $order
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
      */
     public function overload(array $order){
         $out_trade_no=$this->utils->get_uniqid();
@@ -55,6 +62,9 @@ class KD100Sms
     /**
      * 发送耗材短信
      * @param array $order
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
      */
     public function material(array $order){
         $out_trade_no=$this->utils->get_uniqid();
@@ -80,10 +90,14 @@ class KD100Sms
     /**
      * 发送短信
      * @param string $content 短信内容
-     * @param array $order 订单
      * @param string $out_trade_no 短信单号
+     * @param array $order 订单
      * @param int $tid 短信模板
-     * @return mixed
+     * @return bool|string
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
+     * @throws Exception
      */
     public function send(string $content, string $out_trade_no, array $order,  int $tid){
 
@@ -103,6 +117,14 @@ class KD100Sms
             'callback'=> $this->domain.'/web/wxcallback/send_sms'
         ],'POST',['Content-Type: application/x-www-form-urlencoded']);
         Log::info('发送短信：'.$res);
+        $result = json_decode($res, true);
+        if( @$result['status']==1) {
+            // 代理商短信次数
+            $agentSms = $agent_info['agent_sms'] -2;
+            db('admin')
+                ->where('id',$order['agent_id'])
+                ->update(['agent_sms' => $agentSms]);
+        }
         return $res;
     }
 

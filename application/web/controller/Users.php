@@ -84,6 +84,7 @@ class Users extends Controller
             }
             else{
                 $user_detail["level"]="Plus会员";
+                $user_detail['vipvaliddate'] = $user_info->vipvaliddate;
             }
         }
         $couponlist=$user_info->getcouponlist()->where("state",1)->select();
@@ -104,10 +105,11 @@ class Users extends Controller
         $coupon->isUpdate()->saveAll($updatedata);
 
         $user_detail["couponnum"]=count($couponlist)-count($updatedata);//$user_info->getcouponlist()->where("state",1)->count();
-
+        $user_detail[''] =
         $data["data"]=$user_detail;
         return \json($data);
     }
+
     //用户返佣详情
     public function user_rebate_info(){
         $data=[

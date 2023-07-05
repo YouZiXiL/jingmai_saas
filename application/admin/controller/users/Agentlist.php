@@ -4,11 +4,16 @@ namespace app\admin\controller\users;
 
 use app\admin\model\orders\Orderslist;
 use app\common\controller\Backend;
+use app\common\model\Profit;
 use app\web\controller\Common;
 use app\web\controller\Dbcommom;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
+use Exception;
+use think\Db;
 use think\exception\DbException;
+use think\exception\PDOException;
+use think\exception\ValidateException;
 use think\Request;
 use think\response\Json;
 
@@ -83,6 +88,54 @@ class Agentlist extends Backend
         }
         $result = ['total' => $list->total(), 'rows' => $list->items()];
         return json($result);
+    }
+
+    public function edit($ids = null)
+    {
+        $row = $this->model->get($ids);
+        if (!$row) {
+            $this->error(__('No Results were found'));
+        }
+        $profit = Profit::where('agent_id', $ids)->select();
+        if (empty($profit)) $profit = Profit::where('agent_id', 0)->select();
+        if (empty($profit)) $this->error('没有设置利润');
+        $row['profit'] = $profit;
+        $adminIds = $this->getDataLimitAdminIds();
+        if (is_array($adminIds) && !in_array($row[$this->dataLimitField], $adminIds)) {
+            $this->error(__('You have no permission'));
+        }
+        if (false === $this->request->isPost()) {
+            $this->view->assign('row', $row);
+            return $this->view->fetch();
+        }
+        $params = $this->request->post('row/a');
+        $profitValue = $this->request->post('profit/a'); // 利润设置
+        if (empty($params) || empty($profitValue)) {
+            $this->error(__('Parameter %s can not be empty', ''));
+        }
+        $params = $this->preExcludeFields($params);
+        $profitValue = $this->preExcludeFields($profitValue);
+        $result = false;
+        Db::startTrans();
+        try {
+            //是否采用模型验证
+            if ($this->modelValidate) {
+                $name = str_replace("\\model\\", "\\validate\\", get_class($this->model));
+                $validate = is_bool($this->modelValidate) ? ($this->modelSceneValidate ? $name . '.edit' : $name) : $this->modelValidate;
+                $row->validateFailException()->validate($validate);
+            }
+            $result = $row->allowField(true)->save($params);
+            $profitModal = new Profit();
+            $profitModal->saveAll($profitValue);
+            Db::commit();
+        } catch (ValidateException|PDOException|Exception $e) {
+            Db::rollback();
+            $this->error($e->getMessage());
+        }
+        if (false === $result) {
+            $this->error(__('No rows were updated'));
+        }
+        $this->success();
     }
 
     /**

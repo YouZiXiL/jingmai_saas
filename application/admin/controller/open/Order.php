@@ -6,10 +6,8 @@ use app\admin\business\open\OrderBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
 use app\common\business\YunYang;
+use app\common\config\Channel;
 use app\common\controller\Backend;
-use app\common\library\R;
-use app\web\controller\Dbcommom;
-use think\Controller;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\Exception;
@@ -30,10 +28,11 @@ class Order extends Backend
 
     /**
      *  下单
-     * @param YunYang $yunYang
+     * @param OrderBusiness $orderBusiness
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException
+     * @throws Exception
      */
     public function create(OrderBusiness $orderBusiness)
     {
@@ -53,7 +52,7 @@ class Order extends Backend
 //        }
 //        if(!$channel) $this->error('选择渠道有误');
 
-        if ($agent_info['amount']<100){
+        if ($agent_info['amount']<=100){
             $this->error('该商户余额不足100元,请充值后下单');
         }
 
@@ -70,36 +69,16 @@ class Order extends Backend
 
         $orderInfo = $orderBusiness->createOrder($channel, $agent_info);
         switch ($channel['channel_merchant']){
-            case 'YY':
-                $result = $orderBusiness->yyCreateOrder($channel, $agent_info);
+            case Channel::$yy:
+                $orderBusiness->yyCreateOrder($orderInfo);
                 break;
-            case 'FHD':
-                $result = $orderBusiness->fhdCreateOrder($channel, $agent_info);
+            case Channel::$fhd:
+                $orderBusiness->fhdCreateOrder($orderInfo);
+                break;
+            case Channel::$jilu:
+                $orderBusiness->jlCreateOrder($orderInfo);
+                break;
         }
-
-
-
-        if ($result['code'] != 1) {
-            $updateOrder=[
-                'id' => $orderInfo->id,
-                'pay_status'=>0,
-                'yy_fail_reason'=>$result['message'],
-                'order_status'=>'下单失败咨询客服',
-            ];
-            $orderInfo->isUpdate(true)->save($updateOrder);
-            $this->error('智能下单失败');
-        }else{
-            $res = $result['result'];
-            $db= new Dbcommom();
-            $db->set_agent_amount($agent_info['id'],'setDec',$orderData['agent_price'],0,'运单号：'. $res['waybill'].' 下单支付成功');
-            $updateOrder=[
-                'id' => $orderInfo->id,
-                'waybill'=>$res['waybill'],
-                'shopbill'=>$res['shopbill'],
-            ];
-        }
-        $orderInfo->isUpdate(true)->save($updateOrder);
-        $this->success('下单成功',null, $orderInfo);
     }
 
     /**
@@ -131,7 +110,6 @@ class Order extends Backend
             'data' => $fengHuoDi->setParam($fhdQuery),
             'header' => ['Content-Type = application/x-www-form-urlencoded; charset=utf-8']
         ];
-
         $yunYang = new \app\common\business\YunYang();
         $yyParams = [
             'url' => $yunYang->baseUlr,
@@ -140,13 +118,22 @@ class Order extends Backend
 
         $agent_info=db('admin')->where('id',$this->auth->id)->find();
         $utils = new \app\web\controller\Common();
-        $response =  $utils->multiRequest($jiluParams, $fhdParams, $yyParams);
-        $jiluPackage = $orderBusiness->jlPriceHandle($response[0], $agent_info, $paramData);
-        $fhdDb = $orderBusiness->fhdPriceHandle($response[1], $agent_info, $paramData);
-        $yyPackage = $orderBusiness->yyPriceHandle($response[2], $agent_info, $paramData);
-        $packageList = $jiluPackage + $yyPackage;
-        isset($fhdDb) && $packageList[] = $fhdDb;
+        $response =  $utils->multiRequest($yyParams, $jiluParams, $fhdParams);
 
+        $profit = db('profit')->where('agent_id', $agent_info['id'])
+            ->where('mch_code', 'JILU')
+            ->find();
+        if(empty($profit)){
+            $profit = db('profit')->where('agent_id', 0)
+                ->where('mch_code', 'JILU')
+                ->find();
+        }
+
+        $yyPackage = $orderBusiness->yyPriceHandle($response[0], $agent_info, $paramData);
+        $jiluPackage = $orderBusiness->jlPriceHandle($response[1], $agent_info, $paramData, $profit);
+        $fhdDb = $orderBusiness->fhdPriceHandle($response[2], $agent_info, $paramData);
+        $packageList = array_merge_recursive($jiluPackage, $yyPackage);
+        isset($fhdDb) && $packageList[] = $fhdDb;
         if (empty($packageList)){
             throw new Exception('没有指定快递渠道请联系客服');
         }

@@ -712,11 +712,11 @@ class Wxcallback extends Controller
             }
             return json(['code'=>1, 'message'=>'ok']);
         }catch (\Exception $e){
-            recordLog('yy-callback',
-                  $e->getLine() . '-' .$e->getMessage().PHP_EOL
+            recordLog('channel-callback-err',
+                '云洋-' . date('H:i:s', time()). PHP_EOL.
+                $e->getLine().'：'.$e->getMessage().PHP_EOL
                 .$e->getTraceAsString().PHP_EOL
-                .'参数：'.json_encode($pamar).PHP_EOL
-                .date('Y-m-d H:i:s', time()) );
+                .'参数：'.json_encode($pamar, JSON_UNESCAPED_UNICODE)  );
             return json(['code'=>0, 'message'=>'推送失败']);
         }
     }
@@ -726,8 +726,11 @@ class Wxcallback extends Controller
      * 风火递
      */
     function fhd_callback(){
-        $pamar=$this->request->post();
-        file_put_contents('fhd_callback.txt',json_encode($pamar).PHP_EOL,FILE_APPEND);
+        $pamar = $this->request->post();
+        recordLog('channel-callback',
+            '风火递-' . date('H:i:s', time()). PHP_EOL
+            . json_encode($pamar , JSON_UNESCAPED_UNICODE)
+        );
         try {
             if (empty($pamar)){
                 return json(['code'=>0, 'message'=>'传来的数据为空']);
@@ -737,6 +740,7 @@ class Wxcallback extends Controller
 
             $content=[
                 'expressCode'=>$result['expressCode']??null,
+                'waybillCode'=>$result['orderEvent']['waybillCode']??'',
                 'orderId'=>$result['orderId']??null,
                 'orderStatusCode'=>$result['orderStatusCode']??null,
                 'orderStatus'=>$result['orderStatus']??null,
@@ -842,6 +846,9 @@ class Wxcallback extends Controller
                     "updatetime"=>time()
                 ];
                 $up_data = [];
+                if($content['waybillCode']){
+                    $up_data['waybill'] = $content['waybillCode'];
+                }
                 if (isset($content['courierPhone'])){
                     $up_data['comments'] = "快递员姓名：" . @$content['courierName'] . "，联系电话：{$content['courierPhone']}";
                 }
@@ -1019,8 +1026,8 @@ class Wxcallback extends Controller
                 if(
                     (
                         @$result['orderStatusCode']=='GOBACK'
-                        || @$result['orderStatusCode']=='CANCEL'
-                        || @$result['orderStatusCode']=='INVALID'
+//                        || @$result['orderStatusCode']=='CANCEL'
+//                        || @$result['orderStatusCode']=='INVALID'
                     )
                     &&$orders['pay_status']!=2
                 ){
@@ -1105,15 +1112,13 @@ class Wxcallback extends Controller
                 }
                 $rebatelist->save($rebatelistdata);
             }
-            Log::info("风火递---处理成功");
             return json(['code'=>0, 'message'=>'推送成功']);
         }catch (\Exception $e){
-            recordLog('fhd-callback',
-                'msg：  '.$e->getMessage().PHP_EOL
-                .'line： '.$e->getLine().PHP_EOL
-                .'trace：'.$e->getTraceAsString().PHP_EOL
-                .'param：'.json_encode($pamar).PHP_EOL
-                .date('Y-m-d H:i:s', time()).PHP_EOL.PHP_EOL );
+            recordLog('channel-callback-err',
+                '风火递-' . date('H:i:s', time()). PHP_EOL.
+                $e->getLine().'：'.$e->getMessage().PHP_EOL
+                .$e->getTraceAsString().PHP_EOL
+                .'参数：'.json_encode($pamar, JSON_UNESCAPED_UNICODE)  );
             return json(['code'=>1, 'message'=>$e->getMessage()]);
         }
     }
@@ -1205,12 +1210,11 @@ class Wxcallback extends Controller
                 $orderModel->save($updateOrder);
             }
         }catch (\Exception $e) {
-            recordLog('wanli-callback',
-                'msg：  ' . $e->getMessage() . PHP_EOL
-                . 'line： ' . $e->getLine() . PHP_EOL
-                . 'trace：' . $e->getTraceAsString() . PHP_EOL
-                . 'param：' . json_encode($backData) . PHP_EOL
-                . date('Y-m-d H:i:s', time()) . PHP_EOL . PHP_EOL);
+            recordLog('channel-callback-err',
+                '万利-' . date('H:i:s', time()). PHP_EOL.
+                $e->getLine().'：'.$e->getMessage().PHP_EOL
+                .$e->getTraceAsString().PHP_EOL
+                .'参数：'.json_encode($backData, JSON_UNESCAPED_UNICODE));
             return json(['code' => 1, 'message' => $e->getMessage()]);
         }
     }
@@ -1425,8 +1429,8 @@ class Wxcallback extends Controller
                     $yyResult = $yy->createOrderHandle($orders);
                     if ($yyResult['code']!=1){
                         recordLog('channel-create-order-err',
-                            '云洋：'. json_encode($yyResult) . PHP_EOL
-                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
+                            '云洋：'. json_encode($yyResult, JSON_UNESCAPED_UNICODE) . PHP_EOL
+                            .'订单id：'.$orders['out_trade_no']
                         );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付成功下单失败  执行退款操作
@@ -1451,6 +1455,7 @@ class Wxcallback extends Controller
                         }
 
                     }else{
+
                         $rebateList = new RebateListController();
                         $rebateList->createRebateByOrder($orders);
                         //支付成功下单成功
@@ -1476,7 +1481,7 @@ class Wxcallback extends Controller
                     if ($result['rcode']!=0){ // 下单失败
                         recordLog('channel-create-order-err',
                             '风火递：'.$resultJson . PHP_EOL
-                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
+                            .'订单id：'.$orders['out_trade_no']
                         );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付下单失败  执行退款操作
@@ -1778,9 +1783,11 @@ class Wxcallback extends Controller
         }catch (\Exception $e){
             recordLog('wx-callback-err',
                 $e->getLine() .'-'. $e->getMessage().PHP_EOL
-                    .$e->getTraceAsString()
+                    .$e->getTraceAsString().PHP_EOL
+                    .'参数：' . json_encode(input()).PHP_EOL
+                    . 'inBody：' . $inBody.PHP_EOL
             );
-            exit('fail1');
+            exit('fail');
         }
     }
 
@@ -1876,9 +1883,6 @@ class Wxcallback extends Controller
 
     /**
      * 资源包微信下单回调
-     * @throws DataNotFoundException
-     * @throws ModelNotFoundException
-     * @throws DbException
      */
     function resource_buy(){
         $inWechatpaySignature = $this->request->header('Wechatpay-Signature');// 请根据实际情况获取
@@ -1949,7 +1953,7 @@ class Wxcallback extends Controller
             exit('success');
         }catch (Exception $e){
             Log::log($e->getMessage());
-            exit('success');
+            exit('fail');
         }
     }
 
@@ -3720,10 +3724,9 @@ class Wxcallback extends Controller
         catch (Exception $e){
             recordLog('channel-callback-err',
                 'Q必达-' . date('H:i:s', time()). PHP_EOL.
-                'msg：  '.$e->getMessage().PHP_EOL
-                .'line： '.$e->getLine().PHP_EOL
-                .'trace：'.$e->getTraceAsString().PHP_EOL
-                .'param：'.json_encode($params)  );
+                $e->getLine().'：'.$e->getMessage().PHP_EOL
+                .$e->getTraceAsString().PHP_EOL
+                .'参数：'.json_encode($params, JSON_UNESCAPED_UNICODE)  );
             exit("fail");
         }
 
@@ -3754,7 +3757,7 @@ class Wxcallback extends Controller
             $subpriceInfo = []; // 退款对象
             $update = []; // 更新订单数据
             if($sendType == 'trackType'){
-                $expressStatus = $params['apiDataInfo']['expressStatus'];
+                $expressStatus = $params['apiDataInfo']['expressStatus']??null;
                 $expressTrack = $params['apiDataInfo']['expressTrack'];
             }else{
                 $actualWeight = $params['apiDataInfo']['actualWeight'];
@@ -3886,10 +3889,9 @@ class Wxcallback extends Controller
         }catch (Exception $e){
             recordLog('channel-callback-err',
                 '极鹭-' . date('H:i:s', time()). PHP_EOL
-                .'msg：  '.$e->getMessage().PHP_EOL
-                .'line： '.$e->getLine().PHP_EOL
-                .'trace：'.$e->getTraceAsString().PHP_EOL
-                .'param：'.$raw);
+                .$e->getLine().'：'.$e->getMessage().PHP_EOL
+                . $e->getTraceAsString().PHP_EOL
+                .'参数：'.$raw);
             return json(['code'=>-1, 'fail']);
         }
 

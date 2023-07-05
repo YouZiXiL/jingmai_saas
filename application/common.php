@@ -539,6 +539,7 @@ if(!function_exists('recordLog')){
     function recordLog(string $name, string $content){
         $date = date('y/m',time());
         $day = date('d',time());
+        $time = date('H:i:s', time());
         $path = root_path("runtime/log/{$name}/{$date}");
         $file = "{$path}/{$day}.log";
         if(!file_exists($path)){
@@ -547,7 +548,7 @@ if(!function_exists('recordLog')){
         if(!is_file($file)){
             fopen($file, "w",true);
         }
-        file_put_contents( $file, $content.PHP_EOL.'-------------'. PHP_EOL, FILE_APPEND);
+        file_put_contents( $file, "[{$time}]".PHP_EOL. $content.PHP_EOL.'-----------------'. PHP_EOL, FILE_APPEND);
     }
 }
 

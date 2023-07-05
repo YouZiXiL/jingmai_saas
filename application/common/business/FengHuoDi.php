@@ -88,7 +88,7 @@ class FengHuoDi
         $fhdResult['package_count']=$param['package_count'];//包裹数量
         $fhdResult['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
         $fhdResult['channel_merchant'] = 'FHD';
-        $fhdResult['channel']='德邦快递';
+        $fhdResult['channel']='德邦';
         $fhdResult['freight']=sprintf("%.2f",$total['fright']*0.68);
         $fhdResult['send_start_time']=$time;
         $fhdResult['send_end_time']=$sendEndTime;
