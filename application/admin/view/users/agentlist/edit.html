@@ -90,7 +90,7 @@
     {volist name="$row:profit" id="vo" key="key" }
     {if $vo.agent_id }
         <input name="profit[{$vo:mch_code}][id]" value="{$vo:id}" class="hidden" />
-    {/else}
+    {else /}
         <input name="profit[{$vo:mch_code}][user_one_weight]" value="{$vo.user_one_weight}" class="hidden" />
         <input name="profit[{$vo:mch_code}][user_more_weight]" value="{$vo.user_more_weight}" class="hidden" />
     {/if}

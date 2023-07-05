@@ -99,7 +99,13 @@ class Saleratio extends Backend
             $result = $row->save($params);
 
             $profitModal = new Profit();
-            $profitModal->saveAll($profitValue);
+            $profit = $profitModal->where('agent_id', $this->auth->id)->value('id');
+            if($profit){
+                foreach ($profitValue as &$item) {
+                    $item['id'] = $profit;
+                }
+            }
+            $profitModal->saveAll(array_values($profitValue));
             Db::commit();
         } catch (ValidateException|PDOException|\Exception $e) {
             Db::rollback();
