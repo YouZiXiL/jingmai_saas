@@ -24,7 +24,7 @@ class Users extends Controller
 
     protected $admin;
 
-    protected $common;
+    protected Common $common;
 
     protected $checkinscores;
     public function _initialize()
@@ -693,6 +693,7 @@ class Users extends Controller
             }
         }
         catch (Exception $e){
+            dd($e->getTrace());
             file_put_contents('xiochengxucode.txt',$e->getMessage().PHP_EOL.$url.PHP_EOL,FILE_APPEND);
             $data["status"]=400;
             $data["msg"]="网络错误";

@@ -64,7 +64,7 @@ class KD100Sms
      * @param array $order
      * @throws DataNotFoundException
      * @throws DbException
-     * @throws ModelNotFoundException
+     * @throws ModelNotFoundException|Exception
      */
     public function material(array $order){
         $out_trade_no=$this->utils->get_uniqid();
@@ -116,10 +116,10 @@ class KD100Sms
             'outorder'=>$out_trade_no,
             'callback'=> $this->domain.'/web/wxcallback/send_sms'
         ],'POST',['Content-Type: application/x-www-form-urlencoded']);
-        Log::info('发送短信：'.$res);
+        recordLog('sms',  '单号：' . $order['waybill'].PHP_EOL.$res);
         $result = json_decode($res, true);
-        if( @$result['status']==1) {
-            // 代理商短信次数
+        if(isset($result) && @$result['status']==1) {
+            // 发送成功代理商短信次数
             $agentSms = $agent_info['agent_sms'] -2;
             db('admin')
                 ->where('id',$order['agent_id'])
@@ -146,11 +146,10 @@ class KD100Sms
             'comment' => $res,
         ];
         $result = json_decode($res, true);
-        if( @$result['status']!=1) {
-            Log::error('发送短信失败'.$order['waybill']);
-            $pushData['status'] = 2;
-        }else{
+        if (isset($result) && $result['status'] == 1){
             $pushData['status'] = 1;
+        }else{
+            $pushData['status'] = 2;
         }
         PushNotice::create($pushData);
     }

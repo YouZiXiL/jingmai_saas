@@ -664,6 +664,9 @@ class Yunyang extends Controller
                 return json(['status'=>400,'data'=>'','msg'=>'商户号配置错误,请联系管理员']);
             }
         }catch (Exception $e){
+            recordLog('create-order-err',
+                $e->getLine().'：'.$e->getMessage().PHP_EOL
+                .$e->getTraceAsString() );
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
 
