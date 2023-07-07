@@ -89,11 +89,11 @@ class Login extends Controller
             $user_info['agent_id']=$agent_id;
             $user_info['token']=$_3rd_session;
             //如果携带邀请码登录
-            if(!empty($param["invitercode"])){
-                $pauser=$user->get(["myinvitecode"=>$param["invitercode"]]);
+            if(!empty($param["invitcode"])){
+                $pauser=$user->get(["myinvitecode"=>$param["invitcode"]]);
                 if(!empty($pauser)){
-                    $user_info["invitercode"]=$param["invitercode"];
-                    $user_info["fainvitercode"]=$pauser["invitercode"];
+                    $user_info["invitercode"]=$param["invitcode"];
+                    $user_info["fainvitercode"]=$pauser["invitcode"];
                 }
                 //超级B 身份核验
                 if(!empty($pauser->rootid)){

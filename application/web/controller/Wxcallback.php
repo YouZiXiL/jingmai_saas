@@ -408,7 +408,7 @@ class Wxcallback extends Controller
                 $aliOrder = $orders['pay_type'] == 2;
                 $autoOrder = $orders['pay_type'] == 3;
 
-                $users= $autoOrder?null:db('users')->where('id',$orders['user_id'])->find();
+                $users = $autoOrder?null:db('users')->where('id',$orders['user_id'])->find();
                 if(!empty($users["rootid"])){
                     $superB=Admin::get($users["rootid"]);
                 } else{
@@ -423,7 +423,6 @@ class Wxcallback extends Controller
                     $rebateController = new RebateListController();
                     $rebate = $rebateController->yyPackage($rebate, $orders, $superB);
                 }
-
 
                 if($wxOrder){
                     $agent_auth_xcx=db('agent_auth')
@@ -450,13 +449,8 @@ class Wxcallback extends Controller
                     $up_data['order_status']=$pamar['type'];
                 }
 
+                $up_data['final_weight'] = $pamar['calWeight'];
 
-
-                $up_data=[
-                    'final_freight'=>$pamar['totalFreight']??0,
-                    'comments'=>str_replace("null","",$pamar['comments']),
-                    'final_weight'=>$pamar['calWeight']
-                ];
                 if(!empty($pamar['type'])){
                     $up_data['order_status']=$pamar['type'];
                 }

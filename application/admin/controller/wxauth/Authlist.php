@@ -225,8 +225,12 @@ class Authlist extends Backend
             if(!$template)  $this->error("模板未授权");
             $templateAuthToken = $template->auth_token;
             $open = Alipay::start()->open();
-            $version = $open->getMiniVersionList($templateAuthToken);
+            $result = $open->getMiniVersionList($templateAuthToken);
+            if(empty($result) || $result->code != 10000){
+                dd($result);
+            }
             //      * INIT: 开发中, AUDITING: 审核中, AUDIT_REJECT: 审核驳回, WAIT_RELEASE: 待上架, BASE_AUDIT_PASS: 准入不可营销, GRAY: 灰度中, RELEASE: 已上架, OFFLINE: 已下架, AUDIT_OFFLINE: 已下架;
+            $version = $result->app_version_infos;
             $name=  [
                 'INIT'  => '开发中',
                 'AUDITING'  => '审核中',

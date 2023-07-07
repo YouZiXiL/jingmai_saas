@@ -247,13 +247,8 @@ class AliOpen
             $result = $this->aop->execute($request, null, $appAuthToken);
 
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
-            $resultCode = $result->$responseNode->code;
-            if(!empty($resultCode)&&$resultCode == 10000){
-                return $result->$responseNode->app_version_infos??null;
-            } else {
-                Log::error( ["获取小程序版本信息失败：" =>  $result->$responseNode]);
-                throw new Exception('获取小程序版本信息失败');
-            }
+            return $result->$responseNode;
+
         } catch (Exception $e) {
             Log::error( "获取小程序版本信息失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
             throw new Exception('获取小程序版本信息失败');
