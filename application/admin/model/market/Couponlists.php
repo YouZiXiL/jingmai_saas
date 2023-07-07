@@ -67,7 +67,12 @@ class Couponlists extends Model
 
     public function getStateList()
     {
-        return ['1' => __('State 1'), '2' => __('State 2'), '3' => __('State 3')];
+        return [
+            '1' => __('State 1'),
+            '2' => __('State 2'),
+            '3' => __('State 3'),
+            '4' => __('State 4'),
+        ];
     }
 
 

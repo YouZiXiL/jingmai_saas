@@ -123,5 +123,20 @@ class Couponlists extends Backend
         $this->success();
     }
 
+    /**
+     * 作废订单
+     * @return void
+     */
+    public function invalidate($ids){
+        $agent_id = $this->auth->id;
+        if (in_array(2,$this->auth->getGroupIds())) {
+            $list = $this->model->where("agent_id", $this->auth->id);
+        } else {
+            $list = $this->model;
+        }
+        $res =  $list->where('id', $ids)->update(['state' => 4]);
+        $res?$this->success('操作成功'):$this->error('操作失败');
+    }
+
 
 }

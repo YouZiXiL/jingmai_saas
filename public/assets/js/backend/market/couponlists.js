@@ -1,4 +1,4 @@
-define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefined, Backend, Table, Form) {
+define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefined, Backend, Table, Form, Toastr) {
 
     var Controller = {
         index: function () {
@@ -36,13 +36,27 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'type', title: __('Type'), searchList: {"1":__('Type 1'),"2":__('Type 2')}, formatter: Table.api.formatter.normal},
                         {field: 'scene', title: __('Scene'), searchList: {"1":__('Scene 1'),"2":__('Scene 2')}, formatter: Table.api.formatter.normal},
                         {field: 'uselimits', title: __('Uselimits')},
-                        {field: 'state', title: __('State'), searchList: {"1":__('State 1'),"2":__('State 2'),"3":__('State 3')}, formatter: Table.api.formatter.normal},
+                        {field: 'state', title: __('State'), searchList: {"1":__('State 1'),"2":__('State 2'),"3":__('State 3'), "4":__('State 4')}, formatter: Table.api.formatter.normal},
                         {field: 'validdatestart', title: __('Validdatestart'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'validdateend', title: __('Validdateend'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         //{field: 'limitdate', title: __('Limitdate'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         //{field: 'updatetime', title: __('Updatetime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
-                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
+                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, buttons:[
+                            {
+                                name: 'invalidate',
+                                text: '作废',
+                                title: '作废',
+                                classname: 'btn btn-xs btn-info btn-magic btn-ajax',
+                                url: 'market/couponlists/invalidate',
+                                confirm: function (row) {
+                                    return '确认作废优惠券？';
+                                },
+                                success: function (data) {
+                                    table.bootstrapTable('refresh');
+                                },
+                            },
+                        ], formatter: Table.api.formatter.operate}
                     ]
                 ]
             });
