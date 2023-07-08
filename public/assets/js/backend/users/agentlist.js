@@ -103,7 +103,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         Layer.open({
                                             icon:0,
                                             title:['账户加款'],
-                                            content:'<h4 class="text-danger">请谨慎操作</h4><h5 class="text-danger">后台将会记录操作数据，请悉知！</h5><label style="float:left">加款金额：</label><input id="amount" autocomplete="off" step="1" type="number">',
+                                            content:'<h4 class="text-danger">请谨慎操作</h4><h5 class="text-danger">后台将会记录操作数据，请悉知！</h5><label style="float:left">加款金额：</label><input id="amount" autocomplete="off" step="0.01" type="number">',
                                             btn:['确认','取消'],
                                             yes:function (index){
                                                 Fast.api.ajax({

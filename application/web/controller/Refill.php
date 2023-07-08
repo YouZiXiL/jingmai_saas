@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\common\library\R;
 use app\web\model\Refilllist;
 use think\Controller;
 use think\Exception;
@@ -434,6 +435,7 @@ class Refill extends Controller
     }
     //话费 充值
     public function recharge_hf(){
+        return R::error('暂停充值');
         $param=$this->request->param();
         if( empty($param["product_id"]) || empty($param["mobile"]) ||empty($param["amount"])||empty($param["cateid"]) || empty($param["selectid"])){
             return json(["status"=>"400","msg"=>"请输入有效参数","data"=>""]);
@@ -576,6 +578,7 @@ class Refill extends Controller
 
     //电费 充值
     public function recharge_df(){
+        return R::error('暂停充值');
         $param=$this->request->param();
         if( empty($param["product_id"]) || empty($param["mobile"]) ||empty($param["amount"])||empty($param["cateid"]) ||empty($param["area"])||empty($param["city"])){
             return json(["status"=>400,"msg"=>"请输入有效参数","data"=>""]);
@@ -720,6 +723,7 @@ class Refill extends Controller
     }
     //燃气费 充值
     public function recharge_rqf(){
+        return R::error('暂停充值');
         $param=$this->request->param();
         if( empty($param["product_id"]) || empty($param["mobile"]) ||empty($param["amount"])||empty($param["cateid"])){
             return json(["status"=>400,"msg"=>"请输入有效参数","data"=>""]);

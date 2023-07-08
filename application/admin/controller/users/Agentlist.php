@@ -167,12 +167,12 @@ class Agentlist extends Backend
         if (empty($param['amount'])){
             $this->error(__('请输入金额'));
         }
-        if (!preg_match("/^[1-9][0-9]*$/",$param['amount'])){
-            $this->error(__('请输入整数'));
-        }
-        if ($param['amount']<100){
-            $this->error(__('最低充值100元'));
-        }
+//        if (!preg_match("/^[1-9][0-9]*$/",$param['amount'])){
+//            $this->error(__('请输入整数'));
+//        }
+//        if ($param['amount']<100){
+//            $this->error(__('最低充值100元'));
+//        }
 
         $common= new Common();
         $Dbcommmon= new Dbcommom();
