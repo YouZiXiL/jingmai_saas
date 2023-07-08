@@ -50,17 +50,30 @@ class Dbcommom
                     $AgentAuth=AgentAuth::get(['agent_id'=>$id,'auth_type'=>1]);//授权的公众号
                     if ($AgentAuth){
                         $common=new Common();
-                        $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/template/send?access_token='.$common->get_authorizer_access_token($AgentAuth['app_id']),[
-                            'touser'=>$Admin['open_id'],  //接收者openid
-                            'template_id'=>$AgentAuth['after_template'],
-                            //'url'=>'http://mp.weixin.qq.com',  //模板跳转链接
-                            'data'=>[
-                                'first'=>['value'=>$AgentAuth['name'].' 后台余额不足，请及时充值'],
-                                'keyword1'=>['value'=>'当前余额：'.$after_amount.'元'],
-                                'keyword2'=>['value'=>'请您尽快充值，以免影响正常业务','color'=>'#ff0000'],
-                                'remark'  =>['value'=>'请您尽快充值，以免影响正常业务','color'=>'#ff0000']
-                            ]
-                        ],'POST');
+                        if(strtotime($AgentAuth['update_time'])> strtotime('2023-06-07')){
+                            $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/template/send?access_token='.$common->get_authorizer_access_token($AgentAuth['app_id']),[
+                                'touser'=>$Admin['open_id'],  //接收者openid
+                                'template_id'=>$AgentAuth['pay_template'],
+                                //'url'=>'http://mp.weixin.qq.com',  //模板跳转链接
+                                'data'=>[
+                                    'keyword1'=>['value'=>'当前余额：'.$after_amount.'元'],
+                                    'keyword2'=>['value'=>'请您尽快充值，以免影响正常业务','color'=>'#ff0000'],
+                                ]
+                            ],'POST');
+                        }else{
+                            $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/template/send?access_token='.$common->get_authorizer_access_token($AgentAuth['app_id']),[
+                                'touser'=>$Admin['open_id'],  //接收者openid
+                                'template_id'=>$AgentAuth['after_template'],
+                                //'url'=>'http://mp.weixin.qq.com',  //模板跳转链接
+                                'data'=>[
+                                    'first'=>['value'=>$AgentAuth['name'].' 后台余额不足，请及时充值'],
+                                    'keyword1'=>['value'=>'当前余额：'.$after_amount.'元'],
+                                    'keyword2'=>['value'=>'请您尽快充值，以免影响正常业务','color'=>'#ff0000'],
+                                    'remark'  =>['value'=>'请您尽快充值，以免影响正常业务','color'=>'#ff0000']
+                                ]
+                            ],'POST');
+                        }
+
                     }
                 }
 
@@ -68,8 +81,10 @@ class Dbcommom
             Db::commit();
             return true;
         }catch (\Exception $e){
-            Log::error('改变代理商余额-错误：'. $e->getMessage());
-            file_put_contents('set_agent_amount.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+            recordLog('agent-amount',
+                '[error]-('. $e->getLine() . ')-' . $e->getMessage(). PHP_EOL.
+                $e->getTraceAsString()
+            );
             // 回滚事务
             Db::rollback();
             return false;

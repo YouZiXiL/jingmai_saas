@@ -342,6 +342,7 @@ class Wxcallback extends Controller
             $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->find();
 
             if ($agent_auth){
+                $data['update_time'] = date('Y-m-d H:i:s');
                 db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->update($data);
             }else{
                 $data['xcx_audit'] = $parm['auth_type'] == 2?0:5;
