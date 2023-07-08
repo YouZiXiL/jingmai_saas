@@ -10323,7 +10323,7 @@ var provinceData = [
     },
     {
         "code": "50",
-        "name": "重庆市",
+        "name": "重庆",
         "children": [
             {
                 "code": "5001",
