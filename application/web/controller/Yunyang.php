@@ -325,14 +325,10 @@ class Yunyang extends Controller
                 $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
                 $jiluPackage = $jiLu->queryPriceHandle($response[2], $agent_info, $param, $profit);
 
-                recordLog('channel-price-err', '测试数据111-'. json_encode($yyPackage, JSON_UNESCAPED_UNICODE));
-                recordLog('channel-price-err', '测试数据222-'. json_encode($jiluPackage, JSON_UNESCAPED_UNICODE));
 
                 $packageList = array_merge_recursive($jiluPackage, $yyPackage);
-                recordLog('channel-price-err', '测试数据333-'. json_encode($packageList, JSON_UNESCAPED_UNICODE));
 
                 isset($fhdDb) && $packageList[] = $fhdDb;
-                recordLog('channel-price-err', '测试数据444-'. json_encode($packageList, JSON_UNESCAPED_UNICODE));
                 usort($packageList, function ($a, $b){
                     return $a['final_price'] <=> $b['final_price'];
                 });

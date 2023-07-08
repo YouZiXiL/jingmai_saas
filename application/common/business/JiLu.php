@@ -113,6 +113,10 @@ class JiLu
             return [];
         }
         $weight = $param['weight']; // 下单重量
+        $qudao_close = explode('|', $agent_info['qudao_close']);
+        if (in_array('圆通快递',$qudao_close)){
+            return [];
+        }
         foreach ($result['data'] as $index => $item) {
             if($item['expressChannel'] != '5_2') continue;
             // 圆通
