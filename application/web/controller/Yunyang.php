@@ -327,9 +327,17 @@ class Yunyang extends Controller
 
 
                 $packageList = array_merge_recursive($jiluPackage, $yyPackage);
-
-                isset($fhdDb) && $packageList[] = $fhdDb;
+                $packageList[] = $fhdDb;
                 usort($packageList, function ($a, $b){
+                    if (empty($a['final_price']) || empty($b['final_price'])) {
+                        if (empty($a['final_price'])) {
+                            unset($a);
+                        }
+                        if (empty($b['final_price'])) {
+                            unset($b);
+                        }
+                        return 0;
+                    }
                     return $a['final_price'] <=> $b['final_price'];
                 });
             }else{

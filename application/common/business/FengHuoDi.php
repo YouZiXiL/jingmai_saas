@@ -52,7 +52,10 @@ class FengHuoDi
             recordLog('channel-price-err','风火递' . $content. PHP_EOL);
             return [];
         }
-
+        $qudao_close=explode('|', $agent_info['qudao_close']);
+        if (in_array('德邦',$qudao_close)){
+            return [];
+        }
         $time=time();
         $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
         foreach ($result['data']['predictInfo']['detail'] as $item){
