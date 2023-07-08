@@ -4,7 +4,10 @@ namespace app\admin\controller\market;
 
 use app\common\controller\Backend;
 use app\web\controller\Common;
+use app\web\model\Couponlist;
 use think\Db;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
@@ -125,17 +128,39 @@ class Couponlists extends Backend
 
     /**
      * 作废订单
+     * @param $ids
      * @return void
+     * @throws DbException
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
      */
     public function invalidate($ids){
+
         $agent_id = $this->auth->id;
         if (in_array(2,$this->auth->getGroupIds())) {
             $list = $this->model->where("agent_id", $this->auth->id);
         } else {
             $list = $this->model;
         }
-        $res =  $list->where('id', $ids)->update(['state' => 4]);
-        $res?$this->success('操作成功'):$this->error('操作失败');
+        $res =  $list->where('id', $ids)->find();
+        $papercode = $res->papercode;
+        $coupons = new Couponlist();
+        $couponsList = $coupons->where([
+            'papercode' => $papercode,
+            'agent_id' => $agent_id,
+        ])->select();
+        $couponsUpdate = [];
+        foreach ($couponsList as $item) {
+            $couponsUpdate[] = [
+                'id' =>   $item['id'],
+                'state' => 4,
+            ];
+        }
+
+        $list->where('id', $ids)->update(['state' => 4]);
+        $coupons->saveAll($couponsUpdate);
+        $this->success('操作成功');
+
     }
 
 
