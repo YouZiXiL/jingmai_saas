@@ -194,6 +194,12 @@ class Yunyang extends Controller
             $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
 
             if (empty($jijian_address)||empty($shoujian_address)){
+                recordLog("channel-price-err",
+                    '寄件id- '.$param['jijian_id'] .PHP_EOL.
+                    '寄件地址- '. json_encode($jijian_address, JSON_UNESCAPED_UNICODE)  .PHP_EOL.
+                    '收件id- '. $param['shoujian_id'] .PHP_EOL.
+                    '收件地址- '. json_encode($shoujian_address, JSON_UNESCAPED_UNICODE)
+                );
                 throw new Exception('收件或寄件信息错误');
             }
             $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
