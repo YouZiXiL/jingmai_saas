@@ -67,7 +67,7 @@ class FengHuoDi
             }
         }
         if (empty($total)) return null;
-        $agent_price= $total['fright']*0.68+$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
+        $agent_price= $total['fright']*0.68 + $total['fright'] * $agent_info['db_agent_ratio']/100;//代理商价格
         $users_price= $agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
         $admin_shouzhong=0;//平台首重
         $admin_xuzhong=0;//平台续重
@@ -97,6 +97,7 @@ class FengHuoDi
         $fhdResult['send_end_time']=$sendEndTime;
         $fhdResult['tagType']='德邦大件快递360';
         $fhdResult['db_type']='RCP';
+        $fhdResult['content']=$content;
         !empty($param['insured']) &&($fhdResult['insured'] = $param['insured']);//保价金额
         !empty($param['vloum_long']) &&($fhdResult['vloumLong'] = $param['vloum_long']);//货物长度
         !empty($param['vloum_width']) &&($fhdResult['vloumWidth'] = $param['vloum_width']);//货物宽度

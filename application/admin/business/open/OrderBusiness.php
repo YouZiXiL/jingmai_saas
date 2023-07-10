@@ -122,14 +122,14 @@ class OrderBusiness extends Backend
         return $content;
     }
 
-    /*
+    /**
      * 云洋代理商价格计算
+     * @throws Exception
      */
     public function yyPriceHandle(string $content, array $agent_info, array $param){
-
         $data= json_decode($content, true);
         if ($data['code']!=1){
-            recordLog('channel-price-err','云洋' . $content. PHP_EOL);
+            recordLog('channel-price-err','云洋-' . $content);
             throw new Exception('收件或寄件信息错误,请仔细填写');
         }
         // 被关闭的渠道
@@ -200,11 +200,11 @@ class OrderBusiness extends Backend
             // 用户运费 + 附加费用
             isset($item['extFreightFlag']) && $users_price = $users_price + $item['extFreight'];
             // 用户运费 + 保价费 （用户下单金额）
-            $finalPrice=sprintf("%.2f",$users_price + $item['freightInsured']);
+            $finalPrice= sprintf("%.2f",$users_price + $item['freightInsured']);
 
             // 代理商运费（平台结算金额）
-            $item['agent_price']= sprintf("%.2f",$agent_price+$item['freightInsured']);//代理商结算
-            $item['final_price']=$finalPrice;
+            $item['agent_price']= sprintf("%.2f",$agent_price + $item['freightInsured']);//代理商结算
+            $item['final_price']= $finalPrice;
             $item['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
             $item['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
             $item['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
@@ -323,13 +323,18 @@ class OrderBusiness extends Backend
      * @param string $content
      * @param array $agent_info
      * @param array $param
-     * @param $profit
+     * @param array $profit
      * @return array
      */
     public function jlPriceHandle(string $content, array $agent_info, array $param, array $profit){
+        recordLog('jilu-price',
+            '返回参数：'. $content . PHP_EOL .
+            '寄件信息：'. json_encode($param, JSON_UNESCAPED_UNICODE)
+        );
+
         $result = json_decode($content, true);
         if ($result['code'] != 1){
-            recordLog('channel-price-err','极鹭' . $content. PHP_EOL);
+            recordLog('channel-price-err','极鹭-' . $content);
             return [];
         }
         $weight = $param['info']['weight'];

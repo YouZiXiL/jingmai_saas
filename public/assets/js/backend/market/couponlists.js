@@ -31,6 +31,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         //{field: 'agent_id', title: __('Agent_id')},
                         {field: 'gain_way', title: __('Gain_way'), searchList: {"1":__('Gain_way 1'),"2":__('Gain_way 2'),"3":__('Gain_way 3'),"4":__('Gain_way 4'),"5":__('Gain_way 5')}, formatter: Table.api.formatter.normal},
                         {field: 'name', title: __('Name'), operate: 'LIKE'},
+                        {field: 'mobile', title: '兑换用户', operate: 'LIKE'},
                         {field: 'papercode', title: __('Papercode'), operate: 'LIKE'},
                         {field: 'money', title: __('Money'), operate:'BETWEEN'},
                         {field: 'type', title: __('Type'), searchList: {"1":__('Type 1'),"2":__('Type 2')}, formatter: Table.api.formatter.normal},

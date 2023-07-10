@@ -66,14 +66,25 @@ class Couponlists extends Backend
         }
         [$where, $sort, $order, $offset, $limit] = $this->buildparams();
         if (in_array(2,$this->auth->getGroupIds())) {
-            $list = $this->model->where("agent_id", $this->auth->id);
+//            $list = $this->model->with('coupon')->where("agent_id", $this->auth->id);
+            $list = Db::name('agent_couponlist')->where(['a.agent_id' => $this->auth->id]);
         } else {
-            $list = $this->model;
+//            $list = $this->model->with('coupon');
+            $list = Db::name('agent_couponlist');
         }
+
         $list = $list
-            ->where($where)
+            ->alias('a')
+            ->join('couponlist c','a.papercode = c.papercode', 'LEFT')
+            ->join('users u','c.user_id = u.id', 'LEFT')
+            ->field('a.id,a.agent_id,a.name,a.papercode,a.gain_way,
+                a.money,a.type,a.scene,a.uselimits,a.state,a.validdatestart,
+                a.validdateend,a.limitdate,a.createtime,
+                u.mobile'
+            )
             ->order($sort, $order)
             ->paginate($limit);
+
         $result = ['total' => $list->total(), 'rows' => $list->items()];
         return json($result);
     }

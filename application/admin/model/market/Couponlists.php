@@ -3,15 +3,11 @@
 namespace app\admin\model\market;
 
 use think\Model;
+use app\web\model\Couponlist;
 
 
 class Couponlists extends Model
 {
-
-    
-
-    
-
     // 表名
     protected $name = 'agent_couponlist';
     
@@ -108,6 +104,9 @@ class Couponlists extends Model
     }
 
 
+    public function coupon(){
+        return $this->hasOne(Couponlist::class, 'papercode','papercode');
+    }
 
 
 }

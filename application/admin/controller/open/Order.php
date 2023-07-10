@@ -44,14 +44,6 @@ class Order extends Backend
         $agent_info=db('admin')->where('id',$this->auth->id)->find();
         if ($agent_info['status']=='hidden')  $this->error('商户已禁止使用');
 
-//        $channel = '';
-//        foreach ($channelList as $item){
-//            if ($item['channelId'] == $channelId) {
-//                $channel = $item;
-//            }
-//        }
-//        if(!$channel) $this->error('选择渠道有误');
-
         if ($agent_info['amount']<=100){
             $this->error('该商户余额不足100元,请充值后下单');
         }
