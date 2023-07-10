@@ -55,6 +55,17 @@ class Couponlists extends Backend
      */
     public function index()
     {
+
+        $couponinfo=Couponlist::get(["papercode"=>'AKAYP-AFPZY-HMECA-HBHAY']);
+        $couponinfo->state=2;
+        $couponinfo->save();
+
+        $coupon = \app\admin\model\market\Couponlists::get(["papercode"=>$couponinfo->papercode]);
+        $coupon->state = 4;
+        $coupon->save();
+
+
+
         //设置过滤方法
         $this->request->filter(['strip_tags', 'trim']);
         if (false === $this->request->isAjax()) {

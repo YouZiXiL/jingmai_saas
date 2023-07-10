@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\admin\model\market\Couponlists;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
 use app\common\business\OrderBusiness;
@@ -136,11 +137,6 @@ class Wxcallback extends Controller
     /**
      * 授权小程序|公众号
      * @return void
-     * @throws Exception
-     * @throws DataNotFoundException
-     * @throws ModelNotFoundException
-     * @throws DbException
-     * @throws \think\exception\PDOException
      */
     public function shouquan_success(){
         $param=$this->request->param();
@@ -1049,8 +1045,15 @@ class Wxcallback extends Controller
                     // 退优惠券
                     if(!empty($orders["couponid"])){
                         $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                        $couponinfo->state=1;
-                        $couponinfo->save();
+                        if($couponinfo){
+                            $couponinfo->state=1;
+                            $couponinfo->save();
+                            $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                            if($coupon){
+                                $coupon->state = 3;
+                                $coupon->save();
+                            }
+                        }
                     }
 
                     // 将该任务推送到消息队列，等待对应的消费者去执行
@@ -1175,6 +1178,11 @@ class Wxcallback extends Controller
                     $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
                     $couponinfo->state=1;
                     $couponinfo->save();
+                    $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                    if($coupon){
+                        $coupon->state = 3;
+                        $coupon->save();
+                    }
                 }
 
                 // 取消订单
@@ -1476,8 +1484,15 @@ class Wxcallback extends Controller
                         ];
                         if(!empty($orders["couponid"])){
                             $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                            $couponinfo->state=2;
-                            $couponinfo->save();
+                            if($couponinfo){
+                                $couponinfo->state=2;
+                                $couponinfo->save();
+                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                                if($coupon){
+                                    $coupon->state = 4;
+                                    $coupon->save();
+                                }
+                            }
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
                     }
@@ -1525,8 +1540,15 @@ class Wxcallback extends Controller
                         ];
                         if(!empty($orders["couponid"])){
                             $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                            $couponinfo->state=2;
-                            $couponinfo->save();
+                            if($couponinfo){
+                                $couponinfo->state=2;
+                                $couponinfo->save();
+                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                                if($coupon){
+                                    $coupon->state = 4;
+                                    $coupon->save();
+                                }
+                            }
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['waybillCode'].' 下单支付成功');
                     }
@@ -1575,8 +1597,15 @@ class Wxcallback extends Controller
                         ];
                         if(!empty($orders["couponid"])){
                             $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                            $couponinfo->state=2;
-                            $couponinfo->save();
+                            if($couponinfo){
+                                $couponinfo->state=2;
+                                $couponinfo->save();
+                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                                if($coupon){
+                                    $coupon->state = 4;
+                                    $coupon->save();
+                                }
+                            }
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0, ' 下单支付成功');
                     }
@@ -1585,9 +1614,12 @@ class Wxcallback extends Controller
                     $jiLu = new JiLu();
                     $resultJson = $jiLu->createOrderHandle($orders);
                     $result = json_decode($resultJson, true);
+                    recordLog('jilu-create-order',
+                        '订单：'.$orders['out_trade_no']. PHP_EOL .
+                        '返回：'.$resultJson
+                    );
                     if ($result['code']!=1){ // 下单失败
                         recordLog('channel-create-order-err',
-                            date('H:i:s', time()) . PHP_EOL .
                             '订单：'.$orders['out_trade_no']. PHP_EOL .
                             '极鹭下单失败：'.$resultJson
                         );
@@ -1624,172 +1656,20 @@ class Wxcallback extends Controller
                         ];
                         if(!empty($orders["couponid"])){
                             $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                            $couponinfo->state=2;
-                            $couponinfo->save();
+                            if($couponinfo){
+                                $couponinfo->state=2;
+                                $couponinfo->save();
+                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                                if($coupon){
+                                    $coupon->state = 4;
+                                    $coupon->save();
+                                }
+
+                            }
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['expressNo'].' 下单支付成功');
                     }
                     break;
-//                default:
-//                    switch ($orders['channel_tag']){
-//                        case '重货':
-//                            $fhd = new FengHuoDi();
-//                            $resultJson = $fhd->createOrderHandle($orders);
-//                            $result = json_decode($resultJson, true);
-//                            if ($result['rcode']!=0){ // 下单失败
-//                                $out_refund_no=$Common->get_uniqid();//下单退款订单号
-//                                //支付成功下单失败  执行退款操作
-//                                $update=[
-//                                    'pay_status'=>2,
-//                                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-//                                    'yy_fail_reason'=>$result['errorMsg'],
-//                                    'order_status'=>'下单失败咨询客服',
-//                                    'out_refund_no'=>$out_refund_no,
-//                                ];
-//
-//                                $data = [
-//                                    'type'=>3,
-//                                    'order_id'=>$orders['id'],
-//                                    'out_refund_no' => $out_refund_no,
-//                                    'reason'=>$result['errorMsg'],
-//                                ];
-//
-//                                // 将该任务推送到消息队列，等待对应的消费者去执行
-//                                Queue::push(DoJob::class, $data,'way_type');
-//
-//                                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
-//                                    //推送企业微信消息
-//                                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
-//                                }
-//                            }else{
-//                                $users=db('users')->where('id',$orders['user_id'])->find();
-//
-//                                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
-//                                if(empty($rebatelist)){
-//                                    $rebatelist=new Rebatelist();
-//                                    $data_re=[
-//                                        "user_id"=>$orders["user_id"],
-//                                        "invitercode"=>$users["invitercode"],
-//                                        "fainvitercode"=>$users["fainvitercode"],
-//                                        "out_trade_no"=>$orders["out_trade_no"],
-//                                        "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
-//                                        "payinback"=>0,//补交费用 为负则表示超轻
-//                                        "state"=>0,
-//                                        "rebate_amount"=>0,
-//                                        "createtime"=>time(),
-//                                        "updatetime"=>time()
-//                                    ];
-//                                    !empty($users["rootid"]) && ($data_re["rootid"]=$users["rootid"]);
-//                                    $rebatelist->save($data_re);
-//                                }
-//
-//                                //支付成功下单成功
-//
-//                                $update=[
-//                                    'waybill'=>$result['data']['waybillCode'],
-//                                    'shopbill'=>null,
-//                                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-//                                    'pay_status'=>1,
-//                                ];
-//
-//                                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['waybillCode'].' 下单支付成功');
-//                            }
-//                            break;
-//
-//                        case '智能':
-//                            $yy = new \app\common\business\YunYang();
-//                            $yyResult = $yy->createOrderHandle($orders);
-//                            if ($yyResult['code']!=1){
-//                                $out_refund_no=$Common->get_uniqid();//下单退款订单号
-//                                //支付成功下单失败  执行退款操作
-//                                $update=[
-//                                    'pay_status'=>2,
-//                                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-//                                    'yy_fail_reason'=>$yyResult['message'],
-//                                    'order_status'=>'下单失败咨询客服',
-//                                    'out_refund_no'=>$out_refund_no,
-//                                ];
-//                                $data = [
-//                                    'type'=>3,
-//                                    'order_id'=>$orders['id'],
-//                                    'out_refund_no' => $out_refund_no,
-//                                    'reason'=>$yyResult['message'],
-//                                ];
-//                                // 将该任务推送到消息队列，等待对应的消费者去执行
-//                                Queue::push(DoJob::class, $data,'way_type');
-//                                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
-//                                    //推送企业微信消息
-//                                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
-//                                }
-//
-//                            }else{
-//                                $rebateList = new RebateListController();
-//                                $rebateList->createRebateByOrder($orders);
-//                                //支付成功下单成功
-//                                $result=$yyResult['result'];
-//                                $update=[
-//                                    'waybill'=>$result['waybill'],
-//                                    'shopbill'=>$result['shopbill'],
-//                                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-//                                    'pay_status'=>1,
-//                                ];
-//                                if(!empty($orders["couponid"])){
-//                                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-//                                    $couponinfo->state=2;
-//                                    $couponinfo->save();
-//                                }
-//                                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
-//                            }
-//                            break;
-//
-//                        case '同城':
-//                            Log::info('万利下单:'. $orders['out_trade_no']);
-//                            $res = (new WanLi())->createOrder($orders);
-//                            $result = json_decode($res,true);
-//                            Log::info("万利下单结果：". $res);
-//                            if($result['code'] != 200){
-//                                $out_refund_no=$Common->get_uniqid();//下单退款订单号
-//                                //支付成功下单失败  执行退款操作
-//                                $update=[
-//                                    'pay_status'=>2,
-//                                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-//                                    'yy_fail_reason'=>$result['message'],
-//                                    'order_status'=>'下单失败咨询客服',
-//                                    'out_refund_no'=>$out_refund_no,
-//                                ];
-//                                $data = [
-//                                    'type'=>3,
-//                                    'order_id'=>$orders['id'],
-//                                    'out_refund_no' => $out_refund_no,
-//                                    'reason'=>$res['errorMsg'],
-//                                ];
-//                                // 将该任务推送到消息队列，等待对应的消费者去执行
-//                                Queue::push(DoJob::class, $data,'way_type');
-//
-//                                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
-//                                    //推送企业微信消息
-//                                    $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
-//                                }
-//                            }else{
-//                                $rebateList = new RebateListController();
-//                                $rebateList->createRebateByOrder($orders);
-//
-//                                //支付成功下单成功
-//                                $update=[
-//                                    'shopbill'=>$result['data']['orderNo'], // 万利订单号
-//                                    'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-//                                    'pay_status'=>1,
-//                                ];
-//                                if(!empty($orders["couponid"])){
-//                                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-//                                    $couponinfo->state=2;
-//                                    $couponinfo->save();
-//                                }
-//                                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0, ' 下单支付成功');
-//                            }
-//                            break;
-//                    }
-
             }
 
             db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($update);
@@ -2285,8 +2165,15 @@ class Wxcallback extends Controller
                     ];
                     if(!empty($orders["couponid"])){
                         $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                        $couponinfo->state=2;
-                        $couponinfo->save();
+                        if($couponinfo){
+                            $couponinfo->state=2;
+                            $couponinfo->save();
+                            $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                            if($coupon){
+                                $coupon->state = 4;
+                                $coupon->save();
+                            }
+                        }
                     }
 
                     $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0, ' 下单支付成功');
@@ -2339,8 +2226,15 @@ class Wxcallback extends Controller
                     ];
                     if(!empty($orders["couponid"])){
                         $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                        $couponinfo->state=2;
-                        $couponinfo->save();
+                        if($couponinfo){
+                            $couponinfo->state=2;
+                            $couponinfo->save();
+                            $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                            if($coupon){
+                                $coupon->state = 4;
+                                $coupon->save();
+                            }
+                        }
                     }
                     $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
                 }
@@ -3373,8 +3267,15 @@ class Wxcallback extends Controller
                 ];
                 if(!empty($orders["couponid"])){
                     $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                    $couponinfo->state=2;
-                    $couponinfo->save();
+                    if($couponinfo){
+                        $couponinfo->state=2;
+                        $couponinfo->save();
+                        $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                        if($coupon){
+                            $coupon->state = 4;
+                            $coupon->save();
+                        }
+                    }
                 }
                 $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybillNo'].' 下单支付成功');
             }
