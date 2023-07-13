@@ -328,16 +328,30 @@ class OrderBusiness extends Backend
      */
     public function jlPriceHandle(array $cost, array $agent_info, array $param, array $profit){
         $weight = $param['info']['weight'];
-        $reWeight = $weight -1; // 续重重量
-        $agentOne = $cost['one_weight']+ $profit['one_weight'];
-        $agentMore = $cost['more_weight']  + $profit['more_weight'];
-        $agentPrice = $agentOne + $agentMore * $reWeight;
+        $sequelWeight = $weight -1; // 续重重量
+
+
+        $oneWeight = $cost['one_weight']; // 平台首重单价
+        $reWeight = $cost['more_weight']; // 平台续重单价
+        $freight = $oneWeight + $reWeight * $sequelWeight; // 平台预估运费
+
+        $agentOne = $oneWeight+ $profit['one_weight']; //代理商首单价
+        $agentMore = $reWeight  + $profit['more_weight']; //代理商续单价
+        $agentPrice = $agentOne + $agentMore * $sequelWeight;
+
+
+        $content['admin_shouzhong']=sprintf("%.2f",$oneWeight);//平台首重
+        $content['admin_xuzhong']=sprintf("%.2f",$reWeight);//平台续重
+        $content['agent_shouzhong']=sprintf("%.2f",$agentOne);//代理商首重
+        $content['agent_xuzhong']=sprintf("%.2f",$agentMore);//代理商续重
+
+
         $content['tagType'] = '圆通快递';
         $content['channelId'] = '5_2';
         $content['channel'] = '';
+        $content['freight'] =  number_format($freight, 2);
         $content['agent_price'] = number_format($agentPrice, 2);
         $content['final_price']=  $content['agent_price'];
-        $content['freight']= $cost['one_weight'] + $cost['more_weight'] * $reWeight;
         $content['senderInfo']=$param['sender'];//寄件人信息
         $content['receiverInfo']=$param['receiver'];//收件人信息
         $content['Info'] = $param['info']; // 其他信息：如物品重量保价费等

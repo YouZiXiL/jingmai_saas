@@ -120,13 +120,32 @@ class JiLu
         if (in_array('圆通快递',$qudao_close)){
             return [];
         }
-        $agentOne = $cost['one_weight']+ $profit['one_weight'];
-        $agentMore = $cost['more_weight']  + $profit['more_weight'];
+
+
+        $oneWeight = $cost['one_weight']; // 平台首重单价
+        $reWeight = $cost['more_weight']; // 平台续重单价
+        $freight = $oneWeight + $reWeight * $sequelWeight; // 平台预估运费
+
+        $agentOne = $oneWeight+ $profit['one_weight']; //代理商首单价
+        $agentMore = $reWeight  + $profit['more_weight']; //代理商续单价
         $agentPrice = $agentOne + $agentMore * $sequelWeight;
-        $userPrice = $agentOne + $profit['user_one_weight'] + ($agentMore + $profit['user_more_weight']) * $sequelWeight;
+
+        $userOne = $agentOne + $profit['user_one_weight']; // 用首重单价
+        $userMore = $agentMore + $profit['user_more_weight']; // 用续重单价
+        $userPrice = $userOne + $userMore * $sequelWeight;
+
+
+        $content['admin_shouzhong']=sprintf("%.2f",$oneWeight);//平台首重
+        $content['admin_xuzhong']=sprintf("%.2f",$reWeight);//平台续重
+        $content['agent_shouzhong']=sprintf("%.2f",$agentOne);//代理商首重
+        $content['agent_xuzhong']=sprintf("%.2f",$agentMore);//代理商续重
+        $content['users_shouzhong']=sprintf("%.2f",$userOne);//用户首重
+        $content['users_xuzhong']=sprintf("%.2f",$userMore);//用户续重
+
         $content['tagType'] = '圆通快递';
         $content['channelId'] = '5_2';
         $content['channel'] = '圆通';
+        $content['freight'] =  number_format($freight, 2);
         $content['agent_price'] = number_format($agentPrice, 2);
         $content['final_price']=  number_format($userPrice, 2);
         $content['jijian_id']=$param['jijian_id'];//寄件id
@@ -134,6 +153,9 @@ class JiLu
         $content['weight']= $weight;//下单重量
         $content['channel_merchant'] = Channel::$jilu;
         $content['package_count']=$param['package_count'];//包裹数量
+
+
+
 
         !empty($param['insured']) &&($content['insured'] = $param['insured']);//保价费用
         !empty($param['vloum_long']) &&($content['vloumLong'] = $param['vloum_long']);//货物长度
@@ -225,16 +247,16 @@ class JiLu
 
     /**
      * 获取渠道成本
-     * @param array $sender 寄件人
-     * @param array $receiver 收件人
+     * @param string $senderProvinceFull
+     * @param string $receiverProvinceFull
      * @return array|bool|PDOStatement|string|Model|null
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException
      */
-    public function getCost(array $sender, array $receiver){
-        $sendProvince = loseProvince($sender['province']);
-        $receiveProvince = loseProvince($receiver['province']);
+    public function getCost(string $senderProvinceFull, string $receiverProvinceFull){
+        $sendProvince = loseProvince($senderProvinceFull);
+        $receiveProvince = loseProvince($receiverProvinceFull);
         return db('channel_cost')
             ->field('one_weight, more_weight')
             ->where(['route' => $sendProvince . $receiveProvince, 'code_name' => Channel::$jilu])

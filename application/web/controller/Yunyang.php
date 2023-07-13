@@ -288,7 +288,7 @@ class Yunyang extends Controller
 //                    'url' => $jiLu->baseUlr,
 //                    'data' => $jiLu->setParma('PRICE_ORDER', $jlContent),
 //                ];
-                $jiluCost = $jiLu->getCost($jijian_address, $shoujian_address);
+                $jiluCost = $jiLu->getCost($jijian_address['province'], $shoujian_address['province']);
                 Log::error(['$jiluCost' => $jiluCost]);
                 $fhdContent['serviceInfoList'] = [
                     [ 'code'=>'INSURE','value'=>$param['insured']*100, ],

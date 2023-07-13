@@ -84,16 +84,13 @@ class Order extends Backend
     public function query(YunYang $yunYang){
         $paramData = input();
 
-
-
-
         // $data = $yunYang->getPrice($content);
         $orderBusiness = new OrderBusiness();
         $yyQuery = $orderBusiness->yyQueryPriceData($paramData);
         $fhdQuery = $orderBusiness->fhdQueryPriceData($paramData);
 
         $jiLu = new JiLu();
-        $jlCost = $jiLu->getCost($paramData['sender'], $paramData['receiver']);
+        $jlCost = $jiLu->getCost($paramData['sender']['province'], $paramData['receiver']['province']);
 //        $jiluParams = [
 //            'url' => $jiLu->baseUlr,
 //            'data' => $jiLu->setParma('PRICE_ORDER', $jlQuery),

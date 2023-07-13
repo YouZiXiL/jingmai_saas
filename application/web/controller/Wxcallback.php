@@ -147,7 +147,7 @@ class Wxcallback extends Controller
                 'component_appid'=>$kaifang_appid,
                 'authorization_code'=>$param['auth_code'],
             ],'POST');
-            recordLog('wx-shouquan', "微信授权信息" . $res . PHP_EOL);
+            recordLog('wx-shouquan', "微信授权信息" . $res );
             $parm=json_decode($param['parm'],true);
             $authorization_info=json_decode($res,true)['authorization_info'];
             //更新授权APPIDS
@@ -171,7 +171,10 @@ class Wxcallback extends Controller
                 recordLog('wx-shouquan', "授权类型错误" . $getAccountBasicInfoJson . PHP_EOL);
                 exit('授权类型错误');
             }
-            $is_set=db('agent_auth')->where('agent_id','<>',$parm['agent_id'])->where('app_id',$authorization_info['authorizer_appid'])->find();
+            $is_set=db('agent_auth')
+                ->where('agent_id','<>',$parm['agent_id'])
+                ->where('app_id',$authorization_info['authorizer_appid'])
+                ->find();
             if ($is_set){
                 recordLog('wx-shouquan', "该app_id已被授权过" . $getAccountBasicInfoJson . PHP_EOL);
                 exit('该app_id已被授权过');
@@ -335,7 +338,11 @@ class Wxcallback extends Controller
                 $data['pay_template']=$bukuan['template_id'];
 
             }
-            $agent_auth=db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->find();
+            $agent_auth=db('agent_auth')
+                ->where('agent_id',$parm['agent_id'])
+                ->where('auth_type',$parm['auth_type'])
+                ->where('app_id', $getAccountBasicInfo['authorization_info']['authorizer_appid'])
+                ->find();
 
             if ($agent_auth){
                 $data['update_time'] = date('Y-m-d H:i:s');
@@ -1620,11 +1627,12 @@ class Wxcallback extends Controller
                             '极鹭下单失败：'.$resultJson
                         );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        $errMsg = $result['data']['message']??$result['msg'];
                         //支付下单失败  执行退款操作
                         $update=[
                             'pay_status'=>2,
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                            'yy_fail_reason'=>$result['data']['message'],
+                            'yy_fail_reason'=>$errMsg,
                             'order_status'=>'下单失败咨询客服',
                             'out_refund_no'=>$out_refund_no,
                         ];
@@ -1632,7 +1640,7 @@ class Wxcallback extends Controller
                             'type'=>3,
                             'order_id'=>$orders['id'],
                             'out_refund_no' => $out_refund_no,
-                            'reason'=>$result['data']['message'],
+                            'reason'=>$errMsg,
                         ];
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
@@ -3729,22 +3737,22 @@ class Wxcallback extends Controller
             }else{ // 重量，补差价
                 // 超重和耗材
                 if(!empty($addpriceInfos)){
-                    $overloadPrice = 0;
+                    $jiLu = new JiLu();
+                    $cost = $jiLu->getCost($order['sender_province'], $order['receive_province']);
+                    $reWeight = $cost['more_weight']; // 续重单价
                     $update['haocai_freight'] = 0;
                     $addWeight = 0; // 新增重量（续重）
                     foreach ($addpriceInfos as $item){
                         // $item[$addMoney,$addType,$addWeight]
                         // $addType 1、重量差价；2、耗材费；3、订单退回费用；4、额外费用
                         if($item['addType'] == 1){
-                            $overloadPrice += $item['addMoney']; // 超重金额
                             $addWeight += $item['addWeight'];
                         }else{ // 耗材
                             $update['haocai_freight'] += $item['addMoney']; // 超重金额
                         }
                     }
-                    if($overloadPrice && empty($order['final_weight_time'])){
+                    if($addWeight && empty($order['final_weight_time'])){
                         $update['overload_status'] = 1;
-
                         $profit = db('profit')->where('agent_id', $agent_info['id'])
                             ->where('mch_code', 'JILU')
                             ->find();
@@ -3754,11 +3762,11 @@ class Wxcallback extends Controller
                                 ->find();
                         }
 
-
                         // 代理商超重金额
-                        $update['agent_overload_price'] = $overloadPrice + $profit['more_weight'] * $addWeight;
+                        $reWeightAgent = $reWeight + $profit['more_weight'];
+                        $update['agent_overload_price'] = $reWeightAgent * $addWeight;
                         // 用户超重金额
-                        $update['overload_price'] = $update['agent_overload_price'] +  $profit['user_more_weight'] * $addWeight;
+                        $update['overload_price'] = ($reWeightAgent +  $profit['user_more_weight']) * $addWeight;
 
                         $pushData = [
                             'type'=>1,
@@ -3802,13 +3810,18 @@ class Wxcallback extends Controller
                             ->where('mch_code', 'JILU')
                             ->find();
                     }
-                    // 平台超轻金额
-                    $subMemberMoney = $subpriceInfo['subMemberMoney'];
-                    $subWeight = $subpriceInfo['subWeight']; // 退款重量（超轻重量）
+
+                    $jiLu = new JiLu();
+                    $cost = $jiLu->getCost($order['sender_province'], $order['receive_province']);
+                    // 退款重量（超轻重量）
+                    $subWeight = $subpriceInfo['subWeight'];
+                    // 代理商超续重单价
+                    $reWeightAgent = $cost['more_weight'] + $profit['more_weight'];
                     // 代理商超轻金额
-                    $update['agent_tralight_price']= $subMemberMoney +  $profit['more_weight'] * $subWeight;
+                    $update['agent_tralight_price'] = $reWeightAgent * $subWeight;
                     // 用户超轻金额
-                    $update['tralight_price']= $update['agent_tralight_price'] + $profit['user_more_weight']*$subWeight;
+                    $update['overload_price'] = ($reWeightAgent +  $profit['user_more_weight']) * $subWeight;
+
                     $update['tralight_status']=1;
                     $update['final_weight_time']=time();
                 }
