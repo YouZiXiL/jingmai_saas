@@ -1216,7 +1216,6 @@ class Users extends Controller
                 ->chain('v3/pay/transactions/jsapi')
                 ->post(['json' =>$json]);
 
-
             $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
             $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
             //获取小程序通知模版
@@ -1248,9 +1247,9 @@ class Users extends Controller
             }
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         } catch (\Exception $e) {
-
-            file_put_contents('create_couponorders.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
-
+            recordLog('create-coupon-orders-err', $e->getLine() .'：'.$e->getMessage() . PHP_EOL .
+                $e->getTraceAsString() . PHP_EOL
+            );
             // 进行错误处理
             return json(['status'=>400,'data'=>'','msg'=>'商户号配置错误,请联系管理员']);
         }
