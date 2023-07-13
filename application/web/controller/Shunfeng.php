@@ -340,7 +340,7 @@ class Shunfeng extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'没有指定快递渠道']);
         }
 
-        if ($agent_info['amount']<=200){
+        if ($agent_info['amount']<=100){
             return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,请联系客服']);
         }
 

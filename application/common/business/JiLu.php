@@ -3,6 +3,13 @@
 namespace app\common\business;
 use app\common\config\Channel;
 use app\web\controller\Common;
+use PDOStatement;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
+use think\exception\DbException;
+use think\Log;
+use think\Model;
+
 class JiLu
 {
     public Common $utils;
@@ -99,13 +106,57 @@ class JiLu
 
     /**
      * 渠道查询价格
+     * @param array $cost
+     * @param array $agent_info
+     * @param array $param
+     * @param array $profit
+     * @return array
+     */
+    public function queryPriceHandle(array $cost, array $agent_info, array $param ,array $profit){
+
+        $weight = $param['weight']; // 下单重量
+        $sequelWeight = $weight-1; // 续重重量
+        $qudao_close = explode('|', $agent_info['qudao_close']);
+        if (in_array('圆通快递',$qudao_close)){
+            return [];
+        }
+        $agentOne = $cost['one_weight']+ $profit['one_weight'];
+        $agentMore = $cost['more_weight']  + $profit['more_weight'];
+        $agentPrice = $agentOne + $agentMore * $sequelWeight;
+        $userPrice = $agentOne + $profit['user_one_weight'] + ($agentMore + $profit['user_more_weight']) * $sequelWeight;
+        $content['tagType'] = '圆通快递';
+        $content['channelId'] = '5_2';
+        $content['channel'] = '圆通';
+        $content['agent_price'] = number_format($agentPrice, 2);
+        $content['final_price']=  number_format($userPrice, 2);
+        $content['jijian_id']=$param['jijian_id'];//寄件id
+        $content['shoujian_id']=$param['shoujian_id'];//收件id
+        $content['weight']= $weight;//下单重量
+        $content['channel_merchant'] = Channel::$jilu;
+        $content['package_count']=$param['package_count'];//包裹数量
+
+        !empty($param['insured']) &&($content['insured'] = $param['insured']);//保价费用
+        !empty($param['vloum_long']) &&($content['vloumLong'] = $param['vloum_long']);//货物长度
+        !empty($param['vloum_width']) &&($content['vloumWidth'] = $param['vloum_width']);//货物宽度
+        !empty($param['vloum_height']) &&($content['vloumHeight'] = $param['vloum_height']);//货物高度
+        $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($content,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
+
+        $list['final_price']=$content['final_price'];
+        $list['insert_id']=$insert_id;
+        $list['tag_type']=$content['tagType'];
+        return $list;
+    }
+
+
+    /**
+     * 渠道查询价格
      * @param string $content
      * @param array $agent_info
      * @param array $param
      * @param array $profit
      * @return array
      */
-    public function queryPriceHandle(string $content, array $agent_info, array $param ,array $profit){
+    public function queryPriceHandleBackup(string $content, array $agent_info, array $param ,array $profit){
         recordLog('channel-price','极鹭-' . $content);
         $result = json_decode($content, true);
         if ($result['code'] != 1){
@@ -139,11 +190,11 @@ class JiLu
             !empty($param['vloum_height']) &&($item['vloumHeight'] = $param['vloum_height']);//货物高度
             $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($item,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
 
-            $jiluArr[$index]['final_price']=$item['final_price'];
-            $jiluArr[$index]['insert_id']=$insert_id;
-            $jiluArr[$index]['tag_type']=$item['tagType'];
+            $jiluArr['final_price']=$item['final_price'];
+            $jiluArr['insert_id']=$insert_id;
+            $jiluArr['tag_type']=$item['tagType'];
         }
-        return isset($jiluArr) ?array_values($jiluArr):[];
+        return $jiluArr ?? [];
     }
 
     /**
@@ -170,4 +221,24 @@ class JiLu
         ];
         return $this->createOrder($content);
     }
+
+
+    /**
+     * 获取渠道成本
+     * @param array $sender 寄件人
+     * @param array $receiver 收件人
+     * @return array|bool|PDOStatement|string|Model|null
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function getCost(array $sender, array $receiver){
+        $sendProvince = loseProvince($sender['province']);
+        $receiveProvince = loseProvince($receiver['province']);
+        return db('channel_cost')
+            ->field('one_weight, more_weight')
+            ->where(['route' => $sendProvince . $receiveProvince, 'code_name' => Channel::$jilu])
+            ->find();
+    }
+
 }

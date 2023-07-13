@@ -84,17 +84,20 @@ class Order extends Backend
     public function query(YunYang $yunYang){
         $paramData = input();
 
+
+
+
         // $data = $yunYang->getPrice($content);
         $orderBusiness = new OrderBusiness();
         $yyQuery = $orderBusiness->yyQueryPriceData($paramData);
-        $jlQuery = $orderBusiness->jlQueryPriceData($paramData);
         $fhdQuery = $orderBusiness->fhdQueryPriceData($paramData);
 
         $jiLu = new JiLu();
-        $jiluParams = [
-            'url' => $jiLu->baseUlr,
-            'data' => $jiLu->setParma('PRICE_ORDER', $jlQuery),
-        ];
+        $jlCost = $jiLu->getCost($paramData['sender'], $paramData['receiver']);
+//        $jiluParams = [
+//            'url' => $jiLu->baseUlr,
+//            'data' => $jiLu->setParma('PRICE_ORDER', $jlQuery),
+//        ];
 
         $fengHuoDi = new FengHuoDi();
         $fhdParams = [
@@ -110,7 +113,7 @@ class Order extends Backend
 
         $agent_info=db('admin')->where('id',$this->auth->id)->find();
         $utils = new \app\web\controller\Common();
-        $response =  $utils->multiRequest($yyParams, $jiluParams, $fhdParams);
+        $response =  $utils->multiRequest($yyParams, $fhdParams);
 
         $profit = db('profit')->where('agent_id', $agent_info['id'])
             ->where('mch_code', 'JILU')
@@ -122,9 +125,11 @@ class Order extends Backend
         }
 
         $yyPackage = $orderBusiness->yyPriceHandle($response[0], $agent_info, $paramData);
-        $jiluPackage = $orderBusiness->jlPriceHandle($response[1], $agent_info, $paramData, $profit);
-        $fhdDb = $orderBusiness->fhdPriceHandle($response[2], $agent_info, $paramData);
-        $packageList = array_merge_recursive($jiluPackage, $yyPackage);
+        $fhdDb = $orderBusiness->fhdPriceHandle($response[1], $agent_info, $paramData);
+        $jiluPackage = $orderBusiness->jlPriceHandle($jlCost, $agent_info, $paramData, $profit);
+
+        $packageList = $yyPackage;
+        $packageList[] = $jiluPackage;
         isset($fhdDb) && $packageList[] = $fhdDb;
         if (empty($packageList)){
             throw new Exception('没有指定快递渠道请联系客服');

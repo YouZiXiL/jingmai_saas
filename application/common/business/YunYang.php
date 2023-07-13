@@ -96,7 +96,7 @@ class YunYang{
         }
         $data= json_decode($content, true);
         if ($data['code']!=1){
-            recordLog('channel-price-err','云洋-下单失败' . $content);
+            recordLog('channel-price-err','云洋-查价失败:' . PHP_EOL . $content);
             throw new Exception($data['message']);
         }
         $qudao_close=explode('|', $agent_info['qudao_close']);

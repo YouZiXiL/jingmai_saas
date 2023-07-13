@@ -50,6 +50,6 @@ class Couponlist extends Model
         if(empty($value)){
             return "长期";
         }
-        return date("Y-m-d",$value);;
+        return date("Y-m-d",$value);
     }
 }

@@ -57,9 +57,9 @@ class Yunyang extends Controller
             if (empty($param['name'])||empty($param['mobile'])||empty($param['province'])||empty($param['city'])||empty($param['county'])||empty($param['location'])){
                 throw new Exception('参数错误');
             }
-            if (!preg_match("/^1[3-9]\d{9}$/", $param['mobile'])){
-                throw new Exception('手机号错误');
-            }
+//            if (!preg_match("/^1[3-9]\d{9}$/", $param['mobile'])){
+//                throw new Exception('手机号错误');
+//            }
 
 
 
@@ -171,8 +171,8 @@ class Yunyang extends Controller
      */
     public function check_channel_intellect(): Json
     {
+        $param=$this->request->param();
         try {
-            $param=$this->request->param();
             if($param['weight']<=0){
                 throw new Exception('参数错误');
             }
@@ -284,18 +284,16 @@ class Yunyang extends Controller
 
 
                 $jiLu = new JiLu();
-                $jiluParams = [
-                    'url' => $jiLu->baseUlr,
-                    'data' => $jiLu->setParma('PRICE_ORDER', $jlContent),
-                ];
-
-
+//                $jiluParams = [
+//                    'url' => $jiLu->baseUlr,
+//                    'data' => $jiLu->setParma('PRICE_ORDER', $jlContent),
+//                ];
+                $jiluCost = $jiLu->getCost($jijian_address, $shoujian_address);
+                Log::error(['$jiluCost' => $jiluCost]);
                 $fhdContent['serviceInfoList'] = [
                     [ 'code'=>'INSURE','value'=>$param['insured']*100, ],
                     [ 'code'=>'TRANSPORT_TYPE','value'=>'RCP', ]
                 ];
-
-
 
                 $fengHuoDi = new FengHuoDi();
                 $fhdParams = [
@@ -310,7 +308,7 @@ class Yunyang extends Controller
                     'data' => $yunYang->setParma('CHECK_CHANNEL_INTELLECT',$yyContent),
                 ];
 
-                $response =  $this->common->multiRequest($yyParams, $fhdParams, $jiluParams);
+                $response =  $this->common->multiRequest($yyParams, $fhdParams);
 
 
                 $profit = db('profit')->where('agent_id', $this->user->agent_id)
@@ -323,10 +321,15 @@ class Yunyang extends Controller
                 }
                 $yyPackage = $yunYang->queryPriceHandle($response[0], $agent_info, $param);
                 $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
-                $jiluPackage = $jiLu->queryPriceHandle($response[2], $agent_info, $param, $profit);
+//                $jiluPackage = $jiLu->queryPriceHandleBackup($response[2], $agent_info, $param, $profit);
+                if($jiluCost){
+                    $jiluPackage = $jiLu->queryPriceHandle($jiluCost, $agent_info, $param, $profit);
+                }
 
 
-                $packageList = array_merge_recursive($jiluPackage, $yyPackage);
+                $packageList = $yyPackage;
+                if(isset($jiluPackage))  $packageList[] = $jiluPackage;
+
                 $packageList[] = $fhdDb;
                 usort($packageList, function ($a, $b){
                     if (empty($a['final_price']) || empty($b['final_price'])) {
@@ -464,9 +467,12 @@ class Yunyang extends Controller
 
             return json(['status'=>200,'data'=>$packageList,'msg'=>'成功']);
         }catch (\Exception $e){
-            $content = $e->getLine().'：'.$e->getMessage().PHP_EOL
-                . $e->getTraceAsString();
-            recordLog("channel-price-err", $content);
+            $content = '云洋-（' . $e->getLine().'）：'.$e->getMessage() . PHP_EOL .
+            $e->getTraceAsString() . PHP_EOL .
+            '参数：' .  json_encode($param, JSON_UNESCAPED_UNICODE);
+            recordLog("channel-price-err",
+                $content
+            );
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
     }

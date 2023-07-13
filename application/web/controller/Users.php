@@ -66,7 +66,8 @@ class Users extends Controller
         $agent_info=Admin::get($this->user->agent_id);
         $user_detail["score"]=$user_info->score;
         $user_detail["nickname"]=$user_info->nick_name;
-        $user_detail["avatar"]=$user_info->avatar;
+//        $user_detail["avatar"]=$user_info->avatar;
+        $user_detail["avatar"]= $this->request->domain() . '/assets/img/front-avatar.png' ;
         $user_detail["money"]=number_format($user_info->money,2);
         $user_detail["service_rate"]=number_format(($agent_info->service_rate??8)/100,2);//从商家服务表中获得 商家可自定义比例 建议8%
 

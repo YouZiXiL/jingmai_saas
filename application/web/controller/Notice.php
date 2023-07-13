@@ -157,7 +157,7 @@ class Notice extends Controller
      * @throws \Exception
      */
     public function aliAppauth(){
-        Log::error(['支付第三方授权' => input()]);
+        recordLog('ali-callback', json_encode(input(), JSON_UNESCAPED_UNICODE));
         /*
          '支付第三方授权' =>
           array (
@@ -216,7 +216,7 @@ class Notice extends Controller
      * @return true
      */
     public function gateway(){
-        file_put_contents('ali-gateway.txt',json_encode(input()));
+        recordLog('ali-gateway', json_encode(input(), JSON_UNESCAPED_UNICODE));
         return true;
     }
 }

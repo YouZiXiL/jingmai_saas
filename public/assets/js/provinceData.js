@@ -5526,6 +5526,10 @@ var provinceData = [
                 "name": "南昌市",
                 "children": [
                     {
+                        "code": "360100",
+                        "name": "红谷滩区"
+                    },
+                    {
                         "code": "360102",
                         "name": "东湖区"
                     },
@@ -6028,6 +6032,10 @@ var provinceData = [
                     {
                         "code": "370115",
                         "name": "济阳区"
+                    },
+                    {
+                        "code": "370116",
+                        "name": "莱芜区"
                     },
                     {
                         "code": "370124",

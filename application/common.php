@@ -557,3 +557,17 @@ if (!function_exists('getId')){
         return (strtotime(date('YmdHis', time()))) . substr(microtime(), 2, 6) . sprintf('%03d', rand(0, 999));
     }
 }
+
+if(!function_exists('loseProvince')){
+    /**
+     * 去掉省份的'省'字
+     * @return string
+     */
+    function loseProvince($province){
+        $lastChar = mb_substr($province, -1, 1,'UTF-8');
+        if (in_array($lastChar, array("省", "市"))) {
+            $province = mb_substr($province, 0, mb_strlen($province, 'UTF-8') - 1, 'UTF-8');
+        }
+        return $province;
+    }
+}

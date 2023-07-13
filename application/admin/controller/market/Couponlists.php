@@ -56,14 +56,6 @@ class Couponlists extends Backend
     public function index()
     {
 
-        $couponinfo=Couponlist::get(["papercode"=>'AKAYP-AFPZY-HMECA-HBHAY']);
-        $couponinfo->state=2;
-        $couponinfo->save();
-
-        $coupon = \app\admin\model\market\Couponlists::get(["papercode"=>$couponinfo->papercode]);
-        $coupon->state = 4;
-        $coupon->save();
-
 
 
         //设置过滤方法
@@ -179,7 +171,7 @@ class Couponlists extends Backend
             ];
         }
 
-        $list->where('id', $ids)->update(['state' => 4]);
+        $list->where('id', $ids)->update(['state' => 5]);
         $coupons->saveAll($couponsUpdate);
         $this->success('操作成功');
 

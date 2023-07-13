@@ -320,13 +320,61 @@ class OrderBusiness extends Backend
 
     /**
      * 极鹭代理商价格计算
+     * @param array $cost
+     * @param array $agent_info
+     * @param array $param
+     * @param array $profit
+     * @return array
+     */
+    public function jlPriceHandle(array $cost, array $agent_info, array $param, array $profit){
+        $weight = $param['info']['weight'];
+        $reWeight = $weight -1; // 续重重量
+        $agentOne = $cost['one_weight']+ $profit['one_weight'];
+        $agentMore = $cost['more_weight']  + $profit['more_weight'];
+        $agentPrice = $agentOne + $agentMore * $reWeight;
+        $content['tagType'] = '圆通快递';
+        $content['channelId'] = '5_2';
+        $content['channel'] = '';
+        $content['agent_price'] = number_format($agentPrice, 2);
+        $content['final_price']=  $content['agent_price'];
+        $content['freight']= $cost['one_weight'] + $cost['more_weight'] * $reWeight;
+        $content['senderInfo']=$param['sender'];//寄件人信息
+        $content['receiverInfo']=$param['receiver'];//收件人信息
+        $content['Info'] = $param['info']; // 其他信息：如物品重量保价费等
+        $content['channel_tag'] = '智能'; // 渠道类型
+        $content['channel_merchant'] = Channel::$jilu; // 渠道商
+
+        $requireId = SnowFlake::createId();
+        cache( $requireId, json_encode($content), $this->ttl);
+//            $insert_id=db('channel_price_log')
+//                ->insertGetId([
+//                    'channel_tag'=>'auto', // 渠道类型
+//                    'channel_merchant' => 'JILU', // 渠道商
+//                    'content'=>json_encode($item,JSON_UNESCAPED_UNICODE )
+//                ]);
+
+
+
+
+        $list['freight']=$content['agent_price'];
+        $list['tagType']=$content['tagType'];
+        $list['channelId']=$content['channelId'];
+        $list['channel']=$content['channel'];
+        $list['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+        $list['requireId']=(string)$requireId;
+
+        return $list;
+    }
+
+    /**
+     * 极鹭代理商价格计算
      * @param string $content
      * @param array $agent_info
      * @param array $param
      * @param array $profit
      * @return array
      */
-    public function jlPriceHandle(string $content, array $agent_info, array $param, array $profit){
+    public function jlPriceHandleBackup(string $content, array $agent_info, array $param, array $profit){
         recordLog('jilu-price',
             '返回参数：'. $content . PHP_EOL .
             '寄件信息：'. json_encode($param, JSON_UNESCAPED_UNICODE)
