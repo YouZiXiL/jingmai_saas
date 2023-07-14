@@ -55,9 +55,6 @@ class Couponlists extends Backend
      */
     public function index()
     {
-
-
-
         //设置过滤方法
         $this->request->filter(['strip_tags', 'trim']);
         if (false === $this->request->isAjax()) {
@@ -76,8 +73,10 @@ class Couponlists extends Backend
             $list = Db::name('agent_couponlist');
         }
 
+        $search = input('search');
         $list = $list
             ->alias('a')
+            ->where('a.papercode', 'LIKE', "%{$search}%")
             ->join('couponlist c','a.papercode = c.papercode', 'LEFT')
             ->join('users u','c.user_id = u.id', 'LEFT')
             ->field('a.id,a.agent_id,a.name,a.papercode,a.gain_way,

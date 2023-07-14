@@ -60,7 +60,7 @@ class Orderslist extends Backend
      * 查看
      *
      * @return string|Json
-     * @throws \think\Exception
+     * @throws Exception
      * @throws DbException
      */
     public function index()

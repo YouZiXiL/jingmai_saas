@@ -341,16 +341,18 @@ class Wxcallback extends Controller
             $agent_auth=db('agent_auth')
                 ->where('agent_id',$parm['agent_id'])
                 ->where('auth_type',$parm['auth_type'])
-                ->where('app_id', $getAccountBasicInfo['authorization_info']['authorizer_appid'])
+                ->where('app_id', $authorization_info['authorizer_appid'])
                 ->find();
 
             if ($agent_auth){
                 $data['update_time'] = date('Y-m-d H:i:s');
-                db('agent_auth')->where('agent_id',$parm['agent_id'])->where('auth_type',$parm['auth_type'])->update($data);
+                db('agent_auth')
+                    ->where('agent_id',$parm['agent_id'])
+                    ->where('auth_type',$parm['auth_type'])
+                    ->update($data);
             }else{
                 $data['xcx_audit'] = $parm['auth_type'] == 2?0:5;
                 $data['agent_id']=$parm['agent_id'];
-                $data['app_id']=$getAccountBasicInfo['authorization_info']['authorizer_appid'];
                 db('agent_auth')->insert($data);
             }
             exit('授权成功');

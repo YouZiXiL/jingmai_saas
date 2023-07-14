@@ -47,6 +47,7 @@ class ParseAddress {
       console.log('this.address2', this.address);
       const firstName = ParseAddress.parseName({details: this.address});
       console.log('this.address3', this.address);
+
       results = ParseAddress.ParseArea.parse(this.address, parseAll);
 
       for (let result of results) {
