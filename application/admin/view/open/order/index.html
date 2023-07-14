@@ -408,8 +408,7 @@
                 if(result.length<=0) return
                 let res = result[0]
                 this.sender = [res.province , res.city , res.area]
-                console.log('sender',this.sender)
-                this.formData.sender.name =  res.name
+                this.formData.sender.name = this.parseName(res.name);
                 this.formData.sender.mobile = res.mobile || res.phone
                 this.formData.sender.province = res.province
                 this.formData.sender.city = res.city
@@ -423,7 +422,7 @@
                 if(result.length<=0) return
                 let res = result[0]
                 this.receiver = [res.province , res.city , res.area]
-                this.formData.receiver.name =  res.name
+                this.formData.receiver.name =  this.parseName(res.name)
                 this.formData.receiver.mobile = res.mobile || res.phone
                 this.formData.receiver.province = res.province
                 this.formData.receiver.city = res.city
@@ -613,6 +612,12 @@
                     console.log('ret', ret)
                     return true;
                 });
+            },
+
+            // 解析姓名
+            parseName(name){
+                const pattern = /(寄件人姓名|收件人姓名|寄件人|收件人)\s*/g;
+                return name.replace(pattern, '')
             }
 
         }
@@ -628,6 +633,7 @@
         },
         template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
     })
+
 
 </script>
 </html>
