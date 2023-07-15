@@ -40,6 +40,17 @@ class FengHuoDi
     }
 
     /**
+     * 查询价格
+     * @param $content
+     * @return bool|string
+     */
+    public function queryPrice($content){
+        $url = $this->baseUlr . 'predictExpressOrder';
+        return $this->utils->httpRequest($url, $content, 'POST',['Content-Type = application/x-www-form-urlencoded; charset=utf-8']);
+    }
+
+
+    /**
      * 查询价格处理函数
      * @param  $content string
      * @param $agent_info array 代理商

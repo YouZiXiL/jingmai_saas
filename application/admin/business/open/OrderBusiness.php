@@ -4,6 +4,7 @@ namespace app\admin\business\open;
 
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
+use app\common\business\QBiDaBusiness;
 use app\common\business\YunYang;
 use app\common\config\Channel;
 use app\common\controller\Backend;
@@ -13,17 +14,25 @@ use app\web\controller\Common;
 use app\web\controller\Dbcommom;
 use think\Exception;
 use think\Model;
+use think\Request;
 
 class OrderBusiness extends Backend
 {
 
     private int $ttl = 600; // 渠道缓存时间 单位秒
+    public Common $utils;
+
+    public function __construct(Request $request = null)
+    {
+        parent::__construct($request);
+        $this->utils = new Common();
+    }
 
     public function createOrder($channel, $agent_info){
         $out_trade_no='AUTO'.getId();
         $sender = $channel['senderInfo'];
         $receiver = $channel['receiverInfo'];
-        $info = $channel['Info'];
+        $info = $channel['info'];
         $time=time();
         $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
         $orderData=[
@@ -98,7 +107,7 @@ class OrderBusiness extends Backend
     /*
      * 云洋查询价格参数封装
      */
-    public function yyQueryPriceData($paramData){
+    public function yyFormatPrice($paramData){
         $sender = $paramData['sender'];
         $receiver = $paramData['receiver'];
         $address = [
@@ -204,7 +213,7 @@ class OrderBusiness extends Backend
 
             // 代理商运费（平台结算金额）
             $item['agent_price']= sprintf("%.2f",$agent_price + $item['freightInsured']);//代理商结算
-            $item['final_price']= $finalPrice;
+            $item['final_price']= $item['agent_price'];
             $item['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
             $item['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
             $item['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
@@ -214,7 +223,7 @@ class OrderBusiness extends Backend
 
             $item['senderInfo']=$param['sender'];//寄件人信息
             $item['receiverInfo']=$param['receiver'];//收件人信息
-            $item['Info'] = $param['info']; // 其他信息：如物品重量保价费等
+            $item['info'] = $param['info']; // 其他信息：如物品重量保价费等
 
             $item['channel_tag'] = '智能'; // 渠道类型
             $item['channel_merchant'] = 'YY'; // 渠道商
@@ -298,7 +307,7 @@ class OrderBusiness extends Backend
     /*
      * 极鹭查询价格参数封装
      */
-    public function jlQueryPriceData($paramData){
+    public function jlFormatPrice($paramData){
         $sender = $paramData['sender'];
         $receiver = $paramData['receiver'];
         return [
@@ -354,7 +363,7 @@ class OrderBusiness extends Backend
         $content['final_price']=  $content['agent_price'];
         $content['senderInfo']=$param['sender'];//寄件人信息
         $content['receiverInfo']=$param['receiver'];//收件人信息
-        $content['Info'] = $param['info']; // 其他信息：如物品重量保价费等
+        $content['info'] = $param['info']; // 其他信息：如物品重量保价费等
         $content['channel_tag'] = '智能'; // 渠道类型
         $content['channel_merchant'] = Channel::$jilu; // 渠道商
 
@@ -411,12 +420,12 @@ class OrderBusiness extends Backend
             $item['channelId'] = $item['expressChannel'];
 
             $item['agent_price'] = number_format($agent_price, 2);
-            $item['final_price']=  number_format($user_price, 2);
+            $item['final_price']=  $item['final_price'];
             $item['freight']=  $item['final_price'];
 
             $item['senderInfo']=$param['sender'];//寄件人信息
             $item['receiverInfo']=$param['receiver'];//收件人信息
-            $item['Info'] = $param['info']; // 其他信息：如物品重量保价费等
+            $item['info'] = $param['info']; // 其他信息：如物品重量保价费等
 
             $item['channel_tag'] = '智能'; // 渠道类型
             $item['channel_merchant'] = Channel::$jilu; // 渠道商
@@ -487,7 +496,7 @@ class OrderBusiness extends Backend
     /*
      * 风火递查询价格参数封装
      */
-    public function fhdQueryPriceData($paramData){
+    public function fhdFormatPrice($paramData, $type = 'RCP'){
         $sender = $paramData['sender'];
         $receiver = $paramData['receiver'];
         $utils = new Common();
@@ -524,7 +533,7 @@ class OrderBusiness extends Backend
             ],
             'serviceInfoList' => [
                 [ 'code'=>'INSURE','value'=> (int)$paramData['info']['insured']*1000, ],
-                [ 'code'=>'TRANSPORT_TYPE','value'=>'RCP', ]
+                [ 'code'=>'TRANSPORT_TYPE','value'=>$type, ]
             ]
         ];
     }
@@ -564,7 +573,6 @@ class OrderBusiness extends Backend
 
         $finalPrice=sprintf("%.2f",$users_price+($total['fb']??0));//用户拿到的价格=用户运费价格+保价费
         $data = []; // 渠道数据
-        $data['final_price']=$finalPrice;//用户支付总价
         $data['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
         $data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
         $data['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
@@ -572,32 +580,27 @@ class OrderBusiness extends Backend
         $data['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
         $data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
         $data['agent_price']=sprintf("%.2f",$agent_price+($total['fb']??0));//代理商结算
+        $data['final_price']=$data['agent_price'];
 
         $data['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
-        $data['channel']='德邦大件快递360';
         $data['channelId']='';
         $data['expressCode']='DBKD';
         $data['freight']=sprintf("%.2f",$total['fright']*0.68);
         $data['send_start_time']=$time;
         $data['send_end_time']=$sendEndTime;
-        $data['tagType']='德邦快递';
-        $data['db_type']='RCP';
 
         $data['senderInfo']=$param['sender'];//寄件人信息
         $data['receiverInfo']=$param['receiver'];//收件人信息
-        $data['Info'] = $param['info']; // 其他信息：如物品重量保价费等
+        $data['info'] = $param['info']; // 其他信息：如物品重量保价费等
 
-        $data['channel_tag'] = '智能'; // 渠道类型
+        $data['channel_tag'] = $param['channelTag']; // 渠道类型
+        $data['channel']= $param['channel'];
+        $data['tagType']= $param['tagType'];
+        $data['db_type']=$param['type'];
         $data['channel_merchant'] = Channel::$fhd; // 渠道商
         $requireId = SnowFlake::createId();
         cache( $requireId, json_encode($data), $this->ttl);
 
-//        $insert_id=db('channel_price_log')
-//            ->insertGetId([
-//                'channel_tag'=>'auto',
-//                'channel_merchant'=>'FHD',
-//                'content'=>json_encode($data,JSON_UNESCAPED_UNICODE )
-//            ]);
         return [
             'freight'=>$data['agent_price'], // 用户价格
             'requireId'=>(string) $requireId,
@@ -645,5 +648,170 @@ class OrderBusiness extends Backend
     }
 
 
+    /**
+     * q必达查价参数封装
+     * @return array
+     */
+    public function qbdFormatPrice($paramData){
+        $sender = $paramData['sender'];
+        $receiver = $paramData['receiver'];
+        $info = $paramData['info'];
+        return [
+            "sendPhone"=> $sender['mobile'],
+            "sendAddress"=>$sender['province'] . $sender['city'] .$sender['county'] .$sender['location'],
+            "receiveAddress"=>$receiver['province'] . $receiver['city'] .$receiver['county'] .$receiver['location'],
+            "weight"=>$info['weight'],
+            "packageNum"=>$info['packageCount'],
+            "goodsValue"=> $info['insured'],
+            "length"=> $info['vloumLong'],
+            "width"=> $info['vloumWidth'],
+            "height"=> $info['vloumHeight'],
+            "payMethod"=> 3,//线上寄付:3
+            "expressType"=>1,//快递类型 1:快递
+            "productList"=>[
+                ["productCode"=> 5],
+//              ["productCode"=> 6],
+//              ["productCode"=> 7],
+//              ["productCode"=> 8],
+            ]
+        ];
+
+    }
+
+    /**
+     * @param $paramData
+     * @return array
+     */
+    public function setParamByPrice($paramData){
+        $yyQuery = $this->yyFormatPrice($paramData);
+        $fhdQuery = $this->fhdFormatPrice($paramData);
+        $qbdQuery = $this->qbdFormatPrice($paramData);
+
+        $yunYang = new YunYang();
+        $yy = [
+            'url' => $yunYang->baseUlr,
+            'data' => $yunYang->setParma('CHECK_CHANNEL_INTELLECT',$yyQuery),
+        ];
+
+        $fengHuoDi = new FengHuoDi();
+        $fhd = [
+            'url' => $fengHuoDi->baseUlr.'predictExpressOrder',
+            'data' => $fengHuoDi->setParam($fhdQuery),
+            'type' => true,
+            'header' => ['Content-Type = application/x-www-form-urlencoded; charset=utf-8']
+        ];
+
+        $qBiDa = new QBiDaBusiness();
+
+        $qbd = [
+            'url' => $qBiDa->baseUlr.'getPriceList',
+            'data' => $qbdQuery,
+            'header' => $qBiDa->setParam()
+        ];
+        return [$yy, $fhd, $qbd];
+    }
+
+
+    /**
+     * 获取预付费价格
+     * @param $query
+     * @return array
+     */
+    public function multiPrice($query){
+        return  $this->utils->multiRequest(...$query);
+    }
+
+    /**
+     * q必达计算价格
+     * @param string $content
+     * @param array $agent_info
+     * @param $paramData
+     * @return array
+     * @throws Exception
+     */
+    public function qbdPriceHandle(string $content, array $agent_info, $paramData)
+    {
+
+        $result = json_decode($content, true);
+        if (!empty($result['code'])){
+            recordLog('channel-price-err', 'QBD: ' . json_encode($result, JSON_UNESCAPED_UNICODE));
+            throw new Exception('收件或寄件信息错误,请仔细填写');
+        }
+        $list = [];
+        $qudao_close=explode('|', $agent_info['qudao_close']);
+        foreach ($result['data'] as $key=>&$item){
+//                if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
+//                    unset($result['result'][$k]);
+//                    continue;
+//                }15226052986
+            $item['isNew'] = (bool)strpos($item['channelName'], '新户');
+            $item['freight'] = number_format($item["channelFee"] ,2);
+            if($item['isNew']){
+                $item["agent_price"]=number_format($item["channelFee"]  + $item["guarantFee"],2);
+            }else{
+                $item["agent_price"]=number_format($item["originalFee"] + ($item["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$item["guarantFee"],2);
+            }
+            $item["final_price"]=$item["agent_price"];
+            $item["info"]=$paramData['info'];
+            $item['senderInfo']=$paramData['sender'];
+            $item['receiverInfo']=$paramData['receiver'];//收件id
+            $item['channel'] = $item['channelName'];
+            $item['tagType'] = 'JX-顺丰标快';
+            $item['channelId'] = $item['type'];
+            $item['channel_tag'] = '智能'; // 渠道类型
+            $item['channel_merchant'] = Channel::$qbd; // 渠道商
+            $requireId = SnowFlake::createId();
+            cache($requireId, json_encode($item), $this->ttl);
+
+            $list[$key]['freight'] = $item['agent_price'];
+            $list[$key]['tagType'] = $item['tagType'];
+            $list[$key]['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/sf.png';
+            $list[$key]['requireId']= (string) $requireId;
+
+        }
+        return $list;
+    }
+
+    /**
+     * q必达下单
+     * @param Model $orderInfo
+     * @return void
+     * @throws Exception
+     */
+    public function qbdCreateOrder(Model $orderInfo)
+    {
+        $orders = $orderInfo->toArray();
+        $QBiDaBusiness = new QBiDaBusiness();
+        $data = $QBiDaBusiness->createOrderHandle($orders);
+
+        if (!empty($data['code'])){
+            recordLog('channel-create-order-err', 'Q必达-下单失败' . PHP_EOL .
+                '返回结果：'. json_encode($data, JSON_UNESCAPED_UNICODE));
+            //支付成功下单失败  执行退款操作
+            $update=[
+                'id' => $orderInfo->id,
+                'pay_status'=> 0,
+                'yy_fail_reason'=>$data['msg'],
+                'order_status'=>'下单失败咨询客服',
+            ];
+            $orderInfo->isUpdate(true)->save($update);
+            $this->error($data['msg']);
+        }else{
+            //支付成功下单成功
+
+            $db= new Dbcommom();
+            $result=$data['data'];
+            $update=[
+                'id' => $orderInfo->id,
+                'waybill'=>$result['waybillNo'],
+                'shopbill'=>$result['orderNo'],
+                'pay_status'=>1,
+            ];
+
+            $db->set_agent_amount($orders['agent_id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybillNo'].' 下单支付成功');
+            $orderInfo->isUpdate(true)->save($update);
+            $this->success('下单成功',null, $orderInfo);
+        }
+    }
 
 }

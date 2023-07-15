@@ -92,6 +92,7 @@ class Shunfeng extends Controller
 
             $result = $this->common->shunfeng_api("http://api.wanhuida888.com/openApi/getPriceList",$content);
             if (!empty($result['code'])){
+                recordLog('channel-price-err', 'QBD: ' . json_encode($result, JSON_UNESCAPED_UNICODE));
                 throw new Exception('收件或寄件信息错误,请仔细填写');
             }
 
@@ -526,6 +527,7 @@ class Shunfeng extends Controller
         ];
         $res=$this->common->shunfeng_api("http://api.wanhuida888.com/openApi/doCancel",$content);
         if ($res['code']!=0){
+            recordLog('cancel-order-err', 'QBD：' . json_encode($res, JSON_UNESCAPED_UNICODE));
             return json(['status'=>400,'data'=>'','msg'=>$res['msg']]);
         }
         db('orders')->where('id',$id)->where('user_id',$this->user->id)->update(['cancel_time'=>time()]);

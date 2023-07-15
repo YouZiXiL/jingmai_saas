@@ -1029,8 +1029,8 @@ class Yunyang extends Controller
             $result = json_decode($resultJson, true);
             if ($result['code']!=1){
                 recordLog('channel-callback-err',
-                    '极鹭取消订单-' .$resultJson. PHP_EOL .
-                    date('H:i:s', time())
+                    '极鹭取消订单-' . $row['out_trade_no']. PHP_EOL .
+                    $resultJson
                  );
                 return R::error($result['msg']);
             }

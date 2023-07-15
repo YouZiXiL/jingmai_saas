@@ -168,6 +168,13 @@ class Common
 
     /**
      * @param array ...$requests 请求参数
+     *
+     * $requests [
+     *  $url 请求地址
+     *  $data 请求数据
+     *  $header 请求头
+     *  $type 提交数据的格式，不传则为application/json，如果为true则是application/x-www-form-urlencoded
+     * ]
      */
     function multiRequest(array ...$requests){
         $curlGroup = [];
@@ -182,18 +189,10 @@ class Common
             curl_setopt($curl, CURLOPT_AUTOREFERER, 1);
             curl_setopt($curl, CURLOPT_POST, 1);
             curl_setopt($curl, CURLOPT_TIMEOUT, 30);
-            if (empty($item['data'])){
-                curl_setopt($curl, CURLOPT_POSTFIELDS,'{}' );
-            }else{
-                if(empty($item['header'])){
-                    $data=json_encode($item['data'],JSON_UNESCAPED_UNICODE);
-                    curl_setopt($curl, CURLOPT_POSTFIELDS,$data );
-                    curl_setopt($curl, CURLOPT_HTTPHEADER,['Content-Type: application/json; charset=utf-8']);
-                }else{
-                    curl_setopt($curl, CURLOPT_POSTFIELDS,http_build_query($item['data']) );
-                    curl_setopt($curl, CURLOPT_HTTPHEADER,$item['header']);
-                }
-            }
+            $data= empty($item['type']) ? json_encode($item['data'],JSON_UNESCAPED_UNICODE) : http_build_query($item['data']) ;
+            $header = $item['header']??['Content-Type: application/json; charset=utf-8'];
+            curl_setopt($curl, CURLOPT_POSTFIELDS,$data );
+            curl_setopt($curl, CURLOPT_HTTPHEADER,$header);
             $curlGroup[] = $curl;
         }
 

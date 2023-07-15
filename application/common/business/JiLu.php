@@ -2,6 +2,7 @@
 
 namespace app\common\business;
 use app\common\config\Channel;
+use app\common\model\Profit;
 use app\web\controller\Common;
 use PDOStatement;
 use think\db\exception\DataNotFoundException;
@@ -71,9 +72,14 @@ class JiLu
 
     /**
      * 创建订单
+     * @param $content
+     * @param mixed $record
+     * @return bool|string
      */
-    public function createOrder($content){
+    public function createOrder($content, &$record= false){
         $parma = $this->setParma('CREATE_ORDER', $content);
+        Log::log('极鹭下单参数：'. json_encode($parma, JSON_UNESCAPED_UNICODE));
+        $record = json_encode($parma, JSON_UNESCAPED_UNICODE);
         return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
     }
 
@@ -222,7 +228,7 @@ class JiLu
     /**
      * 创建订单
      */
-    public function createOrderHandle($orders){
+    public function createOrderHandle($orders,  &$record = false){
         $content = [
             "actualWeight"=> $orders['weight'],
             "expressChannel"=> $orders['channel_id'],
@@ -241,7 +247,7 @@ class JiLu
             "toPhone"=>$orders['receiver_mobile'],
             "toProvince"=>$orders['receive_province']
         ];
-        return $this->createOrder($content);
+        return $this->createOrder($content, $record);
     }
 
 
@@ -261,6 +267,27 @@ class JiLu
             ->field('one_weight, more_weight')
             ->where(['route' => $sendProvince . $receiveProvince, 'code_name' => Channel::$jilu])
             ->find();
+    }
+
+    /**
+     * 获取代理商利润
+     * @param $agentId
+     * @return array|bool|Model|PDOStatement|string|null
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function getProfitToAgent($agentId)
+    {
+        $profit = db('profit')->where('agent_id', $agentId)
+            ->where('mch_code', 'JILU')
+            ->find();
+        if(empty($profit)){
+            $profit = db('profit')->where('agent_id', 0)
+                ->where('mch_code', 'JILU')
+                ->find();
+        }
+        return $profit;
     }
 
 }

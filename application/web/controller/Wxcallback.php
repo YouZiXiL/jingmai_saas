@@ -801,7 +801,8 @@ class Wxcallback extends Controller
             $users=db('users')->where('id',$orders['user_id'])->find();
             $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
             $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
-            if(empty($rebatelist)){
+
+            if(!empty($rebatelist)){
                 $rebatelist=new Rebatelist();
                 $data=[
                     "user_id"=>$users["id"],
@@ -1072,63 +1073,68 @@ class Wxcallback extends Controller
             if (!empty($up_data)){
                 db('orders')->where('out_trade_no',$result['orderId'])->update($up_data);
             }
-
             //发送小程序订阅消息(运单状态)
             if ($orders['order_status']=='派单中'){
-                if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
-                    if(!empty($rebatelist["invitercode"])){
-                        $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
+                if(!empty($rebatelist)){
+                    if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
+                        if(!empty($rebatelist["invitercode"])){
+                            $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
 
-                        if(!empty($fauser)){
-                            $fauser->money+=$rebatelist->imm_rebate??0;
-                            $fauser->save();
-                            $rebatelistdata["isimmstate"]=1;
+                            if(!empty($fauser)){
+                                $fauser->money+=$rebatelist->imm_rebate??0;
+                                $fauser->save();
+                                $rebatelistdata["isimmstate"]=1;
+                            }
+                        }
+                        if(!empty($rebatelist["fainvitercode"])){
+                            $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
+                            if(!empty($gruser)){
+                                $gruser->money+=$rebatelist->mid_rebate??0;
+                                $gruser->save();
+                                $rebatelistdata["ismidstate"]=1;
+
+                            }
+                        }
+                        $rebatelistdata["state"]=5;
+                    }
+                    if($rebatelist->state ==2){
+                        $rebatelistdata["state"]=4;
+                    }
+                    //超级 B 分润 + 返佣（返佣用自定义比例 ） 返佣表需添加字段：1、基本比例分润字段 2、达标比例分润字段
+                    if(!empty($users["rootid"])){
+                        if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4) {
+                            $superB=Admin::get($users["rootid"]);
+                            if (!empty($superB)){
+                                $superB->defaltamoount+=$rebatelist->root_default_rebate;
+                                $superB->vipamoount+=$rebatelist->root_vip_rebate;
+                                $superB->save();
+                                $rebatelistdata["isrootstate"]=1;
+                            }
+
                         }
                     }
-                    if(!empty($rebatelist["fainvitercode"])){
-                        $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-                        if(!empty($gruser)){
-                            $gruser->money+=$rebatelist->mid_rebate??0;
-                            $gruser->save();
-                            $rebatelistdata["ismidstate"]=1;
-
-                        }
-                    }
-                    $rebatelistdata["state"]=5;
-                }
-                if($rebatelist->state ==2){
-                    $rebatelistdata["state"]=4;
-                }
-                //超级 B 分润 + 返佣（返佣用自定义比例 ） 返佣表需添加字段：1、基本比例分润字段 2、达标比例分润字段
-                if(!empty($users["rootid"])){
-                    if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4) {
-                        $superB=Admin::get($users["rootid"]);
-                        if (!empty($superB)){
-                            $superB->defaltamoount+=$rebatelist->root_default_rebate;
-                            $superB->vipamoount+=$rebatelist->root_vip_rebate;
-                            $superB->save();
-                            $rebatelistdata["isrootstate"]=1;
-                        }
-
-                    }
+                    $rebatelist->save($rebatelistdata);
                 }
 
-                $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
-                    'touser'=>$users['open_id'],  //接收者openid
-                    'template_id'=>$agent_auth_xcx['waybill_template'],
-                    'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
-                    'data'=>[
-                        'character_string13'=>['value'=>$orders['waybill']],
-                        'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
-                        'thing10'=>['value'=>$orders['receive_province'].$orders['receive_city']],
-                        'phrase3'=>['value'=>$result['orderStatus']],
-                        'thing8'  =>['value'=>'点击查看快递信息与物流详情',]
-                    ],
-                    'miniprogram_state'=>'formal',
-                    'lang'=>'zh_CN'
-                ],'POST');
+                if(!empty($users)){
+                    $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,[
+                        'touser'=>$users['open_id'],  //接收者openid
+                        'template_id'=>$agent_auth_xcx['waybill_template'],
+                        'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$orders['id'],  //模板跳转链接
+                        'data'=>[
+                            'character_string13'=>['value'=>$orders['waybill']],
+                            'thing9'=>['value'=>$orders['sender_province'].$orders['sender_city']],
+                            'thing10'=>['value'=>$orders['receive_province'].$orders['receive_city']],
+                            'phrase3'=>['value'=>$result['orderStatus']],
+                            'thing8'  =>['value'=>'点击查看快递信息与物流详情',]
+                        ],
+                        'miniprogram_state'=>'formal',
+                        'lang'=>'zh_CN'
+                    ],'POST');
+
+                }
             }
-            $rebatelist->save($rebatelistdata);
+
             return json(['code'=>0, 'message'=>'推送成功']);
         }catch (\Exception $e){
             recordLog('channel-callback-err',
@@ -1617,7 +1623,7 @@ class Wxcallback extends Controller
                     break;
                 case 'JILU':
                     $jiLu = new JiLu();
-                    $resultJson = $jiLu->createOrderHandle($orders);
+                    $resultJson = $jiLu->createOrderHandle($orders, $record);
                     $result = json_decode($resultJson, true);
                     recordLog('jilu-create-order',
                         '订单：'.$orders['out_trade_no']. PHP_EOL .
@@ -1626,7 +1632,8 @@ class Wxcallback extends Controller
                     if ($result['code']!=1){ // 下单失败
                         recordLog('channel-create-order-err',
                             '订单：'.$orders['out_trade_no']. PHP_EOL .
-                            '极鹭下单失败：'.$resultJson
+                            '极鹭下单失败：'.$resultJson . PHP_EOL .
+                            '请求参数：' . $record
                         );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         $errMsg = $result['data']['message']??$result['msg'];

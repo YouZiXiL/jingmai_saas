@@ -8,6 +8,7 @@ use app\common\business\JiLu;
 use app\common\business\YunYang;
 use app\common\config\Channel;
 use app\common\controller\Backend;
+use app\common\library\utils\SnowFlake;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\Exception;
@@ -70,6 +71,9 @@ class Order extends Backend
             case Channel::$jilu:
                 $orderBusiness->jlCreateOrder($orderInfo);
                 break;
+            case Channel::$qbd:
+                $orderBusiness->qbdCreateOrder($orderInfo);
+                break;
         }
     }
 
@@ -83,55 +87,78 @@ class Order extends Backend
      */
     public function query(YunYang $yunYang){
         $paramData = input();
+        if($paramData['info']['weight']<=60){
+            $this->kdQuery($paramData);
+        }else{
+            $this->wlQuery($paramData);
+        }
 
-        // $data = $yunYang->getPrice($content);
+
+    }
+
+    /**
+     * 快递价格查询
+     * @return void
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws Exception
+     * @throws ModelNotFoundException
+     */
+    public function kdQuery($paramData){
+        $agent_info=db('admin')->where('id',$this->auth->id)->find();
+
         $orderBusiness = new OrderBusiness();
-        $yyQuery = $orderBusiness->yyQueryPriceData($paramData);
-        $fhdQuery = $orderBusiness->fhdQueryPriceData($paramData);
+        $queryParam = $orderBusiness->setParamByPrice($paramData);
+        $response =  $orderBusiness->multiPrice($queryParam);
+        list($yy, $fhd, $qbd) = $response;
+
+
+        $paramData['channelTag'] = '智能';
+        $paramData['tagType'] = '德邦快递';
+        $paramData['type'] = 'RCP';
+        $paramData['channel'] = '德邦大件快递360';
+
+        $yyRes = $orderBusiness->yyPriceHandle($yy, $agent_info, $paramData);
+        $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData);
+        $qbdRes = $orderBusiness->qbdPriceHandle($qbd, $agent_info, $paramData);
 
         $jiLu = new JiLu();
         $jlCost = $jiLu->getCost($paramData['sender']['province'], $paramData['receiver']['province']);
-//        $jiluParams = [
-//            'url' => $jiLu->baseUlr,
-//            'data' => $jiLu->setParma('PRICE_ORDER', $jlQuery),
-//        ];
+        $profit = $jiLu->getProfitToAgent($agent_info['id']);
 
-        $fengHuoDi = new FengHuoDi();
-        $fhdParams = [
-            'url' => $fengHuoDi->baseUlr.'predictExpressOrder',
-            'data' => $fengHuoDi->setParam($fhdQuery),
-            'header' => ['Content-Type = application/x-www-form-urlencoded; charset=utf-8']
-        ];
-        $yunYang = new \app\common\business\YunYang();
-        $yyParams = [
-            'url' => $yunYang->baseUlr,
-            'data' => $yunYang->setParma('CHECK_CHANNEL_INTELLECT',$yyQuery),
-        ];
+        $jlRes = $orderBusiness->jlPriceHandle($jlCost, $agent_info, $paramData, $profit);
 
-        $agent_info=db('admin')->where('id',$this->auth->id)->find();
-        $utils = new \app\web\controller\Common();
-        $response =  $utils->multiRequest($yyParams, $fhdParams);
-
-        $profit = db('profit')->where('agent_id', $agent_info['id'])
-            ->where('mch_code', 'JILU')
-            ->find();
-        if(empty($profit)){
-            $profit = db('profit')->where('agent_id', 0)
-                ->where('mch_code', 'JILU')
-                ->find();
-        }
-
-        $yyPackage = $orderBusiness->yyPriceHandle($response[0], $agent_info, $paramData);
-        $fhdDb = $orderBusiness->fhdPriceHandle($response[1], $agent_info, $paramData);
-        $jiluPackage = $orderBusiness->jlPriceHandle($jlCost, $agent_info, $paramData, $profit);
-
-        $packageList = $yyPackage;
-        $packageList[] = $jiluPackage;
-        isset($fhdDb) && $packageList[] = $fhdDb;
-        if (empty($packageList)){
+        $priceList = array_merge_recursive($yyRes, $qbdRes) ;
+        $priceList[] = $jlRes;
+        $priceList[] = $fhdRes;
+        if (empty($priceList)){
             throw new Exception('没有指定快递渠道请联系客服');
         }
-        $this->success('ok','', $packageList);
+        $this->success('ok','', $priceList);
+    }
+
+    /**
+     * 物流价格查询
+     * @param $paramData
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    private function wlQuery($paramData)
+    {
+        $orderBusiness = new OrderBusiness();
+        $fhdQuery = $orderBusiness->fhdFormatPrice($paramData, 'JZQY_LONG');
+        $fengHuoDi = new FengHuoDi();
+        $setParam = $fengHuoDi->setParam($fhdQuery);
+        $resultJson = $fengHuoDi->queryPrice($setParam);
+        $agent_info=db('admin')->where('id',$this->auth->id)->find();
+
+        $paramData['channelTag'] = '重货';
+        $paramData['tagType'] = '德邦重货';
+        $paramData['type'] = 'JZQY_LONG';
+        $paramData['channel'] = '德邦重货';
+        $list[] = $orderBusiness->fhdPriceHandle($resultJson, $agent_info, $paramData);
+        $this->success('ok','', $list);
     }
 
 }
