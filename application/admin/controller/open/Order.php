@@ -125,12 +125,11 @@ class Order extends Backend
         $jiLu = new JiLu();
         $jlCost = $jiLu->getCost($paramData['sender']['province'], $paramData['receiver']['province']);
         $profit = $jiLu->getProfitToAgent($agent_info['id']);
-
-        $jlRes = $orderBusiness->jlPriceHandle($jlCost, $agent_info, $paramData, $profit);
+        $jlRes = $jlCost?$orderBusiness->jlPriceHandle($jlCost, $agent_info, $paramData, $profit):[];
 
         $priceList = array_merge_recursive($yyRes, $qbdRes) ;
-        $priceList[] = $jlRes;
-        $priceList[] = $fhdRes;
+        !empty($jlRes) && $priceList[] = $jlRes;
+        !empty($fhdRes) && $priceList[] = $fhdRes;
         if (empty($priceList)){
             throw new Exception('没有指定快递渠道请联系客服');
         }

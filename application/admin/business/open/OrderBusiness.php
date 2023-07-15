@@ -744,6 +744,11 @@ class OrderBusiness extends Backend
 //                    unset($result['result'][$k]);
 //                    continue;
 //                }15226052986
+
+            if (empty($item["channelFee"])){
+                recordLog('channel-price-err', 'QBD: ' . json_encode($result, JSON_UNESCAPED_UNICODE));
+                continue;
+            }
             $item['isNew'] = (bool)strpos($item['channelName'], '新户');
             $item['freight'] = number_format($item["channelFee"] ,2);
             if($item['isNew']){
