@@ -566,7 +566,13 @@ if(!function_exists('loseProvince')){
     function loseProvince($province){
         $lastChar = mb_substr($province, -1, 1,'UTF-8');
         if (in_array($lastChar, array("省", "市"))) {
-            $province = mb_substr($province, 0, mb_strlen($province, 'UTF-8') - 1, 'UTF-8');
+            return mb_substr($province, 0, mb_strlen($province, 'UTF-8') - 1, 'UTF-8');
+        }
+        if(strpos($province, '内蒙古') !== false){
+            return '内蒙古';
+        }
+        if (strpos($province, '自治区')){
+            return mb_substr($province, 0, 2, 'UTF-8');
         }
         return $province;
     }
