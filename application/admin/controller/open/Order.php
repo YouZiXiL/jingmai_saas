@@ -37,7 +37,6 @@ class Order extends Backend
      */
     public function create(OrderBusiness $orderBusiness)
     {
-
         $requireId = input('requireId');
         $paramJson = cache($requireId);
         if (!$paramJson) $this->error('下单超时请重试');

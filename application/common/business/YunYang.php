@@ -249,9 +249,10 @@ class YunYang{
     /**
      * 支付成功时的下单逻辑
      * @param $orders
+     * @param mixed $record
      * @return mixed
      */
-    public function createOrderHandle($orders){
+    public function createOrderHandle($orders, &$record = false){
         $content=[
             'channelId'=> $orders['channel_id'],
             'channelTag'=>$orders['channel_tag'],
@@ -278,11 +279,11 @@ class YunYang{
         !empty($orders['vloum_width']) &&($content['vloumWidth'] = $orders['vloum_width']);
         !empty($orders['vloum_height']) &&($content['vloumHeight'] = $orders['vloum_height']);
         !empty($orders['bill_remark']) &&($content['billRemark'] = $orders['bill_remark']);
+        $record = json_encode($content, JSON_UNESCAPED_UNICODE);
         $result = $this->utils->yunyang_api('ADD_BILL_INTELLECT',$content);
         recordLog('yy-create-order',
-            '['. date('H:i:s', time()) .']'. PHP_EOL
-            .json_encode($result, JSON_UNESCAPED_UNICODE) . PHP_EOL
-            .'订单：'.$orders['out_trade_no']
+            '订单：'.$orders['out_trade_no']. PHP_EOL
+            .json_encode($result, JSON_UNESCAPED_UNICODE)
         );
         return $result;
     }

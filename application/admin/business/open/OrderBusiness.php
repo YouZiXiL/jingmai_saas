@@ -277,11 +277,16 @@ class OrderBusiness extends Backend
     public function yyCreateOrder(Model $orderInfo){
         $orders = $orderInfo->toArray();
         $yunYang = new YunYang();
-        $result = $yunYang->createOrderHandle($orders);
+        $result = $yunYang->createOrderHandle($orders, $record);
         if ($result['code'] != 1) {
+            recordLog('channel-create-order-err',
+                '订单ID：'. $orders['out_trade_no']. PHP_EOL.
+                '云洋：'.json_encode($result, JSON_UNESCAPED_UNICODE) . PHP_EOL.
+                '请求参数：' . $record
+            );
             $updateOrder=[
                 'id' => $orderInfo->id,
-                'pay_status'=> 0,
+                'pay_status'=> 2,
                 'yy_fail_reason'=>$result['message'],
                 'order_status'=>'下单失败咨询客服',
             ];
