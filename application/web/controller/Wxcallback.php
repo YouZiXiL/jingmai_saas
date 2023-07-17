@@ -203,7 +203,7 @@ class Wxcallback extends Controller
                 ],'POST');
                 $res=json_decode($resJson,true);
                 if ($res['errcode']!=0){
-                    recordLog('wx-shouquan', "配置小程序服务器域名配置失败" . $resJson . PHP_EOL);
+                    recordLog('wx-shouquan', "配置小程序服务器域名配置失败" . $resJson);
                     exit('配置小程序服务器域名配置失败'.$res['errmsg']);
                 }
 //            $res=$common->httpRequest('https://api.weixin.qq.com/wxa/setwebviewdomain?access_token='.$authorization_info['authorizer_access_token'],[

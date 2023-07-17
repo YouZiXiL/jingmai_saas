@@ -460,4 +460,14 @@ class Authlist extends Backend
     }
 
 
+    /**
+     * 授权设置
+     * @return void
+     * @throws DbException|\think\Exception
+     */
+    public function setup($ids){
+        $agentAuth = $this->model->get($ids);
+        $agentAuth->save(['map_key' => input('map')]);
+        $this->success();
+    }
 }

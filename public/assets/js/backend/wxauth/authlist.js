@@ -305,17 +305,15 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         Layer.open({
                                             title:['地图设置'],
                                             content:'' +
-                                                '<div class="form-inline row">' +
-                                                '<div class="mr-2">腾讯地图key:</div><input class="form-control" id="kami" autocomplete="off" type="text">' +
+                                                '<div class="form-inline row a-center j-center">' +
+                                                `<div class="pr-3">腾讯地图key:</div><input class="form-control" id="map" autocomplete="off" type="text" value=${row.map_key}>` +
                                                 '</div>',
                                             btn:['确认','取消'],
                                             yes:function (index){
                                                 Fast.api.ajax({
-                                                    url: 'wxauth/authlist/renew?ids='+row.id+'&kami='+$('#kami').val(),
+                                                    url: 'wxauth/authlist/setup?ids='+row.id+'&map='+$('#map').val(),
                                                 }, function (data,ret) { //success
-                                                    Layer.msg(ret.msg);
                                                     table.bootstrapTable('refresh');
-                                                    Layer.close(index);
                                                 }, function (data,ret) { //error
                                                     Layer.msg(ret.msg);
                                                     Layer.close(index);
@@ -327,7 +325,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     },
                                     visible: function (row) {
                                         //返回true时按钮显示,返回false隐藏
-                                        return true;
+                                        return row.wx_auth === '1' && row.auth_type === '2';
+
+
                                     }
                                 },
                             ], formatter: Table.api.formatter.operate}
