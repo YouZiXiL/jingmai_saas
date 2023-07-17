@@ -1028,7 +1028,7 @@ class Wxcallback extends Controller
                         'template_id'=>$agent_auth_xcx['material_template'],
                         'xcx_access_token'=>$xcx_access_token,
                         'order_id' => $orders['id'],
-                        'open_id'=>$users['open_id'],
+                        'open_id'=>$users['open_id']??null,
                     ];
                     $rebatelistdata["state"]=2;
                     // 将该任务推送到消息队列，等待对应的消费者去执行

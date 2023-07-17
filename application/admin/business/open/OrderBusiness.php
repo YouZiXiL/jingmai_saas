@@ -7,6 +7,7 @@ use app\common\business\JiLu;
 use app\common\business\QBiDaBusiness;
 use app\common\business\YunYang;
 use app\common\config\Channel;
+use app\common\config\ProfitConfig;
 use app\common\controller\Backend;
 use app\common\library\utils\SnowFlake;
 use app\common\model\Order;
@@ -562,7 +563,7 @@ class OrderBusiness extends Backend
             }
         }
         if (empty($total)) return null;
-        $agent_price= $total['fright']*0.68+$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
+        $agent_price= $total['fright']*ProfitConfig::$fhd+$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
         $users_price= $agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
         $admin_shouzhong=0;//平台首重
         $admin_xuzhong=0;//平台续重

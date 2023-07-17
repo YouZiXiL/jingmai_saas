@@ -56,7 +56,7 @@ class DoJob
                         //代理商减少余额  代理超重
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['agent_overload_amt'],4,'运单号：'.$orders['waybill'].' 超重扣除金额：'.$data['agent_overload_amt'].'元');
                         //发送小程序超重订阅消息
-                        if($orders['pay_type'] == 1 && @$data['template_id']){
+                        if($orders['pay_type'] == 1 && !empty($data['template_id']) && !empty($data['open_id'])){
                             $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
                                 'touser'=>$data['open_id'],  //接收者openid
                                 'template_id'=>$data['template_id'],
@@ -104,7 +104,7 @@ class DoJob
                         //代理商减少余额  耗材
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'运单号：'.$orders['waybill'].' 耗材扣除金额：'.$data['freightHaocai'].'元');
                         //发送小程序耗材订阅消息
-                        if ($orders['pay_type'] == 1 && @$data['template_id']){
+                        if ($orders['pay_type'] == 1 && !empty($data['template_id']) && !empty($data['open_id'])){
                             $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
                                 'touser'=>$data['open_id'],  //接收者openid
                                 'template_id'=>$data['template_id'],

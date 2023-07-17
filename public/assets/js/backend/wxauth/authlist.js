@@ -295,6 +295,38 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         return true;
                                     }
                                 },
+                                {
+                                    name: 'setup',
+                                    text: '设置',
+                                    title: '设置',
+                                    classname: 'btn btn-xs btn-info btn-click',
+                                    icon: 'fa fa-list',
+                                    click: function(options, row, button){
+                                        Layer.open({
+                                            title:['地图设置'],
+                                            content:'<div class="form-inline row"><code>腾讯地图key:</code><input class="form-control" id="kami" autocomplete="off" type="text"></div>',
+                                            btn:['确认','取消'],
+                                            yes:function (index){
+                                                Fast.api.ajax({
+                                                    url: 'wxauth/authlist/renew?ids='+row.id+'&kami='+$('#kami').val(),
+                                                }, function (data,ret) { //success
+                                                    Layer.msg(ret.msg);
+                                                    table.bootstrapTable('refresh');
+                                                    Layer.close(index);
+                                                }, function (data,ret) { //error
+                                                    Layer.msg(ret.msg);
+                                                    Layer.close(index);
+                                                    return false;
+                                                });
+                                                Layer.close(index);
+                                            }
+                                        })
+                                    },
+                                    visible: function (row) {
+                                        //返回true时按钮显示,返回false隐藏
+                                        return true;
+                                    }
+                                },
                             ], formatter: Table.api.formatter.operate}
                     ]
                 ]

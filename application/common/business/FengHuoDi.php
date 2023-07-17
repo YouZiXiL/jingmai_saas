@@ -2,6 +2,7 @@
 
 namespace app\common\business;
 
+use app\common\config\ProfitConfig;
 use app\web\controller\Common;
 
 class FengHuoDi
@@ -78,7 +79,7 @@ class FengHuoDi
             }
         }
         if (empty($total)) return null;
-        $agent_price= $total['fright']*0.68 + $total['fright'] * $agent_info['db_agent_ratio']/100;//代理商价格
+        $agent_price= $total['fright']* ProfitConfig::$fhd + $total['fright'] * $agent_info['db_agent_ratio']/100;//代理商价格
         $users_price= $agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
         $admin_shouzhong=0;//平台首重
         $admin_xuzhong=0;//平台续重
