@@ -304,7 +304,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     click: function(options, row, button){
                                         Layer.open({
                                             title:['地图设置'],
-                                            content:'<div class="form-inline row"><code>腾讯地图key:</code><input class="form-control" id="kami" autocomplete="off" type="text"></div>',
+                                            content:'' +
+                                                '<div class="form-inline row">' +
+                                                '<div class="mr-2">腾讯地图key:</div><input class="form-control" id="kami" autocomplete="off" type="text">' +
+                                                '</div>',
                                             btn:['确认','取消'],
                                             yes:function (index){
                                                 Fast.api.ajax({

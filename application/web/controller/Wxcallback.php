@@ -8,6 +8,7 @@ use app\common\business\JiLu;
 use app\common\business\OrderBusiness;
 use app\common\business\RebateListController;
 use app\common\business\WanLi;
+use app\common\config\ProfitConfig;
 use app\common\library\alipay\Alipay;
 use app\common\library\KD100Sms;
 use app\common\library\R;
@@ -944,7 +945,7 @@ class Wxcallback extends Controller
                     $up_data['overload_status']=1;
                     $overload_weight=ceil($result['orderEvent']['calculateWeight']/1000-$orders['weight']);//超出重量
 
-                    $overload_amt=$result['orderEvent']['transportPrice']/100*0.68-$orders['freight'];//超出金额
+                    $overload_amt=$result['orderEvent']['transportPrice']/100 * ProfitConfig::$fhd -$orders['freight'];//超出金额
                     if($overload_amt<0) $overload_amt=0;
                     $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
                     $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['db_agent_ratio']/100;//代理商续重
