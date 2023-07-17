@@ -13,6 +13,9 @@ use app\web\model\AgentAuth;
 use app\web\model\Rebatelist;
 use DOMDocument;
 use think\Controller;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
+use think\exception\DbException;
 use think\Log;
 use think\Request;
 
@@ -66,6 +69,9 @@ class Test extends Controller
     /**
      * 服务商上传小程序代码
      * @return void
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
      */
     public function open_upload(){
         $agentId = input('agent_id');

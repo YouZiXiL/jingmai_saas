@@ -318,7 +318,10 @@ class Authlist extends Backend
         ],'POST');
         $res=json_decode($resJson,true);
         if ($res['errcode']!=0){
-            Log::error('设置小程序用户隐私保护指引失败-', $resJson);
+            Log::error('设置小程序用户隐私保护指引失败-' . PHP_EOL .
+                $resJson . PHP_EOL .
+                json_encode($row, JSON_UNESCAPED_UNICODE) . PHP_EOL
+            );
             $this->error('设置小程序用户隐私保护指引失败');
         }
         $res=$common->httpRequest('https://api.weixin.qq.com/wxa/gettemplatelist?access_token='.$common->get_component_access_token().'&template_type=0');
