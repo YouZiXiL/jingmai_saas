@@ -91,8 +91,9 @@ class Login extends Controller
             $user_info['token']=$_3rd_session;
             //如果携带邀请码登录
             if(!empty($param["invitcode"])){
+                Log::info(['微信登录' => $param]);
                 // 'invitcode' => 'myinvitecode%3DCAA2122',
-                $invitcode = explode('%', $param["invitcode"]);
+                $invitcode = explode('%3D', $param["invitcode"]);
                 $pauser=$user->get(["myinvitecode"=>$invitcode[1]]);
                 if(!empty($pauser)){
                     $user_info["invitercode"]=$invitcode[1];

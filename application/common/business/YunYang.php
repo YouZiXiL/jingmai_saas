@@ -58,6 +58,13 @@ class YunYang{
         return json_decode($res, true);
     }
 
+
+    public function queryBalance(){
+        $data = $this->setParma('QUERY_BALANCE',[]);
+        $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
+        return json_decode($res, true);
+    }
+
     /**
      * 下单
      * @param array $content
