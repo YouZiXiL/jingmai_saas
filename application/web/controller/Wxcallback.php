@@ -1653,6 +1653,9 @@ class Wxcallback extends Controller
                         );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         $errMsg = $result['data']['message']??$result['msg'];
+                        if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
+                            $errMsg = '不支持的寄件或收件号码';
+                        }
                         //支付下单失败  执行退款操作
                         $update=[
                             'pay_status'=>2,
