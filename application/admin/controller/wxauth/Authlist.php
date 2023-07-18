@@ -322,18 +322,22 @@ class Authlist extends Backend
                 $resJson . PHP_EOL .
                 json_encode($row, JSON_UNESCAPED_UNICODE) . PHP_EOL
             );
-            $this->error('设置小程序用户隐私保护指引失败');
+            $this->error('设置小程序用户隐私保护指引失败'.$resJson);
         }
-        $res=$common->httpRequest('https://api.weixin.qq.com/wxa/gettemplatelist?access_token='.$common->get_component_access_token().'&template_type=0');
-        $res=json_decode($res,true);
+        $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/gettemplatelist?access_token='.$common->get_component_access_token().'&template_type=0');
+        $res=json_decode($resJson,true);
         if ($res['errcode']!=0){
-            $this->error('获取模版库失败');
+            Log::error('获取模版库失败-' . PHP_EOL .
+                $resJson . PHP_EOL .
+                json_encode($row, JSON_UNESCAPED_UNICODE) . PHP_EOL
+            );
+            $this->error('获取模版库失败-'.$resJson);
         }
         $edit = array_column($res['template_list'],'draft_id');
         array_multisort($edit,SORT_DESC,$res['template_list']);
         $template_list=array_shift($res['template_list']);
 
-        $res=$common->httpRequest('https://api.weixin.qq.com/wxa/commit?access_token='.$xcx_access_token,[
+        $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/commit?access_token='.$xcx_access_token,[
             'template_id'=>$template_list['template_id'],
             'ext_json'=>json_encode([
                 'extAppid'=>$row['app_id'],
@@ -345,9 +349,13 @@ class Authlist extends Backend
             'user_version'=>$template_list['user_version'],
             'user_desc'=>$template_list['user_desc'],
         ],'POST');
-        $res=json_decode($res,true);
+        $res=json_decode($resJson,true);
         if ($res['errcode']!=0){
-            $this->error($res['errmsg']);
+            Log::error('上传代码失败-' . PHP_EOL .
+                $resJson . PHP_EOL .
+                json_encode($row, JSON_UNESCAPED_UNICODE) . PHP_EOL
+            );
+            $this->error('上传代码失败'.$resJson);
         }
         $row->save(['xcx_audit'=>3,'user_version'=>$template_list['user_version']]);
         $this->success('成功');
