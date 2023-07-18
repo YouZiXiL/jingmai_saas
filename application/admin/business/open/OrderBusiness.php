@@ -470,12 +470,15 @@ class OrderBusiness extends Backend
         $resultJson = $jiLu->createOrderHandle($orders);
         $result = json_decode($resultJson, true);
         if ($result['code']!=1){ // 下单失败
-
-            //支付下单失败  执行退款操作
+            $errMsg = $result['data']['message']??$result['msg'];
+            if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
+                $errMsg = '不支持的寄件或收件号码';
+            }
+            //支付下单失败
             $updateOrder=[
                 'id' => $orderInfo->id,
-                'pay_status'=> 0,
-                'yy_fail_reason'=>$result['msg'],
+                'pay_status'=> 2,
+                'yy_fail_reason'=>$errMsg,
                 'order_status'=>'下单失败咨询客服',
             ];
             $orderInfo->isUpdate()->save($updateOrder);
@@ -631,7 +634,7 @@ class OrderBusiness extends Backend
         if ($result['rcode']!=0) {
             $updateOrder=[
                 'id' => $orderInfo->id,
-                'pay_status'=> 0,
+                'pay_status'=> 2,
                 'yy_fail_reason'=>$result['errorMsg'],
                 'order_status'=>'下单失败咨询客服',
             ];
@@ -801,7 +804,7 @@ class OrderBusiness extends Backend
             //支付成功下单失败  执行退款操作
             $update=[
                 'id' => $orderInfo->id,
-                'pay_status'=> 0,
+                'pay_status'=> 2,
                 'yy_fail_reason'=>$data['msg'],
                 'order_status'=>'下单失败咨询客服',
             ];

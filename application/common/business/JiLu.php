@@ -78,7 +78,6 @@ class JiLu
      */
     public function createOrder($content, &$record= false){
         $parma = $this->setParma('CREATE_ORDER', $content);
-        Log::log('极鹭下单参数：'. json_encode($parma, JSON_UNESCAPED_UNICODE));
         $record = json_encode($parma, JSON_UNESCAPED_UNICODE);
         return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
     }
