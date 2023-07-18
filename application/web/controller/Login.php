@@ -93,10 +93,10 @@ class Login extends Controller
             if(!empty($param["invitcode"])){
                 Log::info(['微信登录' => $param]);
                 // 'invitcode' => 'myinvitecode%3DCAA2122',
-                $invitcode = explode('%3D', $param["invitcode"]);
-                $pauser=$user->get(["myinvitecode"=>$invitcode[1]]);
+                $invitcode = substr($param["invitcode"],-7 );
+                $pauser=$user->get(["myinvitecode"=>$invitcode]);
                 if(!empty($pauser)){
-                    $user_info["invitercode"]=$invitcode[1];
+                    $user_info["invitercode"]=$invitcode;
                     $user_info["fainvitercode"]=$pauser["invitercode"];
                 }
                 //超级B 身份核验

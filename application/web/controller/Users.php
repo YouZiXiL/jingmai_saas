@@ -424,7 +424,11 @@ class Users extends Controller
         $rebate=new Rebatelist();
 
         $startday=date("Y-m");
-        $userorders=$rebate->whereBetween("updatetime",[strtotime($startday),strtotime(date("Y-m-t "."23:59:59"))])->where("cancel_time","null")->order("id","desc")->page($page,$this->page_rows)->where(function ($query) use($user_info){
+        $userorders=$rebate->whereBetween("updatetime",[strtotime($startday),strtotime(date("Y-m-t "."23:59:59"))])
+            ->where("cancel_time","null")
+            ->order("id","desc")
+            ->page($page,$this->page_rows)
+            ->where(function ($query) use($user_info){
             $query->where("invitercode",$user_info->myinvitecode)->whereOr("fainvitercode",$user_info->myinvitecode);
         })->select();
         if(!empty($userorders)){
