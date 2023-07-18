@@ -45,7 +45,7 @@ class OrderBusiness extends Backend
             'final_freight'=>0,// 平台运费
             'pay_status'=> 0, // 支付状态
             'pay_type'=>3,  // 支付类型
-            'order_status'=>'派单中',
+            'order_status'=>'已派单',
             'overload_price'=>0,//超重金额
             'agent_overload_price'=>0,//代理商超重金额
             'tralight_price'=>0,//超轻金额

@@ -678,7 +678,7 @@ class Wxcallback extends Controller
             db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
 
             //发送小程序订阅消息(运单状态)
-            if ($orders['order_status']=='派单中'){
+            if ($orders['order_status']=='派单中' || $orders['order_status']=='已派单'){
                 if($rebateModal){
                     if( $rebateModal->state !=2 && $rebateModal->state !=3 && $rebateModal->state !=4){
                         if(!empty($rebateModal->invitercode)){
@@ -1089,7 +1089,7 @@ class Wxcallback extends Controller
                 db('orders')->where('out_trade_no',$result['orderId'])->update($up_data);
             }
             //发送小程序订阅消息(运单状态)
-            if ($orders['order_status']=='派单中'){
+            if ($orders['order_status']=='派单中'|| $orders['order_status']=='已派单'){
                 if(!empty($rebatelist)){
                     if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
                         if(!empty($rebatelist["invitercode"])){
@@ -2520,7 +2520,7 @@ class Wxcallback extends Controller
                 $rebatelist->save($rebatelistdata);
                 db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
                 //发送小程序订阅消息(运单状态)
-                if ($orders['order_status']=='派单中'){
+                if ($orders['order_status']=='派单中'|| $orders['order_status']=='已派单'){
                     //如果未 计入 并且 没有补缴 则计入
 
 //                    if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
@@ -3747,7 +3747,9 @@ class Wxcallback extends Controller
             }
 
             if($sendType == 'trackType'){  // 物流轨迹、揽件信息、订单状态
-                if($expressStatus)  $update['order_status'] = $jiLu->getOrderStatus($expressStatus);
+                if($expressStatus !== null){
+                    $update['order_status'] = $jiLu->getOrderStatus($expressStatus);
+                }
                 $update['comments'] = $expressTrack;
                 if($expressStatus == 5 &&$order['pay_status']!=2){ // 已取消
                     $orderBusiness = new OrderBusiness();

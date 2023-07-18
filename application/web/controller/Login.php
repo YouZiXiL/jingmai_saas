@@ -48,6 +48,7 @@ class Login extends Controller
     public function get_openid(): Json
     {
         $param=$this->request->param();
+        Log::info(['登录参数'=> $param]);
         if (empty($param['app_id'])||trim($param['code'])=='null'){
             Log::error(json_encode($param));
             return json(['status'=>400,'data'=>'','msg'=>'请重新登录']);
@@ -90,10 +91,12 @@ class Login extends Controller
             $user_info['token']=$_3rd_session;
             //如果携带邀请码登录
             if(!empty($param["invitcode"])){
-                $pauser=$user->get(["myinvitecode"=>$param["invitcode"]]);
+                // 'invitcode' => 'myinvitecode%3DCAA2122',
+                $invitcode = explode('%', $param["invitcode"]);
+                $pauser=$user->get(["myinvitecode"=>$invitcode[1]]);
                 if(!empty($pauser)){
-                    $user_info["invitercode"]=$param["invitcode"];
-                    $user_info["fainvitercode"]=$pauser["invitcode"];
+                    $user_info["invitercode"]=$invitcode[1];
+                    $user_info["fainvitercode"]=$pauser["invitercode"];
                 }
                 //超级B 身份核验
                 if(!empty($pauser->rootid)){
