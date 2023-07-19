@@ -4,6 +4,7 @@ namespace app\admin\controller\open;
 
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
+use app\common\business\QBiDaBusiness;
 use app\common\business\YunYang;
 use app\common\controller\Backend;
 use think\Exception;
@@ -23,6 +24,7 @@ class Common extends Backend
         $data['yyAmt']  = $this->yyBalance();
         $data['jlAmt']  = $this->jlBalance();
         $data['fhdAmt']  = $this->fhdBalance();
+        $data['qbdAmt']  = $this->qbdBalance();
         $data['wanliAmt'] = $this->wlBalance();
         $this->view->assign('data',$data);
         return $this->view->fetch();
@@ -58,6 +60,15 @@ class Common extends Backend
         return number_format( $result['data'][0]['amount']/100, 2, '.', '');
 
     }
+
+    public function qbdBalance(){
+        $qbd = new QBiDaBusiness();
+        $res = $qbd->queryBalance();
+        $result = json_decode($res, true);
+        if($result['code'] != 0) return $result['msg'];
+        return $result['data']['balance'];
+    }
+
     public function wlBalance(){
         $wanli = new WanLi();
         $resWanli = $wanli->getWalletBalance();

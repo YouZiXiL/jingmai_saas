@@ -44,6 +44,17 @@ class QBiDaBusiness
     }
 
     /**
+     * 查询账户余额
+     * @return bool|string
+     */
+    public function queryBalance(){
+        $url = $this->baseUlr . 'fund';
+        $header =  $this->setParam();
+        return $this->utils->httpRequest($url,[], 'POST',$header );
+    }
+
+
+    /**
      * 下单接口处理
      * @param array $orders
      * @return mixed
