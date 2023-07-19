@@ -205,10 +205,11 @@ class AliOpen
             "  }");
         try {
             $result = $this->aop->execute($request);
+            recordLog('ali-auth-err', '换取令牌'. json_encode($result, JSON_UNESCAPED_UNICODE) );
+
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
             $resultCode = $result->$responseNode->code;
             if(!empty($resultCode)&&$resultCode == 10000){
-                Log::error(['授权成功' => $result->$responseNode]);
                 /**
                 {'app_auth_token' : '202304BBac1121e6b3ec4a37915de23492b7aX16',
                 'app_refresh_token' : '202304BB3c0e927e47ed4ff7b51c4c5287264E16',
@@ -220,11 +221,13 @@ class AliOpen
                  */
                 return $result->$responseNode->tokens[0];
             }else{
-                Log::error( ["换取令牌失败：" =>  $result->$responseNode]);
+                recordLog('ali-auth-err', '换取令牌失败'. json_encode($result, JSON_UNESCAPED_UNICODE) );
                 throw new Exception('换取令牌失败');
             }
         } catch (Exception $e) {
-            Log::error( "换取令牌失败：" . $e->getMessage() . "追踪：" . $e->getTraceAsString() );
+            recordLog('ali-auth-err', "换取令牌失败：" . PHP_EOL .
+                $e->getLine() . $e->getMessage() . PHP_EOL .
+                $e->getTraceAsString());
             throw new Exception('换取令牌失败');
         }
 
@@ -249,10 +252,14 @@ class AliOpen
         $request->setBizContent($c);
         try {
             $result = $this->aop->execute($request, null, $appAuthToken);
-
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
-            return $result->$responseNode;
-
+            $resultCode = $result->$responseNode->code;
+            if(!empty($resultCode)&&$resultCode == 10000){
+                return $result->$responseNode;
+            } else {
+                recordLog('ali-auth-err', '获取小程序版本信息列表）'. json_encode($result, JSON_UNESCAPED_UNICODE) );
+                throw new Exception('获取小程序版本信息失败');
+            }
         } catch (Exception $e) {
             Log::error( "获取小程序版本信息失败：" . $e->getMessage() . "追踪：". $e->getTraceAsString() );
             throw new Exception('获取小程序版本信息失败');
@@ -285,8 +292,9 @@ class AliOpen
      */
     public function getMiniVersionNumber($appAuthToken){
         $release = $this->getMiniVersionList($appAuthToken, "RELEASE");
-        if (!$release) return null;
-        return $release[0]->app_version;
+        recordLog('ali-auth-err', '获取当前小程序版本号（已上架）'. json_encode($release, JSON_UNESCAPED_UNICODE) );
+        $version = $release->app_versions;
+        return $version[0];
     }
 
     /**

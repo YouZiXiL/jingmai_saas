@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\common\library\R;
 use app\web\model\Admin;
 use app\web\model\Agent_couponlist;
 use app\web\model\Agent_rule;
@@ -13,6 +14,7 @@ use app\web\model\Rebatelist;
 use app\web\model\UserScoreLog;
 use think\Controller;
 use think\Exception;
+use think\Log;
 use think\Request;
 use WeChatPay\Crypto\Rsa;
 use WeChatPay\Formatter;
@@ -1135,7 +1137,6 @@ class Users extends Controller
 
     //秒杀购买优惠券
     public function couponbymoney_fast(){
-
         $date=date("D");
         if($date=='Wed'){
             $hour=date("H");
@@ -1171,7 +1172,7 @@ class Users extends Controller
 
 //        $coupon_info=db('agent_couponmanager')->find($param["coupon_id"]);
         $coupon_info=AgentCouponmanager::get($param["coupon_id"]);
-        echo $coupon_info->getLastSql();
+
         if(empty($coupon_info)){
             return json(['status'=>400,'data'=>'','msg'=>'请刷新后重试']);
         }
@@ -1236,6 +1237,7 @@ class Users extends Controller
                 'nonceStr'  => Formatter::nonce(),
                 'package'   =>'prepay_id='. $prepay_id['prepay_id'],
             ];
+
             $params += [
                 'paySign' => Rsa::sign(
                     Formatter::joinedByLineFeed(...array_values($params)),
@@ -1249,7 +1251,8 @@ class Users extends Controller
             if (!$inset){
                 throw new Exception('插入数据失败');
             }
-            return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
+
+            return R::ok($params);
         } catch (\Exception $e) {
             recordLog('create-coupon-orders-err', $e->getLine() .'：'.$e->getMessage() . PHP_EOL .
                 $e->getTraceAsString() . PHP_EOL

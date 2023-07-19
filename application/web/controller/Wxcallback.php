@@ -2080,8 +2080,12 @@ class Wxcallback extends Controller
             $this->updatecouponlist($orders["coupon_id"],"MS",$orders["user_id"]);
             exit('success');
         }catch (\Exception $e){
-            file_put_contents('wx_order_pay.txt',$e->getMessage().PHP_EOL.$e->getLine().PHP_EOL,FILE_APPEND);
-
+            recordLog('wx-callback-err',
+                $e->getLine() .'-'. $e->getMessage().PHP_EOL
+                .$e->getTraceAsString().PHP_EOL
+                .'秒杀购优惠券：' . json_encode(input()).PHP_EOL
+                . 'inBody：' . $inBody.PHP_EOL
+            );
             exit('success');
         }
     }

@@ -204,6 +204,11 @@ class Notice extends Controller
             Db::commit();
             exit('授权成功');
         }catch (\Exception $e) {
+            recordLog('ali-callback-err',
+                '支付宝授权失败：('. $e->getLine() . ')' . $e->getMessage()  .PHP_EOL .
+                $e->getTraceAsString(). PHP_EOL .
+                json_encode(input(), JSON_UNESCAPED_UNICODE)
+            );
             // 回滚事务
             Db::rollback();
             exit('授权失败');
