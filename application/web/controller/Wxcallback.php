@@ -3555,8 +3555,8 @@ class Wxcallback extends Controller
                 $haocai = 0;
                 foreach ($params["data"]["feeList"] as $fee){
                     //耗材
-                    if($fee["type"]==3 ||$fee["type"]==7){
-                        $haocai+=$fee["fee"];
+                    if($fee["type"] == 2 || $fee["type"] == 3 ||$fee["type"]==7){
+                        $haocai += $fee["fee"];
                     }
                 }
                 if($haocai){

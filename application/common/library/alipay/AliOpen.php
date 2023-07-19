@@ -48,6 +48,7 @@ class AliOpen
         $request->setCode($code);
         try {
             $result = $this->aop->execute ($request, null, $appAuthToken);
+
             /*
              * $result 数据类型
             {
@@ -65,14 +66,17 @@ class AliOpen
             }
             */
             if(isset($result->error_response)){
-                Log::error(['换取授权访问令牌失败' => $result->error_response]);
-                throw new Exception('换取授权访问令牌失败');
+                recordLog('ali-auth-err', "换取访问令牌：" . PHP_EOL .
+                     json_encode($result->error_response, JSON_UNESCAPED_UNICODE) );
+                throw new Exception($result->error_response->sub_msg);
             }
             $responseNode = str_replace(".", "_", $request->getApiMethodName()) . "_response";
             return $result->$responseNode;
         }catch (Exception $exception){
-            Log::error( "换取授权访问令牌失败：" . $exception->getMessage(). "追踪：". $exception->getTraceAsString() );
-            throw new Exception('换取授权访问令牌失败');
+            recordLog('ali-auth-err', "换取访问令牌：" . PHP_EOL .
+                $exception->getLine() . $exception->getMessage() . PHP_EOL .
+                $exception->getTraceAsString());
+            throw new Exception('换取访问令牌-' . $exception->getMessage());
         }
     }
     /**

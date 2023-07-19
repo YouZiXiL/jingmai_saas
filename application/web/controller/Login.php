@@ -155,7 +155,7 @@ class Login extends Controller
         $appid = input('appid');
         $code = input('code');
         $response = input('response');
-        $appid = AliConfig::$templateId;
+        // $appid = AliConfig::$templateId;
         $agent = AgentAuth::field('agent_id,auth_token,aes')->where('app_id', $appid)->find();
         if (empty($agent))  return R::error("未授权此小程序");
         try {
@@ -171,15 +171,13 @@ class Login extends Controller
             $token = $this->common->get_uniqid();
             $user = Users::where(['open_id' => $openid, 'agent_id'=>$agent_id])->find();
             $record = ['agent_id' => $agent_id, 'token' => $token, 'login_time' => $time];
-
             if (empty($user)){
-
                 // 解密手机号
                 $utils = new AopUtils();
                 $decrypt = $utils -> decrypt($response, $aes);
                 $phoneData = json_decode($decrypt);
                 if(!$phoneData || $phoneData->code != 10000){
-                    Log::error("获取手机号失败：{$decrypt}");
+                    recordLog('ali-auth-err', "获取手机号失败：" . PHP_EOL .$decrypt );
                     return R::error('获取手机号失败');
                 }
                 $mobile = $phoneData->mobile;
@@ -192,7 +190,6 @@ class Login extends Controller
                 $record['id'] = $user->id;
                 $record['login_time'] = $time;
                 $record['agent_id'] = $agent_id;
-
                 Users::update($record);
             }
             $data=['status'=>200,'data'=>$token,'msg'=>'登录成功'];
@@ -207,8 +204,10 @@ class Login extends Controller
             cache($token,$session,3600*24*25);
             return json($data);
         }catch (\Exception $exception){
-            Log::error("支付宝登录失败：" .$exception->getLine() . $exception->getMessage() .$exception->getTraceAsString());
-            return R::error('登录失败');
+            recordLog('ali-auth-err', "登录失败：" . PHP_EOL .
+                $exception->getLine() . $exception->getMessage() . PHP_EOL .
+                $exception->getTraceAsString());
+            return R::error('登录失败-'.$exception->getMessage());
         }
     }
 

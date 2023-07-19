@@ -26,10 +26,10 @@ class YunYang{
     /**
      * 组装请求参数
      * @param string $serviceCode 接口服务代码
-     * @param array $content
+     * @param array|object $content
      * @return array
      */
-    public function setParma(string $serviceCode, array $content){
+    public function setParma(string $serviceCode, $content){
         $timeStamp = floor(microtime(true) * 1000);
         $requestId = str_shuffle($timeStamp); // 唯一请求标识
         $appid = config('site.yy_appid');
@@ -60,7 +60,7 @@ class YunYang{
 
 
     public function queryBalance(){
-        $data = $this->setParma('QUERY_BALANCE',[]);
+        $data = $this->setParma('QUERY_BALANCE', (object)[]);
         $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
         return json_decode($res, true);
     }
