@@ -82,6 +82,17 @@ class JiLu
         return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
     }
 
+    public function queryBalance(){
+        $content = [
+            "startDate"=> date('Y-m-d H:i:s', strtotime('-1 day')),
+            "endDate"=> date('Y-m-d H:i:s', time()),
+            "pageNum"=> 1,
+            "pageSize"=> 10,
+        ];
+        $parma = $this->setParma('OUTCOME_ORDER', $content);
+        return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
+    }
+
     /**
      * 取消订单
      * @param $content

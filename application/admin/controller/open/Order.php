@@ -111,9 +111,8 @@ class Order extends Backend
         $response =  $orderBusiness->multiPrice($queryParam);
         list($yy, $fhd, $qbd) = $response;
 
-
         $paramData['channelTag'] = '智能';
-        $paramData['tagType'] = '德邦快递';
+        $paramData['tagType'] = '德邦';
         $paramData['type'] = 'RCP';
         $paramData['channel'] = '德邦大件快递360';
 

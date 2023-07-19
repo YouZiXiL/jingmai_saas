@@ -255,7 +255,7 @@ class Yunyang extends Controller
                     ],
                 ],
                 'packageInfo'=>[
-                    'weight'=>$param['weight']*1000,
+                    'weight'=>(int)$param['weight']*1000,
                     'volume'=>'0',
                 ],
             ];
@@ -291,7 +291,7 @@ class Yunyang extends Controller
                 $jiluCost = $jiLu->getCost($jijian_address['province'], $shoujian_address['province']);
                 Log::error(['$jiluCost' => $jiluCost]);
                 $fhdContent['serviceInfoList'] = [
-                    [ 'code'=>'INSURE','value'=>$param['insured']*100, ],
+                    [ 'code'=>'INSURE','value'=>(int)$param['insured']*100, ],
                     [ 'code'=>'TRANSPORT_TYPE','value'=>'RCP', ]
                 ];
 
@@ -299,6 +299,7 @@ class Yunyang extends Controller
                 $fhdParams = [
                     'url' => $fengHuoDi->baseUlr.'predictExpressOrder',
                     'data' => $fengHuoDi->setParam($fhdContent),
+                    'type' => true,
                     'header' => ['Content-Type = application/x-www-form-urlencoded; charset=utf-8']
                 ];
 
@@ -309,8 +310,6 @@ class Yunyang extends Controller
                 ];
 
                 $response =  $this->common->multiRequest($yyParams, $fhdParams);
-
-
                 $profit = db('profit')->where('agent_id', $this->user->agent_id)
                     ->where('mch_code', Channel::$jilu)
                     ->find();
@@ -330,7 +329,7 @@ class Yunyang extends Controller
                 $packageList = $yyPackage;
                 if(isset($jiluPackage))  $packageList[] = $jiluPackage;
 
-                $packageList[] = $fhdDb;
+                if(!empty($fhdDb)) $packageList[] = $fhdDb;
                 usort($packageList, function ($a, $b){
                     if (empty($a['final_price']) || empty($b['final_price'])) {
                         if (empty($a['final_price'])) {

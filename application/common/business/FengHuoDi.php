@@ -10,19 +10,21 @@ class FengHuoDi
 
     public Common $utils;
     public string $baseUlr;
+    public string $baseUlrV2;
 
     public function __construct(){
         $this->utils = new Common();
         $this->baseUlr = 'https://openapi.fhd001.com/express/';
+        $this->baseUlrV2 = 'https://openapi.fhd001.com/express/v2/';
     }
 
 
     /**
      * 参数组装
-     * @param array $content
+     * @param  $content
      * @return array
      */
-    public function setParam(array $content){
+    public function setParam( $content){
         $pid=13513;
         list($msec, $sec) = explode(' ', microtime());
         $timeStamp= (float)sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
@@ -38,6 +40,18 @@ class FengHuoDi
             'params'=>$params,
             'sign'=>$sign
         ];
+    }
+
+    /**
+     * 查询账户余额
+     * @return bool|string
+     */
+    public function queryBalance()
+    {
+        $url = $this->baseUlrV2 . 'getExpressSettleAccountList';
+        $data = $this->setParam((object)[]);
+        return $this->utils->httpRequest($url, $data, 'POST',['Content-Type = application/x-www-form-urlencoded; charset=utf-8']);
+
     }
 
     /**
@@ -70,6 +84,7 @@ class FengHuoDi
         }
         $time=time();
         $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
+        if(empty($result['data']['predictInfo']['detail'])) return [];
         foreach ($result['data']['predictInfo']['detail'] as $item){
             if ($item['priceEntryCode']=='FRT'){
                 $total['fright']=$item['caculateFee'];  // 基础运费
@@ -79,7 +94,7 @@ class FengHuoDi
             }
         }
         if (empty($total)) return null;
-        $agent_price= $total['fright']* ProfitConfig::$fhd + $total['fright'] * $agent_info['db_agent_ratio']/100;//代理商价格
+        $agent_price= $total['fright'] * ProfitConfig::$fhd + $total['fright'] * $agent_info['db_agent_ratio']/100;//代理商价格
         $users_price= $agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
         $admin_shouzhong=0;//平台首重
         $admin_xuzhong=0;//平台续重
@@ -180,4 +195,6 @@ class FengHuoDi
         ];
         return $this->utils->fhd_api('createExpressOrder',$content);
     }
+
+
 }

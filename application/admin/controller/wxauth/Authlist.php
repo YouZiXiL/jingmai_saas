@@ -312,7 +312,12 @@ class Authlist extends Backend
         // $res=$common->httpRequest('https://api.weixin.qq.com/wxa/get_qrcode?access_token='.$xcx_access_token);
         // return Response::create($res,'',200,['Content-Type' =>'image/jpeg']);
         $resJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/component/setprivacysetting?access_token='.$xcx_access_token,[
-            'setting_list'=>[['privacy_key'=>'Album','privacy_text'=>'订单详情上传图片'],['privacy_key'=>'PhoneNumber','privacy_text'=>'推送提醒'],['privacy_key'=>'AlbumWriteOnly','privacy_text'=>'海报保存']],
+            'setting_list'=>[
+                ['privacy_key'=>'Album','privacy_text'=>'订单详情上传图片'],
+                ['privacy_key'=>'PhoneNumber','privacy_text'=>'推送提醒'],
+                ['privacy_key'=>'AlbumWriteOnly','privacy_text'=>'海报保存'],
+                ['privacy_key'=>'Location','privacy_text'=>'定位收件人寄件人位置，用于收发快递服务'],
+            ],
             'owner_setting'=>['contact_email'=>'1037124449@qq.com','notice_method'=>'通过弹窗提醒用户'],
 
         ],'POST');

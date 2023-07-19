@@ -2,6 +2,8 @@
 
 namespace app\admin\controller\open;
 
+use app\common\business\FengHuoDi;
+use app\common\business\JiLu;
 use app\common\business\YunYang;
 use app\common\controller\Backend;
 use think\Exception;
@@ -19,12 +21,9 @@ class Common extends Backend
     public function index()
     {
         $data['yyAmt']  = $this->yyBalance();
-
-        $wanli = new WanLi();
-        $resWanli = $wanli->getWalletBalance();
-        $resWanli = json_decode($resWanli,true);
-        if($resWanli['code'] != 200) $usableAmt = $resWanli['message'];
-        $data['wanliAmt'] = number_format($resWanli['data']['usableAmt']/100, 2,'.','');
+        $data['jlAmt']  = $this->jlBalance();
+        $data['fhdAmt']  = $this->fhdBalance();
+        $data['wanliAmt'] = $this->wlBalance();
         $this->view->assign('data',$data);
         return $this->view->fetch();
     }
@@ -36,15 +35,35 @@ class Common extends Backend
     public function yyBalance(){
         $yy = new YunYang();
         $result = $yy->queryBalance();
-        if ($result['code'] !== 200){
+        if ($result['code'] != 200){
             Log::info('云洋查询余额失败：'. json_encode($result, JSON_UNESCAPED_UNICODE));
             return $result['message'];
         }
         return $result['result']["keyong"];
     }
 
-    public function wlBalance(){
+    public function jlBalance(){
+        $jiLu = new JiLu();
+        $res = $jiLu->queryBalance();
+        $result = json_decode($res, true);
+        if($result['code'] != 1) return $result['msg'];
+        return $result['data']['balance'];
+    }
 
+    public function fhdBalance(){
+        $fhd = new FengHuoDi();
+        $res = $fhd->queryBalance();
+        $result = json_decode($res,true);
+        if($result['scode'] != 0) return $result['data'];
+        return number_format( $result['data'][0]['amount']/100, 2, '.', '');
+
+    }
+    public function wlBalance(){
+        $wanli = new WanLi();
+        $resWanli = $wanli->getWalletBalance();
+        $resWanli = json_decode($resWanli,true);
+        if($resWanli['code'] != 200) return  $resWanli['message'];
+        return number_format($resWanli['data']['usableAmt']/100, 2,'.','');
     }
 
 
