@@ -191,7 +191,8 @@ class Notice extends Controller
                 'refresh_token' => $authInfo->app_refresh_token,
                 'aes' => $aes,
                 'user_version' => $vn,
-                'auth_type' => 2
+                'auth_type' => 2,
+                'xcx_audit' => $vn?5:0
             ];
             $agentAuth = AgentAuth::where('app_id', $authInfo->auth_app_id)->find();
             if ($agentAuth) {

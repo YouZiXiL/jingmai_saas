@@ -254,9 +254,16 @@ class Authlist extends Backend
         $appAuthToken = $agentAuth->auth_token;
         $open = Alipay::start()->open();
 
+
         switch ($type){
             case 'upload': // 上传代码
-                $open->versionUpload($version, $appAuthToken);
+                $result = $open->versionUpload($version, $appAuthToken);
+                if($result->code == 10000){
+                    $this->success('上传成功');
+                }else{
+                    Log::error(['代码上传失败' => $result]);
+                    $this->error($result->sub_msg);
+                }
             case 'back': $open->miniVersionAuditedCancel($version, $appAuthToken); break;  // 退回快发
             case 'audit': // 提交审核
                 $auditResult = $open->setMiniVersionAudit($version, $appAuthToken);
