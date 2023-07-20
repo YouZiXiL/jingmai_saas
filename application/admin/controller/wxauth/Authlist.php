@@ -159,9 +159,6 @@ class Authlist extends Backend
         $result=$writer->write($qrCode);
 
         $this->success('成功','',base64_encode($result->getString()));
-
-        //return Response::create($result->getString(),'',200,['Content-Type' => $result->getMimeType()]);
-
     }
 
     /**
@@ -212,7 +209,6 @@ class Authlist extends Backend
         $ids = input('ids');
         $type = input('type');
         $v = input('v');
-
         if ($type && $v){
             $this->versionManager($ids, $type, $v);
         }else{

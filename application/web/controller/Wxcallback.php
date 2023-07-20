@@ -812,7 +812,9 @@ class Wxcallback extends Controller
                 ->where('wx_auth',1)
                 ->where('auth_type',2)
                 ->find();
-            $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+
+            $authOrder = $orders['pay_type'] == 3;
+            $xcx_access_token= $authOrder?'':$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
             $users=db('users')->where('id',$orders['user_id'])->find();
             $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
             $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
@@ -892,6 +894,7 @@ class Wxcallback extends Controller
 
 
                 $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
+
                 //超轻处理
                 if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
 //                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0) {
@@ -905,7 +908,6 @@ class Wxcallback extends Controller
                     $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                     $users_tralight_amt=$tralight_weight*$up_data['users_xuzhong'];//代理商给用户退款金额
                     $agent_tralight_amt=$tralight_weight*$up_data['agent_xuzhong'];//平台给代理商退余额
-
 
                     if(!empty($users["rootid"])){
                         $superB=db("admin")->find($users["rootid"]);
@@ -922,20 +924,22 @@ class Wxcallback extends Controller
                     $up_data['agent_tralight_price']=$agent_tralight_amt;
                     $rebatelistdata["payinback"]=-$up_data['tralight_price'];
 
-                    if(!empty($users["rootid"])){
-                        $rebatelistdata["root_price"]=number_format($rebatelist->root_price-$root_tralight_amt,2);
-                        $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice-$root_default_tralight_amt,2);
+                    if(!empty($rebatelist)){
+                        if(!empty($users["rootid"])){
+                            $rebatelistdata["root_price"]=number_format($rebatelist->root_price-$root_tralight_amt,2);
+                            $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice-$root_default_tralight_amt,2);
 
-                        $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($superB["imm_rate"]??0)/100,2);
-                        $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($superB["midd_rate"]??0)/100,2);
+                            $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($superB["imm_rate"]??0)/100,2);
+                            $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($superB["midd_rate"]??0)/100,2);
 
-                        $rebatelistdata["root_vip_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_price"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
-                        $rebatelistdata["root_default_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_defaultprice"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                            $rebatelistdata["root_vip_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_price"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                            $rebatelistdata["root_default_rebate"]=number_format($rebatelist->final_price-$rebatelistdata["root_defaultprice"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                        } else{
+                            $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["imm_rate"]??0)/100,2);
+                            $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["midd_rate"]??0)/100,2);
+                        }
                     }
-                    else{
-                        $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["imm_rate"]??0)/100,2);
-                        $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["midd_rate"]??0)/100,2);
-                    }
+
 
                 } else
                     if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000 &&empty($orders['final_weight_time'])){
@@ -967,7 +971,7 @@ class Wxcallback extends Controller
                         'agent_overload_amt' =>$agent_overload_amt,
                         'order_id' => $orders['id'],
                         'xcx_access_token'=>$xcx_access_token,
-                        'open_id'=>$users['open_id'],
+                        'open_id'=>$users['open_id']??'',
                         'template_id'=>$agent_auth_xcx['pay_template'],
                         'cal_weight'=>$overload_weight .'kg',
                         'users_overload_amt'=>$users_overload_amt.'元'
@@ -986,20 +990,23 @@ class Wxcallback extends Controller
 
                         $rebatelistdata["payinback"]=$up_data['overload_price'];
                         $rebatelistdata["state"]=2;
-                        if(!empty($users["rootid"])){
-                            $rebatelistdata["root_price"]=number_format($rebatelist->root_price+$root_overload_amt,2);
-                            $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice+$root_default_overload_amt,2);
 
-                            $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$rebatelistdata["payinback"])*($superB["imm_rate"]??0)/100,2);
-                            $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$rebatelistdata["payinback"])*($superB["midd_rate"]??0)/100,2);
+                        if(!empty($rebatelist)){
+                            if(!empty($users["rootid"])){
+                                $rebatelistdata["root_price"]=number_format($rebatelist->root_price+$root_overload_amt,2);
+                                $rebatelistdata["root_defaultprice"]=number_format($rebatelist->root_defaultprice+$root_default_overload_amt,2);
 
-                            $rebatelistdata["root_vip_rebate"]=number_format($rebatelist["final_price"]-$rebatelistdata["root_defaultprice"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
-                            $rebatelistdata["root_default_rebate"]=number_format($rebatelist["final_price"]-$agent_default_price-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                                $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$rebatelistdata["payinback"])*($superB["imm_rate"]??0)/100,2);
+                                $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$rebatelistdata["payinback"])*($superB["midd_rate"]??0)/100,2);
+
+                                $rebatelistdata["root_vip_rebate"]=number_format($rebatelist["final_price"]-$rebatelistdata["root_defaultprice"]-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                                $rebatelistdata["root_default_rebate"]=number_format($rebatelist["final_price"]-$agent_default_price-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
+                            } else{
+                                $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["imm_rate"]??0)/100,2);
+                                $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
+                            }
                         }
-                        else{
-                            $rebatelistdata["imm_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["imm_rate"]??0)/100,2);
-                            $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]+$up_data['overload_price'])*($agent_info["midd_rate"]??0)/100,2);
-                        }
+
 
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
@@ -1039,7 +1046,9 @@ class Wxcallback extends Controller
                 }
             }
             if(!empty($result['orderStatus'])){
-                $up_data['order_status']=$result['orderStatus'];
+                $orderStatus = $result['orderStatus'];
+                if($orderStatus == '已开单')  $orderStatus = '运输中';
+                $up_data['order_status']=$orderStatus;
             }
 
 
@@ -3714,7 +3723,6 @@ class Wxcallback extends Controller
                 $addpriceInfos = $params['apiDataInfo']['addpriceInfos']??[];
                 $subpriceInfo = $params['apiDataInfo']['subpriceInfo']??[];
 
-                $update['final_weight'] = $actualWeight;
             }
             $compact = compact('expressNo','expressId','sendType','expressStatus',
                 'expressTrack','actualWeight','raw');
@@ -3729,6 +3737,7 @@ class Wxcallback extends Controller
                 recordLog('channel-callback-err',  '极鹭-订单已取消-' . PHP_EOL . $raw  );
                 return json(['code'=>1, 'message'=>'订单已取消']);
             }
+            if(!$order['final_weight']) $update['final_weight'] = $actualWeight;
             $jiLu = new JiLu();
             $wxOrder = $order['pay_type'] == 1;
             $aliOrder = $order['pay_type'] == 2;
@@ -3862,7 +3871,7 @@ class Wxcallback extends Controller
 
             }
             if (!empty($update)){
-                $orderModel->isUpdate()->save($update);
+                $orderModel->isUpdate(true)->save($update);
             }
             return json(['code'=>1, 'message'=>'ok']);
         }catch (Exception $e){

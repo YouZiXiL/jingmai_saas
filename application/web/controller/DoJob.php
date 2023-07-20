@@ -87,6 +87,7 @@ class DoJob
                         }
                         db('orders')->where('id',$orders['id'])->update([
                             'final_weight_time'=>time(),
+                            'overload_status' => 1
                         ]);
                     }
                 }catch (\Exception $e){
