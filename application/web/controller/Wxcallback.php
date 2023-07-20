@@ -3622,6 +3622,7 @@ class Wxcallback extends Controller
                     }
                 }
 
+
                 //更改超重状态
                 if ($orders['weight']<$pamar['weightFee']&&empty($orders['final_weight_time'])){
                     $up_data['overload_status']=1;
@@ -3737,7 +3738,8 @@ class Wxcallback extends Controller
                 recordLog('channel-callback-err',  '极鹭-订单已取消-' . PHP_EOL . $raw  );
                 return json(['code'=>1, 'message'=>'订单已取消']);
             }
-            if(!$order['final_weight']) $update['final_weight'] = $actualWeight;
+
+            if($order['final_weight'] == 0 || empty($order['final_weight'])) $update['final_weight'] = $actualWeight;
             $jiLu = new JiLu();
             $wxOrder = $order['pay_type'] == 1;
             $aliOrder = $order['pay_type'] == 2;

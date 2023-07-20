@@ -400,14 +400,15 @@ class Authlist extends Backend
         $res=json_decode($resJson,true);
 
         if ($res['errcode']!=0){
-            if($res['errcode'] == 85023){
-                $this->error('小程序填写的类目数不在 1-5 以内'. $resJson);
+            Log::error('提交审核失败：'. $resJson);
+            switch ($res['errcode']){
+                case 85023: $this->error('小程序填写的类目数不在 1-5 以内');
+                case 85085: $this->error('小程序提审数量已达本月上限');
+                case 86002: $this->error('小程序还未设置昵称、头像、简介。请先设置完后再重新提交');
+                default:  $this->error('提交审核失败：' . $resJson);
             }
-            $this->error('提交审核失败：' . $resJson);
         }
         $row->save(['xcx_audit'=>4]);
-
-
         $this->success('成功');
     }
 
