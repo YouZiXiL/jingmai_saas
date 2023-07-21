@@ -106,8 +106,8 @@ class Shunfeng extends Controller
 //                }15226052986
                 if(empty($v["limitWeight"])){
 
-                }
-                else{
+                } else{
+                    $v['oldName'] = $v['channelName'];
                     if(strpos($v['channelName'], '新户')){
                         $v['isNew'] = (bool)strpos($v['channelName'], '新户');
                         $channelTag = '顺丰新';

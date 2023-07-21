@@ -67,21 +67,21 @@ class Userslist extends Backend
             return $this->selectpage();
         }
         [$where, $sort, $order, $offset, $limit] = $this->buildparams();
-
         if (in_array(2,$this->auth->getGroupIds())) {
-
             $list = $this->model->where("userslist.agent_id", $this->auth->id);
         } else {
             $list = $this->model;
         }
         $list = $list
             ->where($where)
+            ->field('userslist.id, userslist.nick_name, userslist.mobile, 
+            userslist.create_time, userslist.login_time, agent_auth.name,
+            userslist.score, userslist.uservip')
+            ->join('agent_auth', 'find_in_set(agent_auth.id, auth_ids)', 'left' )
             ->order($sort, $order)
-            ->with([
-                'wxauthinfo'=>function($query){
-                    $query->where('auth_type',2)->WithField('name');
-                }])
             ->paginate($limit);
+
+
         $result = ['total' => $list->total(), 'rows' => $list->items()];
         return json($result);
     }

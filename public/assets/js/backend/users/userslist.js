@@ -34,7 +34,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
                         {field: 'create_time', title: __('Create_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'login_time', title: __('Login_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
-                        {field: 'wxauthinfo.name', title: __('归属账号'), operate: false},
+                        {field: 'name', title: __('归属账号'), operate: false},
                         {field: 'score', title: __('Score'), operate: false},
                         {field: 'uservip', title: __('Uservip'), operate: false,searchList: {"0":__('Uservip 0'),"2":__('Uservip 2')}, formatter: Table.api.formatter.normal},
                         {field: 'operate', title: __('Operate'),buttons: [

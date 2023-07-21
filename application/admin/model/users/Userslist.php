@@ -9,10 +9,6 @@ use think\Model;
 class Userslist extends Model
 {
 
-    
-
-    
-
     // 表名
     protected $name = 'users';
     
@@ -62,5 +58,7 @@ class Userslist extends Model
         return $this->belongsTo(Authlist::class,'agent_id','agent_id', [], 'LEFT')->setEagerlyType(0);
     }
 
-
+    function agentAuth(){
+        return $this->hasMany(Authlist::class, 'agent_id', 'agent_id' );
+    }
 }

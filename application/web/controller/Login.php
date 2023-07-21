@@ -46,8 +46,8 @@ class Login extends Controller
      */
     public function get_openid(): Json
     {
+
         $param=$this->request->param();
-        Log::info(['登录参数'=> $param]);
         try {
             if (empty($param['app_id'])||trim($param['code'])=='null'){
                 Log::error(json_encode($param));
@@ -65,15 +65,30 @@ class Login extends Controller
 
             $user = new Users;
             if (!empty($param["agent_id"])){
-                $agent_id = $param["agent_id"];
+                $agentAuth=db('agent_auth')
+                    ->field('id,agent_id')
+                    ->where('agent_id',$param['agent_id'])
+                    ->find();
             }else{
-                $agent_id=db('agent_auth')->where('app_id',$param['app_id'])->value('agent_id');
-                if (empty($agent_id)){
-                    return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
-                }
+                $agentAuth=db('agent_auth')
+                    ->field('id,agent_id')
+                    ->where('app_id',$param['app_id'])
+                    ->find();
+            }
+            if (empty($agentAuth)){
+                return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+            }
+            $agent_id = $agentAuth['agent_id'];
+            $auth_id = $agentAuth['id'];
+            $user_info=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
+            $auth_ids = [];
+            if (!empty($user_info['auth_ids']))$auth_ids = explode(',', $user_info['auth_ids']);
+
+            if(!in_array($auth_id, $auth_ids)){
+                $auth_ids[]=$auth_id;
             }
 
-            $user_info=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
+            $auth_ids = implode(',', $auth_ids);
             $time=time();
             if(empty($user_info)){
                 if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
@@ -89,6 +104,7 @@ class Login extends Controller
                 $user_info['login_time']=$time;
                 $user_info['agent_id']=$agent_id;
                 $user_info['token']=$_3rd_session;
+                $user_info['auth_ids'] = $auth_ids;
                 //如果携带邀请码登录
                 if(!empty($param["invitcode"])){
                     Log::info(['微信登录' => $param]);
@@ -113,6 +129,7 @@ class Login extends Controller
                     'login_time' => $time,
                     'agent_id'   => $agent_id,
                     'token'      => $_3rd_session,
+                    'auth_ids'    => $auth_ids
                 ];
                 if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
                     $mobile=$this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
