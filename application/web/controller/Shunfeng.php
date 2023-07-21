@@ -108,7 +108,14 @@ class Shunfeng extends Controller
 
                 }
                 else{
-                    $v['isNew'] = (bool)strpos($v['channelName'], '新户');
+                    if(strpos($v['channelName'], '新户')){
+                        $v['isNew'] = (bool)strpos($v['channelName'], '新户');
+                        $channelTag = '顺丰新';
+                    }else{
+                        $v['isNew'] = false;
+                        $channelTag = '顺丰';
+                    }
+
                     $v['channelName'] = 'JX-顺丰标快';
                     if($v['isNew']){
                         $v["agent_price"]=number_format($v["channelFee"]  + $v["guarantFee"],2);
@@ -125,7 +132,7 @@ class Shunfeng extends Controller
                     $v['shoujian_id']=$param['shoujian_id'];//收件id
                     $v['weight']=$param['weight'];//重量
                     $v['package_count']=$param['package_count'];//包裹数量
-                    $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>"顺丰",'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
+                    $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>$channelTag,'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
                     $v["insert_id"]=$insert_id;
 
                     array_push($arr,$v);

@@ -3426,6 +3426,7 @@ class Wxcallback extends Controller
             if (count(explode("取消",$orders['order_status']))>1){
                 return "SUCCESS";
             }
+            $isNew = $orders['tag_type'] == '顺丰新';
             $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
             $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
             $users=db('users')->where('id',$orders['user_id'])->find();
@@ -3599,8 +3600,14 @@ class Wxcallback extends Controller
                         $dicount=number_format($orders["freight"]/$orders['originalFee'],2);
                         $up_data['tralight_status']=1;
                         $up_data['final_weight_time']=time();
-                        $up_data['tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
-                        $up_data['agent_tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);
+                        if($isNew){
+                            $up_data['tralight_price']=number_format($weightprice,2);
+                            $up_data['agent_tralight_price']=number_format($weightprice,2);
+                        }else{
+                            $up_data['tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
+                            $up_data['agent_tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);
+                        }
+
                         $rebatelistdata["payinback"]=-$up_data['tralight_price'];
                         if(!empty($users["rootid"])){
                             $root_tralight_amt=$tralight_weight*($dicount+$agent_info["sf_agent_ratio"]/100);
@@ -3632,9 +3639,13 @@ class Wxcallback extends Controller
 
                     $dicount=number_format($orders["freight"]/$orders['originalFee'],2);
 
-
-                    $up_data['overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);//用户超重金额
-                    $up_data['agent_overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);//代理商超重金额
+                    if($isNew){
+                        $up_data['overload_price']=number_format($weightprice,2);//用户超重金额
+                        $up_data['agent_overload_price']=number_format($weightprice,2);//代理商超重金额
+                    }else{
+                        $up_data['overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);//用户超重金额
+                        $up_data['agent_overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);//代理商超重金额
+                    }
 
 
                     if(!empty($users["rootid"])){
@@ -3664,8 +3675,8 @@ class Wxcallback extends Controller
                         'type'=>1,
                         'agent_overload_amt' =>$up_data['agent_overload_price'],
                         'order_id' => $orders['id'],
-                        'xcx_access_token'=>$xcx_access_token,
-                        'open_id'=>$users['open_id'],
+                        'xcx_access_token'=>$xcx_access_token??null,
+                        'open_id'=>$users?$users['open_id']:null,
                         'template_id'=>$agent_auth_xcx['pay_template'],
                         'cal_weight'=>$overload_weight .'kg',
                         'users_overload_amt'=>$up_data['agent_overload_price'].'元'
@@ -3865,7 +3876,7 @@ class Wxcallback extends Controller
                     // 代理商超轻金额
                     $update['agent_tralight_price'] = $reWeightAgent * $subWeight;
                     // 用户超轻金额
-                    $update['overload_price'] = ($reWeightAgent +  $profit['user_more_weight']) * $subWeight;
+                    $update['tralight_price'] = ($reWeightAgent +  $profit['user_more_weight']) * $subWeight;
 
                     $update['tralight_status']=1;
                     $update['final_weight_time']=time();
