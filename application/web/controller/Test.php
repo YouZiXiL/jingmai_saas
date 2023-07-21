@@ -28,6 +28,12 @@ class Test extends Controller
         $this->utils = new Common();
     }
 
+    public function test(){
+        $str = '重庆';
+        $res  = formatProvince($str);
+        dd($res);
+    }
+
     // 获取分享链接
     public function getLink()
     {

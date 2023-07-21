@@ -577,3 +577,20 @@ if(!function_exists('loseProvince')){
         return $province;
     }
 }
+
+/**
+ * 将直辖市后面添加市字
+ */
+if(!function_exists('formatProvince')){
+    function formatProvince($str){
+        $three = mb_substr($str, 2, 1,'UTF-8');
+        if($three == '市') return $str;
+        $prefixes = ['北京', '天津', '上海', '重庆'];
+        $prefix = mb_substr($str, 0, 2, 'UTF-8'); // 获取字符串前两个字符
+        if (in_array($prefix, $prefixes)) {
+            $str = $prefix . '市' . mb_substr($str, 2); // 在前缀后面加上 "市"
+        }
+
+        return $str;
+    }
+}

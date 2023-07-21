@@ -315,6 +315,7 @@ class DoJob
                         $up_data['pay_status']=2;
                         $up_data['overload_status']=0;
                         $up_data['consume_status']=0;
+                        $up_data['cancel_time']= time();
                         $up_data['order_status']='已取消';
                         //代理商增加余额  退款
                         //代理结算金额 代理运费+保价金+耗材+超重

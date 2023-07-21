@@ -281,6 +281,11 @@ class YunYang{
             'packageCount'=>$orders['package_count'],
             'itemName'=>$orders['item_name']
         ];
+
+        if($orders['tag_type'] == '京东'){
+            $content['senderProvince'] = formatProvince($content['senderProvince']);
+            $content['receiveProvince'] = formatProvince($content['receiveProvince']);
+        }
         !empty($orders['insured']) &&($content['insured'] = $orders['insured']);
         !empty($orders['vloum_long']) &&($content['vloumLong'] = $orders['vloum_long']);
         !empty($orders['vloum_width']) &&($content['vloumWidth'] = $orders['vloum_width']);
