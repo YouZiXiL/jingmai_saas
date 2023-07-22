@@ -18,7 +18,6 @@ class SendSms extends Command
 
     protected function execute(Input $input, Output $output)
     {
-
         $common=new Common();
         $domain=config('site.site_url');
         $kuaidi100_userid=config('site.kuaidi100_userid');

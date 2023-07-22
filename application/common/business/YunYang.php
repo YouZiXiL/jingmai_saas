@@ -71,9 +71,7 @@ class YunYang{
 
     public function queryTrance($waybill){
         $data = $this->setParma('QUERY_TRANCE', ['waybill'=>$waybill]);
-        $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
-        $result = json_decode($res, true);
-        dd($result);
+        return $this->utils->httpRequest($this->baseUlr, $data ,'POST');
     }
 
     /**

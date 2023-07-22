@@ -1507,7 +1507,7 @@ class Wxcallback extends Controller
                         }
 
                     }else{
-
+                        Queue::push(TrackJob::class, $orders, 'track');
                         $rebateList = new RebateListController();
                         $rebateList->createRebateByOrder($orders);
                         //支付成功下单成功

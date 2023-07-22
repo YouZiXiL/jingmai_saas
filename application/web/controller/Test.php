@@ -30,7 +30,11 @@ class Test extends Controller
 
     public function test(){
         $yunYang = new \app\common\business\YunYang();
-        $yunYang->queryTrance('YT2501847002426');
+        $res = $yunYang->queryTrance('5302010093852');
+        $result = json_decode($res, true);
+        $comments = $result['result'][0];
+        if(empty($comments)) return R::error('false');
+        return R::ok($result);
     }
 
     // 获取分享链接
