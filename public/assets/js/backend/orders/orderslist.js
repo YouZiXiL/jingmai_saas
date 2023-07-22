@@ -82,7 +82,32 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     icon: 'fa fa-user-o',
                                     url: 'orders/orderslist/comments',
                                     success: function (data) {
-                                        Layer.alert(data);
+                                        if (data == null) data = '无'
+                                        // 弹出层自定义按钮
+                                        layer.alert(data, {
+                                            btn: ['复制', '取消'],
+                                            btn1: function(index, layero) {
+                                                // 获取要复制的文本
+                                                const textToCopy = data;
+
+                                                // 复制文本到剪贴板
+                                                const $temp = $("<input>");
+                                                $("body").append($temp);
+                                                $temp.val(textToCopy).select();
+                                                document.execCommand("copy");
+                                                $temp.remove();
+
+                                                // 关闭弹出层
+                                                layer.close(index);
+
+                                                // 弹出复制成功提示
+                                                layer.msg('已复制到剪贴板', {icon: 1});
+                                            },
+                                            btn2: function(index, layero) {
+                                                // 取消操作
+                                                layer.close(index);
+                                            }
+                                        });
                                         //如果需要阻止成功提示，则必须使用return false;
                                         return false;
                                     },

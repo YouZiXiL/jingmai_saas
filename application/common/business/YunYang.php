@@ -59,10 +59,21 @@ class YunYang{
     }
 
 
+    /**
+     * 查询账户余额
+     * @return mixed
+     */
     public function queryBalance(){
         $data = $this->setParma('QUERY_BALANCE', (object)[]);
         $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
         return json_decode($res, true);
+    }
+
+    public function queryTrance($waybill){
+        $data = $this->setParma('QUERY_TRANCE', ['waybill'=>$waybill]);
+        $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
+        $result = json_decode($res, true);
+        dd($result);
     }
 
     /**

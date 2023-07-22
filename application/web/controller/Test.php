@@ -29,9 +29,8 @@ class Test extends Controller
     }
 
     public function test(){
-        $str = '重庆';
-        $res  = formatProvince($str);
-        dd($res);
+        $yunYang = new \app\common\business\YunYang();
+        $yunYang->queryTrance('YT2501847002426');
     }
 
     // 获取分享链接
