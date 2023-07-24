@@ -75,6 +75,7 @@ return [
     'Salf_type 1'        => '超重核重',
     'Salf_type 2'        => '超轻反馈',
     'Salf_type 3'        => '现结/到付',
+    'Salf_type 4'        => '更换运单',
     'Salf_content'       => '详细说明',
     'Salf_weight'        => '反馈重量',
     'Salf_volume'        => '反馈体积',

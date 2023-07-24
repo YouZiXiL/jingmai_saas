@@ -792,13 +792,14 @@ class Wxcallback extends Controller
                 recordLog('channel-callback-err',  '风火递-没有订单-' . PHP_EOL .  json_encode($pamar , JSON_UNESCAPED_UNICODE)  );
                 return json(['code'=>-1, 'message'=>'没有此订单']);
             }
-
             $orders = $orderModel->toArray();
-            if ($orders['order_status']=='已取消'){
+            if ($orders['order_status']=='已取消'  || $orders['order_status']=='已作废'){
                 if (isset($result['orderStatusCode']) &&  $result['orderStatusCode']=='GOT') {
-                    if ($content['waybillCode'] != $orders['waybill']) {
-                        $afterSale = new AfterSale();
-                        $afterSale->alterWaybill($content['waybillCode'], $orders);
+                    $afterSale = new AfterSale();
+                    if( $content['waybillCode'] != $orders['waybill']){
+                        $afterSale->alterWaybill($content, $orders);
+                    }else{
+                        $afterSale->reviveWaybill($orders);
                     }
                 }
                 return json(['code'=>0, 'message'=>'订单已取消']);
@@ -888,7 +889,7 @@ class Wxcallback extends Controller
             if (isset($result['orderEvent']['comments'])){
                 $up_data['yy_fail_reason'] = $result['orderEvent']['comments'];
             }
-            if (@$result['orderStatusCode']=='GOT'){
+            if (!empty($result['orderStatusCode'])  && $result['orderStatusCode']=='GOT'){
                 if( $content['waybillCode'] != $orders['waybill']){
                     $afterSale = new AfterSale();
                     $afterSale->alterWaybill($content, $orders);
@@ -3766,9 +3767,7 @@ class Wxcallback extends Controller
 
             if($order['final_weight'] == 0 || empty($order['final_weight'])){
                 $update['final_weight'] = $actualWeight;
-            }
-
-            if(!empty($actualWeight) && $actualWeight != $order['final_weight']){
+            }else if(!empty($actualWeight) && $actualWeight != $order['final_weight']){
                 $common = new Common();
                 $content = [
                     'title' => '计费重量变化',
@@ -3778,6 +3777,7 @@ class Wxcallback extends Controller
                 ];
                 $common->wxrobot_channel_exception($content);
             }
+
 
             $jiLu = new JiLu();
             $wxOrder = $order['pay_type'] == 1;

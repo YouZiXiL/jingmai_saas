@@ -30,15 +30,34 @@ class AfterSale
             'cope_status'=>0,
             'salf_num'=>1,
             'op_type'=>0,
-            'create_time'=>time(),
         ];
+        $after = Afterlist::where('order_id', $order['id'])->find();
+        if($after)   $after->save($data);
+        $data['create_time']=time();
         Afterlist::create($data);
         $content = [
-            'user' => "系统提示-" . $order['channel_merchant'],
+            'title' => '运单更换',
+            'user' =>  $order['channel_merchant'],
             'waybill' => $content['waybillCode'],
             'oldWaybill' => $order['waybill']
         ];
         $common = new Common();
         $common->wxrobot_rewaybill_msg($content);
+    }
+
+    /**
+     * 运单复活
+     * @param $order
+     * @return void
+     */
+    public function reviveWaybill($order){
+        $content = [
+            'title' => '运单复活',
+            'user' =>  $order['channel_merchant'],
+            'waybill' => $order['waybill'],
+            'body' => '该运单已重新开单',
+        ];
+        $common = new Common();
+        $common->wxrobot_channel_exception($content);
     }
 }

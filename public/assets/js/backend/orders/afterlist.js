@@ -75,7 +75,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     return "<span >"+value+"kg</span>";
                                 }
                             }},
-                        {field: 'salf_type', title: __('Salf_type'), searchList: {"0":__('Salf_type 0'),"1":__('Salf_type 1'),"2":__('Salf_type 2'),"3":__('Salf_type 3')}, formatter: Table.api.formatter.normal},
+                        {field: 'salf_type', title: __('Salf_type'), searchList: {"0":__('Salf_type 0'),"1":__('Salf_type 1'),"2":__('Salf_type 2'),"3":__('Salf_type 3'),"4":__('Salf_type 4')}, formatter: Table.api.formatter.normal},
                         {field: 'salf_content', title: __('Salf_content'), operate:false,cellStyle:function () {
                                 return{
                                     css:{

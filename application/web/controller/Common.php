@@ -431,10 +431,11 @@ class Common
     function wxrobot_rewaybill_msg(array $content){
         $data = $this->httpRequest(config('site.wx_robot_url'),['msgtype'=>'markdown',
             'markdown'=>[
-                'content'=> '运单更换反馈'.PHP_EOL.
+                'content'=> $content['title'].PHP_EOL.
+                    '> 渠道商：<font color="info">' .$content['user']. '</font>'. PHP_EOL .
                     '> 新运单号：<font color="info">' .$content['waybill']. '</font>'. PHP_EOL .
-                    '> 原运单号：<font color="info">' .$content['oldWaybill']. '</font>'. PHP_EOL .
-                    '> 反馈人：<font color="info">' .$content['user']. '</font>'. PHP_EOL
+                    '> 原运单号：<font color="info">' .$content['oldWaybill']. '</font>'. PHP_EOL
+
             ]
         ],'POST');
     }
