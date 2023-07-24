@@ -1073,6 +1073,7 @@ class Wxcallback extends Controller
             复活单是操作异常才会有，这种避免不了，但是几率很小
             异常单子建议先不给客户退费，找我们客服核实是否计费，再操作是否给客户退费
          * */
+
             if(
                 (
                     @$result['orderStatusCode']=='GOBACK'
@@ -3763,7 +3764,21 @@ class Wxcallback extends Controller
                 return json(['code'=>1, 'message'=>'订单已取消']);
             }
 
-            if($order['final_weight'] == 0 || empty($order['final_weight'])) $update['final_weight'] = $actualWeight;
+            if($order['final_weight'] == 0 || empty($order['final_weight'])){
+                $update['final_weight'] = $actualWeight;
+            }
+
+            if(!empty($actualWeight) && $actualWeight != $order['final_weight']){
+                $common = new Common();
+                $content = [
+                    'title' => '计费重量变化',
+                    'user' => $order['channel_merchant'],
+                    'waybill' =>  $order['waybill'],
+                    'body' => "计费重量：$actualWeight"
+                ];
+                $common->wxrobot_channel_exception($content);
+            }
+
             $jiLu = new JiLu();
             $wxOrder = $order['pay_type'] == 1;
             $aliOrder = $order['pay_type'] == 2;
@@ -3809,7 +3824,7 @@ class Wxcallback extends Controller
                     $jiLu = new JiLu();
                     $cost = $jiLu->getCost($order['sender_province'], $order['receive_province']);
                     $reWeight = $cost['more_weight']; // 续重单价
-                    $update['haocai_freight'] = 0;
+                    $material = 0; // 耗材
                     $addWeight = 0; // 新增重量（续重）
                     foreach ($addpriceInfos as $item){
                         // $item[$addMoney,$addType,$addWeight]
@@ -3817,7 +3832,7 @@ class Wxcallback extends Controller
                         if($item['addType'] == 1){
                             $addWeight += $item['addWeight'];
                         }else{ // 耗材
-                            $update['haocai_freight'] += $item['addMoney']; // 超重金额
+                            $material += $item['addMoney']; // 耗材费
                         }
                     }
                     if($addWeight && empty($order['final_weight_time'])){
@@ -3852,7 +3867,20 @@ class Wxcallback extends Controller
                         // 发送超重短信
                         KD100Sms::run()->overload($order);
                     }
-                    if($update['haocai_freight']){
+
+                    if( empty($order['haocai_freight'])) $update['haocai_freight'] = $material;
+
+                    if(!empty($material) && $material != $order['haocai_freight']){
+                        $common = new Common();
+                        $content = [
+                            'title' => '耗材费用变化',
+                            'user' => $order['channel_merchant'],
+                            'waybill' =>  $order['waybill'],
+                            'body' => "耗材费用：$material"
+                        ];
+                        $common->wxrobot_channel_exception($content);
+                    }
+                    if($material  && empty($order['consume_time'])){
                         $update['consume_status'] = 1;
                         $pushData = [
                             'type'=>2,
@@ -3896,6 +3924,7 @@ class Wxcallback extends Controller
                 }
 
             }
+
             if (!empty($update)){
                 $orderModel->isUpdate(true)->save($update);
             }

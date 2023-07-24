@@ -439,6 +439,23 @@ class Common
         ],'POST');
     }
 
+    /**
+     * 渠道商回调信息异常
+     * @param array $content
+     * @return void
+     */
+    function wxrobot_channel_exception(array $content){
+        $data = $this->httpRequest(config('site.wx_robot_url'),['msgtype'=>'markdown',
+            'markdown'=>[
+                'content'=> $content['title'].PHP_EOL.
+                    '> 渠道商：<font color="info">' .$content['user']. '</font>'. PHP_EOL .
+                    '> 运单号：<font color="info">' .$content['waybill']. '</font>'. PHP_EOL .
+                    '> 内容：<font color="info">' .$content['body']. '</font>'. PHP_EOL
+
+            ]
+        ],'POST');
+    }
+
     public function chongzhi($path,$data){
         $content=[
             "userid"=>$this->userid,
