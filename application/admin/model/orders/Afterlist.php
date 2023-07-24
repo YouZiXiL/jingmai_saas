@@ -9,10 +9,6 @@ use think\Model;
 class Afterlist extends Model
 {
 
-    
-
-    
-
     // 表名
     protected $name = 'after_sale';
     

@@ -7,11 +7,6 @@ use think\Model;
 
 class Pay extends Model
 {
-
-    
-
-    
-
     // 表名
     protected $name = 'admin';
     

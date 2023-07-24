@@ -122,8 +122,8 @@ class Afterlist extends Backend
                 $orders=$orders->get(['id'=>$row['order_id']]);
                 if ($params['cope_status']==1){
                     //处理退款
-                    if ($orders['tralight_status']==2 || $orders['tralight_status']==3){
-                        throw new Exception('此订单超轻已处理');
+                    if ($orders['tralight_status']!=3){
+                        throw new Exception('此订并未反馈超轻');
                     }
                     $agent_tralight_amt=$orders['agent_tralight_price'];//代理退款金额
                     $users_tralight_amt=$orders['tralight_price']; //代理商退用户金额

@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\admin\model\market\Couponlists;
+use app\common\business\AfterSale;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
 use app\common\business\OrderBusiness;
@@ -746,7 +747,7 @@ class Wxcallback extends Controller
 
 
     /**
-     * 风火递
+     * 风火递回调
      */
     function fhd_callback(){
         $pamar = $this->request->post();
@@ -794,6 +795,12 @@ class Wxcallback extends Controller
 
             $orders = $orderModel->toArray();
             if ($orders['order_status']=='已取消'){
+                if (isset($result['orderStatusCode']) &&  $result['orderStatusCode']=='GOT') {
+                    if ($content['waybillCode'] != $orders['waybill']) {
+                        $afterSale = new AfterSale();
+                        $afterSale->alterWaybill($content['waybillCode'], $orders);
+                    }
+                }
                 return json(['code'=>0, 'message'=>'订单已取消']);
             }
             // 快递运输状态
@@ -882,6 +889,11 @@ class Wxcallback extends Controller
                 $up_data['yy_fail_reason'] = $result['orderEvent']['comments'];
             }
             if (@$result['orderStatusCode']=='GOT'){
+                if( $content['waybillCode'] != $orders['waybill']){
+                    $afterSale = new AfterSale();
+                    $afterSale->alterWaybill($content, $orders);
+                }
+
                 if ($result['orderEvent']['calculateWeight']/1000<$result['orderEvent']['totalVolume']*1000/6000){
                      $result['orderEvent']['calculateWeight']=$result['orderEvent']['totalVolume']*1000/6000*1000;
                 }
@@ -1093,6 +1105,7 @@ class Wxcallback extends Controller
                 // 将该任务推送到消息队列，等待对应的消费者去执行
                 Queue::push(DoJob::class, $data,'way_type');
             }
+
 
             if (!empty($up_data)){
                 db('orders')->where('out_trade_no',$result['orderId'])->update($up_data);
