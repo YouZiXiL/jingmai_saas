@@ -370,10 +370,11 @@ class Yunyang extends Controller
                 $res['send_end_time']=$sendEndTime;
                 $res['tagType']='德邦重货';
                 $res['db_type']='JZQY_LONG';
-                !empty($param['insured']) &&($res['insured'] = $param['insured']);//保价金额
-                !empty($param['vloum_long']) &&($res['vloumLong'] = $param['vloum_long']);//货物长度
-                !empty($param['vloum_width']) &&($res['vloumWidth'] = $param['vloum_width']);//货物宽度
-                !empty($param['vloum_height']) &&($res['vloumHeight'] = $param['vloum_height']);//货物高度
+                $res['insured'] = (int) $param['insured'];
+                $res['vloumLong'] = (int) $param['vloum_long'];
+                $res['vloumWidth'] = (int) $param['vloum_width'];
+                $res['vloumHeight'] = (int) $param['vloum_height'];
+
                 $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($res,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
                 $packageList[0]['final_price']=$finalPrice;
                 $packageList[0]['insert_id']=$insert_id;
@@ -428,10 +429,11 @@ class Yunyang extends Controller
                 $res['send_end_time']=$sendEndTime;
                 $res['tagType']='德邦重货';
                 $res['db_type']='JZKH';
-                !empty($param['insured']) &&($res['insured'] = $param['insured']);//保价金额
-                !empty($param['vloum_long']) &&($res['vloumLong'] = $param['vloum_long']);//货物长度
-                !empty($param['vloum_width']) &&($res['vloumWidth'] = $param['vloum_width']);//货物宽度
-                !empty($param['vloum_height']) &&($res['vloumHeight'] = $param['vloum_height']);//货物高度
+                $res['insured'] = (int) $param['insured'];
+                $res['vloumLong'] = (int) $param['vloum_long'];
+                $res['vloumWidth'] = (int) $param['vloum_width'];
+                $res['vloumHeight'] = (int) $param['vloum_height'];
+
                 $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($res,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
                 $packageList[1]['final_price']=$finalPrice;
                 $packageList[1]['insert_id']=$insert_id;

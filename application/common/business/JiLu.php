@@ -171,12 +171,11 @@ class JiLu
         $content['package_count']=$param['package_count'];//包裹数量
 
 
+        $content['insured'] = (int) $param['insured'];
+        $content['vloumLong'] = (int) $param['vloum_long'];
+        $content['vloumWidth'] = (int) $param['vloum_width'];
+        $content['vloumHeight'] = (int) $param['vloum_height'];
 
-
-        !empty($param['insured']) &&($content['insured'] = $param['insured']);//保价费用
-        !empty($param['vloum_long']) &&($content['vloumLong'] = $param['vloum_long']);//货物长度
-        !empty($param['vloum_width']) &&($content['vloumWidth'] = $param['vloum_width']);//货物宽度
-        !empty($param['vloum_height']) &&($content['vloumHeight'] = $param['vloum_height']);//货物高度
         $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($content,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
 
         $list['final_price']=$content['final_price'];

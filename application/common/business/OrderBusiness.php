@@ -135,8 +135,6 @@ class OrderBusiness
             'create_time'=>time()
         ];
         $data = array_merge($commonData, $oderData);
-        recordLog('create-order-err', '$data' . json_encode($data, JSON_UNESCAPED_UNICODE));
-        recordLog('create-order-err', '$channel'.json_encode($channel, JSON_UNESCAPED_UNICODE));
         $order = Order::create($data);
         if (!$order){
             throw new Exception('插入数据失败');

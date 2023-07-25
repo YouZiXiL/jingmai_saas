@@ -125,10 +125,11 @@ class FengHuoDi
         $fhdResult['tagType']='德邦大件快递360';
         $fhdResult['db_type']='RCP';
         $fhdResult['content']=$content;
-        !empty($param['insured']) &&($fhdResult['insured'] = $param['insured']);//保价金额
-        !empty($param['vloum_long']) &&($fhdResult['vloumLong'] = $param['vloum_long']);//货物长度
-        !empty($param['vloum_width']) &&($fhdResult['vloumWidth'] = $param['vloum_width']);//货物宽度
-        !empty($param['vloum_height']) &&($fhdResult['vloumHeight'] = $param['vloum_height']);//货物高度
+        $fhdResult['insured'] = (int) $param['insured'];
+        $fhdResult['vloumLong'] = (int) $param['vloum_long'];
+        $fhdResult['vloumWidth'] = (int) $param['vloum_width'];
+        $fhdResult['vloumHeight'] = (int) $param['vloum_height'];
+
         $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($fhdResult,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
         return [
             'final_price'=>$finalPrice, // 用户价格
