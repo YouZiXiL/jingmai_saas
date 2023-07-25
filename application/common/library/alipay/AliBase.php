@@ -141,11 +141,17 @@ class AliBase
             if(!empty($resultCode)&&$resultCode == 10000){
                 return $result->$responseNode;
             } else {
-                Log::error( ["支付宝退款失败：" => $result] );
+                recordLog('ali-pay-err',
+                    '退款失败：'. PHP_EOL .
+                    json_encode($result, JSON_UNESCAPED_UNICODE)
+                );
                 return false;
             }
         } catch (Exception $e) {
-            Log::error( "支付宝退款失败：".$e->getMessage()."追踪：".$e->getTraceAsString() );
+            recordLog('ali-pay-err',
+                '退款失败：('. $e->getLine() .')：' . $e->getMessage() . PHP_EOL .
+                $e->getTraceAsString()
+            );
             return false;
         }
     }

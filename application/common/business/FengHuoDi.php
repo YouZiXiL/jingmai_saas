@@ -125,10 +125,10 @@ class FengHuoDi
         $fhdResult['tagType']='德邦大件快递360';
         $fhdResult['db_type']='RCP';
         $fhdResult['content']=$content;
-        $fhdResult['insured'] = (int) $param['insured'];
-        $fhdResult['vloumLong'] = (int) $param['vloum_long'];
-        $fhdResult['vloumWidth'] = (int) $param['vloum_width'];
-        $fhdResult['vloumHeight'] = (int) $param['vloum_height'];
+        $fhdResult['insured']  = isset($param['insured'])?(int) $param['insured']:0;
+        $fhdResult['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
+        $fhdResult['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
+        $fhdResult['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
 
         $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($fhdResult,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
         return [

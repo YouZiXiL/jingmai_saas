@@ -224,10 +224,10 @@ class Yunyang extends Controller
                 'receiveAddress'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
                 'weight'=>$param['weight'],
                 'packageCount'=>$param['package_count'],
-                'insured' => (int) $param['insured'],
-                'vloumLong' => (int) $param['vloum_long'],
-                'vloumWidth' => (int) $param['vloum_width'],
-                'vloumHeight' => (int) $param['vloum_height'],
+                'insured' => isset($param['insured'])?(int) $param['insured']:0,
+                'vloumLong' => isset($param['vloum_long'])?(int)$param['vloum_long']:0 ,
+                'vloumWidth' => isset($param['vloum_width'])?(int) $param['vloum_width']:0,
+                'vloumHeight' => isset($param['vloum_height'])?(int) $param['vloum_height']:0,
             ];
 
             $fhdContent = [
@@ -370,10 +370,11 @@ class Yunyang extends Controller
                 $res['send_end_time']=$sendEndTime;
                 $res['tagType']='德邦重货';
                 $res['db_type']='JZQY_LONG';
-                $res['insured'] = (int) $param['insured'];
-                $res['vloumLong'] = (int) $param['vloum_long'];
-                $res['vloumWidth'] = (int) $param['vloum_width'];
-                $res['vloumHeight'] = (int) $param['vloum_height'];
+
+                $res['insured']  = isset($param['insured'])?(int) $param['insured']:0;
+                $res['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
+                $res['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
+                $res['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
 
                 $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($res,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
                 $packageList[0]['final_price']=$finalPrice;
@@ -429,10 +430,12 @@ class Yunyang extends Controller
                 $res['send_end_time']=$sendEndTime;
                 $res['tagType']='德邦重货';
                 $res['db_type']='JZKH';
-                $res['insured'] = (int) $param['insured'];
-                $res['vloumLong'] = (int) $param['vloum_long'];
-                $res['vloumWidth'] = (int) $param['vloum_width'];
-                $res['vloumHeight'] = (int) $param['vloum_height'];
+
+                $res['insured']  = isset($param['insured'])?(int) $param['insured']:0;
+                $res['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
+                $res['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
+                $res['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
+
 
                 $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($res,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
                 $packageList[1]['final_price']=$finalPrice;

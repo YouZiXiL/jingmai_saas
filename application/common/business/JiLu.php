@@ -170,11 +170,10 @@ class JiLu
         $content['channel_merchant'] = Channel::$jilu;
         $content['package_count']=$param['package_count'];//包裹数量
 
-
-        $content['insured'] = (int) $param['insured'];
-        $content['vloumLong'] = (int) $param['vloum_long'];
-        $content['vloumWidth'] = (int) $param['vloum_width'];
-        $content['vloumHeight'] = (int) $param['vloum_height'];
+        $content['insured']  = isset($param['insured'])?(int) $param['insured']:0;
+        $content['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
+        $content['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
+        $content['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
 
         $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($content,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
 
@@ -221,10 +220,10 @@ class JiLu
             $item['channel_merchant'] = Channel::$jilu;
             $item['package_count']=$param['package_count'];//包裹数量
 
-            !empty($param['insured']) &&($item['insured'] = $param['insured']);//保价费用
-            !empty($param['vloum_long']) &&($item['vloumLong'] = $param['vloum_long']);//货物长度
-            !empty($param['vloum_width']) &&($item['vloumWidth'] = $param['vloum_width']);//货物宽度
-            !empty($param['vloum_height']) &&($item['vloumHeight'] = $param['vloum_height']);//货物高度
+            $item['insured']  = isset($param['insured'])?(int) $param['insured']:0;
+            $item['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
+            $item['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
+            $item['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
             $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($item,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
 
             $jiluArr['final_price']=$item['final_price'];

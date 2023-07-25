@@ -2,17 +2,23 @@
 
 namespace app\web\controller;
 
+use app\admin\model\market\Couponlists;
+use app\common\business\FengHuoDi;
+use app\common\business\JiLu;
+use app\common\business\WanLi;
 use app\common\library\alipay\Alipay;
 use app\common\model\Order;
 use app\web\library\ali\AliConfig;
 use app\web\model\Admin;
 use app\web\model\AgentAssets;
 use app\web\model\AgentAuth;
+use app\web\model\Couponlist;
 use app\web\model\Rebatelist;
 use think\Controller;
 use think\Db;
 use think\Exception;
 use think\Log;
+use think\Queue;
 
 class Notice extends Controller
 {
@@ -45,7 +51,7 @@ class Notice extends Controller
             $orders = $orderModel->toArray();
             // 订单非未支付状态
             if ($orders['pay_status']!=0){
-                throw new Exception('订单已支付');
+                throw new Exception('重复回调');
             }
 
             // 改订单状态为付款中
@@ -53,93 +59,191 @@ class Notice extends Controller
 
             $DbCommon= new Dbcommom();
             $Common=new Common();
-            $content=[
-                'channelId'=> $orders['channel_id'],
-                'channelTag'=>$orders['channel_tag'],
-                'sender'=> $orders['sender'],
-                'senderMobile'=>$orders['sender_mobile'],
-                'senderProvince'=>$orders['sender_province'],
-                'senderCity'=>$orders['sender_city'],
-                'senderCounty'=>$orders['sender_county'],
-                'senderLocation'=>$orders['sender_location'],
-                'senderAddress'=>$orders['sender_address'],
-                'receiver'=>$orders['receiver'],
-                'receiverMobile'=>$orders['receiver_mobile'],
-                'receiveProvince'=>$orders['receive_province'],
-                'receiveCity'=>$orders['receive_city'],
-                'receiveCounty'=>$orders['receive_county'],
-                'receiveLocation'=>$orders['receive_location'],
-                'receiveAddress'=>$orders['receive_address'],
-                'weight'=>$orders['weight'],
-                'packageCount'=>$orders['package_count'],
-                'itemName'=>$orders['item_name']
-            ];
-            !empty($orders['insured']) &&($content['insured'] = $orders['insured']);
-            !empty($orders['vloum_long']) &&($content['vloumLong'] = $orders['vloum_long']);
-            !empty($orders['vloum_width']) &&($content['vloumWidth'] = $orders['vloum_width']);
-            !empty($orders['vloum_height']) &&($content['vloumHeight'] = $orders['vloum_height']);
-            !empty($orders['bill_remark']) &&($content['billRemark'] = $orders['bill_remark']);
 
-            $data=$Common->yunyang_api('ADD_BILL_INTELLECT',$content);
-            Log::error(['云洋下单结果查询：' => $data]);
-            if ($data['code']!=1){
-                Log::error('云洋下单失败'.PHP_EOL.json_encode($data).PHP_EOL.json_encode($content));
-                if($orderModel->pay_status == 2) return $signal;
-                //支付成功下单失败  执行退款操作
-                $refund = Alipay::start()->base()->refund(
-                    input('out_trade_no'),
-                    input('buyer_pay_amount'),
-                    input('body')
-                );
-                if(!$refund) return $signal; // 退款失败
-                $out_refund_no=$Common->get_uniqid();//下单退款订单号
-                $update=[
-                    'id'=> $orders['id'],
-                    'pay_status'=>2,
-                    'yy_fail_reason'=>$data['message'],
-                    'order_status'=>'下单失败咨询客服',
-                    'out_refund_no'=>$out_refund_no,
-                ];
-            }else{
-                Log::error('下单成功');
-                // 下单成功
-                $users=db('users')->where('id',$orders['user_id'])->find();
-                Log::error(['下单用户' => $users]);
-                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
-                Log::error(['这是啥' => $rebatelist]);
-                if(empty($rebatelist)){
-                    $rebatelist=new Rebatelist();
-                    $data_re=[
-                        "user_id"=>$orders["user_id"],
-                        "invitercode"=>$users["invitercode"],
-                        "fainvitercode"=>$users["fainvitercode"],
-                        "out_trade_no"=>$orders["out_trade_no"],
-                        "final_price"=>$orders["final_price"]-$orders["insured_price"],//保价费用不参与返佣和分润
-                        "payinback"=>0,//补交费用 为负则表示超轻
-                        "state"=>0,
-                        "rebate_amount"=>0,
-                        "createtime"=>time(),
-                        "updatetime"=>time()
-                    ];
-                    !empty($users["rootid"]) && ($data_re["rootid"]=$users["rootid"]);
-                    $rebatelist->save($data_re);
-                }
+            switch ($orders['channel_merchant']){
+                case 'YY':
+                    $yy = new \app\common\business\YunYang();
+                    $res = $yy->createOrderHandle($orders, $record);
+                    if ($res['code']!=1){
+                        recordLog('channel-create-order-err',
+                            '订单ID：'. $orders['out_trade_no']. PHP_EOL.
+                            '云洋：'.json_encode($res, JSON_UNESCAPED_UNICODE) . PHP_EOL.
+                            '请求参数：' . $record
+                        );
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
 
-                $DbCommon->set_agent_amount(
-                    $orders['agent_id'],
-                    'setDec',$orders['agent_price'],
-                    0,
-                    '运单号：'.$data['result']['waybill'].' 下单支付成功'
-                );
-                $update=[
-                    'id'=> $orders['id'],
-                    'waybill'=>$data['result']['waybill'],
-                    'shopbill'=>$data['result']['shopbill'],
-                    'order_status'=>'已付款',
-                    'pay_status'=>1,
-                ];
+                        //支付成功下单失败  执行退款操作
+                        $refund = Alipay::start()->base()->refund(
+                            input('out_trade_no'),
+                            input('buyer_pay_amount'),
+                            input('body')
+                        );
+                        $update=[
+                            'id'=> $orders['id'],
+                            'pay_status'=> $refund?2:4,
+                            'yy_fail_reason'=>$res['message'],
+                            'order_status'=>'下单失败咨询客服',
+                            'out_refund_no'=>$out_refund_no,
+                        ];
+
+
+                    }else{
+                        Queue::push(TrackJob::class, $orders, 'track');
+                        //支付成功下单成功
+                        $result=$res['result'];
+                        $update=[
+                            'id'=> $orders['id'],
+                            'waybill'=>$result['waybill'],
+                            'shopbill'=>$result['shopbill'],
+                            'order_status'=>'已付款',
+                            'pay_status'=>1,
+                        ];
+                        $DbCommon->set_agent_amount(
+                            $orders['agent_id'],
+                            'setDec',$orders['agent_price'],
+                            0,
+                            '运单号：'.$result['waybill'].' 下单支付成功'
+                        );
+                    }
+                    break;
+                case 'FHD':
+                    $fhd = new FengHuoDi();
+                    $resultJson = $fhd->createOrderHandle($orders);
+                    $result = json_decode($resultJson, true);
+                    if ($result['rcode']!=0){ // 下单失败
+                        recordLog('channel-create-order-err',
+                            '风火递：'.$resultJson . PHP_EOL
+                            .'订单id：'.$orders['out_trade_no']
+                        );
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        //支付成功下单失败  执行退款操作
+                        $refund = Alipay::start()->base()->refund(
+                            input('out_trade_no'),
+                            input('buyer_pay_amount'),
+                            input('body')
+                        );
+
+                        $update=[
+                            'id'=> $orders['id'],
+                            'pay_status'=> $refund?2:4,
+                            'yy_fail_reason'=>$result['errorMsg'],
+                            'order_status'=>'下单失败咨询客服',
+                            'out_refund_no'=>$out_refund_no,
+                        ];
+
+                    }else{ // 下单成功
+
+                        $update=[
+                            'id'=> $orders['id'],
+                            'waybill'=>$result['data']['waybillCode'],
+                            'shopbill'=>null,
+                            'order_status'=>'已付款',
+                            'pay_status'=>1,
+                        ];
+                        $DbCommon->set_agent_amount(
+                            $orders['agent_id'],
+                            'setDec',$orders['agent_price'],
+                            0,
+                            '运单号：'.$result['data']['waybillCode'].' 下单支付成功'
+                        );
+                    }
+                    break;
+                case 'wanli':
+                    $res = (new WanLi())->createOrder($orders);
+                    $result = json_decode($res,true);
+                    if($result['code'] != 200){
+                        recordLog('channel-create-order-err',
+                            '万利：'.$res . PHP_EOL
+                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
+                        );
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        //支付成功下单失败  执行退款操作
+                        $refund = Alipay::start()->base()->refund(
+                            input('out_trade_no'),
+                            input('buyer_pay_amount'),
+                            input('body')
+                        );
+
+                        $update=[
+                            'id'=> $orders['id'],
+                            'pay_status'=> $refund?2:4,
+                            'yy_fail_reason'=>$result['message'],
+                            'order_status'=>'下单失败咨询客服',
+                            'out_refund_no'=>$out_refund_no,
+                        ];
+
+                    }else{
+                        //支付成功下单成功
+                        $update=[
+                            'id'=> $orders['id'],
+                            'shopbill'=>$result['data']['orderNo'], // 万利订单号
+                            'pay_status'=>1,
+                            'order_status'=>'已付款',
+                        ];
+
+                        $DbCommon->set_agent_amount(
+                            $orders['agent_id'],
+                            'setDec',$orders['agent_price'],
+                            0, ' 下单支付成功'
+                        );
+                    }
+                    break;
+                case 'JILU':
+                    $jiLu = new JiLu();
+                    $resultJson = $jiLu->createOrderHandle($orders, $record);
+                    $result = json_decode($resultJson, true);
+                    recordLog('jilu-create-order',
+                        '订单：'.$orders['out_trade_no']. PHP_EOL .
+                        '返回：'.$resultJson
+                    );
+                    if ($result['code']!=1){ // 下单失败
+                        recordLog('channel-create-order-err',
+                            '订单：'.$orders['out_trade_no']. PHP_EOL .
+                            '极鹭下单失败：'.$resultJson . PHP_EOL .
+                            '请求参数：' . $record
+                        );
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        $errMsg = $result['data']['message']??$result['msg'];
+                        if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
+                            $errMsg = '不支持的寄件或收件号码';
+                        }
+                        //支付成功下单失败  执行退款操作
+                        $refund = Alipay::start()->base()->refund(
+                            input('out_trade_no'),
+                            input('buyer_pay_amount'),
+                            input('body')
+                        );
+
+                        $update=[
+                            'id'=> $orders['id'],
+                            'pay_status'=> $refund?2:4,
+                            'yy_fail_reason'=>$errMsg,
+                            'order_status'=>'下单失败咨询客服',
+                            'out_refund_no'=>$out_refund_no,
+                        ];
+
+
+                    }else{ // 下单成功
+                        $update=[
+                            'id'=> $orders['id'],
+                            'waybill'=>$result['data']['expressNo'],
+                            'shopbill'=>$result['data']['expressId'],
+                            'pay_status'=>1,
+                            'order_status'=>'已付款',
+                        ];
+                        $DbCommon->set_agent_amount(
+                            $orders['agent_id'],
+                            'setDec',$orders['agent_price'],
+                            0,
+                            '运单号：'.$result['data']['expressNo'].' 下单支付成功'
+                        );
+                    }
+                    break;
             }
-            $orderModel->isUpdate(true)->save($update);
+            if(isset($update)){
+                $orderModel->isUpdate(true)->save($update);
+            }
+
             return $signal;
         }catch (\Exception $e){
             recordLog('ali-callback-err',
