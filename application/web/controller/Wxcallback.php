@@ -3730,8 +3730,8 @@ class Wxcallback extends Controller
         $raw = json_encode($params, JSON_UNESCAPED_UNICODE );
         try {
             recordLog('channel-callback',  '极鹭-' . PHP_EOL . $raw  );
-            $expressNo = $params['apiDataInfo']['expressNo']; // 运单号
-            $expressId = @$params['apiDataInfo']['expressId']; // 极鹭单号
+            $expressNo = $params['apiDataInfo']['expressNo']??''; // 运单号
+            $expressId = $params['apiDataInfo']['expressId']??''; // 极鹭单号
             $sendType = $params['sendType']; // 回调类型 trackType-物流轨迹、揽件信息、订单状态，weightType-重量，补差价
 
             // trackType时的参数
@@ -3754,7 +3754,7 @@ class Wxcallback extends Controller
             $compact = compact('expressNo','expressId','sendType','expressStatus',
                 'expressTrack','actualWeight','raw');
             db('jilu_callback')->insert($compact);
-            $orderModel = Order::where('waybill', $expressNo)->find();
+            $orderModel = Order::where('shopbill', $expressId)->find();
             if(!$orderModel){
                 recordLog('channel-callback-err',  '极鹭-没有订单-' . PHP_EOL . $raw  );
                 return json(['code'=>-1, 'message'=>'没有此订单']);
