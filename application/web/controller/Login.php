@@ -192,6 +192,9 @@ class Login extends Controller
             $time = time();
             $token = $this->common->get_uniqid();
             $user = Users::where(['open_id' => $openid, 'agent_id'=>$agent_id])->find();
+//            if($appid == '2021003189607001'){
+//                dd($user->toArray());
+//            }
             $record = ['agent_id' => $agent_id, 'token' => $token, 'login_time' => $time];
             if (empty($user)){
                 // 解密手机号

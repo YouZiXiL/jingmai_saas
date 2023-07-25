@@ -104,12 +104,17 @@ class AliBase
             if(!empty($resultCode)&&$resultCode == 10000){
                 return $result->$responseNode;
             } else {
-                Log::error( ["支付宝创建订单失败：" => $result] );
-                throw new Exception('支付宝创建订单失败');
+                recordLog('ali-order-err',
+                    '下单失败：('. json_encode($result, JSON_UNESCAPED_UNICODE)
+                );
+                throw new Exception($result->$responseNode->sub_msg);
             }
         } catch (Exception $e) {
-            Log::error( "支付宝创建订单失败：".$e->getMessage()."追踪：".$e->getTraceAsString() );
-            throw new Exception('支付宝创建订单失败');
+            recordLog('ali-order-err',
+                '下单失败：('. $e->getLine() .')：' . $e->getMessage() . PHP_EOL .
+                $e->getTraceAsString()
+            );
+            throw new Exception('下单失败：'. $e->getMessage());
         }
     }
 
