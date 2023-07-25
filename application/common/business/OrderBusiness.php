@@ -3,6 +3,7 @@
 namespace app\common\business;
 
 use app\common\library\alipay\Alipay;
+use app\common\model\Order;
 use app\web\controller\Common;
 use app\web\controller\Dbcommom;
 use app\web\controller\DoJob;
@@ -20,7 +21,6 @@ class OrderBusiness
     public function refund(Model $orderModel)
     {
         $order = $orderModel->toArray();
-
         $wxOrder = $order['pay_type'] == 1; // 微信支付
         $aliOrder = $order['pay_type'] == 2; // 支付宝支付
         $autoOrder = $order['pay_type'] == 3; // 智能下单
@@ -64,6 +64,82 @@ class OrderBusiness
             $orderModel->isUpdate()->save($update);
             $DbCommon = new Dbcommom();
             $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, '运单号：' . $order['waybill'] . ' 已取消并退款');
+        }
+    }
+
+    /**
+     * 创建订单
+     * @return void
+     * @throws Exception
+     */
+    public function create($oderData, $channel, $agent){
+        $receiver=db('users_address')->where('id',$channel['shoujian_id'])->find();
+        $sender=db('users_address')->where('id',$channel['jijian_id'])->find();
+        //黑名单
+        $blacklist=db('agent_blacklist')->where('agent_id',$agent['id'])->where('mobile',$sender['mobile'])->find();
+        if ($blacklist){
+            throw new Exception('此手机号无法下单');
+        }
+        $commonData=[
+            'agent_id'=>$agent['id'],
+            'db_type'=>$channel['db_type']??null,
+            'send_start_time'=>$channel['send_start_time']??null,
+            'send_end_time'=>$channel['send_end_time']??null,
+            'channel'=>$channel['channel'],
+            'channel_merchant'=>$channel['channel_merchant'],
+            'freight'=>$channel['freight']??0,
+            'channel_id'=>$channel['channelId']??0,
+            'tag_type'=>$channel['tagType'],
+            'admin_shouzhong'=>$channel['admin_shouzhong']??0,
+            'admin_xuzhong'=>$channel['admin_xuzhong']??0,
+            'agent_shouzhong'=>$channel['agent_shouzhong']??0,
+            'agent_xuzhong'=>$channel['agent_xuzhong']??0,
+            'users_shouzhong'=>$channel['users_shouzhong']??0,
+            'users_xuzhong'=>$channel['users_xuzhong']??0,
+            'final_freight'=>$channel['payPrice']??0, //平台支付的费用
+            'agent_price'=>$channel['agent_price'], // 代理商支付费用
+            'final_price'=>$channel['final_price'], // 用户支付费用
+            'insured_price'=>$channel['freightInsured']??0,//保价费用
+            'comments'=>'无',
+            'pay_status'=>0,
+            'order_status'=>'已派单',
+            'overload_price'=>0,//超重金额
+            'agent_overload_price'=>0,//代理商超重金额
+            'tralight_price'=>0,//超轻金额
+            'agent_tralight_price'=>0,//代理商超轻金额
+            'final_weight'=>0,
+            'haocai_freight'=>0,
+            'overload_status'=>0,
+            'consume_status'=>0,
+            'tralight_status'=>0,
+            'sender'=> $sender['name'],
+            'sender_mobile'=>$sender['mobile'],
+            'sender_province'=>$sender['province'],
+            'sender_city'=>$sender['city'],
+            'sender_county'=>$sender['county'],
+            'sender_location'=>$sender['location'],
+            'sender_address'=>$sender['province'].$sender['city'].$sender['county'].$sender['location'],
+            'receiver'=>$receiver['name'],
+            'receiver_mobile'=>$receiver['mobile'],
+            'receive_province'=>$receiver['province'],
+            'receive_city'=>$receiver['city'],
+            'receive_county'=>$receiver['county'],
+            'receive_location'=>$receiver['location'],
+            'receive_address'=>$receiver['province'].$receiver['city'].$receiver['county'].$receiver['location'],
+            'weight'=>$channel['weight'],
+            'package_count'=>$channel['package_count'],
+            'insured'=>$channel['insured']??0,
+            'vloum_long'=>$channel['vloumLong']??0,
+            'vloum_width'=>$channel['vloumWidth']??0,
+            'vloum_height'=>$channel['vloumHeight']??0,
+            'create_time'=>time()
+        ];
+        $data = array_merge($commonData, $oderData);
+        recordLog('create-order-err', '$data' . json_encode($data, JSON_UNESCAPED_UNICODE));
+        recordLog('create-order-err', '$channel'.json_encode($channel, JSON_UNESCAPED_UNICODE));
+        $order = Order::create($data);
+        if (!$order){
+            throw new Exception('插入数据失败');
         }
     }
 }

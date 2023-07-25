@@ -29,11 +29,9 @@ class Test extends Controller
     }
 
     public function test(){
-        $yunYang = new \app\common\business\YunYang();
-        $res = $yunYang->queryTrance('5302010093852');
-        $result = json_decode($res, true);
-        $comments = $result['result'][0];
-        if(empty($comments)) return R::error('false');
+        $arr1 = ['name'=>'大明', 'age'=>15, 'sex' => 2];
+        $arr2 = ['name'=>'xiaoming', 'city'=>'kaifeng'];
+        $result = array_merge($arr1, $arr2);
         return R::ok($result);
     }
 

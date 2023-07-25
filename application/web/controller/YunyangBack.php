@@ -25,7 +25,7 @@ use WeChatPay\Crypto\Rsa;
 use WeChatPay\Formatter;
 
 
-class Yunyang extends Controller
+class YunyangBack extends Controller
 {
 
     protected $user;
@@ -206,6 +206,7 @@ class Yunyang extends Controller
 
             $time=time();
             $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
+            $transportType = ''; // 运输类型（风火递参数）
             $yyContent = [
                 'channelTag'=>$param['channel_tag'], // 智能|重货
                 'sender'=> $jijian_address['name'],
@@ -224,10 +225,6 @@ class Yunyang extends Controller
                 'receiveAddress'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
                 'weight'=>$param['weight'],
                 'packageCount'=>$param['package_count'],
-                'insured' => (int) $param['insured'],
-                'vloumLong' => (int) $param['vloum_long'],
-                'vloumWidth' => (int) $param['vloum_width'],
-                'vloumHeight' => (int) $param['vloum_height'],
             ];
 
             $fhdContent = [
@@ -263,10 +260,36 @@ class Yunyang extends Controller
                 ],
             ];
 
+            $jlContent = [
+                "actualWeight"=> $param['weight'],
+                "fromCity"=> $jijian_address['city'],
+                "fromCounty"=> $jijian_address['county'],
+                "fromDetails"=> $jijian_address['location'],
+                "fromName"=> $jijian_address['name'],
+                "fromPhone"=> $jijian_address['mobile'],
+                "fromProvince"=> $jijian_address['province'],
+                "toCity"=> $shoujian_address['city'],
+                "toCounty"=> $shoujian_address['county'],
+                "toDetails"=> $shoujian_address['location'],
+                "toName"=> $shoujian_address['name'],
+                "toPhone"=> $shoujian_address['mobile'],
+                "toProvince"=> $shoujian_address['province']
+            ];
+
             if ($param['channel_tag']=='智能'){
+                !empty($param['insured']) &&($yyContent['insured'] = $param['insured']);
+                !empty($param['vloum_long']) &&($yyContent['vloumLong'] = $param['vloum_long']);
+                !empty($param['vloum_width']) &&($yyContent['vloumWidth'] = $param['vloum_width']);
+                !empty($param['vloum_height']) &&($yyContent['vloumHeight'] = $param['vloum_height']);
+
 
                 $jiLu = new JiLu();
+//                $jiluParams = [
+//                    'url' => $jiLu->baseUlr,
+//                    'data' => $jiLu->setParma('PRICE_ORDER', $jlContent),
+//                ];
                 $jiluCost = $jiLu->getCost($jijian_address['province'], $shoujian_address['province']);
+                Log::error(['$jiluCost' => $jiluCost]);
                 $fhdContent['serviceInfoList'] = [
                     [ 'code'=>'INSURE','value'=>(int)$param['insured']*100, ],
                     [ 'code'=>'TRANSPORT_TYPE','value'=>'RCP', ]
@@ -496,7 +519,14 @@ class Yunyang extends Controller
             if ($agent_info['amount']<$check_channel_intellect['agent_price']){
                 return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,无法下单']);
             }
+            $jijian_address=db('users_address')->where('id',$check_channel_intellect['jijian_id'])->find();
+            //黑名单
+            $blacklist=db('agent_blacklist')->where('agent_id',$this->user->agent_id)->where('mobile',$jijian_address['mobile'])->find();
+            if ($blacklist){
+                return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
+            }
 
+            $shoujian_address=db('users_address')->where('id',$check_channel_intellect['shoujian_id'])->find();
 
 
             $agentAuthModel=AgentAuth::where('app_id',$this->user->app_id)
@@ -506,19 +536,72 @@ class Yunyang extends Controller
             $agentAuth = $agentAuthModel->toArray();
 
             $out_trade_no='XD'.$this->common->get_uniqid();
-
-            $orderData = [
-                'out_trade_no'=>$out_trade_no,
-                'channel_tag'=>$info['channel_tag'],
+            $data=[
+                'db_type'=>$check_channel_intellect['db_type']??null,
+                'send_start_time'=>$check_channel_intellect['send_start_time']??null,
+                'send_end_time'=>$check_channel_intellect['send_end_time']??null,
                 'user_id'=>$this->user->id,
-                'pay_type'=> '1',
+                'agent_id'=>$this->user->agent_id,
                 'auth_id' => $agentAuth['id'],
+                'channel'=>$check_channel_intellect['channel'],
+                'channel_tag'=>$info['channel_tag'],
+                'channel_merchant'=>$check_channel_intellect['channel_merchant'],
+                'insert_id'=>$param['insert_id'],
+                'out_trade_no'=>$out_trade_no,
+                'freight'=>$check_channel_intellect['freight']??0,
+                'channel_id'=>$check_channel_intellect['channelId']??0,
+                'tag_type'=>$check_channel_intellect['tagType'],
+                'admin_shouzhong'=>$check_channel_intellect['admin_shouzhong']??0,
+                'admin_xuzhong'=>$check_channel_intellect['admin_xuzhong']??0,
+                'agent_shouzhong'=>$check_channel_intellect['agent_shouzhong']??0,
+                'agent_xuzhong'=>$check_channel_intellect['agent_xuzhong']??0,
+                'users_shouzhong'=>$check_channel_intellect['users_shouzhong']??0,
+                'users_xuzhong'=>$check_channel_intellect['users_xuzhong']??0,
+                'final_freight'=>$check_channel_intellect['payPrice']??0, //平台支付的费用
+                'agent_price'=>$check_channel_intellect['agent_price'], // 代理商支付费用
+                'final_price'=>$check_channel_intellect['final_price'], // 用户支付费用
+                'insured_price'=>$check_channel_intellect['freightInsured']??0,//保价费用
+                'comments'=>'无',
                 'wx_mchid'=>$agent_info['wx_mchid'],
                 'wx_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
-                'insert_id'=>$param['insert_id'],
+
+                'pay_status'=>0,
+                'order_status'=>'已派单',
+                'overload_price'=>0,//超重金额
+                'agent_overload_price'=>0,//代理商超重金额
+                'tralight_price'=>0,//超轻金额
+                'agent_tralight_price'=>0,//代理商超轻金额
+                'final_weight'=>0,
+                'pay_type'=> '1',
+                'haocai_freight'=>0,
+                'overload_status'=>0,
+                'consume_status'=>0,
+                'tralight_status'=>0,
+                'sender'=> $jijian_address['name'],
+                'sender_mobile'=>$jijian_address['mobile'],
+                'sender_province'=>$jijian_address['province'],
+                'sender_city'=>$jijian_address['city'],
+                'sender_county'=>$jijian_address['county'],
+                'sender_location'=>$jijian_address['location'],
+                'sender_address'=>$jijian_address['province'].$jijian_address['city'].$jijian_address['county'].$jijian_address['location'],
+                'receiver'=>$shoujian_address['name'],
+                'receiver_mobile'=>$shoujian_address['mobile'],
+                'receive_province'=>$shoujian_address['province'],
+                'receive_city'=>$shoujian_address['city'],
+                'receive_county'=>$shoujian_address['county'],
+                'receive_location'=>$shoujian_address['location'],
+                'receive_address'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
+                'weight'=>$check_channel_intellect['weight'],
+                'package_count'=>$check_channel_intellect['package_count'],
                 'item_name'=>$param['item_name'],
-                'bill_remark' => $param['bill_remark']??''
+                'create_time'=>time()
             ];
+
+            !empty($param['bill_remark']) &&($data['bill_remark'] = $param['bill_remark']);
+            !empty($check_channel_intellect['insured']) &&($data['insured'] = $check_channel_intellect['insured']);
+            !empty($check_channel_intellect['vloum_long']) &&($data['vloum_long'] = $check_channel_intellect['vloumLong']);
+            !empty($check_channel_intellect['vloum_width']) &&($data['vloum_width'] = $check_channel_intellect['vloum_width']);
+            !empty($check_channel_intellect['vloum_height']) &&($data['vloum_height'] = $check_channel_intellect['vloum_height']);
             $couponmoney=0;
             if(!empty($param["couponid"])){
                 $couponinfo=Couponlist::get(["id"=>$param["couponid"],"state"=>1]);
@@ -578,12 +661,14 @@ class Yunyang extends Controller
 //                $couponinfo["state"]=2;
 //                $couponinfo->save();
                     //表示该笔订单使用了优惠券
-                    $orderData["couponid"]=$param["couponid"];
-                    $orderData["couponpapermoney"]=$couponinfo->money;
-                    $orderData["aftercoupon"]=$check_channel_intellect['final_price']-$couponmoney;
+                    $data["couponid"]=$param["couponid"];
+                    $data["couponpapermoney"]=$couponinfo->money;
+                    $data["aftercoupon"]=$check_channel_intellect['final_price']-$couponmoney;
                 }
-                $orderBusiness = new OrderBusiness();
-                $orderBusiness->create($orderData, $check_channel_intellect, $agent_info);
+                $inset=db('orders')->insert($data);
+                if (!$inset){
+                    throw new Exception('插入数据失败');
+                }
                 return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
             } catch (\Exception $e) {
                 recordLog('create-order-err',
@@ -591,13 +676,13 @@ class Yunyang extends Controller
                     $e->getLine().'：'.$e->getMessage().PHP_EOL
                     .$e->getTraceAsString() );
                 // 进行错误处理
-                return json(['status'=>400, 'data'=>'','msg'=> $e->getMessage()]);
+                return json(['status'=>400,'data'=>'','msg'=>'商户号配置错误,请联系管理员']);
             }
         }catch (Exception $e){
             recordLog('create-order-err',
                 $e->getLine().'：'.$e->getMessage().PHP_EOL
                 .$e->getTraceAsString() );
-            return json(['status'=>400, 'data'=>'', 'msg'=>$e->getMessage()]);
+            return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
 
     }
@@ -609,7 +694,6 @@ class Yunyang extends Controller
     function createOrderByAli(): Json
     {
         // return json(['status'=>401]);
-        $param=$this->request->param();
         if(empty(input('insert_id'))||empty(input('item_name'))){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
@@ -675,6 +759,67 @@ class Yunyang extends Controller
 
             $out_trade_no='XD'.$this->common->get_uniqid();
 
+            $data=[
+                'user_id'=>$this->user->id,
+                'agent_id'=>$this->user->agent_id,
+                'auth_id' => $agentAuth['id'],
+                'channel'=>$check_channel_intellect['channel'],
+                'channel_tag'=>$info['channel_tag'],
+                'insert_id'=> input('insert_id'),
+                'out_trade_no'=>$out_trade_no,
+                'freight'=>$check_channel_intellect['freight'],
+                'channel_id'=>$check_channel_intellect['channelId'],
+                'tag_type'=>$check_channel_intellect['tagType'],
+                'admin_shouzhong'=>$check_channel_intellect['admin_shouzhong'],
+                'admin_xuzhong'=>$check_channel_intellect['admin_xuzhong'],
+                'agent_shouzhong'=>$check_channel_intellect['agent_shouzhong'],
+                'agent_xuzhong'=>$check_channel_intellect['agent_xuzhong'],
+                'users_shouzhong'=>$check_channel_intellect['users_shouzhong'],
+                'users_xuzhong'=>$check_channel_intellect['users_xuzhong'],
+                'agent_price'=>$check_channel_intellect['agent_price'],
+                'insured_price'=>$check_channel_intellect['freightInsured'],//保价费用
+                'comments'=>'无',
+                'wx_mchid'=> input('appid'),
+                'pay_type'=> '2',
+                'final_freight'=>0,//云洋最终运费
+                'pay_status'=>0,
+                'order_status'=>'已派单',
+                'overload_price'=>0,//超重金额
+                'agent_overload_price'=>0,//代理商超重金额
+                'tralight_price'=>0,//超轻金额
+                'agent_tralight_price'=>0,//代理商超轻金额
+                'final_weight'=>0,
+                'haocai_freight'=>0,
+                'overload_status'=>0,
+                'consume_status'=>0,
+                'tralight_status'=>0,
+                'final_price'=>$check_channel_intellect['final_price'],
+                'sender'=> $jijian_address['name'],
+                'sender_mobile'=>$jijian_address['mobile'],
+                'sender_province'=>$jijian_address['province'],
+                'sender_city'=>$jijian_address['city'],
+                'sender_county'=>$jijian_address['county'],
+                'sender_location'=>$jijian_address['location'],
+                'sender_address'=>$jijian_address['province'].$jijian_address['city'].$jijian_address['county'].$jijian_address['location'],
+                'receiver'=>$shoujian_address['name'],
+                'receiver_mobile'=>$shoujian_address['mobile'],
+                'receive_province'=>$shoujian_address['province'],
+                'receive_city'=>$shoujian_address['city'],
+                'receive_county'=>$shoujian_address['county'],
+                'receive_location'=>$shoujian_address['location'],
+                'receive_address'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
+                'weight'=>$check_channel_intellect['weight'],
+                'package_count'=>$check_channel_intellect['package_count'],
+                'item_name'=> input('item_name'),
+                'create_time'=>time()
+            ];
+            !empty(input('bill_remark')) &&($data['bill_remark'] = input('bill_remark'));
+            !empty($check_channel_intellect['insured']) &&($data['insured'] = $check_channel_intellect['insured']);
+            !empty($check_channel_intellect['vloum_long']) &&($data['vloum_long'] = $check_channel_intellect['vloumLong']);
+            !empty($check_channel_intellect['vloum_width']) &&($data['vloum_width'] = $check_channel_intellect['vloum_width']);
+            !empty($check_channel_intellect['vloum_height']) &&($data['vloum_height'] = $check_channel_intellect['vloum_height']);
+
+
             $object = new stdClass();
             $object->out_trade_no = $out_trade_no;
             $object->total_amount = $check_channel_intellect['final_price'];
@@ -684,21 +829,13 @@ class Yunyang extends Controller
             $appAuthToken = $agent_info->agent_auth[0]->auth_token;
             $object->query_options = [$appAuthToken];
             $result = Alipay::start()->base()->create($object, $appAuthToken);
+
             $tradeNo = $result->trade_no;
-            $orderData = [
-                'out_trade_no'=>$out_trade_no,
-                'channel_tag'=>$info['channel_tag'],
-                'user_id'=>$this->user->id,
-                'pay_type'=> '2',
-                'wx_out_trade_no' => $tradeNo,
-                'auth_id' => $agentAuth['id'],
-                'insert_id'=>$param['insert_id'],
-                'item_name'=>$param['item_name'],
-                'wx_mchid'=> $param['appid'],
-                'bill_remark' => $param['bill_remark']??''
-            ];
-            $orderBusiness = new OrderBusiness();
-            $orderBusiness->create($orderData, $check_channel_intellect, $agent_info);
+            $data['wx_out_trade_no'] = $tradeNo;
+            $inset=db('orders')->insert($data);
+            if (!$inset){
+                throw new Exception('插入数据失败');
+            }
             return json(['status'=>200,'data'=>$tradeNo,'msg'=>'成功']);
         }catch (\Exception $e){
             recordLog('ali-order-err',

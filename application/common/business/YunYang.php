@@ -224,10 +224,10 @@ class YunYang{
             $v['weight']=$param['weight'];//重量
             $v['channel_merchant'] = Channel::$yy;
             $v['package_count']=$param['package_count'];//包裹数量
-            !empty($param['insured']) &&($v['insured'] = $param['insured']);//保价费用
-            !empty($param['vloum_long']) &&($v['vloumLong'] = $param['vloum_long']);//货物长度
-            !empty($param['vloum_width']) &&($v['vloumWidth'] = $param['vloum_width']);//货物宽度
-            !empty($param['vloum_height']) &&($v['vloumHeight'] = $param['vloum_height']);//货物高度
+            $v['insured'] = (int) $param['insured'];
+            $v['vloumLong'] = (int) $param['vloum_long'];
+            $v['vloumWidth'] = (int) $param['vloum_width'];
+            $v['vloumHeight'] = (int) $param['vloum_height'];
             $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
             $list[$k]['final_price']=$finalPrice;
             $list[$k]['insert_id']=$insert_id;
