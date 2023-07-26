@@ -236,7 +236,6 @@ class YunYang{
 
 
         if(isset($list)){
-            recordLog('channel-price', '测试数据-'. json_encode($list, JSON_UNESCAPED_UNICODE));
             $result = [];
             // 去除一个价格高的圆通
             foreach ($list as $item) {
@@ -252,8 +251,6 @@ class YunYang{
                     $result[] = $item;
                 }
             }
-            recordLog('channel-price', '测试数据222-'. json_encode(array_values($result), JSON_UNESCAPED_UNICODE));
-
             return array_values($result);
         }else{
             recordLog('channel-price', '测试数据-空');

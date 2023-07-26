@@ -276,4 +276,11 @@ class Test extends Controller
 
     }
 
+
+    public function getOrderInfoByJl($expressId){
+        $jiLu = new JiLu();
+        $result = $jiLu->getOrderInfo($expressId);
+        return R::ok(json_decode($result));
+    }
+
 }

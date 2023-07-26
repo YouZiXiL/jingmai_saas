@@ -5,6 +5,7 @@ namespace app\admin\controller\orders;
 
 use app\admin\model\Admin;
 use app\common\controller\Backend;
+use app\common\library\alipay\Alipay;
 use app\web\controller\Common;
 use app\web\controller\Dbcommom;
 use app\web\model\AgentAuth;
@@ -111,13 +112,23 @@ class Afterlist extends Backend
         $result = false;
         Db::startTrans();
         try {
+            $up_data = [];
+
             //是否采用模型验证
             if ($this->modelValidate) {
                 $name = str_replace("\\model\\", "\\validate\\", get_class($this->model));
                 $validate = is_bool($this->modelValidate) ? ($this->modelSceneValidate ? $name . '.edit' : $name) : $this->modelValidate;
                 $row->validateFailException()->validate($validate);
             }
-            $orders=new \app\admin\model\orders\Orderslist();
+            $ordersModel = new \app\admin\model\orders\Orderslist();
+            $orders = $ordersModel->get(['id'=>$row['order_id']]);
+
+            if ($orders['pay_type'] == 2){
+                $agentAuth = AgentAuth::where('agent_id',$orders['agent_id'])
+                    ->where('app_id',$orders['wx_mchid'])
+                    ->find();
+            }
+
             if ($row['salf_type']==2){
                 $orders=$orders->get(['id'=>$row['order_id']]);
                 if ($params['cope_status']==1){
@@ -169,8 +180,9 @@ class Afterlist extends Backend
                     $orders->allowField(true)->save(['tralight_status'=>4]);
                 }
             }
+
             //取消订单处理
-            if (($row['salf_type']==0&&$params['cope_status']==1)||($row['salf_type']==3&&$params['cope_status']==1)){
+            if ((empty($row['salf_type'])&&$params['cope_status']==1)||($row['salf_type']==3&&$params['cope_status']==1)){
                 $orders=$orders->get(['id'=>$row['order_id']]);
                 if ($orders['pay_status']!=1){
                     throw new Exception('此订单已取消');
@@ -195,7 +207,18 @@ class Afterlist extends Backend
                             ],
                         ]]);
                     $up_data['out_refund_no'] = $out_refund_no;
+                }elseif ($orders['pay_type'] == 2){
+                    $refund = Alipay::start()->base()
+                        ->refund($orders['out_trade_no'],$orders['final_price'],$agentAuth['auth_token']);
+                    if($refund){
+                        $out_refund_no=$common->get_uniqid();//下单退款订单号
+                        $up_data['out_refund_no'] = $out_refund_no;
+                    }else{
+                        $payStatus = 4;
+                        $orderStatus = '取消成功未退款';
+                    }
                 }
+
                 //超重退款
                 if($orders['overload_status']==2&&$orders['wx_out_overload_no']){
                     if($orders['pay_type'] == 1){
@@ -214,8 +237,14 @@ class Afterlist extends Backend
                                 ],
                             ]]);
                         $up_data['out_overload_refund_no']=$out_overload_refund_no;
+                    }elseif ($orders['pay_type'] == 2){
+                        $refund = Alipay::start()->base()
+                            ->refund($orders['out_trade_no'],$orders['overload_price'],$agentAuth['auth_token']);
+                        if($refund){
+                            $out_refund_no=$common->get_uniqid();//下单退款订单号
+                            $up_data['out_refund_no'] = $out_refund_no;
+                        }
                     }
-
                     $up_data['overload_price']=0;
                 }
 
@@ -237,6 +266,13 @@ class Afterlist extends Backend
                                 ],
                             ]]);
                         $up_data['out_haocai_refund_no'] = $out_haocai_refund_no;
+                    }elseif ($orders['pay_type'] == 2){
+                        $refund = Alipay::start()->base()
+                            ->refund($orders['out_trade_no'],$orders['haocai_freight'],$agentAuth['auth_token']);
+                        if($refund){
+                            $out_refund_no=$common->get_uniqid();//下单退款订单号
+                            $up_data['out_refund_no'] = $out_refund_no;
+                        }
                     }
                     $up_data['haocai_freight']=0;
                 }
@@ -247,10 +283,10 @@ class Afterlist extends Backend
 
 
                 //处理退款完成 更改退款状态和订单状态
-                $up_data['pay_status']=2;
+                $up_data['pay_status']= $payStatus??2;
                 $up_data['overload_status']=0;
                 $up_data['consume_status']=0;
-                $up_data['order_status']='已作废';
+                $up_data['order_status']= $orderStatus??'已作废';
                 $up_data['cancel_time']=time();
 
                 $up_data['admin_xuzhong']=0;

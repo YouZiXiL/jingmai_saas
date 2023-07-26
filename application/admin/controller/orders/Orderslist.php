@@ -322,7 +322,8 @@ class Orderslist extends Backend
 //            }
         }
         //取消订单反馈
-        if ($params['salf_type']==0){
+        if ($params['salf_type'] == 0){
+            $content['title'] = '取消订单';
 //            $content=[
 //                'subType'=>'3',
 //                'waybill'=>$row['waybill'],

@@ -410,9 +410,10 @@ class Common
      * @return void
      */
     function wxrobot_exception_msg(array $content){
+        $title = $content['title']??'异常反馈订单';
         $data = $this->httpRequest(config('site.wx_robot_url'),['msgtype'=>'markdown',
             'markdown'=>[
-                'content'=> '异常反馈订单'.PHP_EOL.
+                'content'=> $title.PHP_EOL.
                     '> 运单号：<font color="info">' .$content['waybill']. '</font>'. PHP_EOL .
                     '> 反馈人：<font color="info">' .$content['user']. '</font>'. PHP_EOL .
                     '> 反馈物品：<font color="info">' .$content['item_name']. '</font>'. PHP_EOL .
@@ -422,6 +423,7 @@ class Common
             ]
         ],'POST');
     }
+
 
     /**
      * 换单反馈
@@ -448,7 +450,7 @@ class Common
     function wxrobot_channel_exception(array $content){
         $data = $this->httpRequest(config('site.wx_robot_url'),['msgtype'=>'markdown',
             'markdown'=>[
-                'content'=> $content['title'].PHP_EOL.
+                'content'=> '<font color="comment">'. $content['title'].  '</font>'.PHP_EOL.
                     '> 渠道商：<font color="info">' .$content['user']. '</font>'. PHP_EOL .
                     '> 运单号：<font color="info">' .$content['waybill']. '</font>'. PHP_EOL .
                     '> 内容：<font color="info">' .$content['body']. '</font>'. PHP_EOL

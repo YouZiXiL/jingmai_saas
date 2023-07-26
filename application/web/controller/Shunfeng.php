@@ -96,7 +96,8 @@ class Shunfeng extends Controller
                 throw new Exception('收件或寄件信息错误,请仔细填写');
             }
 
-            $qudao_close=explode('|', $agent_info['qudao_close']);
+            recordLog('channel-price', 'QBD: ' . json_encode($result, JSON_UNESCAPED_UNICODE));
+            $qudao_close = explode('|', $agent_info['qudao_close']);
             $arr=[];
             $time=time();
             foreach ($result['data'] as $k=>&$v){

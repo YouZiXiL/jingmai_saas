@@ -385,7 +385,7 @@ class Wxcallback extends Controller
     }
 
     /**
-     * 云洋订单回调
+     * 云洋回调
      * @throws
      */
     function way_type(){
@@ -463,6 +463,7 @@ class Wxcallback extends Controller
             }
 
             if($aliOrder){
+
                 // 支付宝支付
                 $agent_auth_xcx = AgentAuth::where('agent_id',$orders['agent_id'])
                     ->where('app_id',$orders['wx_mchid'])
@@ -666,7 +667,6 @@ class Wxcallback extends Controller
                             'pay_status'=>4,
                             'order_status'=>'取消成功未退款'
                         ];
-
                     }
                     $orderModel->save($update);
                     $DbCommon= new Dbcommom();
@@ -804,6 +804,7 @@ class Wxcallback extends Controller
                 }
                 return json(['code'=>0, 'message'=>'订单已取消']);
             }
+
             // 快递运输状态
             if('expressLogisticsStatus' === input('type')){
                 $message = $pamar['message'];
@@ -815,13 +816,27 @@ class Wxcallback extends Controller
                 ];
                 $orderModel->isUpdate(true)->save($ordersUpdate);
             }
-            $agent_auth_xcx=db('agent_auth')
-                ->where('agent_id',$orders['agent_id'])
-                ->where('wx_auth',1)
-                ->where('auth_type',2)
-                ->find();
 
-            $authOrder = $orders['pay_type'] == 3;
+            $wxOrder = $orders['pay_type'] == 1; // 微信订单
+            $aliOrder = $orders['pay_type'] == 2; // 支付宝订单
+            $authOrder = $orders['pay_type'] == 3; // 智能下单
+
+            if($wxOrder){
+                $agent_auth_xcx=db('agent_auth')
+                    ->where('agent_id',$orders['agent_id'])
+                    ->where('wx_auth',1)
+                    ->where('auth_type',2)
+                    ->find();
+                $xcx_access_token = $common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+            }
+
+            if($aliOrder){
+                // 支付宝支付
+                $agent_auth_xcx = AgentAuth::where('agent_id',$orders['agent_id'])
+                    ->where('app_id',$orders['wx_mchid'])
+                    ->find();
+            }
+
             $xcx_access_token= $authOrder?'':$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
             $users=db('users')->where('id',$orders['user_id'])->find();
             $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
@@ -1687,6 +1702,7 @@ class Wxcallback extends Controller
                             'yy_fail_reason'=>$errMsg,
                             'order_status'=>'下单失败咨询客服',
                             'out_refund_no'=>$out_refund_no,
+                            'shopbill'=>$result['data']['expressId'],
                         ];
                         $data = [
                             'type'=>3,
@@ -3432,15 +3448,17 @@ class Wxcallback extends Controller
         $params = $this->request->param();
         try {
             $content = $params;
-            $content['data'] = json_encode($params['data']);
+            $content['data'] = json_encode($params['data'], JSON_UNESCAPED_UNICODE);
 
             db('q_callback')->insert($content);
             $common= new Common();
             $orders=db('orders')->where('out_trade_no',$params['thirdOrderNo'])->find();
+
             //判断具体返回信息后可改为等号
             if (count(explode("取消",$orders['order_status']))>1){
                 return "SUCCESS";
             }
+
             $isNew = $orders['tag_type'] == '顺丰新';
             $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
             $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
@@ -3497,7 +3515,7 @@ class Wxcallback extends Controller
             $up_data=[];
             if(@$params["pushType"]==1){
                 $up_data=[
-                    "order_status"=>$params["data"]["status"]."-".$params["data"]["desc"]
+                    "order_status"=> $params["data"]["status"]."-".$params["data"]["desc"]
                 ];
 
                 if($params["data"]["status"]==1){
@@ -3574,8 +3592,8 @@ class Wxcallback extends Controller
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
                 }
-
-            }elseif (@$params["pushType"]==2){
+            }
+            elseif (@$params["pushType"]==2){
                 $up_data=[
                     'final_freight'=>$params["data"]['totalFee']
                 ];
@@ -3708,6 +3726,7 @@ class Wxcallback extends Controller
                 $up_data['waybill']=$params["data"]['newWaybillNo'];
             }
             $rebatelist->save($rebatelistdata);
+
             db('orders')->where('waybill',$params['waybillNo'])->update($up_data);
             exit("SUCCESS");
         }
@@ -3744,7 +3763,7 @@ class Wxcallback extends Controller
             $update = []; // 更新订单数据
             if($sendType == 'trackType'){
                 $expressStatus = $params['apiDataInfo']['expressStatus']??null;
-                $expressTrack = $params['apiDataInfo']['expressTrack'];
+                $expressTrack = $params['apiDataInfo']['expressTrack']??'';
             }else{
                 $actualWeight = $params['apiDataInfo']['actualWeight'];
                 $addpriceInfos = $params['apiDataInfo']['addpriceInfos']??[];
@@ -3754,7 +3773,12 @@ class Wxcallback extends Controller
             $compact = compact('expressNo','expressId','sendType','expressStatus',
                 'expressTrack','actualWeight','raw');
             db('jilu_callback')->insert($compact);
-            $orderModel = Order::where('shopbill', $expressId)->find();
+            if($expressId){
+                $orderModel = Order::where('shopbill', $expressId)->find();
+            }else{
+                $orderModel = Order::where('waybill', $expressNo)->find();
+            }
+
             if(!$orderModel){
                 recordLog('channel-callback-err',  '极鹭-没有订单-' . PHP_EOL . $raw  );
                 return json(['code'=>-1, 'message'=>'没有此订单']);
@@ -3765,13 +3789,18 @@ class Wxcallback extends Controller
                 return json(['code'=>1, 'message'=>'订单已取消']);
             }
 
+            if($order['pay_status'] == '2'){
+                recordLog('channel-callback-err',  '极鹭-订单已退款-' . PHP_EOL . $raw  );
+                return json(['code'=>1, 'message'=>'订单已退款']);
+            }
+
             if($order['final_weight'] == 0 || empty($order['final_weight'])){
                 $update['final_weight'] = $actualWeight;
             }else if(!empty($actualWeight) && $actualWeight != $order['final_weight']){
                 $common = new Common();
                 $content = [
                     'title' => '计费重量变化',
-                    'user' => $order['channel_merchant'],
+                    'user' =>  'JX', //$order['channel_merchant'],
                     'waybill' =>  $order['waybill'],
                     'body' => "计费重量：$actualWeight"
                 ];

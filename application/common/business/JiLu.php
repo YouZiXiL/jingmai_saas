@@ -104,6 +104,15 @@ class JiLu
     }
 
     /**
+     * 获取订单详情
+     * @param $expressId
+     * @return bool|string
+     */
+    public function getOrderInfo($expressId){
+        $parma = $this->setParma('EXPRESS_INFO', ['expressId' => $expressId]);
+        return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
+    }
+    /**
      * 运单状态
      * @param $status
      * @return string

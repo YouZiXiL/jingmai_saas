@@ -190,9 +190,7 @@ class Yunyang extends Controller
                 $param['insured']=0;
             }
             $jijian_address=db('users_address')->where('id',$param['jijian_id'])->find();
-
             $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
-
             if (empty($jijian_address)||empty($shoujian_address)){
                 recordLog("channel-price-err",
                     '寄件id- '.$param['jijian_id'] .PHP_EOL.
