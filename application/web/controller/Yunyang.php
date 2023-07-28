@@ -549,53 +549,45 @@ class Yunyang extends Controller
                 ]
             ];
 
-            try {
-                $resp = $wx_pay
-                    ->chain('v3/pay/transactions/jsapi')
-                    ->post(['json' =>$json]);
+
+            $resp = $wx_pay
+                ->chain('v3/pay/transactions/jsapi')
+                ->post(['json' =>$json]);
 
 
-                $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
-                $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+            $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
+            $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
 
-                $prepay_id=json_decode($resp->getBody(),true);
-                if (!array_key_exists('prepay_id',$prepay_id)){
-                    throw new Exception('拉取支付错误');
-                }
-                $params = [
-                    'appId'     => $this->user->app_id,
-                    'timeStamp' => (string)Formatter::timestamp(),
-                    'nonceStr'  => Formatter::nonce(),
-                    'package'   =>'prepay_id='. $prepay_id['prepay_id'],
-                ];
-                $params += [
-                    'paySign' => Rsa::sign(
-                        Formatter::joinedByLineFeed(...array_values($params)),
-                        $merchantPrivateKeyInstance),
-                    'signType' => 'RSA',
-                    'waybill_template'=>$agentAuth['waybill_template'],
-                    'pay_template'=>$agentAuth['pay_template'],
-                    'material_template'=>$agentAuth['material_template'],
-                ];
-                if(!empty($couponinfo)){
+            $prepay_id=json_decode($resp->getBody(),true);
+            if (!array_key_exists('prepay_id',$prepay_id)){
+                throw new Exception('拉取支付错误');
+            }
+            $params = [
+                'appId'     => $this->user->app_id,
+                'timeStamp' => (string)Formatter::timestamp(),
+                'nonceStr'  => Formatter::nonce(),
+                'package'   =>'prepay_id='. $prepay_id['prepay_id'],
+            ];
+            $params += [
+                'paySign' => Rsa::sign(
+                    Formatter::joinedByLineFeed(...array_values($params)),
+                    $merchantPrivateKeyInstance),
+                'signType' => 'RSA',
+                'waybill_template'=>$agentAuth['waybill_template'],
+                'pay_template'=>$agentAuth['pay_template'],
+                'material_template'=>$agentAuth['material_template'],
+            ];
+            if(!empty($couponinfo)){
 //                $couponinfo["state"]=2;
 //                $couponinfo->save();
-                    //表示该笔订单使用了优惠券
-                    $orderData["couponid"]=$param["couponid"];
-                    $orderData["couponpapermoney"]=$couponinfo->money;
-                    $orderData["aftercoupon"]=$check_channel_intellect['final_price']-$couponmoney;
-                }
-                $orderBusiness = new OrderBusiness();
-                $orderBusiness->create($orderData, $check_channel_intellect, $agent_info);
-                return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
-            } catch (\Exception $e) {
-                recordLog('create-order-err',
-                    date('H:i:s', time()). PHP_EOL.
-                    $e->getLine().'：'.$e->getMessage().PHP_EOL
-                    .$e->getTraceAsString() );
-                // 进行错误处理
-                return json(['status'=>400, 'data'=>'','msg'=> $e->getMessage()]);
+                //表示该笔订单使用了优惠券
+                $orderData["couponid"]=$param["couponid"];
+                $orderData["couponpapermoney"]=$couponinfo->money;
+                $orderData["aftercoupon"]=$check_channel_intellect['final_price']-$couponmoney;
             }
+            $orderBusiness = new OrderBusiness();
+            $orderBusiness->create($orderData, $check_channel_intellect, $agent_info);
+            return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         }catch (Exception $e){
             recordLog('create-order-err',
                 $e->getLine().'：'.$e->getMessage().PHP_EOL

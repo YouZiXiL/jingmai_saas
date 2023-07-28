@@ -2,12 +2,14 @@
 
 namespace app\web\controller;
 
+use app\common\business\AliBusiness;
 use app\common\business\JiLu;
 use app\common\business\WanLi;
 use app\common\library\alipay\AliOpen;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\wechat\crypt\WXBizMsgCrypt;
+use app\common\model\Order;
 use app\web\model\Admin;
 use app\web\model\AgentAuth;
 use app\web\model\Rebatelist;
@@ -17,6 +19,7 @@ use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\exception\DbException;
 use think\Log;
+use think\Queue;
 use think\Request;
 
 class Test extends Controller
@@ -29,10 +32,17 @@ class Test extends Controller
     }
 
     public function test(){
-        $arr1 = ['name'=>'大明', 'age'=>15, 'sex' => 2];
-        $arr2 = ['name'=>'xiaoming', 'city'=>'kaifeng'];
-        $result = array_merge($arr1, $arr2);
-        return R::ok($result);
+        $json = '{"code":-1,"msg":"Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]"}';
+        $res = json_decode($json, true);
+        $errMsg = $res['data']['message']??$res['msg'];
+        if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]')
+        {
+            $errMsg ='不支持的寄件或收件号码';
+        }else if(strpos($errMsg, 'HttpMessageConverter')!== false){
+            $errMsg ='不支持的寄件或收件号码222';
+        }
+
+        dd($errMsg);
     }
 
     // 获取分享链接
@@ -277,10 +287,74 @@ class Test extends Controller
     }
 
 
+    /**
+     * 极鹭订单详情
+     * @param $expressId
+     * @return \think\response\Json
+     */
     public function getOrderInfoByJl($expressId){
         $jiLu = new JiLu();
         $result = $jiLu->getOrderInfo($expressId);
         return R::ok(json_decode($result));
+    }
+
+
+    /**
+     * 云洋物流轨迹
+     * @param $waybill
+     * @return \think\response\Json
+     */
+    public function yyTrance($waybill){
+
+        $yunYang = new \app\common\business\YunYang();
+        $res = $yunYang->queryTrance($waybill);
+        $result = json_decode($res, true);
+        $comments = $result['result'][0];
+        if(empty($comments)) return R::error('false');
+        return R::ok($comments);
+    }
+
+    /**
+     * 支付设置模版消息
+     */
+    public function aliTemplate(){
+
+        $aliBusiness = new AliBusiness();
+        // $materId = $aliBusiness->applyMaterialTemplate();
+        $materId = $aliBusiness->applyFreightTemplate();
+        return R::ok($materId);
+    }
+
+
+    /**
+     * 获取模版
+     */
+    public function queryTemplate(){
+        $aliopen = Alipay::start()->open();
+//        $appAuthToken = '202307BBb0d0e5733a964938a22944ed16cc6X16';
+        $appAuthToken = '202306BBd746daff20da460bb459762d844daC16';
+        try {
+            $result = $aliopen->queryTemplate($appAuthToken);
+            return R::ok($result);
+        } catch (\Exception $e) {
+            return R::error($e->getMessage()) ;
+        }
+    }
+
+    /**
+     * 获取母版列表
+     * @return string|\think\response\Json
+     */
+    public function queryTemplatelib(){
+        $aliopen = Alipay::start()->open();
+        $appAuthToken = '202307BBb0d0e5733a964938a22944ed16cc6X16';
+        try {
+            $result = $aliopen->queryTemplatelib($appAuthToken);
+            return R::ok($result);
+        } catch (\Exception $e) {
+            return R::error($e->getMessage()) ;
+        }
+
     }
 
 }

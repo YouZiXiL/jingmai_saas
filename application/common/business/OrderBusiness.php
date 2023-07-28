@@ -30,6 +30,7 @@ class OrderBusiness
                 'type' => 4,
                 'order_id' => $order['id'],
             ];
+
             // 将该任务推送到消息队列，等待对应的消费者去执行
             Queue::push(DoJob::class, $data, 'way_type');
         } else if ($autoOrder) { // 智能下单

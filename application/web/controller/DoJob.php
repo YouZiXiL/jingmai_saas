@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\common\business\CouponBusiness;
 use app\common\model\PushNotice;
 use think\Log;
 use think\queue\Job;
@@ -322,6 +323,12 @@ class DoJob
                         $Dbcommon->set_agent_amount($row['agent_id'],'setInc',$row['agent_price'],1,'运单号：'.$row['waybill'].' 已取消并退款');
 
                         db('orders')->where('id',$data['order_id'])->update($up_data);
+                        if(!empty($row["couponid"])){
+                            // 返还优惠券
+                            $couponBusiness = new CouponBusiness();
+                            $couponBusiness->notUsedStatus($row);
+                        }
+
 
                     }
                 }catch (\Exception $e){

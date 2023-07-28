@@ -255,15 +255,27 @@ class Wxcallback extends Controller
                     exit('小程序运单状态模板订阅失败'.PHP_EOL.$yundan['errmsg']);
                 }
 
-                $bukuanJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
+                // 运费补差价模版
+                $freightJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
+                    'tid'=>'40287',
+                    'kidList'=>[5,3,4,1],
+                    'sceneDesc'=>'运费差价补缴通知'
+                ],'POST');
+                $freight=json_decode($freightJson,true);
+                if ($freight['errcode']!=0){
+                    recordLog('wx-shouquan', "运费差价补缴模板订阅失败" . $freightJson . PHP_EOL);
+                    exit('运费差价补缴模板订阅失败'.PHP_EOL.$freight['errmsg']);
+                }
+
+                $overloadJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
                     'tid'=>'783',
                     'kidList'=>[6,5,11,2,7],
                     'sceneDesc'=>'运单超重补缴通知'
                 ],'POST');
-                $bukuan=json_decode($bukuanJson,true);
-                if ($bukuan['errcode']!=0){
-                    recordLog('wx-shouquan', "小程序超重补缴模板订阅失败" . $bukuanJson . PHP_EOL);
-                    exit('小程序超重补缴模板订阅失败'.PHP_EOL.$bukuan['errmsg']);
+                $overload=json_decode($overloadJson,true);
+                if ($overload['errcode']!=0){
+                    recordLog('wx-shouquan', "小程序超重补缴模板订阅失败" . $overloadJson . PHP_EOL);
+                    exit('小程序超重补缴模板订阅失败'.PHP_EOL.$overload['errmsg']);
                 }
 
                 $materialJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
@@ -279,8 +291,9 @@ class Wxcallback extends Controller
 
 
                 $data['waybill_template']=$yundan['priTmplId']; // 小程序运单状态模板
-                $data['pay_template']=$bukuan['priTmplId']; // 小程序超重补交模板
+                $data['pay_template']=$overload['priTmplId']; // 小程序超重补交模板
                 $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
+                $data['freight_template']= $freight['template_id']; // 小程序运费补缴模版
 
 
             }else{ // 公众号
@@ -315,15 +328,16 @@ class Wxcallback extends Controller
                     exit('添加模板失败-1'.PHP_EOL.$fankui['errmsg']);
                 }
 
-                $bukuanJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
+                // 异常反馈模版
+                $exceptJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
                     // 'template_id_short'=>'OPENTM415535685',
                     'template_id_short'=>'47053',  //添加补款通知
                     'keyword_name_list'=> ['异常原因', '异常处理'],
                 ],'POST');
-                $bukuan=json_decode($bukuanJson,true);
-                if ($bukuan['errcode']!=0){
-                    recordLog('wx-shouquan', "添加反馈结果通知模板失败" . $bukuanJson . PHP_EOL);
-                    exit('添加模板失败-2'.PHP_EOL.$bukuan['errmsg']);
+                $except=json_decode($exceptJson,true);
+                if ($except['errcode']!=0){
+                    recordLog('wx-shouquan', "添加反馈结果通知模板失败" . $exceptJson . PHP_EOL);
+                    exit('添加模板失败-2'.PHP_EOL.$except['errmsg']);
                 }
 
 //                $bukuanJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
@@ -336,8 +350,9 @@ class Wxcallback extends Controller
 //                }
 
                 // $data['waybill_template']=$yundan['template_id'];
-                $data['after_template']=$fankui['template_id'];
-                $data['pay_template']=$bukuan['template_id'];
+                $data['after_template']= $fankui['template_id'];
+                $data['pay_template'] = $except['template_id'];
+
 
             }
 //            $agent_auth=db('agent_auth')
@@ -428,6 +443,9 @@ class Wxcallback extends Controller
             $orders = $orderModel->toArray();
             if ($orders['order_status']=='已取消'){
                 throw new Exception('订单已取消：'. $orders['out_trade_no']);
+            }
+            if($orders['order_status']=='已签收'){
+                throw new Exception('订单已签收：'. $orders['out_trade_no']);
             }
 
             $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
@@ -612,7 +630,7 @@ class Wxcallback extends Controller
                 KD100Sms::run()->overload($orders);
             }
             //更改耗材状态
-            if ($pamar['freightHaocai']!=0){
+            if ($pamar['freightHaocai']!=0 &&empty($orders['consume_time'])){
                 $up_data['haocai_freight']=$pamar['freightHaocai'];
                 $data = [
                     'type'=>2,
@@ -1537,7 +1555,6 @@ class Wxcallback extends Controller
                         }
 
                     }else{
-                        Queue::push(TrackJob::class, $orders, 'track');
                         $rebateList = new RebateListController();
                         $rebateList->createRebateByOrder($orders);
                         //支付成功下单成功
@@ -1559,6 +1576,9 @@ class Wxcallback extends Controller
                                     $coupon->save();
                                 }
                             }
+                        }
+                        if($orders['tag_type'] == '京东'){
+                            Queue::push(TrackJob::class, $orders, 'track');
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
                     }
@@ -1694,7 +1714,13 @@ class Wxcallback extends Controller
                         $errMsg = $result['data']['message']??$result['msg'];
                         if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
                             $errMsg = '不支持的寄件或收件号码';
+                        }elseif (strpos($errMsg, 'HttpMessageConverter')!== false){
+                            $errMsg = '不支持的寄件或收件号码';
                         }
+                        recordLog('channel-create-order-err',
+                            '订单：'.$orders['out_trade_no']. PHP_EOL .
+                            '极鹭错误信息：'.$errMsg
+                        );
                         //支付下单失败  执行退款操作
                         $update=[
                             'pay_status'=>2,
@@ -1702,7 +1728,7 @@ class Wxcallback extends Controller
                             'yy_fail_reason'=>$errMsg,
                             'order_status'=>'下单失败咨询客服',
                             'out_refund_no'=>$out_refund_no,
-                            'shopbill'=>$result['data']['expressId'],
+                            'shopbill'=>$result['data']['expressId']??'',
                         ];
                         $data = [
                             'type'=>3,
@@ -2555,12 +2581,6 @@ class Wxcallback extends Controller
                     ];
                     $rebatelistdata["cancel_time"]=time();
                     $rebatelistdata["state"]=3;
-
-                    if(!empty($orders["couponid"])){
-                        $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                        $couponinfo->state=1;
-                        $couponinfo->save();
-                    }
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
                 }

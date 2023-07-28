@@ -435,9 +435,9 @@ class Common
             'markdown'=>[
                 'content'=> $content['title'].PHP_EOL.
                     '> 渠道商：<font color="info">' .$content['user']. '</font>'. PHP_EOL .
+                    '> 商户订单：<font color="info">' .$content['no']. '</font>'. PHP_EOL .
                     '> 新运单号：<font color="info">' .$content['waybill']. '</font>'. PHP_EOL .
                     '> 原运单号：<font color="info">' .$content['oldWaybill']. '</font>'. PHP_EOL
-
             ]
         ],'POST');
     }

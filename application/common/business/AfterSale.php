@@ -32,12 +32,17 @@ class AfterSale
             'op_type'=>0,
         ];
         $after = Afterlist::where('order_id', $order['id'])->find();
-        if($after)   $after->save($data);
-        $data['create_time']=time();
-        Afterlist::create($data);
+        if($after){
+            $after->save($data);
+        }else{
+            $data['create_time']=time();
+            Afterlist::create($data);
+        }
+
         $content = [
             'title' => '运单更换',
-            'user' =>  $order['channel_merchant'],
+            'user' =>  'JX', // $order['channel_merchant'],
+            'no' => $order['out_trade_no'],
             'waybill' => $content['waybillCode'],
             'oldWaybill' => $order['waybill']
         ];

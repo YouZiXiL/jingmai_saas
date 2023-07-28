@@ -13,8 +13,10 @@ use app\common\library\utils\SnowFlake;
 use app\common\model\Order;
 use app\web\controller\Common;
 use app\web\controller\Dbcommom;
+use app\web\controller\TrackJob;
 use think\Exception;
 use think\Model;
+use think\Queue;
 use think\Request;
 
 class OrderBusiness extends Backend
@@ -304,6 +306,9 @@ class OrderBusiness extends Backend
             ];
 
             $orderInfo->isUpdate(true)->save($updateOrder);
+            if($orders['tag_type'] == '京东'){
+                Queue::push(TrackJob::class, $orders, 'track');
+            }
             $this->success('下单成功',null, $orderInfo);
         }
 

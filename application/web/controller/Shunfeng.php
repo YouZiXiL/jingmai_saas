@@ -168,8 +168,6 @@ class Shunfeng extends Controller
             "thirdOrderNo"=>$orders["out_trade_no"]
         ];
 
-
-
         $data=$this->common->shunfeng_api('http://api.wanhuida888.com/openApi/doOrder',$content);
         return json(['status'=>200,'data'=>$data,'msg'=>'成功']);
 

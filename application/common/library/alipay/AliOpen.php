@@ -13,6 +13,9 @@ use app\common\library\alipay\aop\request\AlipayOpenAuthTokenAppRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniBaseinfoQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniCategoryQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniIsvCreateRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniMessageTemplateApplyRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniMessageTemplateBatchqueryRequest;
+use app\common\library\alipay\aop\request\AlipayOpenMiniMessageTemplatelibBatchqueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionAuditApplyRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionAuditCancelRequest;
 use app\common\library\alipay\aop\request\AlipayOpenMiniVersionAuditedCancelRequest;
@@ -607,5 +610,103 @@ dd($result);
             throw new Exception('代码上传失败');
         }
 
+    }
+
+    /**
+     * alipay.open.mini.message.templatelib.batchquery(消息母板批量查询接口)
+     * @throws Exception
+     */
+    public function queryTemplatelib($appAuthToken){
+        $request = new AlipayOpenMiniMessageTemplatelibBatchqueryRequest();
+        $obj = new stdClass();
+        $obj->page_size = 10;
+        $obj->page_num =  1;
+        $obj->industry_scenario = 'ISC5cfe641a2f7745c4a11e77e19824db0a';
+//         $obj->industry_scenario = 'COMMON';
+        $obj->industry_code = 'XS1010';
+        $obj->has_push = true;
+        $obj->scene_rule = 'one_time_subscribe';
+        $request->setBizContent(json_encode($obj));
+        try {
+            $result = $this->aop->execute($request, null, $appAuthToken);
+            $responseApiName = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $response = $result->$responseApiName;
+            if(!empty($response->code)&&$response->code==10000){
+                return $response;
+            } else {
+                recordLog('ali-auth-err', "获取模板失败：" . json_encode($response, JSON_UNESCAPED_UNICODE));
+                throw new Exception($response->sub_msg);
+            }
+        }catch (Exception $e) {
+            recordLog('ali-auth-err', "获取模板失败：" . PHP_EOL .
+                $e->getLine() . $e->getMessage() . PHP_EOL .
+                $e->getTraceAsString());
+            throw new Exception('获取模板失败-' . $e->getMessage());
+        }
+    }
+
+
+    /**
+     * alipay.open.mini.message.template.batchquery(消息子板批量查询接口)
+     * 用于商家批量查询已申领的消息子板列表
+     * @throws Exception
+     */
+    public function queryTemplate($appAuthToken){
+        $request = new AlipayOpenMiniMessageTemplateBatchqueryRequest();
+        $obj = new stdClass();
+        $obj->status_list=['STARTED'];
+        $obj->biz_type='sub_msg';
+        $obj->page_num= 1;
+        $obj->page_size= 10;
+        $request->setBizContent(json_encode($obj));
+        try {
+            $result = $this->aop->execute($request, null, $appAuthToken);
+            $responseApiName = str_replace(".", "_", $request->getApiMethodName()) . "_response";
+            $response = $result->$responseApiName;
+            if(!empty($response->code)&&$response->code==10000){
+                return $response;
+            } else {
+                recordLog('ali-auth-err', "获取模版消息失败：" . json_encode($response, JSON_UNESCAPED_UNICODE));
+                throw new Exception($response->sub_msg);
+            }
+        } catch (Exception $e) {
+            recordLog('ali-auth-err', "获取模版消息失败：" . PHP_EOL .
+                $e->getLine() . $e->getMessage() . PHP_EOL .
+                $e->getTraceAsString());
+            throw new Exception('获取模版消息失败-' . $e->getMessage());
+        }
+
+
+    }
+
+    /**
+     * alipay.open.mini.message.template.apply(消息模板申领接口)
+     * @throws Exception
+     */
+    public function applyTemplate($template, $word, $appAuthToken){
+        $request = new AlipayOpenMiniMessageTemplateApplyRequest();
+        $obj = new stdClass();
+        $obj->lib_code = $template;
+        $obj->keyword_list = $word;
+        $obj->scene_rule = "one_time_subscribe";
+        $request->setBizContent(json_encode($obj));
+        try {
+            $responseResult = $this->aop->execute($request, null ,$appAuthToken);
+            $responseApiName = str_replace(".","_",$request->getApiMethodName())."_response";
+            $response = $responseResult->$responseApiName;
+            if(!empty($response->code)&&$response->code==10000){
+                return $response->template_id;
+            }
+            else{
+                recordLog('ali-auth-err', "消息模板设置失败：" . json_encode($response, JSON_UNESCAPED_UNICODE));
+                throw new Exception($response->sub_msg);
+            }
+
+        } catch (Exception $e) {
+            recordLog('ali-auth-err', "消息模板设置失败：" . PHP_EOL .
+                $e->getLine() . $e->getMessage() . PHP_EOL .
+                $e->getTraceAsString());
+            throw new Exception('消息模板设置失败-' . $e->getMessage());
+        }
     }
 }
