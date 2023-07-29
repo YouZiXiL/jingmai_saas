@@ -44,7 +44,7 @@ class AliBusiness
         $content = [
             'to_user_id' => $data['open_id'],
             'user_template_id' => $data['template_id'],
-            'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],
+            'page'=>'pages/information/overload/overload?id='.$orders['id'],
             'data' => [
                 'keyword1' => ['value' => $orders['tag_type']],
                 'keyword2' => ['value' => $orders['waybill']],
@@ -66,12 +66,12 @@ class AliBusiness
         $content = [
             'to_user_id' => $data['open_id'],
             'user_template_id' => $data['template_id'],
-            'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],
+            'page'=>'pages/information/haocai/haocai?id='.$orders['id'],
             'data' => [
                 'keyword1' => ['value' => $orders['tag_type']],
                 'keyword2' => ['value' => $orders['waybill']],
                 'keyword3' => ['value' => '产生耗材费用'],
-                'keyword4' => ['value' => $data['users_overload_amt']. '元'],
+                'keyword4' => ['value' => $data['haocai_freight']. '元'],
             ]
         ];
         return $this->open->sendTemplate($content, $data['xcx_access_token']);

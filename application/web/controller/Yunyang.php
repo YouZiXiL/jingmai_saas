@@ -478,6 +478,7 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'商户没有配置微信支付']);
         }
 
+
         try {
             $bujiao=db('orders')
                 ->where('user_id',$this->user->id)
@@ -587,6 +588,7 @@ class Yunyang extends Controller
             }
             $orderBusiness = new OrderBusiness();
             $orderBusiness->create($orderData, $check_channel_intellect, $agent_info);
+
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         }catch (Exception $e){
             recordLog('create-order-err',
@@ -695,7 +697,7 @@ class Yunyang extends Controller
             $orderBusiness = new OrderBusiness();
             $orderBusiness->create($orderData, $check_channel_intellect, $agent_info);
             $rData = [
-                'waybill_template'=> $agentAuth['waybill_template'],
+                'pay_template'=> $agentAuth['pay_template'],
                 'material_template'=> $agentAuth['material_template'],
                 'tradeNo'=> $tradeNo,
             ];

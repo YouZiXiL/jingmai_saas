@@ -141,6 +141,11 @@ class DoJob
                                 'comment' => $resultJson,
                             ]);
                         }
+                        elseif ($orders['pay_type'] == 2 && !empty($data['template_id'])){
+                            // 超重
+                            $aliBusiness = new AliBusiness();
+                            $aliBusiness->sendMaterialTemplate($data, $orders);
+                        }
 
                         db('orders')->where('id',$orders['id'])->update([
                             'consume_time'=>time(),

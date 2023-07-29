@@ -5,6 +5,7 @@ namespace app\web\controller;
 use app\common\business\AliBusiness;
 use app\common\business\JiLu;
 use app\common\business\WanLi;
+use app\common\business\WxBusiness;
 use app\common\library\alipay\AliOpen;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
@@ -385,7 +386,7 @@ class Test extends Controller
             'template_id' => '2de8e27bcad74319b01f555901c4626b',
             'users_overload_amt' => 3,
             'cal_weight' => 10,
-            'xcx_access_token' => '202306BBd746daff20da460bb459762d844daC16',
+            'xcx_access_token' => '202307BBf6a91825e54f44d1ae17e092facd6A16',
         ];
         $result = $aliBusiness->sendOverloadTemplate($data, $orders);
         return R::ok($result);
@@ -404,11 +405,22 @@ class Test extends Controller
         $data=[
             'open_id' => '2088802593608751',
             'template_id' => 'c5e943313ca4437a9a2bd7fe71c91f5e',
-            'users_overload_amt' => 3,
-            'cal_weight' => 10,
-            'xcx_access_token' => '202306BBd746daff20da460bb459762d844daC16',
+            'haocai_freight' => 10,
+            'xcx_access_token' => '202307BBf6a91825e54f44d1ae17e092facd6A16',
         ];
         $result = $aliBusiness->sendMaterialTemplate($data, $orders);
+        return R::ok($result);
+    }
+
+    /**
+     * 获取模版消息列表
+     * @return \think\response\Json
+     * @throws DbException
+     * @throws \think\Exception
+     */
+    public function getWxTemplateList(){
+        $wxBusiness = new WxBusiness();
+        $result = $wxBusiness->getTemplateList('wxda7d6f1aea4ac201');
         return R::ok($result);
     }
 

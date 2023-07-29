@@ -26,6 +26,7 @@ use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\Exception;
 use think\exception\DbException;
+use think\exception\PDOException;
 use think\Log;
 use think\Queue;
 use think\Request;
@@ -585,7 +586,7 @@ class Wxcallback extends Controller
                     'order_id' => $orders['id'],
                     'xcx_access_token'=>$xcx_access_token,
                     'open_id'=>$users?$users['open_id']:'',
-                    'template_id'=>$wxOrder?$agent_auth_xcx['pay_template']:null,
+                    'template_id'=>$agent_auth_xcx['pay_template']??null,
                     'cal_weight'=>$overload_weight .'kg',
                     'users_overload_amt'=>$users_overload_amt.'元'
                 ];
@@ -820,8 +821,8 @@ class Wxcallback extends Controller
 
             $wxOrder = $orders['pay_type'] == 1; // 微信订单
             $aliOrder = $orders['pay_type'] == 2; // 支付宝订单
-            $authOrder = $orders['pay_type'] == 3; // 智能下单
-
+            $autoOrder = $orders['pay_type'] == 3; // 智能下单
+            $xcx_access_token = null;
             if($wxOrder){
                 $agent_auth_xcx=db('agent_auth')
                     ->where('agent_id',$orders['agent_id'])
@@ -836,9 +837,8 @@ class Wxcallback extends Controller
                 $agent_auth_xcx = AgentAuth::where('agent_id',$orders['agent_id'])
                     ->where('app_id',$orders['wx_mchid'])
                     ->find();
+                $xcx_access_token= $agent_auth_xcx['auth_token'];
             }
-
-            $xcx_access_token= $authOrder?'':$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
             $users=db('users')->where('id',$orders['user_id'])->find();
             $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
             $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
@@ -1001,7 +1001,7 @@ class Wxcallback extends Controller
                         'order_id' => $orders['id'],
                         'xcx_access_token'=>$xcx_access_token,
                         'open_id'=>$users['open_id']??'',
-                        'template_id'=>$agent_auth_xcx['pay_template'],
+                        'template_id'=>$agent_auth_xcx['pay_template']??null,
                         'cal_weight'=>$overload_weight .'kg',
                         'users_overload_amt'=>$users_overload_amt.'元'
                     ];
@@ -1062,7 +1062,7 @@ class Wxcallback extends Controller
                     $data = [
                         'type'=>2,
                         'freightHaocai' => $up_data['haocai_freight'],
-                        'template_id'=>$agent_auth_xcx['material_template'],
+                        'template_id'=>$agent_auth_xcx['material_template']??null,
                         'xcx_access_token'=>$xcx_access_token,
                         'order_id' => $orders['id'],
                         'open_id'=>$users['open_id']??null,
@@ -2375,8 +2375,28 @@ class Wxcallback extends Controller
                 if ($orders['order_status']=='已取消'){
                     throw new Exception('订单已取消');
                 }
-                $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
-                $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+
+                $wxOrder = $orders['pay_type'] == 1; // 微信订单
+                $aliOrder = $orders['pay_type'] == 2; // 支付宝订单
+                $autoOrder = $orders['pay_type'] == 3; // 智能下单
+                $xcx_access_token = null;
+                if($wxOrder){
+                    $agent_auth_xcx=db('agent_auth')
+                        ->where('agent_id',$orders['agent_id'])
+                        ->where('wx_auth',1)
+                        ->where('auth_type',2)
+                        ->find();
+                    $xcx_access_token = $common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+                }
+
+                if($aliOrder){
+                    // 支付宝支付
+                    $agent_auth_xcx = AgentAuth::where('agent_id',$orders['agent_id'])
+                        ->where('app_id',$orders['wx_mchid'])
+                        ->find();
+                    $xcx_access_token= $agent_auth_xcx['auth_token'];
+                }
+
                 $users=db('users')->where('id',$orders['user_id'])->find();
                 $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
 
@@ -2531,7 +2551,7 @@ class Wxcallback extends Controller
                         'order_id' => $orders['id'],
                         'xcx_access_token'=>$xcx_access_token,
                         'open_id'=>$users['open_id'],
-                        'template_id'=>$agent_auth_xcx['pay_template'],
+                        'template_id'=>$agent_auth_xcx['pay_template']??null,
                         'cal_weight'=>$overload_weight .'kg',
                         'users_overload_amt'=>$up_data['overload_price'].'元'
                     ];
@@ -2639,6 +2659,14 @@ class Wxcallback extends Controller
     }
 
     //充值回调
+
+    /**
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
+     * @throws PDOException
+     * @throws Exception
+     */
     function refillcallback(){
         $common=new Common();
         $data = $_POST;//接收所有post的数据
@@ -3463,8 +3491,29 @@ class Wxcallback extends Controller
             }
 
             $isNew = $orders['tag_type'] == '顺丰新';
-            $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
-            $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+
+            $wxOrder = $orders['pay_type'] == 1; // 微信订单
+            $aliOrder = $orders['pay_type'] == 2; // 支付宝订单
+            $autoOrder = $orders['pay_type'] == 3; // 智能下单
+            $xcx_access_token = null;
+            if($wxOrder){
+                $agent_auth_xcx=db('agent_auth')
+                    ->where('agent_id',$orders['agent_id'])
+                    ->where('wx_auth',1)
+                    ->where('auth_type',2)
+                    ->find();
+                $xcx_access_token = $common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+            }
+
+            if($aliOrder){
+                // 支付宝支付
+                $agent_auth_xcx = AgentAuth::where('agent_id',$orders['agent_id'])
+                    ->where('app_id',$orders['wx_mchid'])
+                    ->find();
+                $xcx_access_token= $agent_auth_xcx['auth_token'];
+            }
+
+
             $users=db('users')->where('id',$orders['user_id'])->find();
             $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
 
@@ -3607,9 +3656,8 @@ class Wxcallback extends Controller
                 foreach ($params["data"]["feeList"] as $fee){
                     if($fee['type'] == 1){
                         $originalFreight =  $fee["fee"];
-                    }
-                    //耗材
-                    if($fee["type"] == 2 || $fee["type"] == 3 ||$fee["type"]==7){
+                    }else {
+                        //耗材
                         $haocai += $fee["fee"];
                     }
                 }
@@ -3623,7 +3671,7 @@ class Wxcallback extends Controller
                         'order_id' => $orders['id'],
                         'open_id' => $users['open_id'],
                         'xcx_access_token'=>$xcx_access_token,
-                        'template_id' => $agent_auth_xcx['material_template']
+                        'template_id' => $agent_auth_xcx['material_template']??null
                     ];
                     $up_data['haocai_freight'] = $haocai;
                     // 将该任务推送到消息队列，等待对应的消费者去执行
@@ -3720,7 +3768,7 @@ class Wxcallback extends Controller
                         'order_id' => $orders['id'],
                         'xcx_access_token'=>$xcx_access_token??null,
                         'open_id'=>$users?$users['open_id']:null,
-                        'template_id'=>$agent_auth_xcx['pay_template'],
+                        'template_id'=>$agent_auth_xcx['pay_template']??null,
                         'cal_weight'=>$overload_weight .'kg',
                         'users_overload_amt'=>$up_data['agent_overload_price'].'元'
                     ];
@@ -3842,6 +3890,15 @@ class Wxcallback extends Controller
                 $xcx_access_token=$jiLu->utils->get_authorizer_access_token($agent_auth_xcx['app_id']);
             }
 
+
+            if($aliOrder){
+                // 支付宝支付
+                $agent_auth_xcx = AgentAuth::where('agent_id',$order['agent_id'])
+                    ->where('app_id',$order['wx_mchid'])
+                    ->find();
+                $xcx_access_token= $agent_auth_xcx['auth_token'];
+            }
+
             if($sendType == 'trackType'){  // 物流轨迹、揽件信息、订单状态
                 if($expressStatus !== null){
                     $update['order_status'] = $jiLu->getOrderStatus($expressStatus);
@@ -3927,7 +3984,7 @@ class Wxcallback extends Controller
                             'order_id' => $order['id'],
                             'xcx_access_token'=>$xcx_access_token,
                             'open_id'=>$users?$users['open_id']:"",
-                            'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
+                            'template_id'=>$agent_auth_xcx['material_template']??null,
                         ];
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $pushData,'way_type');
