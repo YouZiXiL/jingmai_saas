@@ -694,7 +694,12 @@ class Yunyang extends Controller
             ];
             $orderBusiness = new OrderBusiness();
             $orderBusiness->create($orderData, $check_channel_intellect, $agent_info);
-            return json(['status'=>200,'data'=>$tradeNo,'msg'=>'成功']);
+            $rData = [
+                'waybill_template'=> $agentAuth['waybill_template'],
+                'material_template'=> $agentAuth['material_template'],
+                'tradeNo'=> $tradeNo,
+            ];
+            return json(['status'=>200,'data'=>$rData,'msg'=>'成功']);
         }catch (\Exception $e){
             recordLog('ali-order-err',
                 '下单失败：('. $e->getLine() .')：' . $e->getMessage() . PHP_EOL .
@@ -1040,7 +1045,6 @@ class Yunyang extends Controller
     function overload_pay(): Json
     {
         $id=$this->request->param('id');
-        Log::error("超重支付ID: {$id}");
         if (empty($id)||!is_numeric($id)){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
@@ -1072,7 +1076,6 @@ class Yunyang extends Controller
                 ]]);
             $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
             $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
-
             $prepay_id=json_decode($resp->getBody(),true);
             if (!array_key_exists('prepay_id',$prepay_id)){
                 throw new Exception('拉取支付错误');
@@ -1090,7 +1093,7 @@ class Yunyang extends Controller
             db('orders')->where('id',$id)->update([
                 'cz_mchid'=>$agent_info['wx_mchid'],
                 'cz_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
-                'out_overload_no'=>$out_overload_no
+                'out_overload_no' => $out_overload_no
             ]);
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
         } catch (Exception $e) {

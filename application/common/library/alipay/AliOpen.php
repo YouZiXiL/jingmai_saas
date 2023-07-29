@@ -7,6 +7,7 @@ use app\common\library\alipay\aop\AopCertClient;
 use app\common\library\alipay\aop\request\AlipayOpenAppApiQueryRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAppApiFieldApplyRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAppApiSceneQueryRequest;
+use app\common\library\alipay\aop\request\AlipayOpenAppMiniTemplatemessageSendRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAuthAppAesGetRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAuthAppAesSetRequest;
 use app\common\library\alipay\aop\request\AlipayOpenAuthTokenAppRequest;
@@ -708,5 +709,41 @@ dd($result);
                 $e->getTraceAsString());
             throw new Exception('消息模板设置失败-' . $e->getMessage());
         }
+    }
+
+    /**
+     * 发送模版消息
+     * alipay.open.app.mini.templatemessage.send(小程序发送模板消息)
+     * @return bool
+     * @throws Exception
+     */
+    public function sendTemplate($content, $appAuthToken ){
+        $request = new AlipayOpenAppMiniTemplatemessageSendRequest();
+        $obj = new stdClass();
+        $obj->data = $content['data'];
+        $obj->page = $content['page'];
+        $obj->user_template_id = $content['user_template_id'];
+        $obj->to_user_id = $content['to_user_id'];
+        if (isset($content['form_id'])) $obj->form_id = $content['form_id'];
+        $request->setBizContent(json_encode($obj));
+
+        try {
+            $responseResult = $this->aop->execute($request, null, $appAuthToken);
+            $responseApiName = str_replace(".","_",$request->getApiMethodName())."_response";
+            $response = $responseResult->$responseApiName;
+            if(!empty($response->code)&&$response->code==10000){
+                return true;
+            }
+            else{
+                recordLog('ali-auth-err', "发送模版失败：" . json_encode($response, JSON_UNESCAPED_UNICODE));
+                throw new Exception($response->sub_msg);
+            }
+        } catch (Exception $e) {
+            recordLog('ali-auth-err', "发送模版失败：" . PHP_EOL .
+                $e->getLine() . $e->getMessage() . PHP_EOL .
+                $e->getTraceAsString());
+            throw new Exception('发送模版失败-' . $e->getMessage());
+        }
+
     }
 }

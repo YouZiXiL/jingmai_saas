@@ -4,6 +4,8 @@ namespace app\common\business;
 
 use app\common\library\alipay\Alipay;
 use app\common\library\alipay\Aliopen;
+use Exception;
+
 class AliBusiness
 {
     private Aliopen $open;
@@ -15,10 +17,8 @@ class AliBusiness
     /**
      * 添加运费补缴通知模版
      */
-    public function applyFreightTemplate(){
+    public function applyFreightTemplate($appAuthToken){
         $template = 'TMd5910428b25840678e678f7070a94f73'; // 运费补缴通知
-        // $appAuthToken = '202307BBb0d0e5733a964938a22944ed16cc6X16';
-        $appAuthToken = '202306BBd746daff20da460bb459762d844daC16';
         $word = [
             ['name'=>'快递公司'],
             ['name'=>'运单号'],
@@ -28,27 +28,52 @@ class AliBusiness
 
         try {
             return $this->open->applyTemplate($template, $word, $appAuthToken);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $e->getMessage();
         }
     }
 
     /**
-     * 添加在线支付商品费提示模版
+     * 发送超重订阅消息
+     * @param $data
+     * @param $orders
+     * @return bool
+     * @throws Exception
      */
-    public function applyPayTemplate(){
-        $template = 'TMfc6f9911473f44138ab035a15e0a7670'; // 在线支付商品费提示
-//        $appAuthToken = '202307BBb0d0e5733a964938a22944ed16cc6X16';
-        $appAuthToken = '202306BBd746daff20da460bb459762d844daC16';
-        $word = [
-            ['name'=>'运单号'],
-            ['name'=>'提示'],
-            ['name'=>'金额'],
+    public function sendOverloadTemplate($data, $orders){
+        $content = [
+            'to_user_id' => $data['open_id'],
+            'user_template_id' => $data['template_id'],
+            'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],
+            'data' => [
+                'keyword1' => ['value' => $orders['tag_type']],
+                'keyword2' => ['value' => $orders['waybill']],
+                'keyword3' => ['value' => '超出重量：' . $data['cal_weight'] . 'KG'],
+                'keyword4' => ['value' => $data['users_overload_amt'] . '元'],
+            ]
         ];
-        try {
-            return $this->open->applyTemplate($template, $word, $appAuthToken);
-        } catch (\Exception $e) {
-            return $e->getMessage();
-        }
+        return $this->open->sendTemplate($content, $data['xcx_access_token']);
+    }
+
+    /**
+     * 发送耗材订阅消息
+     * @param $data
+     * @param $orders
+     * @return bool
+     * @throws Exception
+     */
+    public function sendMaterialTemplate($data, $orders){
+        $content = [
+            'to_user_id' => $data['open_id'],
+            'user_template_id' => $data['template_id'],
+            'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],
+            'data' => [
+                'keyword1' => ['value' => $orders['tag_type']],
+                'keyword2' => ['value' => $orders['waybill']],
+                'keyword3' => ['value' => '产生耗材费用'],
+                'keyword4' => ['value' => $data['users_overload_amt']. '元'],
+            ]
+        ];
+        return $this->open->sendTemplate($content, $data['xcx_access_token']);
     }
 }

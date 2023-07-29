@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\common\business\AliBusiness;
 use app\common\business\CouponBusiness;
 use app\common\model\PushNotice;
 use think\Log;
@@ -85,6 +86,11 @@ class DoJob
                                 'status'=>$result['errcode'] == 0?1:2,
                                 'comment' => $resultJson,
                             ]);
+                        }
+                        elseif ($orders['pay_type'] == 2 && !empty($data['template_id'])){
+                            // 超重
+                            $aliBusiness = new AliBusiness();
+                            $aliBusiness->sendOverloadTemplate($data, $orders);
                         }
                         db('orders')->where('id',$orders['id'])->update([
                             'final_weight_time'=>time(),

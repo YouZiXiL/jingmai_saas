@@ -112,6 +112,7 @@ class JiLu
         $parma = $this->setParma('EXPRESS_INFO', ['expressId' => $expressId]);
         return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
     }
+
     /**
      * 运单状态
      * @param $status

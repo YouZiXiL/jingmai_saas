@@ -1,4 +1,7 @@
 <?php
+
+namespace app\common\library\alipay\aop\request;
+
 /**
  * ALIPAY API: alipay.open.app.mini.templatemessage.send request
  *

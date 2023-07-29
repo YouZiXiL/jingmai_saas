@@ -34,12 +34,17 @@ class TrackJob
         try {
             Log::info('执行track：'. json_encode($data, JSON_UNESCAPED_UNICODE));
             if ($data['channel_merchant'] == Channel::$yy) {
+                Log::info('执行track：1');
+                if(empty($data['waybill'])) return false;
                 if(!empty($data['comments']) || $data['comments'] == '无') return true;
+                Log::info('执行track：2');
                 $yunYang = new \app\common\business\YunYang();
                 $res = $yunYang->queryTrance($data['waybill']);
+                Log::info('执行track：3-'.$res);
                 $result = json_decode($res, true);
                 if($result['code'] != 1){
-                    throw new Exception("YY获取物流轨迹失败:" . $res);
+                    Log::error("track-队列执行异常："."YY获取物流轨迹失败:" . $res);
+                    return false;
                 }
                 $comments = $result['result'][0];
                 if(empty($comments)) return false;

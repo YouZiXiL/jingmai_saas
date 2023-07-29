@@ -481,11 +481,11 @@ class Wxcallback extends Controller
             }
 
             if($aliOrder){
-
                 // 支付宝支付
                 $agent_auth_xcx = AgentAuth::where('agent_id',$orders['agent_id'])
                     ->where('app_id',$orders['wx_mchid'])
                     ->find();
+                $xcx_access_token= $agent_auth_xcx['auth_token'];
             }
 
             $up_data=[
@@ -3620,11 +3620,18 @@ class Wxcallback extends Controller
                 $up_data['final_weight']=$params["data"]['weightFee'];
                 $up_data['haocai_freight'] = 0;
                 $haocai = 0;
+                $originalFreight = 0;
                 foreach ($params["data"]["feeList"] as $fee){
+                    if($fee['type'] == 1){
+                        $originalFreight =  $fee["fee"];
+                    }
                     //耗材
                     if($fee["type"] == 2 || $fee["type"] == 3 ||$fee["type"]==7){
                         $haocai += $fee["fee"];
                     }
+                }
+                if($originalFreight> $orders['freight']){
+                    $haocai += $originalFreight - $orders['freight'];
                 }
                 if($haocai){
                     $data = [

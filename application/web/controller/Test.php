@@ -303,6 +303,7 @@ class Test extends Controller
      * 云洋物流轨迹
      * @param $waybill
      * @return \think\response\Json
+     * @throws DbException
      */
     public function yyTrance($waybill){
 
@@ -310,7 +311,15 @@ class Test extends Controller
         $res = $yunYang->queryTrance($waybill);
         $result = json_decode($res, true);
         $comments = $result['result'][0];
+
+        $order = Order::get(['waybill' => $waybill]);
         if(empty($comments)) return R::error('false');
+        if(empty($order->comments) || $order->comments == '无') {
+            $order->save(['comments' => $comments]);
+        };
+
+
+
         return R::ok($comments);
     }
 
@@ -320,9 +329,13 @@ class Test extends Controller
     public function aliTemplate(){
 
         $aliBusiness = new AliBusiness();
-        // $materId = $aliBusiness->applyMaterialTemplate();
-        $materId = $aliBusiness->applyFreightTemplate();
-        return R::ok($materId);
+
+
+        $data['pay_template'] = $aliBusiness->applyFreightTemplate();
+        $data['material_template'] = $aliBusiness->applyFreightTemplate();
+
+
+        return R::ok();
     }
 
 
@@ -355,6 +368,48 @@ class Test extends Controller
             return R::error($e->getMessage()) ;
         }
 
+    }
+
+    /**
+     * 发送超重信息
+     * @return \think\response\Json
+     * @throws DbException
+     * @throws \Exception
+     */
+    public function sendOverloadTemplate(){
+        $orders = Order::get(['id' => 75659]);
+        $aliBusiness = new AliBusiness();
+
+        $data=[
+            'open_id' => '2088802593608751',
+            'template_id' => '2de8e27bcad74319b01f555901c4626b',
+            'users_overload_amt' => 3,
+            'cal_weight' => 10,
+            'xcx_access_token' => '202306BBd746daff20da460bb459762d844daC16',
+        ];
+        $result = $aliBusiness->sendOverloadTemplate($data, $orders);
+        return R::ok($result);
+    }
+
+    /**
+     * 发送超重信息
+     * @return \think\response\Json
+     * @throws DbException
+     * @throws \Exception
+     */
+    public function sendMaterialTemplate(){
+        $orders = Order::get(['id' => 75659]);
+        $aliBusiness = new AliBusiness();
+
+        $data=[
+            'open_id' => '2088802593608751',
+            'template_id' => 'c5e943313ca4437a9a2bd7fe71c91f5e',
+            'users_overload_amt' => 3,
+            'cal_weight' => 10,
+            'xcx_access_token' => '202306BBd746daff20da460bb459762d844daC16',
+        ];
+        $result = $aliBusiness->sendMaterialTemplate($data, $orders);
+        return R::ok($result);
     }
 
 }

@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\admin\model\market\Couponlists;
+use app\common\business\AliBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
 use app\common\business\WanLi;
@@ -262,17 +263,8 @@ class Notice extends Controller
      */
     public function aliAppauth(){
         recordLog('ali-auth', json_encode(input(), JSON_UNESCAPED_UNICODE));
-        /*
-         '支付第三方授权' =>
-          array (
-            'app_auth_code' => 'P660f271c5b724f3da528855a3da9416',
-            'state' => '23',
-            'app_id' => '2021003176656290',
-            'source' => 'alipay_app_auth',
-          ),
-         */
         $code = input('app_auth_code');
-        $appid = input('app_id');
+        // $appid = input('app_id');
         $agent_id = input('state');
         if(!input('app_auth_code')) exit('无效的请求');
         if(!$agent_id) exit('无效参数');
@@ -280,30 +272,45 @@ class Notice extends Controller
         try {
             $aliOpen = Alipay::start()->open();
             $authInfo = $aliOpen->getAuthToken($code);
-            $miniProgram = $aliOpen->getMiniBaseInfo($authInfo->app_auth_token);
-            $vn = $aliOpen->getMiniVersionNumber($authInfo->app_auth_token);
+            $appAuthToken = $authInfo->app_auth_token;
+            $appRefreshToken = $authInfo->app_refresh_token;
+            $authAppId = $authInfo->auth_app_id;
+
+            $miniProgram = $aliOpen->getMiniBaseInfo($appAuthToken);
+            $vn = $aliOpen->getMiniVersionNumber($appAuthToken);
             $aes = $aliOpen->setAes($authInfo->auth_app_id);
+
             $data = [
                 'agent_id' => $agent_id,
-                'app_id' => $authInfo->auth_app_id,
+                'app_id' => $authAppId,
                 'name' => $miniProgram->app_name,
                 'avatar' => $miniProgram->app_logo,
                 'wx_auth' => 2,
-                'yuanshi_id' => $authInfo->auth_app_id,
+                'yuanshi_id' => '',
                 'body_name' => '',
-                'auth_token' => $authInfo->app_auth_token,
-                'refresh_token' => $authInfo->app_refresh_token,
+                'auth_token' => $appAuthToken,
+                'refresh_token' => $appRefreshToken,
                 'aes' => $aes,
                 'user_version' => $vn,
                 'auth_type' => 2,
                 'xcx_audit' => $vn?5:0
             ];
-            $agentAuth = AgentAuth::where('app_id', $authInfo->auth_app_id)->find();
+
+            $agentAuth = AgentAuth::where('app_id', $authAppId)->find();
             if ($agentAuth) {
                 if ($agentAuth->agent_id != $agent_id) exit('该app_id已被授权过');
+                if(empty($agentAuth->pay_template) || empty($agentAuth->material_template)){
+                    $aliBusiness = new AliBusiness();
+                    $data['pay_template'] = $aliBusiness->applyFreightTemplate($appAuthToken);
+                    $data['material_template'] = $aliBusiness->applyFreightTemplate($appAuthToken);
+                }
                 $data['id'] = $agentAuth->id;
                 $agentAuth->save($data);
             } else {
+                // 添加模版消息
+                $aliBusiness = new AliBusiness();
+                $data['pay_template'] = $aliBusiness->applyFreightTemplate($appAuthToken);
+                $data['material_template'] = $aliBusiness->applyFreightTemplate($appAuthToken);
                 AgentAuth::create($data);
             }
             Db::commit();
@@ -316,7 +323,7 @@ class Notice extends Controller
             );
             // 回滚事务
             Db::rollback();
-            exit('授权失败');
+            exit('授权失败：' . $e->getMessage());
         }
     }
 

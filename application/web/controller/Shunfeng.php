@@ -174,8 +174,6 @@ class Shunfeng extends Controller
     }
     function create_order_test(): Json{
         $param=$this->request->param();
-
-        $param=$this->request->param();
         if(empty($param['insert_id'])||empty($param['item_name'])){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
