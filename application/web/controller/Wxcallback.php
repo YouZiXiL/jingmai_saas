@@ -255,18 +255,6 @@ class Wxcallback extends Controller
                     exit('小程序运单状态模板订阅失败'.PHP_EOL.$yundan['errmsg']);
                 }
 
-                // 运费补差价模版
-                $freightJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
-                    'tid'=>'40287',
-                    'kidList'=>[5,3,4,1],
-                    'sceneDesc'=>'运费差价补缴通知'
-                ],'POST');
-                $freight=json_decode($freightJson,true);
-                if ($freight['errcode']!=0){
-                    recordLog('wx-shouquan', "运费差价补缴模板订阅失败" . $freightJson . PHP_EOL);
-                    exit('运费差价补缴模板订阅失败'.PHP_EOL.$freight['errmsg']);
-                }
-
                 $overloadJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
                     'tid'=>'783',
                     'kidList'=>[6,5,11,2,7],
@@ -293,8 +281,6 @@ class Wxcallback extends Controller
                 $data['waybill_template']=$yundan['priTmplId']; // 小程序运单状态模板
                 $data['pay_template']=$overload['priTmplId']; // 小程序超重补交模板
                 $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
-                $data['freight_template']= $freight['template_id']; // 小程序运费补缴模版
-
 
             }else{ // 公众号
                 $resJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token='.$authorization_info['authorizer_access_token']);
