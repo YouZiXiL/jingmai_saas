@@ -276,12 +276,9 @@ class Wxcallback extends Controller
                     recordLog('wx-shouquan', "小程序耗材补交模板订阅失败" . $materialJson . PHP_EOL);
                     exit('小程序耗材补交模板订阅失败'.PHP_EOL.$material['errmsg']);
                 }
-
-
                 $data['waybill_template']=$yundan['priTmplId']; // 小程序运单状态模板
                 $data['pay_template']=$overload['priTmplId']; // 小程序超重补交模板
                 $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
-
             }else{ // 公众号
                 $resJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token='.$authorization_info['authorizer_access_token']);
                 $res=json_decode($resJson,true);
