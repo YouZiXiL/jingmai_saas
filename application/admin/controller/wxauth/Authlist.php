@@ -435,14 +435,19 @@ class Authlist extends Backend
     function release_app($ids=null){
         $row = $this->model->get($ids);
         $common=new Common();
-        $xcx_access_token=$common->get_authorizer_access_token($row['app_id']);
-        $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/release?access_token='.$xcx_access_token,[],'POST');
-        $res=json_decode($resJson,true);
-        if ($res['errcode']!=0){
-            $this->error("发布小程序失败：{$resJson}");
+        try {
+            $xcx_access_token = $common->get_authorizer_access_token($row['app_id']);
+            $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/release?access_token='.$xcx_access_token,[],'POST');
+            $res=json_decode($resJson,true);
+            if ($res['errcode']!=0){
+                $this->error("发布小程序失败：{$resJson}");
+            }
+            $row->save(['xcx_audit'=>5]);
+            $this->success('发布小程序成功');
+        } catch (\think\Exception $e) {
+            $this->error($e->getMessage());
         }
-        $row->save(['xcx_audit'=>5]);
-        $this->success('发布小程序成功');
+
     }
 
     function remove_app($ids=null){

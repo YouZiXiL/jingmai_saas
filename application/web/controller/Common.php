@@ -2,9 +2,12 @@
 
 namespace app\web\controller;
 
+use app\common\business\WxBusiness;
 use app\web\model\Admin;
+use app\web\model\AgentAuth;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
+use think\Exception;
 use think\exception\DbException;
 use think\Log;
 use think\response\Redirect;
@@ -282,6 +285,7 @@ class Common
      * $agent_id 代理商id
      * $type xcx  小程序 默认
      * $type gzh  公众号
+     * @throws Exception
      */
     function get_authorizer_access_token($app_id){
         $time=time()-6600;
@@ -295,10 +299,20 @@ class Common
                 'authorizer_refresh_token'=>$refresh_token,
             ];
 
-            $authorizer_token= $this->httpRequest('https://api.weixin.qq.com/cgi-bin/component/api_authorizer_token?component_access_token='.$this->get_component_access_token(),$data,'POST');
-
-            $authorizer_token=json_decode($authorizer_token,true);
-            Log::error(['$authorizer_token' => $authorizer_token]);
+            $authorizer_token_json= $this->httpRequest('https://api.weixin.qq.com/cgi-bin/component/api_authorizer_token?component_access_token='.$this->get_component_access_token(),$data,'POST');
+            $authorizer_token=json_decode($authorizer_token_json,true);
+            if (isset($authorizer_token['errcode'])){
+                $wxBusiness = new WxBusiness();
+                $info = $wxBusiness->getAuthorizerInfo($app_id);
+                if (isset($info['authorization_info']['authorizer_refresh_token'])){
+                    $refresh_token = $info['authorization_info']['authorizer_refresh_token'];
+                    $data = db('agent_auth')->where('app_id', $app_id)->update(['refresh_token'=>$refresh_token]);
+                    if($data){
+                        $this->get_authorizer_access_token($app_id);
+                    }
+                }
+                throw new Exception($authorizer_token_json);
+            }
             db('access_token')->insert(['access_token'=>$authorizer_token['authorizer_access_token'],'app_id'=>$app_id,'create_time'=>time()]);
             return $authorizer_token['authorizer_access_token'];
         }else{
