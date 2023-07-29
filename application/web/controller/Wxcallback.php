@@ -920,13 +920,10 @@ class Wxcallback extends Controller
                 $up_data['final_freight']=$result['orderEvent']['transportPrice']/100*0.68
                     +($result['orderEvent']['totalPrice']/100-$result['orderEvent']['transportPrice']/100);
 
-
-
                 $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
 
                 //超轻处理
                 if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0&&empty($orders['final_weight_time'])) {
-//                    if ($weight>0&&$result['orderEvent']['calculateWeight']/1000!=0) {
                     $tralight_weight=$weight;//超轻重量
                     $tralight_amt=$orders['freight']-$result['orderEvent']['transportPrice']/100*0.68;//超轻金额
                     $admin_xuzhong=$tralight_amt/$tralight_weight;//平台续重单价
@@ -945,8 +942,6 @@ class Wxcallback extends Controller
                         $root_tralight_amt=$tralight_weight*$agent_xuzhong;
                         $root_default_tralight_amt=$tralight_weight*$agent_default_xuzhong;
                     }
-
-
                     $up_data['tralight_status']=1;
                     $up_data['final_weight_time']=time();
                     $up_data['tralight_price']=$users_tralight_amt;
@@ -968,10 +963,8 @@ class Wxcallback extends Controller
                             $rebatelistdata["mid_rebate"]=number_format(($rebatelist["final_price"]-$up_data['tralight_price'])*($agent_info["midd_rate"]??0)/100,2);
                         }
                     }
-
-
-                } else
-                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000 &&empty($orders['final_weight_time'])){
+                }
+                else if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000 &&empty($orders['final_weight_time'])){
 //                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
 
                     // 超重状态
@@ -1053,9 +1046,11 @@ class Wxcallback extends Controller
                     )
                     && empty($orders['consume_time'])
                 ){
+                    $insurancePrice = $result['orderEvent']['insurancePrice'] - (int) $orders['insured'] * 100;
+                    if ($insurancePrice<=0) $insurancePrice = 0;
                     $up_data['haocai_freight'] = (
                         $result['orderEvent']['packageServicePrice']
-                        + $result['orderEvent']['insurancePrice']
+                        + $insurancePrice
                         + $result['orderEvent']['deliveryPrice']
                         +$content['otherPrice']
                     )/100;
@@ -3854,15 +3849,34 @@ class Wxcallback extends Controller
 
             if($order['final_weight'] == 0 || empty($order['final_weight'])){
                 $update['final_weight'] = $actualWeight;
-            }else if(!empty($actualWeight) && $actualWeight != $order['final_weight']){
-                $common = new Common();
-                $content = [
-                    'title' => '计费重量变化',
-                    'user' =>  'JX', //$order['channel_merchant'],
-                    'waybill' =>  $order['waybill'],
-                    'body' => "计费重量：$actualWeight"
-                ];
-                $common->wxrobot_channel_exception($content);
+            }else if(!empty($actualWeight)){
+                if( (int) $actualWeight != (int) $order['final_weight']){
+                    $common = new Common();
+                    $content = [
+                        'title' => '计费重量变化',
+                        'user' =>  'JX', //$order['channel_merchant'],
+                        'waybill' =>  $order['waybill'],
+                        'body' => "计费重量：$actualWeight"
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }else{
+                    if(!empty($addpriceInfos)){
+                        $addMoneyTotal = 0; // 初始化总金额为 0
+                        foreach ($addpriceInfos as $item) {
+                            $addMoneyTotal += (int) $item['addMoney']; // 将当前元素的 addMoney 字段加到总金额中
+                        }
+                        if($addMoneyTotal == 0){
+                            $content = [
+                                'title' => '退款通知',
+                                'user' =>  'JX', //$order['channel_merchant'],
+                                'waybill' =>  $order['waybill'],
+                                'body' => "订单已退款"
+                            ];
+                            $common = new Common();
+                            $common->wxrobot_channel_exception($content);
+                        }
+                    }
+                }
             }
 
 
@@ -3913,6 +3927,8 @@ class Wxcallback extends Controller
                     $rebateController = new RebateListController();
                     $rebateController->handle($order, $superB, $users);
                 }
+
+
 
             }else{ // 重量，补差价
                 // 超重和耗材
