@@ -349,8 +349,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             $(document).on('click', '.btn-upload', function () {
                 // 上传代码
                 // Fast.api.close($("input[name=callback]").val());
-                var ids = $("input[name=RELEASE]").val();
-                var version = $("code[name=RELEASE]").text();
+                var ids = $("input[name=agent_auth_id]").val();
+                var version = $("code[name=versionT]").text();
+                console.log('version', version)
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=upload&v=${version}`
                 }, function (data,ret) { //success
@@ -359,7 +360,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
             $(document).on('click', '.btn-back', function () {
                 // Fast.api.close($("input[name=callback]").val());
-                var ids = $("input[name=AUDIT_REJECT]").val();
+                var ids = $("input[name=agent_auth_id]").val();
                 var version = $("code[name=AUDIT_REJECT]").text();
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=back&v=${version}`
@@ -369,7 +370,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
             $(document).on('click', '.btn-audit', function () {
                 // 提交审核
-                var ids = $("input[name=INIT]").val();
+                var ids = $("input[name=agent_auth_id]").val();
                 var version = $(this).siblings("input.form-control").val();
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=audit&v=${version}`
@@ -379,7 +380,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
             $(document).on('click', '.btn-cancel', function () {
                 // 消息审核
-                var ids = $("input[name=AUDITING]").val();
+                var ids = $("input[name=agent_auth_id]").val();
                 var version = $("code[name=AUDITING]").text();
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=cancel&v=${version}`
@@ -389,7 +390,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
             $(document).on('click', '.btn-online', function () {
                 // 待上架
-                var ids = $("input[name=WAIT_RELEASE]").val();
+                var ids = $("input[name=agent_auth_id]").val();
                 var version = $("code[name=WAIT_RELEASE]").text();
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=online&v=${version}`

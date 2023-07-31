@@ -307,7 +307,7 @@ class OrderBusiness extends Backend
 
             $orderInfo->isUpdate(true)->save($updateOrder);
             if($orders['tag_type'] == '京东'){
-                Queue::push(TrackJob::class, $orders, 'track');
+                Queue::push(TrackJob::class, $orders['id'], 'track');
             }
             $this->success('下单成功',null, $orderInfo);
         }

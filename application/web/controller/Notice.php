@@ -89,7 +89,7 @@ class Notice extends Controller
 
 
                     }else{
-                        Queue::push(TrackJob::class, $orders, 'track');
+                        Queue::push(TrackJob::class, $orders['id'], 'track');
                         //支付成功下单成功
                         $result=$res['result'];
                         $update=[

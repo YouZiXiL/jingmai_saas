@@ -1556,7 +1556,7 @@ class Wxcallback extends Controller
                             }
                         }
                         if($orders['tag_type'] == '京东'){
-                            Queue::push(TrackJob::class, $orders, 'track');
+                            Queue::push(TrackJob::class, $orders['id'], 'track');
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
                     }
@@ -3850,7 +3850,7 @@ class Wxcallback extends Controller
             if($order['final_weight'] == 0 || empty($order['final_weight'])){
                 $update['final_weight'] = $actualWeight;
             }else if(!empty($actualWeight)){
-                if( (int) $actualWeight != (int) $order['final_weight']){
+                if( number_format($actualWeight, 2) != number_format($order['final_weight'],2)){
                     $common = new Common();
                     $content = [
                         'title' => '计费重量变化',
@@ -3863,7 +3863,7 @@ class Wxcallback extends Controller
                     if(!empty($addpriceInfos)){
                         $addMoneyTotal = 0; // 初始化总金额为 0
                         foreach ($addpriceInfos as $item) {
-                            $addMoneyTotal += (int) $item['addMoney']; // 将当前元素的 addMoney 字段加到总金额中
+                            $addMoneyTotal += $item['addMoney']; // 将当前元素的 addMoney 字段加到总金额中
                         }
                         if($addMoneyTotal == 0){
                             $content = [

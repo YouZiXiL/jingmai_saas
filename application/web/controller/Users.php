@@ -1138,11 +1138,11 @@ class Users extends Controller
     //秒杀购买优惠券
     public function couponbymoney_fast(){
         $date=date("D");
-        if($date=='Wed'){
-            $hour=date("H");
-            if($hour<10){
-                return json(['status'=>400,'data'=>'','msg'=>'每周三10点开抢']);
-            }
+        $hour=date("H");
+        if($date!='Wed'){
+            return json(['status'=>400,'data'=>'','msg'=>'每周三10点开抢']);
+        }else if($hour<10 || $hour>16){
+            return json(['status'=>400,'data'=>'','msg'=>'每周三10点开抢']);
         }
 
         $param=$this->request->param();

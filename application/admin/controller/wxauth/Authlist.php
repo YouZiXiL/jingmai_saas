@@ -13,6 +13,8 @@ use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
 use Exception;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\exception\DbException;
 use think\Log;
 use think\Response;
@@ -205,33 +207,54 @@ class Authlist extends Backend
     public function version_ali(){
         $ids = input('ids');
         $type = input('type');
-        $v = input('v');
+        $v =  input('v');
         if ($type && $v){
             $this->versionManager($ids, $type, $v);
-        }else{
-//            $template = AgentAuth::field('auth_token')->where('app_id', AliConfig::$templateId)->find();
-            $template = AgentAuth::field('auth_token')->find($ids);
-
-            if(!$template)  $this->error("模板未授权");
-            $templateAuthToken = $template->auth_token;
-            $open = Alipay::start()->open();
-            $result = $open->getMiniVersionList($templateAuthToken);
-            if(empty($result) || $result->code != 10000){
-                dd($result);
-            }
-            //      * INIT: 开发中, AUDITING: 审核中, AUDIT_REJECT: 审核驳回, WAIT_RELEASE: 待上架, BASE_AUDIT_PASS: 准入不可营销, GRAY: 灰度中, RELEASE: 已上架, OFFLINE: 已下架, AUDIT_OFFLINE: 已下架;
-            $version = $result->app_version_infos;
-            $name=  [
-                'INIT'  => '开发中',
-                'AUDITING'  => '审核中',
-                'AUDIT_REJECT'  => '审核驳回',
-                'WAIT_RELEASE'  => '待上架',
-                'RELEASE'  => '已上架',
-            ];
-            $this->view->assign(compact('version', 'name','ids'));
-            return $this->view->fetch();
         }
+        // 版本列表
+        return $this->versionList($ids);
     }
+
+    /**
+     * 支付宝小程序版本列表
+     * @return string
+     * @throws DbException
+     * @throws \think\Exception
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws Exception
+     */
+    public function versionList($ids){
+        $template = AgentAuth::field('auth_token')->where('app_id', AliConfig::$templateId)->find();
+        $agent = AgentAuth::field('auth_token')->find($ids);
+        if(!$agent)  $this->error("模板未授权");
+        $templateAuthToken = $template->auth_token;
+        $open = Alipay::start()->open();
+        $versionInfoT = $open->getMiniVersionList($templateAuthToken, 'RELEASE');
+        if(empty($versionInfoT) || $versionInfoT->code != 10000){
+            dd($versionInfoT);
+        }
+        // * INIT: 开发中, AUDITING: 审核中, AUDIT_REJECT: 审核驳回, WAIT_RELEASE: 待上架, BASE_AUDIT_PASS: 准入不可营销, GRAY: 灰度中, RELEASE: 已上架, OFFLINE: 已下架, AUDIT_OFFLINE: 已下架;
+        $versionT = $versionInfoT->app_version_infos; // 模版版本
+
+        $agentAuthToken = $agent->auth_token;
+        $versionInfoAgent = $open->getMiniVersionList($agentAuthToken);
+        if(empty($versionInfoAgent) || $versionInfoAgent->code != 10000){
+            dd($versionInfoAgent);
+        }
+        $version = $versionInfoAgent->app_version_infos; // 代理商版本
+
+        $name=  [
+            'INIT'  => '开发中',
+            'AUDITING'  => '审核中',
+            'AUDIT_REJECT'  => '审核驳回',
+            'WAIT_RELEASE'  => '待上架',
+            'RELEASE'  => '已上架',
+        ];
+        $this->view->assign(compact('versionT', 'version', 'name','ids'));
+        return $this->view->fetch();
+    }
+
 
 
     /**

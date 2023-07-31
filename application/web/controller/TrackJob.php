@@ -3,16 +3,17 @@
 namespace app\web\controller;
 
 use app\common\config\Channel;
+use app\common\model\Order;
 use think\Exception;
 use think\Log;
 use think\queue\Job;
 
 class TrackJob
 {
-    public function fire(Job $job, $data)
+    public function fire(Job $job, $orderId)
     {
         // 执行任务的代码
-        $isJobDone = $this->job($data);
+        $isJobDone = $this->job($orderId);
         if($isJobDone){
             $job->delete();
         } else {
@@ -28,18 +29,24 @@ class TrackJob
 
     }
 
-    private function job($data)
+    /**
+     * 获取物流轨迹
+     * @param $orderId
+     * @return bool
+     */
+    private function job($orderId)
     {
-
         try {
-            Log::info('执行track：'. json_encode($data, JSON_UNESCAPED_UNICODE));
-            if ($data['channel_merchant'] == Channel::$yy) {
+            Log::info('执行track：'. json_encode($orderId) );
+            $orders = Order::get(['id', $orderId]);
+            Log::info('执行trackOrder：'. json_encode($orders->toArray(), JSON_UNESCAPED_UNICODE));
+            if ($orders['channel_merchant'] == Channel::$yy) {
                 Log::info('执行track：1');
-                if(empty($data['waybill'])) return false;
-                if(!empty($data['comments']) || $data['comments'] == '无') return true;
+                if(empty($orders['waybill'])) return false;
+                if(!empty($orders['comments']) && $orders['comments'] != '无') return true;
                 Log::info('执行track：2');
                 $yunYang = new \app\common\business\YunYang();
-                $res = $yunYang->queryTrance($data['waybill']);
+                $res = $yunYang->queryTrance($orders['waybill']);
                 Log::info('执行track：3-'.$res);
                 $result = json_decode($res, true);
                 if($result['code'] != 1){
@@ -51,7 +58,7 @@ class TrackJob
                 $up_data = [
                     'comments' => $comments
                 ];
-                db('orders')->where('id',$data['id'])->update($up_data);
+                db('orders')->where('id',$orders['id'])->update($up_data);
                 return true;
             }
             return true;
