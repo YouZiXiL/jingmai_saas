@@ -19,18 +19,26 @@
     </tr>
     </thead>
     <tbody>
-    <tr>
-        <td>版本</td>
-        <td><code name=versionT>{$vo:app_version}</code></td>
-    </tr>
-    <tr>
-        <td>状态</td>
-        <td  class="text-success" >
-            {$name[$vo:version_status]}
-            <button class="btn btn-success btn-upload btn-xs ml-4">上传代码</button>
-            <input class="form-control hidden" value={$vo:app_version} />
-        </td>
-    </tr>
+        <tr>
+            <td>版本</td>
+            <td><code name=versionT>{$vo:app_version}</code></td>
+        </tr>
+        <tr>
+            <td>状态</td>
+            <td  class="text-success" >
+                {$name[$vo:version_status]}
+                <button class="btn btn-success btn-upload btn-xs ml-4">上传代码</button>
+                <input class="form-control hidden" value={$vo:app_version} />
+            </td>
+        </tr>
+        <tr>
+            <td>简介</td>
+            <td style="word-break: break-all;">{$vo:version_description ?? ''}</td>
+        </tr>
+        <tr>
+            <td>创建时间</td>
+            <td style="word-break: break-all;">{$vo:create_time}</td>
+        </tr>
     </tbody>
 </table>
 {/volist}
@@ -55,7 +63,6 @@
             {case value="RELEASE"}
                 <td  class="text-success" >
                     {$name[$vo:version_status]}
-                    <button class="btn btn-success btn-upload btn-xs ml-4">上传代码</button>
                     <input class="form-control hidden" value={$vo:app_version} />
                 </td>
             {/case}
@@ -90,14 +97,6 @@
             {default /} <td style="word-break: break-all;">{$name[$vo:version_status]}</td>
         {/switch}
 
-    </tr>
-    <tr>
-        <td>简介</td>
-        <td style="word-break: break-all;">{$vo:version_description ?? ''}</td>
-    </tr>
-    <tr>
-        <td>创建时间</td>
-        <td style="word-break: break-all;">{$vo:create_time}</td>
     </tr>
 </tbody>
 {/volist}

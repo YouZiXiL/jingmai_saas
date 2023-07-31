@@ -351,10 +351,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 // Fast.api.close($("input[name=callback]").val());
                 var ids = $("input[name=agent_auth_id]").val();
                 var version = $("code[name=versionT]").text();
-                console.log('version', version)
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=upload&v=${version}`
                 }, function (data,ret) { //success
+                    location.reload();
                 }, function (data,ret) { //error
                 });
             });
@@ -365,6 +365,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=back&v=${version}`
                 }, function (data,ret) { //success
+                    location.reload();
                 }, function (data,ret) { //error
                 });
             });
@@ -375,6 +376,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=audit&v=${version}`
                 }, function (data,ret) { //success
+                    location.reload();
                 }, function (data,ret) { //error
                 });
             });
@@ -385,6 +387,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=cancel&v=${version}`
                 }, function (data,ret) { //success
+                    location.reload();
                 }, function (data,ret) { //error
                 });
             });
@@ -395,6 +398,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 Fast.api.ajax({
                     url: `wxauth/authlist/version_ali?ids=${ids}&type=online&v=${version}`
                 }, function (data,ret) { //success
+                    location.reload();
                 }, function (data,ret) { //error
                 });
             });
