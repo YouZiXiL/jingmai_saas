@@ -297,8 +297,12 @@ class AliOpen
     public function getMiniVersionNumber($appAuthToken){
         $release = $this->getMiniVersionList($appAuthToken, "RELEASE");
         recordLog('ali-auth-err', '获取当前小程序版本号（已上架）'. json_encode($release, JSON_UNESCAPED_UNICODE) );
-        $version = $release->app_versions;
-        return $version[0];
+        if(isset($release->app_versions)){
+            $version = $release->app_versions;
+            return $version[0];
+        }else{
+            return '0';
+        }
     }
 
     /**
