@@ -4,6 +4,8 @@ namespace app\admin\controller\basicset;
 
 use app\common\controller\Backend;
 use think\Db;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
@@ -92,6 +94,9 @@ class Wxim extends Backend
     /**
      * 更新配置
      * @return void
+     * @throws DbException
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
      */
     public function update(){
         $row=$this->model->where('id',$this->auth->id)->field('id')->find();
