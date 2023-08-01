@@ -4,6 +4,7 @@ namespace app\admin\controller\orders;
 
 
 use app\admin\model\Admin;
+use app\common\business\CouponBusiness;
 use app\common\controller\Backend;
 use app\common\library\alipay\Alipay;
 use app\web\controller\Common;
@@ -281,6 +282,11 @@ class Afterlist extends Backend
                 //代理结算金额 代理运费+保价金+耗材+超重
                 $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已作废并退款');
 
+                if(!empty($orders["couponid"])){
+                    // 返还优惠券
+                    $couponBusiness = new CouponBusiness();
+                    $couponBusiness->notUsedStatus($orders);
+                }
 
                 //处理退款完成 更改退款状态和订单状态
                 $up_data['pay_status']= $payStatus??2;
