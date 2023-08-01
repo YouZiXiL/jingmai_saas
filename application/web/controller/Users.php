@@ -944,7 +944,9 @@ class Users extends Controller
         $coupon_manager=AgentCouponmanager::get($params["couponid"]);
         $startdate=date("Y-m");
         $enddate=date("Y-m-t "."23:59:59");
-        $userscore=UserScoreLog::where("user_id",$this->user->id)->whereTime("createtime",'between',[strtotime($startdate),strtotime($enddate)])->count();
+        $userscore=UserScoreLog::where("user_id",$this->user->id)
+            ->where('memo' , '兑换优惠券')
+            ->whereTime("createtime",'between',[strtotime($startdate),strtotime($enddate)])->count();
         if($userscore>0){
             $data['msg']='本月已兑换';
             $data['status']=400;
