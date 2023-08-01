@@ -3658,8 +3658,14 @@ class Wxcallback extends Controller
                 }
 
                 if($originalFreight> $orders['freight']){
+                    if($params["data"]['weightFee'] > $orders['weight']){
+                        // 有超重(超轻)，换单费用就加到超重金额里
+                        $diffWeightPrice = $originalFreight - $orders['freight'];
+                    }
+                    // 没有超重就加到耗材里
                     $haocai += $originalFreight - $orders['freight'];
                 }
+
                 if($haocai){
                     $data = [
                         'type'=>2,
@@ -3681,7 +3687,7 @@ class Wxcallback extends Controller
                 //超轻处理
                 $weight=floor($orders['weight']-$pamar['weightFee']);
                 if ($weight>0&&$pamar['weightFee']!=0&&empty($orders['final_weight_time'])){
-                    $tralight_weight=$weight;//超轻重量
+                    $tralight_weight = $weight;//超轻重量
                     $weightprice=$orders["final_price"]-($pamar["totalFee"]-$haocai);
                     if($weightprice>0){
                         $dicount=number_format($orders["freight"]/$orders['originalFee'],2);
@@ -3716,13 +3722,12 @@ class Wxcallback extends Controller
                     }
                 }
 
-
                 //更改超重状态
                 if ($orders['weight']<$pamar['weightFee']&&empty($orders['final_weight_time'])){
                     $up_data['overload_status']=1;
                     $overload_weight=ceil($pamar['weightFee']-$orders['weight']);//超出重量
 
-                    $weightprice=$pamar["totalFee"]-$haocai-$orders["final_price"];
+                    $weightprice= $diffWeightPrice??$pamar["totalFee"]-$haocai-$orders["final_price"];
 
                     $dicount=number_format($orders["freight"]/$orders['originalFee'],2);
 
