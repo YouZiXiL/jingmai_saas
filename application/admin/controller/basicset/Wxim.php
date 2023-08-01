@@ -89,4 +89,13 @@ class Wxim extends Backend
         $this->success();
     }
 
+
+    /**
+     * 更新配置
+     * @return void
+     */
+    public function update(){
+
+    }
+
 }

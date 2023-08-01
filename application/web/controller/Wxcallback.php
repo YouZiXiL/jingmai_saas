@@ -3656,6 +3656,7 @@ class Wxcallback extends Controller
                         $haocai += $fee["fee"];
                     }
                 }
+
                 if($originalFreight> $orders['freight']){
                     $haocai += $originalFreight - $orders['freight'];
                 }

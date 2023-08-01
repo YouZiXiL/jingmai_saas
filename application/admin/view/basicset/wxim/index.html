@@ -1,19 +1,73 @@
-<form id="wxim-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>基本信息</title>
+</head>
+<body>
+<div  id="robot" v-cloak>
+    <el-form label-position="right" :model="formData" :rules="rules" ref="ruleForm" >
 
-    <div class="form-group">
-        <label for="wx_im_bot" class="control-label col-xs-12 col-sm-2">企业微信机器人链接:</label>
-        <div class="col-xs-12 col-sm-4 ">
-            <input type="text"  class="form-control" id="wx_im_bot" name="row[wx_im_bot]" autocomplete="off" value="{$row.wx_im_bot}"  />
-            <div class="text-success" style="">用于通知企业微信群</div>
-        </div>
-    </div>
+        <el-card class="box-card" shadow="never">
+            <div class="grid-content bg-white">
+                <el-form-item label="微信企业机器人" prop="wxImBot">
+                    <el-input placeholder="用于通知企业微信群" v-model="formData.wxImBot"></el-input>
+                </el-form-item>
+                <el-card header="发送场景"  shadow="never">
+                    <el-form-item label="订单重量">
+                        <el-tooltip class="item" effect="dark" content="如：填5 表明在大于等于5KG的时候发送消息；0 不发消息" placement="top-start">
+
+                        <i style="font-size: 18px" class="el-icon-warning-outline mr-3"></i>
+                        </el-tooltip>
+                        <el-input-number v-model="formData.weight" @change="onChangeWeight" :min="0" ></el-input-number>
+<!--                        <el-input placeholder="如：填5，表明在大于等于5KG的时候发送消息" :min="1"  v-model="formData.weight"></el-input>-->
+                    </el-form-item>
+                </el-card>
+                <el-form-item >
+                    <div><el-button style="width: 120px" type="primary"  @click="onSubmit"> 提 交 </el-button></div>
+                </el-form-item>
+            </div>
+        </el-card>
 
 
-    <div class="form-group layer-footer">
-        <label class="control-label col-xs-12 col-sm-2"></label>
-        <div class="col-xs-12 col-sm-8">
-            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
-            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
-        </div>
-    </div>
-</form>
+
+    </el-form>
+</div>
+
+<!-- 弹窗 -->
+
+</body>
+<script type="module">
+    new Vue({
+        el: '#robot',
+        data: function() {
+            return {
+                formData:{
+                    wxImBot: '',
+                    weight: 0,
+                },
+
+                rules: {
+                    'wxImBot': [
+                        { required: true, message: '请输入企业微信机器人链接', trigger: ['change'] },
+                        { max: 66, message: '内容过长', trigger: ['change'] }
+                    ],
+                }
+            };
+        },
+        created(){
+
+        },
+        methods:{
+
+            onSubmit(){
+
+            },
+            onChangeWeight(){
+
+            }
+        }
+    })
+
+</script>
+</html>
