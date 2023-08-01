@@ -867,107 +867,113 @@ class Yunyang extends Controller
     function order_cancel(): Json
     {
         $id=$this->request->param('id');
-        if (empty($id)){
-            return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
-        }
-        $agent_info=db('admin')->field('zizhu,wx_im_bot')->where('id',$this->user->agent_id)->find();
-        if ($agent_info['zizhu']==0){
-            return json(['status'=>400,'data'=>'','msg'=>'请联系管理员取消订单']);
-        }
-        $orderModel = Order::where('id',$id)->where('user_id',$this->user->id)->find();
-        if(!$orderModel) return R::error('没找到该订单');
-        $row = $orderModel->toArray();
-        if ($row['pay_status']!=1){
-            return json(['status'=>400,'data'=>'','msg'=>'此订单已取消']);
-        }
-        if ($row['channel_tag']=='重货'){
-
-            $content=[
-                'expressCode'=>'DBKD',
-                'orderId'=>$row['out_trade_no'],
-                'reason'=>'不要了'
-            ];
-            $res=$this->common->fhd_api('cancelExpressOrder',$content);
-            file_put_contents('order_cancel.txt',$res .PHP_EOL,FILE_APPEND);
-            $res=json_decode($res,true);
-            if (!$res['data']['result']){
-                return json(['status'=>400,'data'=>'','msg'=>'取消失败请联系客服']);
+        try {
+            if (empty($id)){
+                return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
             }
-        }else if($row['channel_merchant'] == Channel::$jilu){
-
-            $content = [
-                'expressChannel' => $row['channel_id'],
-                'expressNo' => $row['waybill'],
-            ];
-            $jiLu = new JiLu();
-            $resultJson = $jiLu->cancelOrder($content);
-            $result = json_decode($resultJson, true);
-            if ($result['code']!=1){
-                recordLog('channel-callback-err',
-                    '极鹭取消订单-' . $row['out_trade_no']. PHP_EOL .
-                    $resultJson
-                 );
-                return R::error($result['msg']);
+            $agent_info=db('admin')->field('zizhu,wx_im_bot')->where('id',$this->user->agent_id)->find();
+            if ($agent_info['zizhu']==0){
+                return json(['status'=>400,'data'=>'','msg'=>'请联系管理员取消订单']);
             }
-            if( $row['pay_status']!=2) {
-                // 执行退款操作
-                $orderBusiness = new OrderBusiness();
-                $orderBusiness->refund($orderModel);
+            $orderModel = Order::where('id',$id)->where('user_id',$this->user->id)->find();
+            if(!$orderModel) return R::error('没找到该订单');
+            $row = $orderModel->toArray();
+            if ($row['pay_status']!=1){
+                return json(['status'=>400,'data'=>'','msg'=>'此订单已取消']);
             }
-        }else if($row['channel_merchant'] == Channel::$fhd){
-            $content=[
-                'expressCode'=> $row['db_type'],
-                'orderId'=>$row['out_trade_no'],
-                'reason'=>'不要了'
-            ];
-            $resultJson=$this->common->fhd_api('cancelExpressOrder',$content);
-            $res=json_decode($resultJson,true);
-            recordLog('cancel-order',
-                '风火递-'.PHP_EOL.
+            if ($row['channel_tag']=='重货'){
+                $content=[
+                    'expressCode'=>'DBKD',
+                    'orderId'=>$row['out_trade_no'],
+                    'reason'=>'不要了'
+                ];
+                $res=$this->common->fhd_api('cancelExpressOrder',$content);
+                file_put_contents('order_cancel.txt',$res .PHP_EOL,FILE_APPEND);
+                $res=json_decode($res,true);
+                if (!$res['data']['result']){
+                    return json(['status'=>400,'data'=>'','msg'=>'取消失败请联系客服']);
+                }
+            }else if($row['channel_merchant'] == Channel::$jilu){
+                $content = [
+                    'expressChannel' => $row['channel_id'],
+                    'expressNo' => $row['waybill'],
+                ];
+                $jiLu = new JiLu();
+                $resultJson = $jiLu->cancelOrder($content);
+                $result = json_decode($resultJson, true);
+                if ($result['code']!=1){
+                    recordLog('channel-callback-err',
+                        '极鹭取消订单-' . $row['out_trade_no']. PHP_EOL .
+                        $resultJson
+                    );
+                    return R::error($result['msg']);
+                }
+                if( $row['pay_status']!=2) {
+                    // 执行退款操作
+                    $orderBusiness = new OrderBusiness();
+                    $orderBusiness->refund($orderModel);
+                }
+            }else if($row['channel_merchant'] == Channel::$fhd){
+                $content=[
+                    'expressCode'=> $row['db_type'],
+                    'orderId'=>$row['out_trade_no'],
+                    'reason'=>'不要了'
+                ];
+                $resultJson=$this->common->fhd_api('cancelExpressOrder',$content);
+                $res=json_decode($resultJson,true);
+                recordLog('cancel-order',
+                    '风火递-'.PHP_EOL.
                     '订单-'. $row['out_trade_no']  .PHP_EOL.
                     '返回结果-'. $resultJson
-            );
-            if($res['rcode'] != 0){
-                return R::error('取消失败请联系客服');
+                );
+                if($res['rcode'] != 0){
+                    return R::error('取消失败请联系客服');
+                }
+            }else if($row['channel_tag']=='智能'){
+                $content=[
+                    'shopbill'=>$row['shopbill']
+                ];
+                $res=$this->common->yunyang_api('CANCEL',$content);
+                recordLog('order-cancer', '云洋取消订单失败' . json_encode($res));
+                if ($res['code']!=1){
+                    return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
+                }
+            }else if ($row['channel_tag']=='顺丰'){
+                $content=[
+                    "genre"=>1,
+                    'orderNo'=>$row['shopbill']
+                ];
+                $res=$this->common->shunfeng_api("http://api.wanhuida888.com/openApi/doCancel",$content);
+                if ($res['code']!=0){
+                    return R::error($res['msg']);
+                }
+            }else{
+                return R::error('没有该渠道');
             }
-        }else if($row['channel_tag']=='智能'){
-            $content=[
-                'shopbill'=>$row['shopbill']
-            ];
-            $res=$this->common->yunyang_api('CANCEL',$content);
-            if ($res['code']!=1){
-                return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
+            db('orders')
+                ->where('id',$id)
+                ->where('user_id',$this->user->id)
+                ->update([
+                    'cancel_time'=>time(),
+                ]);
+            // 退还优惠券
+            if(!empty($row["couponid"])){
+                $coupon=Couponlist::get($row["couponid"]);
+                if(!empty($coupon)){
+                    $coupon["state"]=1;
+                    $coupon->save();
+                }
             }
-        }else if ($row['channel_tag']=='顺丰'){
-            $content=[
-                "genre"=>1,
-                'orderNo'=>$row['shopbill']
-            ];
-            $res=$this->common->shunfeng_api("http://api.wanhuida888.com/openApi/doCancel",$content);
-            if ($res['code']!=0){
-                return R::error($res['msg']);
+            if (!empty($agent_info['wx_im_bot'])&&$row['weight']>=3){
+                $this->common->wxim_bot($agent_info['wx_im_bot'],$row);
             }
-        }else{
-            return R::error('没有该渠道');
+            return json(['status'=>200,'data'=>'','msg'=>'取消成功']);
+        }catch (\Exception $e){
+            recordLog('order-cancer', '云洋取消订单失败' . $e->getMessage() . PHP_EOL .
+             $e->getTraceAsString());
+            return json(['status'=>400,'data'=>'','msg'=>'取消失败']);
         }
-        db('orders')
-            ->where('id',$id)
-            ->where('user_id',$this->user->id)
-            ->update([
-                'cancel_time'=>time(),
-            ]);
-        // 退还优惠券
-        if(!empty($row["couponid"])){
-            $coupon=Couponlist::get($row["couponid"]);
-            if(!empty($coupon)){
-                $coupon["state"]=1;
-                $coupon->save();
-            }
-        }
-        if (!empty($agent_info['wx_im_bot'])&&$row['weight']>=3){
-            $this->common->wxim_bot($agent_info['wx_im_bot'],$row);
-        }
-        return json(['status'=>200,'data'=>'','msg'=>'取消成功']);
+
     }
 
     /**

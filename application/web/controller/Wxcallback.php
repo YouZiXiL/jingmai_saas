@@ -804,7 +804,7 @@ class Wxcallback extends Controller
                         $afterSale->reviveWaybill($orders);
                     }
                 }
-                return json(['code'=>0, 'message'=>'订单已取消']);
+                // return json(['code'=>0, 'message'=>'订单已取消']);
             }
 
             // 快递运输状态
@@ -3879,7 +3879,6 @@ class Wxcallback extends Controller
                 }
             }
 
-
             $jiLu = new JiLu();
             $wxOrder = $order['pay_type'] == 1;
             $aliOrder = $order['pay_type'] == 2;
@@ -3947,6 +3946,7 @@ class Wxcallback extends Controller
                             $material += $item['addMoney']; // 耗材费
                         }
                     }
+
                     if($addWeight && empty($order['final_weight_time'])){
                         $update['overload_status'] = 1;
                         $profit = db('profit')->where('agent_id', $agent_info['id'])
