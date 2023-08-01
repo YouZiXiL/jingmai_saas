@@ -52,6 +52,10 @@
                         { required: true, message: '请输入企业微信机器人链接', trigger: ['change'] },
                         { max: 66, message: '内容过长', trigger: ['change'] }
                     ],
+                    'weight': [
+                        { required: true, message: '请输入企业微信机器人链接', trigger: ['change'] },
+                        { max: 66, message: '内容过长', trigger: ['change'] }
+                    ],
                 }
             };
         },
@@ -61,7 +65,9 @@
         methods:{
 
             onSubmit(){
+                this.$refs['ruleForm'].validate((valid) => {
 
+                })
             },
             onChangeWeight(){
 
