@@ -3647,11 +3647,9 @@ class Wxcallback extends Controller
                 $up_data['final_weight']=$params["data"]['weightFee'];
                 $up_data['haocai_freight'] = 0;
                 $haocai = 0;
-                $originalFreight = 0;
+                $originalFreight =  $params["data"]['originalFee'];
                 foreach ($params["data"]["feeList"] as $fee){
-                    if($fee['type'] == 1){
-                        $originalFreight =  $fee["fee"];
-                    }else {
+                    if($fee['type'] != 1){
                         //耗材
                         $haocai += $fee["fee"];
                     }
@@ -3661,9 +3659,10 @@ class Wxcallback extends Controller
                     if($params["data"]['weightFee'] > $orders['weight']){
                         // 有超重(超轻)，换单费用就加到超重金额里
                         $diffWeightPrice = $originalFreight - $orders['freight'];
+                    }else{
+                        // 没有超重就加到耗材里
+                        $haocai += $originalFreight - $orders['freight'];
                     }
-                    // 没有超重就加到耗材里
-                    $haocai += $originalFreight - $orders['freight'];
                 }
 
                 if($haocai){
