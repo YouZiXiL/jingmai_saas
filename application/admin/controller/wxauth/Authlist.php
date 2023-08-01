@@ -242,7 +242,7 @@ class Authlist extends Backend
         if(empty($versionInfoAgent) || $versionInfoAgent->code != 10000){
             dd($versionInfoAgent);
         }
-        $version = $versionInfoAgent->app_version_infos; // 代理商版本
+        $version = $versionInfoAgent->app_version_infos??'0'; // 代理商版本
 
         $name=  [
             'INIT'  => '开发中',
