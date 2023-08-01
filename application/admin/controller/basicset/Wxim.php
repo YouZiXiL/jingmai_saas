@@ -47,7 +47,7 @@ class Wxim extends Backend
      */
     public function index()
     {
-        $row=$this->model->where('id',$this->auth->id)->field('wx_im_bot')->find();
+        $row=$this->model->where('id',$this->auth->id)->field('wx_im_bot, wx_im_weight')->find();
 
         if (!$row) {
             $this->error(__('No Results were found'));
@@ -59,7 +59,6 @@ class Wxim extends Backend
         }
         if (false === $this->request->isPost()) {
             $this->view->assign('row', $row);
-
             return $this->view->fetch();
         }
         $params = $this->request->post('row/a');
@@ -95,7 +94,22 @@ class Wxim extends Backend
      * @return void
      */
     public function update(){
+        $row=$this->model->where('id',$this->auth->id)->field('id')->find();
+        $adminIds = $this->getDataLimitAdminIds();
 
+        if (is_array($adminIds) && !in_array($row[$this->dataLimitField], $adminIds)) {
+            $this->error(__('You have no permission'));
+        }
+        $wxImBot = input('wxImBot');
+        $wxImWeight = input('wxImWeight');
+
+        if ($wxImWeight){
+            $row->allowField(true)->save([
+                'wx_im_bot' => $wxImBot,
+                'wx_im_weight' => $wxImWeight,
+            ]);
+        }
+        $this->success();
     }
 
 }

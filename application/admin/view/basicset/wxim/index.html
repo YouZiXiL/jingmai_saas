@@ -7,25 +7,26 @@
 <body>
 <div  id="robot" v-cloak>
     <el-form label-position="right" :model="formData" :rules="rules" ref="ruleForm" >
-
         <el-card class="box-card" shadow="never">
             <div class="grid-content bg-white">
                 <el-form-item label="微信企业机器人" prop="wxImBot">
                     <el-input placeholder="用于通知企业微信群" v-model="formData.wxImBot"></el-input>
                 </el-form-item>
-                <el-card header="发送场景"  shadow="never">
-                    <el-form-item label="订单重量">
-                        <el-tooltip class="item" effect="dark" content="如：填5 表明在大于等于5KG的时候发送消息；0 不发消息" placement="top-start">
-
-                        <i style="font-size: 18px" class="el-icon-warning-outline mr-3"></i>
-                        </el-tooltip>
-                        <el-input-number v-model="formData.weight" @change="onChangeWeight" :min="0" ></el-input-number>
-<!--                        <el-input placeholder="如：填5，表明在大于等于5KG的时候发送消息" :min="1"  v-model="formData.weight"></el-input>-->
-                    </el-form-item>
-                </el-card>
-                <el-form-item >
-                    <div><el-button style="width: 120px" type="primary"  @click="onSubmit"> 提 交 </el-button></div>
+                <div>
+                    <div class="mt-4 mb-2" style=" font-weight: 500">发送场景：</div>
+                    <div class="border px-3">
+                        <el-form-item style="margin-top: 22px" label="取消订单">
+                            <el-tooltip class="item" effect="dark" content="如：填5 表示订单重量>=5KG时发送取消通知；0 不发通知" placement="top-start">
+                                <i style="font-size: 18px" class="el-icon-warning-outline mr-3"></i>
+                            </el-tooltip>
+                            <el-input-number v-model="formData.wxImWeight"  @change="onChangeWeight" :min="0" ></el-input-number>
+                        </el-form-item>
+                    </div>
+                </div>
+                <el-form-item class="mt-3">
+                     <el-button style="width: 120px" type="primary"  @click="onSubmit"> 提 交 </el-button>
                 </el-form-item>
+
             </div>
         </el-card>
 
@@ -44,7 +45,7 @@
             return {
                 formData:{
                     wxImBot: '',
-                    weight: 0,
+                    wxImWeight: 0,
                 },
 
                 rules: {
@@ -52,21 +53,39 @@
                         { required: true, message: '请输入企业微信机器人链接', trigger: ['change'] },
                         { max: 66, message: '内容过长', trigger: ['change'] }
                     ],
-                    'weight': [
-                        { required: true, message: '请输入企业微信机器人链接', trigger: ['change'] },
-                        { max: 66, message: '内容过长', trigger: ['change'] }
+                    'wxImWeight': [
+                        { required: true, message: '请填写重量', trigger: ['change'] },
                     ],
                 }
             };
         },
         created(){
-
+            this.formData.wxImBot = `{$row.wx_im_bot}`
+            this.formData.wxImWeight = `{$row.wx_im_weight}`
         },
-        methods:{
 
+        methods:{
             onSubmit(){
                 this.$refs['ruleForm'].validate((valid) => {
+                    console.log('valid', valid)
+                    if(valid){
+                        Fast.api.ajax({
+                            url: 'basicset/wxim/update',
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            data: JSON.stringify({
+                                ...this.formData
+                            })
+                        },  (data) => { //success
+                            console.log(data)
 
+                            return true
+                        }, (data,ret) => { //error
+                            return true;
+                        });
+                    }
                 })
             },
             onChangeWeight(){
