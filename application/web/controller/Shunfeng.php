@@ -543,9 +543,10 @@ class Shunfeng extends Controller
                 $coupon->save();
             }
         }
-        if (!empty($agent_info['wx_im_bot'])&&  $row['weight']>= $agent_info['wx_im_weight'] ){
+        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $row['weight']>= $agent_info['wx_im_weight'] ){
             $this->common->wxim_bot($agent_info['wx_im_bot'],$row);
         }
+
         return json(['status'=>200,'data'=>'','msg'=>'取消成功']);
     }
     function order_decil(): Json

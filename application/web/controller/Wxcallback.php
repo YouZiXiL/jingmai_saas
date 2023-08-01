@@ -1527,7 +1527,8 @@ class Wxcallback extends Controller
                         ];
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
-                        if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                             //推送企业微信消息
                             $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                         }
@@ -1589,7 +1590,7 @@ class Wxcallback extends Controller
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
 
-                        if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                             //推送企业微信消息
                             $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                         }
@@ -1645,7 +1646,7 @@ class Wxcallback extends Controller
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
 
-                        if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                             //推送企业微信消息
                             $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                         }
@@ -1717,7 +1718,7 @@ class Wxcallback extends Controller
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
 
-                        if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                             //推送企业微信消息
                             $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                         }
@@ -2211,7 +2212,7 @@ class Wxcallback extends Controller
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
 
-                    if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                    if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                         //推送企业微信消息
                         $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                     }
@@ -2289,7 +2290,7 @@ class Wxcallback extends Controller
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
 
-                    if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                    if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                         //推送企业微信消息
                         $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                     }
@@ -2931,7 +2932,7 @@ class Wxcallback extends Controller
                 // 将该任务推送到消息队列，等待对应的消费者去执行
                 Queue::push(DoJob::class, $data,'way_type');
 
-                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                     //推送企业微信消息
                     $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                 }
@@ -3103,7 +3104,7 @@ class Wxcallback extends Controller
                 // 将该任务推送到消息队列，等待对应的消费者去执行
                 Queue::push(DoJob::class, $data,'way_type');
 
-                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                     //推送企业微信消息
                     $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                 }
@@ -3224,7 +3225,7 @@ class Wxcallback extends Controller
                 // 将该任务推送到消息队列，等待对应的消费者去执行
                 Queue::push(DoJob::class, $data,'way_type');
 
-                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                     //推送企业微信消息
                     $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                 }
@@ -3353,7 +3354,7 @@ class Wxcallback extends Controller
                 // 将该任务推送到消息队列，等待对应的消费者去执行
                 Queue::push(DoJob::class, $data,'way_type');
 
-                if (!empty($agent_info['wx_im_bot'])&&$orders['weight']>=3){
+                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                     //推送企业微信消息
                     $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                 }
