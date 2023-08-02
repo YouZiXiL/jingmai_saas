@@ -3310,12 +3310,17 @@ class Wxcallback extends Controller
 
             $Common=new Common();
             $Dbcommmon= new Dbcommom();
+            $receive_province = formatProvince($orders['receive_province']);
+            $receiveAddress = $receive_province . $orders['receive_city'] .$orders['receive_county'].$orders['receive_location'];
+
+            $sender_province = formatProvince($orders['sender_province']);
+            $senderAddress = $sender_province . $orders['sender_city'] .$orders['sender_county'].$orders['sender_location'];
             $content=[
                 "productCode"=>$orders['channel_id'],
                 "senderPhone"=>$orders['sender_mobile'],
                 "senderName"=>$orders['sender'],
-                "senderAddress"=>$orders['sender_address'],
-                "receiveAddress"=>$orders['receive_address'],
+                "senderAddress"=>$senderAddress,
+                "receiveAddress"=>$receiveAddress,
                 "receivePhone"=>$orders['receiver_mobile'],
                 "receiveName"=>$orders['receiver'],
                 "goods"=>$orders['item_name'],
