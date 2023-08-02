@@ -929,6 +929,15 @@ class Yunyang extends Controller
                 if($res['rcode'] != 0){
                     return R::error('取消失败请联系客服');
                 }
+            }else if ($row['channel_merchant']== Channel::$qbd){
+                $content=[
+                    "genre"=>1,
+                    'orderNo'=>$row['shopbill']
+                ];
+                $res=$this->common->shunfeng_api("http://api.wanhuida888.com/openApi/doCancel",$content);
+                if ($res['code']!=0){
+                    return R::error($res['msg']);
+                }
             }else if($row['channel_tag']=='智能'){
                 $content=[
                     'shopbill'=>$row['shopbill']
@@ -937,15 +946,6 @@ class Yunyang extends Controller
                 recordLog('order-cancer', '云洋取消订单失败' . json_encode($res));
                 if ($res['code']!=1){
                     return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
-                }
-            }else if ($row['channel_tag']=='顺丰'){
-                $content=[
-                    "genre"=>1,
-                    'orderNo'=>$row['shopbill']
-                ];
-                $res=$this->common->shunfeng_api("http://api.wanhuida888.com/openApi/doCancel",$content);
-                if ($res['code']!=0){
-                    return R::error($res['msg']);
                 }
             }else{
                 return R::error('没有该渠道');
