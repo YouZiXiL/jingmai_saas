@@ -2,7 +2,6 @@
 
 namespace app\web\controller;
 
-use app\admin\model\market\Couponlists;
 use app\common\business\AliBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
@@ -11,15 +10,10 @@ use app\common\business\WanLi;
 use app\common\library\alipay\Alipay;
 use app\common\model\Order;
 use app\web\library\ali\AliConfig;
-use app\web\model\Admin;
-use app\web\model\AgentAssets;
 use app\web\model\AgentAuth;
-use app\web\model\Couponlist;
-use app\web\model\Rebatelist;
 use think\Controller;
 use think\Db;
 use think\Exception;
-use think\Log;
 use think\Queue;
 
 class Notice extends Controller
