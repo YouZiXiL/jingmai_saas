@@ -56,7 +56,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                 searchFormVisible:true,
                 columns: [
                     [
-                        {field: 'id', title: __('Id'), visible: false},
+                        {field: 'id', title: __('Id'), visible: true},
                         {field: 'waybill', title: __('Waybill'), operate: 'LIKE', formatter:function (value) {
                             if (value!=null){
                                 return '<a style="color:#195967;" href="https://www.baidu.com/s?wd='+value+'"  target="_blank"  class="btn btn-xs btn-waybill">' + value + '</a><code data-toggle="tooltip" data-clipboard-text="'+value+'" class="fa fa-files-o btn btn-xs btn-copy-waybill"></code>';
