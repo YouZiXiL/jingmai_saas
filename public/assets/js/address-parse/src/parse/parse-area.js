@@ -90,6 +90,7 @@ class ParseArea {
 
     // 正向解析
     this.results.unshift(...ParseArea.parseByProvince(address));
+    console.log('this.results', this.results)
     if (parseAll || !this.results[0] || !this.results[0].__parse) {
       // 逆向城市解析  通过所有CityShort匹配
       this.results.unshift(...ParseArea.parseByCity(address));
@@ -175,6 +176,7 @@ class ParseArea {
         index = address.indexOf(shortProvince);
       }
       if (index > -1) {
+
         // 如果省份不是第一位 在省份之前的字段识别为名称
         if (index > 0) {
           result.name = address.substr(0, index).trim();
@@ -195,9 +197,11 @@ class ParseArea {
           }
         }
         let __address = ParseArea.parse_city_by_province(address, result);
+        console.log('__address',__address)
         if (!result.city) {
           __address = ParseArea.parse_area_by_province(address, result);
         }
+        console.log('_address', result.city)
         if (result.city) {
           result.__parse = true;
           address = __address;

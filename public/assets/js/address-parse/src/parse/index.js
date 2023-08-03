@@ -42,14 +42,12 @@ class ParseAddress {
       this.parseMobile();
       this.parsePhone();
       this.parseZipCode();
-      console.log('this.address1', this.address);
       this.address = this.address.replace(/ {2,}/, ' ');
-      console.log('this.address2', this.address);
       const firstName = ParseAddress.parseName({details: this.address});
-      console.log('this.address3', this.address);
 
+      console.log('address', this.address);
       results = ParseAddress.ParseArea.parse(this.address, parseAll);
-
+      console.log('results', results);
       for (let result of results) {
         Object.assign(result, this.result);
         result.name = result.name.trim();
