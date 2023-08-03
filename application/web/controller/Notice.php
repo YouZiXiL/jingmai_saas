@@ -6,6 +6,7 @@ use app\admin\model\market\Couponlists;
 use app\common\business\AliBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
+use app\common\business\OrderBusiness;
 use app\common\business\WanLi;
 use app\common\library\alipay\Alipay;
 use app\common\model\Order;
@@ -71,24 +72,10 @@ class Notice extends Controller
                             '云洋：'.json_encode($res, JSON_UNESCAPED_UNICODE) . PHP_EOL.
                             '请求参数：' . $record
                         );
-                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
-
-                        //支付成功下单失败  执行退款操作
-                        $refund = Alipay::start()->base()->refund(
-                            input('out_trade_no'),
-                            input('buyer_pay_amount'),
-                            input('body')
-                        );
-                        $update=[
-                            'id'=> $orders['id'],
-                            'pay_status'=> $refund?2:4,
-                            'yy_fail_reason'=>$res['message'],
-                            'order_status'=>'下单失败咨询客服',
-                            'out_refund_no'=>$out_refund_no,
-                        ];
-
-
-                    }else{
+                        $orderBusiness = new OrderBusiness();
+                        $orderBusiness->orderFail($orderModel, $res['message']);
+                    }
+                    else{
                         Queue::push(TrackJob::class, $orders['id'], 'track');
                         //支付成功下单成功
                         $result=$res['result'];
@@ -116,21 +103,8 @@ class Notice extends Controller
                             '风火递：'.$resultJson . PHP_EOL
                             .'订单id：'.$orders['out_trade_no']
                         );
-                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
-                        //支付成功下单失败  执行退款操作
-                        $refund = Alipay::start()->base()->refund(
-                            input('out_trade_no'),
-                            input('buyer_pay_amount'),
-                            input('body')
-                        );
-
-                        $update=[
-                            'id'=> $orders['id'],
-                            'pay_status'=> $refund?2:4,
-                            'yy_fail_reason'=>$result['errorMsg'],
-                            'order_status'=>'下单失败咨询客服',
-                            'out_refund_no'=>$out_refund_no,
-                        ];
+                        $orderBusiness = new OrderBusiness();
+                        $orderBusiness->orderFail($orderModel, $result['errorMsg']);
 
                     }else{ // 下单成功
 
@@ -157,21 +131,9 @@ class Notice extends Controller
                             '万利：'.$res . PHP_EOL
                             .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
                         );
-                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
-                        //支付成功下单失败  执行退款操作
-                        $refund = Alipay::start()->base()->refund(
-                            input('out_trade_no'),
-                            input('buyer_pay_amount'),
-                            input('body')
-                        );
 
-                        $update=[
-                            'id'=> $orders['id'],
-                            'pay_status'=> $refund?2:4,
-                            'yy_fail_reason'=>$result['message'],
-                            'order_status'=>'下单失败咨询客服',
-                            'out_refund_no'=>$out_refund_no,
-                        ];
+                        $orderBusiness = new OrderBusiness();
+                        $orderBusiness->orderFail($orderModel, $result['message']);
 
                     }else{
                         //支付成功下单成功
@@ -208,22 +170,8 @@ class Notice extends Controller
                         if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
                             $errMsg = '不支持的寄件或收件号码';
                         }
-                        //支付成功下单失败  执行退款操作
-                        $refund = Alipay::start()->base()->refund(
-                            input('out_trade_no'),
-                            input('buyer_pay_amount'),
-                            input('body')
-                        );
-
-                        $update=[
-                            'id'=> $orders['id'],
-                            'pay_status'=> $refund?2:4,
-                            'yy_fail_reason'=>$errMsg,
-                            'order_status'=>'下单失败咨询客服',
-                            'out_refund_no'=>$out_refund_no,
-                        ];
-
-
+                        $orderBusiness = new OrderBusiness();
+                        $orderBusiness->orderFail($orderModel, $errMsg);
                     }else{ // 下单成功
                         $update=[
                             'id'=> $orders['id'],

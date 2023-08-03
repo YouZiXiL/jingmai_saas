@@ -4,6 +4,7 @@ namespace app\common\business;
 
 use app\common\library\alipay\Alipay;
 use app\common\library\alipay\Aliopen;
+use app\web\model\AgentAuth;
 use Exception;
 
 class AliBusiness
@@ -75,5 +76,32 @@ class AliBusiness
             ]
         ];
         return $this->open->sendTemplate($content, $data['xcx_access_token']);
+    }
+
+    /**
+     * 下单失败退款操作
+     * @param $orderModel
+     * @param $errMsg
+     * @return void
+     * @throws Exception
+     */
+    public function orderRefund($orderModel, $errMsg){
+        $orders = $orderModel->toArray();
+        $agentAuth = AgentAuth::where('id', $orders['auth_id'])->value('auth_token');
+        $out_refund_no= getId();//下单退款订单号
+        //支付成功下单失败  执行退款操作
+        $refund = Alipay::start()->base()->refund(
+            $orders['out_trade_no'],
+            $orders['final_price'],
+            $agentAuth
+        );
+
+        $update=[
+            'id'=> $orders['id'],
+            'pay_status'=> $refund?2:4,
+            'yy_fail_reason'=>$res['message'],
+            'order_status'=>'下单失败咨询客服',
+            'out_refund_no'=>$out_refund_no,
+        ];
     }
 }

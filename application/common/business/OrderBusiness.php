@@ -15,10 +15,13 @@ use think\Queue;
 class OrderBusiness
 {
     /**
-     * 订单退款
+     * 取消订单，退款操作
+     * @param Model $orderModel
+     * @return void
      * @throws Exception
+     * @throws \Exception
      */
-    public function refund(Model $orderModel)
+    public function orderCancel(Model $orderModel)
     {
         $order = $orderModel->toArray();
         $wxOrder = $order['pay_type'] == 1; // 微信支付
@@ -44,29 +47,69 @@ class OrderBusiness
             $DbCommon = new Dbcommom();
             $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, '运单号：' . $order['waybill'] . ' 已取消并退款');
         } else if ($aliOrder) { // 支付宝
-            $agent_auth_xcx = AgentAuth::where('agent_id',$order['agent_id'])
-                ->where('app_id',$order['wx_mchid'])
-                ->find();
-            $refund = Alipay::start()->base()->refund($order['out_trade_no'], $order['final_price'], $agent_auth_xcx['auth_token']);
-            if ($refund) {
-                $out_refund_no = $utils->get_uniqid();//下单退款订单号
-                $update = [
-                    'pay_status' => 2,
-                    'order_status' => '已取消',
-                    'out_refund_no' => $out_refund_no,
-                ];
-            } else {
-                $update = [
-                    'pay_status' => 4,
-                    'order_status' => '取消成功未退款'
-                ];
-
+            $agentAuth = AgentAuth::where('id', $order['auth_id'])->value('auth_token');
+            // 执行退款操作
+            $refund = Alipay::start()->base()->refund(
+                $order['out_trade_no'],
+                $order['final_price'],
+                $agentAuth
+            );
+            $out_refund_no = $utils->get_uniqid();//下单退款订单号
+            $update = [
+                'id'=> $order['id'],
+                'pay_status' => 2,
+                'order_status' => '已取消',
+                'out_refund_no' => $out_refund_no,
+            ];
+            if (!$refund) {
+                $update['pay_status'] = 4;
             }
             $orderModel->isUpdate()->save($update);
-            $DbCommon = new Dbcommom();
-            $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, '运单号：' . $order['waybill'] . ' 已取消并退款');
+            if($order['pay_status'] == 1){
+                // 只有支付成功的订单，取消操作时才给商家退款
+                $DbCommon = new Dbcommom();
+                $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, '运单号：' . $order['waybill'] . ' 已取消并退款');
+            }
+
         }
     }
+
+    /**
+     * 下单失败退款
+     * @param $errMsg string 失败原因
+     * @return void
+     * @throws Exception
+     * @throws \Exception
+     */
+    public function orderFail(Model $orderModel, string $errMsg){
+        $order = $orderModel->toArray();
+        $wxOrder = $order['pay_type'] == 1; // 微信支付
+        $aliOrder = $order['pay_type'] == 2; // 支付宝支付
+        $autoOrder = $order['pay_type'] == 3; // 智能下单
+
+        if($aliOrder){
+            $agentAuth = AgentAuth::where('id', $order['auth_id'])->value('auth_token');
+            // 执行退款操作
+            $refund = Alipay::start()->base()->refund(
+                $order['out_trade_no'],
+                $order['final_price'],
+                $agentAuth
+            );
+            $out_refund_no = getId();//下单退款订单号
+            $update = [
+                'id'=> $order['id'],
+                'pay_status' => 2,
+                'order_status' => '下单失败咨询客服',
+                'out_refund_no' => $out_refund_no,
+                'yy_fail_reason'=> $errMsg,
+            ];
+            if (!$refund) {
+                $update['pay_status'] = 3;
+            }
+            $orderModel->isUpdate()->save($update);
+        }
+    }
+
 
     /**
      * 创建订单

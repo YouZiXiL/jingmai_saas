@@ -3810,6 +3810,7 @@ class Wxcallback extends Controller
 
     /**
      * 极鹭回调
+     * @throws \Exception
      */
     function jilu(){
         $params = input();
@@ -3933,7 +3934,7 @@ class Wxcallback extends Controller
                 $update['comments'] = $expressTrack;
                 if($expressStatus == 5 &&$order['pay_status']!=2){ // 已取消
                     $orderBusiness = new OrderBusiness();
-                    $orderBusiness->refund($orderModel);
+                    $orderBusiness->orderCancel($orderModel);
                     return json(['code'=>1, 'message'=>'ok']);
                 }
                 if($expressStatus == 2){ // 已签收

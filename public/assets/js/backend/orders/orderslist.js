@@ -373,7 +373,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     icon: 'fa fa-magic',
                                     url: 'orders/orderslist/after',
                                     visible: function (row) {
-                                        return row.pay_status === '1' || row.pay_type === '3';
+                                        return row.pay_status === '1' || row.pay_status === '3';
                                     }
                                 },
                                 {

@@ -11,6 +11,7 @@ use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\wechat\crypt\WXBizMsgCrypt;
 use app\common\model\Order;
+use app\common\model\PushNotice;
 use app\web\model\Admin;
 use app\web\model\AgentAuth;
 use app\web\model\Rebatelist;
@@ -18,6 +19,7 @@ use DOMDocument;
 use think\Controller;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
+use think\Exception;
 use think\exception\DbException;
 use think\Log;
 use think\Queue;
@@ -32,18 +34,15 @@ class Test extends Controller
         $this->utils = new Common();
     }
 
+    /**
+     * @throws DbException
+     * @throws Exception
+     */
     public function test(){
-        $json = '{"code":-1,"msg":"Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]"}';
-        $res = json_decode($json, true);
-        $errMsg = $res['data']['message']??$res['msg'];
-        if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]')
-        {
-            $errMsg ='不支持的寄件或收件号码';
-        }else if(strpos($errMsg, 'HttpMessageConverter')!== false){
-            $errMsg ='不支持的寄件或收件号码222';
-        }
+        $agentAuth = AgentAuth::where('id', 109)->value('auth_token');
 
-        dd($errMsg);
+        return R::ok($agentAuth);
+
     }
 
     // 获取分享链接
@@ -78,6 +77,7 @@ class Test extends Controller
      * 第三方获取小程序access_token
      * @param $kaifang_appid
      * @return void
+     * @throws Exception
      */
     public function open_access_token($kaifang_appid){
         $xcx_access_token=$this->utils->get_authorizer_access_token($kaifang_appid);
@@ -422,6 +422,27 @@ class Test extends Controller
         $wxBusiness = new WxBusiness();
         $result = $wxBusiness->getTemplateList('wxda7d6f1aea4ac201');
         return R::ok($result);
+    }
+
+    // 发送耗材短信
+    public function sendMaterialMsm(){
+        $weightId = 7762; // 超重模版ID
+        $haocaiId = 7769; // 耗材模版ID
+        $this->domain=config('site.site_url');
+        $userid=config('site.kuaidi100_userid');
+        $key=config('site.kuaidi100_key');
+        $content=json_encode(['发收人姓名'=>'测试','快递单号'=>'test123', '补缴链接'=>'test_link']);
+        $res=$this->utils->httpRequest('https://apisms.kuaidi100.com/sms/send.do',[
+            'sign'=>strtoupper(md5($key.$userid)),
+            'userid'=>$userid,
+            'seller'=>'鲸喜',
+            'phone'=> '13937895022',
+            'tid'=>$weightId,
+            'content'=>$content,
+            'outorder'=>'订单号',
+            'callback'=> $this->domain.'/web/wxcallback/send_sms'
+        ],'POST',['Content-Type: application/x-www-form-urlencoded']);
+        return R::ok($res);
     }
 
 }

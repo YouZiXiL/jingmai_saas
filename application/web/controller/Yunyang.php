@@ -911,7 +911,7 @@ class Yunyang extends Controller
                 if( $row['pay_status']!=2) {
                     // 执行退款操作
                     $orderBusiness = new OrderBusiness();
-                    $orderBusiness->refund($orderModel);
+                    $orderBusiness->orderCancel($orderModel);
                 }
             }else if($row['channel_merchant'] == Channel::$fhd){
                 $content=[

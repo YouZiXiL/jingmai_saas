@@ -5,6 +5,7 @@ namespace app\admin\controller\orders;
 
 use app\admin\model\Admin;
 use app\common\business\CouponBusiness;
+use app\common\business\OrderBusiness;
 use app\common\controller\Backend;
 use app\common\library\alipay\Alipay;
 use app\web\controller\Common;
@@ -142,7 +143,6 @@ class Afterlist extends Backend
                     $final_price = $orders['final_price']; // 支付金额
                     $Dbcommon= new Dbcommom();
                     $Common=new Common();
-                    //代理商增加余额  代理超轻
                     $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'运单号：'.$orders['waybill'].' 超轻增加金额：'.$agent_tralight_amt.'元');
                     if($orders->pay_type == 1){
                         //退款时对优惠券判定
@@ -176,6 +176,10 @@ class Afterlist extends Backend
                             ]]);
                         $remark='超轻退回金额：'.$agent_tralight_amt.'元';
                     }
+                    elseif ($orders->pay_type == 2){
+                        $orderBusiness = new OrderBusiness();
+                        $orderBusiness->orderCancel($orders);
+                    }
                     $orders->allowField(true)->save(['tralight_status'=>2]);
                 }else{
                     $orders->allowField(true)->save(['tralight_status'=>4]);
@@ -185,7 +189,7 @@ class Afterlist extends Backend
             //取消订单处理
             if ((empty($row['salf_type'])&&$params['cope_status']==1)||($row['salf_type']==3&&$params['cope_status']==1)){
                 $orders=$orders->get(['id'=>$row['order_id']]);
-                if ($orders['pay_status']!=1){
+                if ($orders['pay_status']!=1 && $orders['pay_status']!=3 ){
                     throw new Exception('此订单已取消');
                 }
 
@@ -208,7 +212,8 @@ class Afterlist extends Backend
                             ],
                         ]]);
                     $up_data['out_refund_no'] = $out_refund_no;
-                }elseif ($orders['pay_type'] == 2){
+                }
+                elseif ($orders['pay_type'] == 2){
                     $refund = Alipay::start()->base()
                         ->refund($orders['out_trade_no'],$orders['final_price'],$agentAuth['auth_token']);
                     if($refund){

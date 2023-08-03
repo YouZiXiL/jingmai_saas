@@ -181,7 +181,7 @@ class Orderslist extends Backend
             if( $row['pay_status']!=2) {
                 // 执行退款操作
                 $orderBusiness = new OrderBusiness();
-                $orderBusiness->refund($orderModel);
+                $orderBusiness->orderCancel($orderModel);
             }
         } else if ($row['channel_tag']=='重货'){
             $content=[
@@ -277,7 +277,8 @@ class Orderslist extends Backend
         if ($Afterlist){
             $this->error(__('此订单已反馈超轻，待客服核实'));
         }
-        if ($row['pay_status']!=1){
+
+        if ($row['pay_status']!=1 && $row['pay_status']!=3){
             $this->error(__('此订单不能反馈'));
         }
         $params = $this->preExcludeFields($params);
