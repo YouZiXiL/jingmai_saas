@@ -6,6 +6,8 @@ use app\common\library\alipay\Alipay;
 use app\common\library\alipay\Aliopen;
 use app\web\model\AgentAuth;
 use Exception;
+use stdClass;
+use think\exception\PDOException;
 
 class AliBusiness
 {
@@ -79,29 +81,30 @@ class AliBusiness
     }
 
     /**
-     * 下单失败退款操作
-     * @param $orderModel
-     * @param $errMsg
-     * @return void
+     * 超重支付
+     * @param array $order
+     * @param $openId
+     * @return string
+     * @throws PDOException
+     * @throws \think\Exception
      * @throws Exception
      */
-    public function orderRefund($orderModel, $errMsg){
-        $orders = $orderModel->toArray();
-        $agentAuth = AgentAuth::where('id', $orders['auth_id'])->value('auth_token');
-        $out_refund_no= getId();//下单退款订单号
-        //支付成功下单失败  执行退款操作
-        $refund = Alipay::start()->base()->refund(
-            $orders['out_trade_no'],
-            $orders['final_price'],
-            $agentAuth
-        );
-
-        $update=[
-            'id'=> $orders['id'],
-            'pay_status'=> $refund?2:4,
-            'yy_fail_reason'=>$res['message'],
-            'order_status'=>'下单失败咨询客服',
-            'out_refund_no'=>$out_refund_no,
-        ];
+    public function overload(array $order, $openId){
+        $appAuthToken = AgentAuth::where('id',$order['auth_id'])->value('auth_token');
+        $out_overload_no = 'CZ' . getId();
+        $object = new stdClass();
+        $object->out_trade_no = $out_overload_no;
+        $object->total_amount = $order['overload_price'];
+        $object->subject = '超重补缴-'.$out_overload_no;
+        $object->buyer_id = $openId;
+        $object->query_options = [$appAuthToken];
+        $notifyUrl = request()->domain() . '/web/notice/overload';
+        $result = Alipay::start()->base()->create($object, $appAuthToken, $notifyUrl);
+        $tradeNo = $result->trade_no;
+        db('orders')->where('id',$order['id'])->update([
+            'wx_out_overload_no'=> $tradeNo,
+            'out_overload_no' => $out_overload_no
+        ]);
+        return $tradeNo;
     }
 }

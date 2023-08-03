@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\common\business\AliBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
 use app\common\business\OrderBusiness;
@@ -1110,20 +1111,8 @@ class Yunyang extends Controller
                 return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
             }
             else if($order['pay_type'] == 2){
-                $appAuthToken = AgentAuth::where('id',$order['auth_id'])->value('auth_token');
-                $object = new stdClass();
-                $object->out_trade_no = $out_overload_no;
-                $object->total_amount = $order['overload_price'];
-                $object->subject = '超重补缴-'.$out_overload_no;
-                $object->buyer_id = $this->user->open_id;
-                $object->query_options = [$appAuthToken];
-                $notifyUrl = request()->domain() . '/web/notice/overload';
-                $result = Alipay::start()->base()->create($object, $appAuthToken, $notifyUrl);
-                $tradeNo = $result->trade_no;
-                db('orders')->where('id',$id)->update([
-                    'wx_out_overload_no'=> $tradeNo,
-                    'out_overload_no' => $out_overload_no
-                ]);
+                $aliBusiness = new AliBusiness();
+                $tradeNo = $aliBusiness->overload($order, $this->user->open_id);
                 return R::ok($tradeNo);
             }
             return R::error('未知类型');
@@ -1302,21 +1291,6 @@ class Yunyang extends Controller
             throw new Exception('图片类型错误');
         }
         $attachment = $upload->upload();
-
-//            $content=[
-//                'subType'=>'2',
-//                'waybill'=>$orders['waybill'],
-//                'checkGoodsName'=>$orders['item_name'],
-//                'checkWeight'=>$pamar['salf_weight'],
-//                'checkVolume'=>$pamar['salf_volume'],
-//                'checkPicOne'=>$this->request->domain().$attachment->url,
-//            ];
-//            $data=$this->common->yunyang_api('AFTER_SALE',$content);
-//            if ($data['code']!=1){
-//                throw new Exception($data['message']);
-//            }
-
-
 
             db('after_sale')->insert([
                 'order_id'=>$pamar['id'],

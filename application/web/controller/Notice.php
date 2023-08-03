@@ -303,7 +303,7 @@ class Notice extends Controller
                 throw new Exception('支付宝支付失败');
             }
 
-            $orderModel = Order::where('out_trade_no',input('out_trade_no'))->find();
+            $orderModel = Order::where('out_overload_no',input('out_trade_no'))->find();
             if(!$orderModel){
                 throw new Exception('支付订单未找到');
             }
