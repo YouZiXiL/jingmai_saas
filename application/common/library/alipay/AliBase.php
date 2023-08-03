@@ -89,13 +89,15 @@ class AliBase
      * 统一收单交易创建接口
      * @param $object
      * @param $appAuthToken
+     * @param $notifyUrl @回调地址
      * @return object {code:1000, msg:Success, out_trade_no:XD1681719306712952887, trade_no:2023041722001408751405766558,}
      * @throws Exception
      */
-    public function create($object, $appAuthToken = null){
+    public function create($object, $appAuthToken = null, $notifyUrl = null){
         $json = json_encode($object);
         $request = new AlipayTradeCreateRequest();
-        $request->setNotifyUrl(request()->domain() . '/web/notice/ali');
+        $notifyUrl = $notifyUrl??request()->domain() . '/web/notice/ali';
+        $request->setNotifyUrl($notifyUrl);
         $request->setBizContent($json);
         try {
             $result = $this->aop->execute($request, null, $appAuthToken);

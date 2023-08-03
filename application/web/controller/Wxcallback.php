@@ -1348,7 +1348,7 @@ class Wxcallback extends Controller
             if(!$orders){
                 throw new Exception('找不到指定订单');
             }
-            //如果订单未支付  调用云洋下单接口
+
             if ($orders['overload_status']!=1){
                 throw new Exception('重复回调');
             }

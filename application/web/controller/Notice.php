@@ -284,5 +284,49 @@ class Notice extends Controller
         recordLog('ali-gateway', json_encode(input(), JSON_UNESCAPED_UNICODE));
         return true;
     }
+
+    /**
+     * 超重回调
+     * @return string
+     */
+    public function overload(){
+        $signal = "success";
+        recordLog('ali-callback', '超重回调-'.json_encode(input(), JSON_UNESCAPED_UNICODE));
+        try {
+            $alipay = AliConfig::options(input('app_id'))->payment()->common();
+            $verifySign= $alipay->verifyNotify(input());
+            if (!$verifySign){
+                throw new Exception('验签失败');
+            }
+
+            if (input('trade_status') !== 'TRADE_SUCCESS'){
+                throw new Exception('支付宝支付失败');
+            }
+
+            $orderModel = Order::where('out_trade_no',input('out_trade_no'))->find();
+            if(!$orderModel){
+                throw new Exception('支付订单未找到');
+            }
+
+            $orders = $orderModel->toArray();
+            if ($orders['overload_status']!=1){
+                throw new Exception('重复回调');
+            }
+            // 改订单状态为付款中
+            $orderModel->isUpdate(true)
+                ->save([
+                    'id'=> $orders['id'],
+                    'overload_status' => 2
+                ]);
+            return $signal;
+        }catch (\Exception $e){
+            recordLog('ali-callback-err',
+                '超重回调：('. $e->getLine() . ')' . $e->getMessage()  .PHP_EOL .
+                $e->getTraceAsString(). PHP_EOL .
+                json_encode(input(), JSON_UNESCAPED_UNICODE)
+            );
+            return 'fail';
+        }
+    }
 }
 

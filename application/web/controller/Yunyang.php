@@ -1051,6 +1051,7 @@ class Yunyang extends Controller
      * 超重支付
      * @return Json
      * @throws DbException
+     * @throws \Exception
      */
     function overload_pay(): Json
     {
@@ -1064,48 +1065,69 @@ class Yunyang extends Controller
         }
 
         $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
-
-        $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
         $out_overload_no='CZ'.$this->common->get_uniqid();
         try {
-            $resp = $wx_pay
-                ->chain('v3/pay/transactions/jsapi')
-                ->post(['json' => [
-                    'mchid'        => $agent_info['wx_mchid'],
-                    'out_trade_no' => $out_overload_no,
-                    'appid'        => $this->user->app_id,
-                    'description'  => '超重补缴-'.$out_overload_no,
-                    'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_overload_pay',
-                    'amount'       => [
-                        'total'    => (int)bcmul($order['overload_price'],100),
-                        'currency' => 'CNY'
-                    ],
-                    'payer'        => [
-                        'openid'   =>$this->user->open_id
-                    ]
-                ]]);
-            $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
-            $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
-            $prepay_id=json_decode($resp->getBody(),true);
-            if (!array_key_exists('prepay_id',$prepay_id)){
-                throw new Exception('拉取支付错误');
+            if($order['pay_type'] == 1){
+                $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+
+                $resp = $wx_pay
+                    ->chain('v3/pay/transactions/jsapi')
+                    ->post(['json' => [
+                        'mchid'        => $agent_info['wx_mchid'],
+                        'out_trade_no' => $out_overload_no,
+                        'appid'        => $this->user->app_id,
+                        'description'  => '超重补缴-'.$out_overload_no,
+                        'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_overload_pay',
+                        'amount'       => [
+                            'total'    => (int)bcmul($order['overload_price'],100),
+                            'currency' => 'CNY'
+                        ],
+                        'payer'        => [
+                            'openid'   =>$this->user->open_id
+                        ]
+                    ]]);
+                $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
+                $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+                $prepay_id=json_decode($resp->getBody(),true);
+                if (!array_key_exists('prepay_id',$prepay_id)){
+                    throw new Exception('拉取支付错误');
+                }
+                $params = [
+                    'appId'     => $this->user->app_id,
+                    'timeStamp' => (string)Formatter::timestamp(),
+                    'nonceStr'  => Formatter::nonce(),
+                    'package'   =>'prepay_id='. $prepay_id['prepay_id'],
+                ];
+                $params += ['paySign' => Rsa::sign(
+                    Formatter::joinedByLineFeed(...array_values($params)),
+                    $merchantPrivateKeyInstance
+                ), 'signType' => 'RSA'];
+                db('orders')->where('id',$id)->update([
+                    'cz_mchid'=>$agent_info['wx_mchid'],
+                    'cz_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+                    'out_overload_no' => $out_overload_no
+                ]);
+                return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
             }
-            $params = [
-                'appId'     => $this->user->app_id,
-                'timeStamp' => (string)Formatter::timestamp(),
-                'nonceStr'  => Formatter::nonce(),
-                'package'   =>'prepay_id='. $prepay_id['prepay_id'],
-            ];
-            $params += ['paySign' => Rsa::sign(
-                Formatter::joinedByLineFeed(...array_values($params)),
-                $merchantPrivateKeyInstance
-            ), 'signType' => 'RSA'];
-            db('orders')->where('id',$id)->update([
-                'cz_mchid'=>$agent_info['wx_mchid'],
-                'cz_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
-                'out_overload_no' => $out_overload_no
-            ]);
-            return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
+            else if($order['pay_type'] == 2){
+                $appAuthToken = AgentAuth::where('id',$order['auth_id'])->value('auth_token');
+                $object = new stdClass();
+                $object->out_trade_no = $out_overload_no;
+                $object->total_amount = $order['overload_price'];
+                $object->subject = '超重补缴-'.$out_overload_no;
+                $object->buyer_id = $this->user->open_id;
+                $object->query_options = [$appAuthToken];
+                $notifyUrl = request()->domain() . '/web/notice/overload';
+                $result = Alipay::start()->base()->create($object, $appAuthToken, $notifyUrl);
+                $tradeNo = $result->trade_no;
+                db('orders')->where('id',$id)->update([
+                    'wx_out_overload_no'=> $tradeNo,
+                    'out_overload_no' => $out_overload_no
+                ]);
+                return R::ok($tradeNo);
+            }
+            return R::error('未知类型');
+
         } catch (Exception $e) {
             // 进行错误处理
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
