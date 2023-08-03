@@ -1188,49 +1188,57 @@ class Yunyang extends Controller
 
         $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
 
-        $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
-        $out_haocai_no='HC'.$this->common->get_uniqid();
-
         try {
-            $resp = $wx_pay
-                ->chain('v3/pay/transactions/jsapi')
-                ->post(['json' => [
-                    'mchid'        => $agent_info['wx_mchid'],
-                    'out_trade_no' => $out_haocai_no,
-                    'appid'        => $this->user->app_id,
-                    'description'  => '耗材补缴-'.$out_haocai_no,
-                    'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_haocai_pay',
-                    'amount'       => [
-                        'total'    => (int)bcmul($order['haocai_freight'],100),
-                        'currency' => 'CNY'
-                    ],
-                    'payer'        => [
-                        'openid'   =>$this->user->open_id
-                    ]
-                ]]);
-            $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
-            $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+            if($order['pay_type'] == 1){
+                $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+                $out_haocai_no='HC'.$this->common->get_uniqid();
+                $resp = $wx_pay
+                    ->chain('v3/pay/transactions/jsapi')
+                    ->post(['json' => [
+                        'mchid'        => $agent_info['wx_mchid'],
+                        'out_trade_no' => $out_haocai_no,
+                        'appid'        => $this->user->app_id,
+                        'description'  => '耗材补缴-'.$out_haocai_no,
+                        'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_haocai_pay',
+                        'amount'       => [
+                            'total'    => (int)bcmul($order['haocai_freight'],100),
+                            'currency' => 'CNY'
+                        ],
+                        'payer'        => [
+                            'openid'   =>$this->user->open_id
+                        ]
+                    ]]);
+                $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
+                $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
 
-            $prepay_id=json_decode($resp->getBody(),true);
-            if (!array_key_exists('prepay_id',$prepay_id)){
-                throw new Exception('拉取支付错误');
+                $prepay_id=json_decode($resp->getBody(),true);
+                if (!array_key_exists('prepay_id',$prepay_id)){
+                    throw new Exception('拉取支付错误');
+                }
+                $params = [
+                    'appId'     => $this->user->app_id,
+                    'timeStamp' => (string)Formatter::timestamp(),
+                    'nonceStr'  => Formatter::nonce(),
+                    'package'   =>'prepay_id='. $prepay_id['prepay_id'],
+                ];
+                $params += ['paySign' => Rsa::sign(
+                    Formatter::joinedByLineFeed(...array_values($params)),
+                    $merchantPrivateKeyInstance
+                ), 'signType' => 'RSA'];
+                db('orders')->where('id',$id)->update([
+                    'hc_mchid'=>$agent_info['wx_mchid'],
+                    'hc_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+                    'out_haocai_no'=>$out_haocai_no
+                ]);
+                return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
             }
-            $params = [
-                'appId'     => $this->user->app_id,
-                'timeStamp' => (string)Formatter::timestamp(),
-                'nonceStr'  => Formatter::nonce(),
-                'package'   =>'prepay_id='. $prepay_id['prepay_id'],
-            ];
-            $params += ['paySign' => Rsa::sign(
-                Formatter::joinedByLineFeed(...array_values($params)),
-                $merchantPrivateKeyInstance
-            ), 'signType' => 'RSA'];
-            db('orders')->where('id',$id)->update([
-                'hc_mchid'=>$agent_info['wx_mchid'],
-                'hc_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
-                'out_haocai_no'=>$out_haocai_no
-            ]);
-            return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
+            elseif ($order['pay_type'] == 2){
+                $aliBusiness = new AliBusiness();
+                $tradeNo = $aliBusiness->material($order, $this->user->open_id);
+                return R::ok($tradeNo);
+            }
+            return R::error('未知渠道');
+
         } catch (\Exception $e) {
             // 进行错误处理
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);

@@ -13,7 +13,10 @@ use app\web\library\ali\AliConfig;
 use app\web\model\AgentAuth;
 use think\Controller;
 use think\Db;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
+use think\exception\DbException;
 use think\Queue;
 
 class Notice extends Controller
@@ -29,16 +32,7 @@ class Notice extends Controller
         $signal = "success";
         recordLog('ali-callback', json_encode(input(), JSON_UNESCAPED_UNICODE));
         try {
-            $alipay = AliConfig::options(input('app_id'))->payment()->common();
-            $verifySign= $alipay->verifyNotify(input());
-            if (!$verifySign){
-                throw new Exception('验签失败');
-            }
-
-            if (input('trade_status') !== 'TRADE_SUCCESS'){
-                throw new Exception('支付宝支付失败');
-            }
-
+            $this->checkHandle();
             $orderModel = Order::where('out_trade_no',input('out_trade_no'))->find();
             if(!$orderModel){
                 throw new Exception('支付订单未找到');
@@ -285,23 +279,13 @@ class Notice extends Controller
      */
     public function overload(){
         $signal = "success";
-        recordLog('ali-callback', '超重回调-'.json_encode(input(), JSON_UNESCAPED_UNICODE));
+        recordLog('ali-callback', 'CZ-'.json_encode(input(), JSON_UNESCAPED_UNICODE));
         try {
-            $alipay = AliConfig::options(input('app_id'))->payment()->common();
-            $verifySign= $alipay->verifyNotify(input());
-            if (!$verifySign){
-                throw new Exception('验签失败');
-            }
-
-            if (input('trade_status') !== 'TRADE_SUCCESS'){
-                throw new Exception('支付宝支付失败');
-            }
-
+            $this->checkHandle();
             $orderModel = Order::where('out_overload_no',input('out_trade_no'))->find();
             if(!$orderModel){
                 throw new Exception('支付订单未找到');
             }
-
             $orders = $orderModel->toArray();
             if ($orders['overload_status']!=1){
                 throw new Exception('重复回调');
@@ -315,11 +299,64 @@ class Notice extends Controller
             return $signal;
         }catch (\Exception $e){
             recordLog('ali-callback-err',
-                '超重回调：('. $e->getLine() . ')' . $e->getMessage()  .PHP_EOL .
+                'CZ：('. $e->getLine() . ')' . $e->getMessage()  .PHP_EOL .
                 $e->getTraceAsString(). PHP_EOL .
                 json_encode(input(), JSON_UNESCAPED_UNICODE)
             );
             return 'fail';
+        }
+    }
+
+    /**
+     * 耗材回调
+     * @return string
+     */
+    public function material(){
+        $signal = "success";
+        recordLog('ali-callback', 'HC-'.json_encode(input(), JSON_UNESCAPED_UNICODE));
+        try {
+            $this->checkHandle();
+            $orderModel = Order::where('out_haocai_no',input('out_trade_no'))->find();
+            if(!$orderModel){
+                throw new Exception('支付订单未找到');
+            }
+            $orders = $orderModel->toArray();
+            if ($orders['consume_status']!=1){
+                throw new Exception('重复回调');
+            }
+            // 改订单状态为付款中
+            $orderModel->isUpdate(true)
+                ->save([
+                    'id'=> $orders['id'],
+                    'consume_status' => 2
+                ]);
+            return $signal;
+        }catch (\Exception $e){
+            recordLog('ali-callback-err',
+                'HC：('. $e->getLine() . ')' . $e->getMessage()  .PHP_EOL .
+                $e->getTraceAsString(). PHP_EOL .
+                json_encode(input(), JSON_UNESCAPED_UNICODE)
+            );
+            return 'fail';
+        }
+    }
+
+    /**
+     * 订单支付验签
+     * @return void
+     * @throws Exception
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
+     */
+    protected function checkHandle(){
+        $alipay = AliConfig::options(input('app_id'))->payment()->common();
+        $verifySign= $alipay->verifyNotify(input());
+        if (!$verifySign){
+            throw new Exception('验签失败');
+        }
+        if (input('trade_status') !== 'TRADE_SUCCESS'){
+            throw new Exception('支付宝支付失败');
         }
     }
 }

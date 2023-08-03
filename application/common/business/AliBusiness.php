@@ -107,4 +107,33 @@ class AliBusiness
         ]);
         return $tradeNo;
     }
+
+
+    /**
+     * 耗材支付
+     * @param array $order
+     * @param $openId
+     * @return string
+     * @throws PDOException
+     * @throws \think\Exception
+     * @throws Exception
+     */
+    public function material(array $order, $openId){
+        $appAuthToken = AgentAuth::where('id',$order['auth_id'])->value('auth_token');
+        $materialNo = 'HC' . getId();
+        $object = new stdClass();
+        $object->out_trade_no = $materialNo;
+        $object->total_amount = $order['haocai_freight'];
+        $object->subject = '超重补缴-'.$materialNo;
+        $object->buyer_id = $openId;
+        $object->query_options = [$appAuthToken];
+        $notifyUrl = request()->domain() . '/web/notice/material';
+        $result = Alipay::start()->base()->create($object, $appAuthToken, $notifyUrl);
+        $tradeNo = $result->trade_no;
+        db('orders')->where('id',$order['id'])->update([
+            'wx_out_haocai_no'=> $tradeNo,
+            'out_haocai_no' => $materialNo
+        ]);
+        return $tradeNo;
+    }
 }
