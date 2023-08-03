@@ -112,9 +112,6 @@ class Order extends Backend
         list($yy, $fhd, $qbd) = $response;
 
         $paramData['channelTag'] = '智能';
-        $paramData['tagType'] = '德邦';
-        $paramData['type'] = 'RCP';
-        $paramData['channel'] = '德邦大件快递360';
 
         $yyRes = $orderBusiness->yyPriceHandle($yy, $agent_info, $paramData);
         $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData);

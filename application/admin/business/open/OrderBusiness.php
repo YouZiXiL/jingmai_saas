@@ -160,69 +160,70 @@ class OrderBusiness extends Backend
                 case  '申通':
                 case  '圆通':
                 case  '极兔':
+                case '中通':
+                case '韵达':
+                case '菜鸟':
                     $admin_shouzhong=$item['price']['priceOne'];//平台首重
                     $admin_xuzhong=$item['price']['priceMore'];//平台续重
                     $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
                     $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                    $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                    $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
                     $xzWeight=$param['info']['weight']-1;//续重重量
-                    $xuzhong_price=$users_xuzhong*$xzWeight;//用户续重总价格
-                    $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                    $agent_price=$agent_shouzhong+$agent_xuzhong*$xzWeight;//代理商结算金额
-                    break;
-                case '中通':
-                case '韵达':
-                    $admin_shouzhong=$item['priceOne'];//平台首重
-                    $admin_xuzhong=$item['priceMore'];//平台续重
-                    $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                    $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                    $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                    $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                    $xzWeight=$param['info']['weight']-1;//续重重量
-                    $xuzhong_price=$users_xuzhong*$xzWeight;//用户续重总价格
-                    $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                    $agent_price=$agent_shouzhong+$agent_xuzhong*$xzWeight;//代理商结算金额
+                    $agentFreight=$agent_shouzhong+$agent_xuzhong*$xzWeight; //代理商运费
                     break;
                 case '顺丰':
-                    $agent_price=$item['freight']+$item['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
-                    $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
+                    $agentFreight=$item['freight']+$item['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
                     $admin_shouzhong=0;//平台首重
                     $admin_xuzhong=0;//平台续重
                     $agent_shouzhong=0;//代理商首重
                     $agent_xuzhong=0;//代理商续重
-                    $users_shouzhong=0;//用户首重
-                    $users_xuzhong=0;//用户续重
                     break;
                 case '德邦':
                 case '京东':
-                    $agent_price=$item['freight']+$item['freight']*$agent_info['agent_db_ratio']/100;//代理商价格
-                    $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
+                    $agentFreight=$item['freight']+$item['freight']*$agent_info['agent_db_ratio']/100;//代理商运费
                     $admin_shouzhong=@$item['discountPriceOne'];//平台首重
                     $admin_xuzhong=@$item['discountPriceMore'];//平台续重
                     $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_db_ratio']/100;//代理商首重
                     $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
-                    $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
-                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
                     break;
+
                 default:
                     unset($channel[$key]);
                     continue 2;
             }
             // 用户运费 + 附加费用
-            isset($item['extFreightFlag']) && $users_price = $users_price + $item['extFreight'];
-            // 用户运费 + 保价费 （用户下单金额）
-            $finalPrice= sprintf("%.2f",$users_price + $item['freightInsured']);
+            if(isset($item['extFreightFlag']) ){
+                $agentFreight += $item['extFreight'];
+            }
+            // 代理商结算金额 （ 运费 + 保价费）
+            $agentPrice = sprintf("%.2f",$agentFreight + $item['freightInsured']);
 
-            // 代理商运费（平台结算金额）
-            $item['agent_price']= sprintf("%.2f",$agent_price + $item['freightInsured']);//代理商结算
+            if($item['tagType'] == '菜鸟'){
+                $caiNiaoEnable = false; // 菜鸟是否可用
+                foreach ($item['appointTimes'] as $appointTime) {
+                    if($appointTime['date'] == date('Y-m-d') &&  $appointTime['dateSelectable']  ){
+                        foreach ($appointTime['timeList'] as $time) {
+                            if($time['selectable']){
+                                $caiNiaoEnable = $time['selectable'];
+                                continue 2;
+                            }
+                        }
+                    }
+                }
+                if(!$caiNiaoEnable){
+                    unset($channel[$key]);
+                    continue;
+                }
+            }
+
+            // 代理商结算金额
+            $item['agent_price']= $agentPrice;//代理商结算
             $item['final_price']= $item['agent_price'];
             $item['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
             $item['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
             $item['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
             $item['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
-            $item['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
-            $item['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
+            $item['users_shouzhong']= 0;//用户首重
+            $item['users_xuzhong']= 0;//用户续重
 
             $item['senderInfo']=$param['sender'];//寄件人信息
             $item['receiverInfo']=$param['receiver'];//收件人信息
@@ -233,18 +234,10 @@ class OrderBusiness extends Backend
 
             $requireId = SnowFlake::createId();
             cache( $requireId, json_encode($item), $this->ttl);
-
-//            $insert_id=db('channel_price_log')
-//                ->insertGetId([
-//                    'channel_tag'=> 'auto',
-//                    'channel_merchant'=>'YY',
-//                    'content'=>json_encode($item,JSON_UNESCAPED_UNICODE )
-//                ]);
-
-            $list[$key]['freight']=$item['agent_price'];
-            $list[$key]['tagType']=$item['tagType'];
-            $list[$key]['channelLogoUrl']=$item['channelLogoUrl'];
-            $list[$key]['channelId']=$item['channelId'];
+            $list[$key]['freight']= $agentFreight;
+            $list[$key]['tagType']= $item['tagType'];
+            $list[$key]['channelLogoUrl']= $item['channelLogoUrl'];
+            $list[$key]['channelId']= $item['channelId'];
             $list[$key]['channel']='';
             $list[$key]['requireId']= (string) $requireId;
         }
@@ -560,6 +553,9 @@ class OrderBusiness extends Backend
      * @return array
      */
     public function fhdPriceHandle(string $content, array $agent_info, array $param){
+        $param['tagType'] = '德邦';
+        $param['type'] = 'RCP';
+        $param['channel'] = '德邦大件快递360';
         $result=json_decode($content,true);
         if($result['rcode'] != 0 || $result['scode'] != 0) {
             recordLog('channel-price-err','风火递' . $content. PHP_EOL);

@@ -117,99 +117,75 @@ class YunYang{
         }
         $qudao_close=explode('|', $agent_info['qudao_close']);
         $qudao_close[] = '德邦'; // 云洋禁用德邦
+
         foreach ($data['result'] as $k=>&$v){
             if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
                 unset($data['result'][$k]);
                 continue;
             }
-            if ($v['tagType']=='顺丰'){
-                $agent_price=$v['freight']+$v['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
-                $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
-                $admin_shouzhong=0;//平台首重
-                $admin_xuzhong=0;//平台续重
-                $agent_shouzhong=0;//代理商首重
-                $agent_xuzhong=0;//代理商续重
-                $users_shouzhong=0;//用户首重
-                $users_xuzhong=0;//用户续重
-            }elseif ($v['tagType']=='德邦'){
-                $agent_price=$v['freight']+$v['freight']*$agent_info['agent_db_ratio']/100;//代理商价格
-                $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
-                $admin_shouzhong=@$v['discountPriceOne'];//平台首重
-                $admin_xuzhong=@$v['discountPriceMore'];//平台续重
-                $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_db_ratio']/100;//代理商首重
-                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
-                $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
-                $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
-            }elseif ($v['tagType']=='京东'){
-                $agent_price=$v['freight']+$v['freight']*$agent_info['agent_jd_ratio']/100;//代理商价格
-                $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
-                $admin_shouzhong=@$v['discountPriceOne'];//平台首重
-                $admin_xuzhong=@$v['discountPriceMore'];//平台续重
-                $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_jd_ratio']/100;//代理商首重
-                $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_jd_ratio']/100;//代理商续重
-                $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
-                $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
-            }elseif ($v['tagType']=='圆通'){
-
-                $admin_shouzhong=$v['price']['priceOne'];//平台首重
-                $admin_xuzhong=$v['price']['priceMore'];//平台续重
-                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                $weight=$param['weight']-1;//续重重量
-                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-            }elseif ($v['tagType']=='申通'){
-                $admin_shouzhong=$v['price']['priceOne'];//平台首重
-                $admin_xuzhong=$v['price']['priceMore'];//平台续重
-                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                $weight=$param['weight']-1;//续重重量
-                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-            }elseif ($v['tagType']=='极兔'){
-                $admin_shouzhong=$v['price']['priceOne'];//平台首重
-                $admin_xuzhong=$v['price']['priceMore'];//平台续重
-                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                $weight=$param['weight']-1;//续重重量
-                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-            }elseif ($v['tagType']=='中通'){
-                $admin_shouzhong=$v['priceOne'];//平台首重
-                $admin_xuzhong=$v['priceMore'];//平台续重
-                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                $weight=$param['weight']-1;//续重重量
-                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-            }elseif ($v['tagType']=='韵达'){
-
-                $admin_shouzhong=$v['priceOne'];//平台首重
-                $admin_xuzhong=$v['priceMore'];//平台续重
-                $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                $weight=$param['weight']-1;//续重重量
-                $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
-            }else{
-                continue;
+            switch ($v['tagType']){
+                case  '申通':
+                case  '圆通':
+                case  '极兔':
+                case '中通':
+                case '韵达':
+                case '菜鸟':
+                    $admin_shouzhong=$v['price']['priceOne'];//平台首重
+                    $admin_xuzhong=$v['price']['priceMore'];//平台续重
+                    $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
+                    $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
+                    $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
+                    $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
+                    $weight=$param['weight']-1;//续重重量
+                    $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
+                    $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
+                    $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+                    break;
+                case '顺丰':
+                    $agent_price=$v['freight']+$v['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
+                    $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
+                    $admin_shouzhong=0;//平台首重
+                    $admin_xuzhong=0;//平台续重
+                    $agent_shouzhong=0;//代理商首重
+                    $agent_xuzhong=0;//代理商续重
+                    $users_shouzhong=0;//用户首重
+                    $users_xuzhong=0;//用户续重
+                    break;
+                case '德邦':
+                case '京东':
+                    $agent_price=$v['freight']+$v['freight']*$agent_info['agent_db_ratio']/100;//代理商价格
+                    $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
+                    $admin_shouzhong=@$v['discountPriceOne'];//平台首重
+                    $admin_xuzhong=@$v['discountPriceMore'];//平台续重
+                    $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_db_ratio']/100;//代理商首重
+                    $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
+                    $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
+                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+                    break;
+                default:
+                    continue 2;
             }
-            if(isset($v['extFreightFlag'])) $users_price = $users_price + $v['extFreight'];
+            if($v['tagType'] == '菜鸟'){
+                $caiNiaoEnable = false; // 菜鸟是否可用
+                foreach ($v['appointTimes'] as $appointTime) {
+                    if($appointTime['date'] == date('Y-m-d') &&  $appointTime['dateSelectable']  ){
+                        foreach ($appointTime['timeList'] as $time) {
+                            if($time['selectable']){
+                                $caiNiaoEnable = $time['selectable'];
+                                continue 2;
+                            }
+                        }
+                    }
+                }
+                if(!$caiNiaoEnable){
+                    continue;
+                }
+            }
+
+            if(isset($v['extFreightFlag'])){
+                $users_price = $users_price + $v['extFreight'];
+                $agent_price = $agent_price + $v['extFreight'];
+            }
             $finalPrice=sprintf("%.2f",$users_price+$v['freightInsured']);//用户拿到的价格=用户运费价格+保价费
             $v['final_price']=$finalPrice;//用户支付总价
             $v['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
