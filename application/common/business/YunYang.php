@@ -167,12 +167,14 @@ class YunYang{
             }
             if($v['tagType'] == '菜鸟'){
                 $caiNiaoEnable = false; // 菜鸟是否可用
-                foreach ($v['appointTimes'] as $appointTime) {
-                    if($appointTime['date'] == date('Y-m-d') &&  $appointTime['dateSelectable']  ){
-                        foreach ($appointTime['timeList'] as $time) {
-                            if($time['selectable']){
-                                $caiNiaoEnable = $time['selectable'];
-                                continue 2;
+                if(isset($item['appointTimes'])) {
+                    foreach ($v['appointTimes'] as $appointTime) {
+                        if ($appointTime['date'] == date('Y-m-d') && $appointTime['dateSelectable']) {
+                            foreach ($appointTime['timeList'] as $time) {
+                                if ($time['selectable']) {
+                                    $caiNiaoEnable = $time['selectable'];
+                                    continue 2;
+                                }
                             }
                         }
                     }
