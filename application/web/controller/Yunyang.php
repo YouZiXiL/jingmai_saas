@@ -447,7 +447,7 @@ class Yunyang extends Controller
 
             return json(['status'=>200,'data'=>$packageList,'msg'=>'成功']);
         }catch (\Exception $e){
-            $content = '云洋-（' . $e->getLine().'）：'.$e->getMessage() . PHP_EOL .
+            $content = '（' . $e->getLine().'）：'.$e->getMessage() . PHP_EOL .
             $e->getTraceAsString() . PHP_EOL .
             '参数：' .  json_encode($param, JSON_UNESCAPED_UNICODE);
             recordLog("channel-price-err",
