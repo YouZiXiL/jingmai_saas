@@ -3,6 +3,7 @@
 namespace app\admin\controller\basicset;
 
 use app\common\controller\Backend;
+use app\common\model\AgentConfig;
 use think\Db;
 use think\Exception;
 use think\exception\DbException;
@@ -48,8 +49,14 @@ class Siteset extends Backend
      */
     public function index()
     {
-        $row=$this->model->where('id',$this->auth->id)->field('zizhu,zhonghuo,wx_map_key,coupon,qudao_close,city_close,wx_guanzhu,qywx_id,kf_url,wx_title,ordtips,ordtips_title,ordtips_cnt,zhongguo_tips,button_txt,order_tips,bujiao_tips,banner,add_tips,share_tips,share_pic,checkin_conti_prize,checkin_cycledays,package_rule,privacy_rule,agent_rebate')->find();
-
+        $row=$this->model
+            ->where('id',$this->auth->id)
+            ->with('agentConfig')
+            ->field('id,zizhu,zhonghuo,wx_map_key,coupon,qudao_close,
+        city_close,wx_guanzhu,qywx_id,kf_url,wx_title,ordtips,ordtips_title,ordtips_cnt,zhongguo_tips,button_txt,
+        order_tips,bujiao_tips,banner,add_tips,share_tips,share_pic,checkin_conti_prize,checkin_cycledays,package_rule,
+        privacy_rule,agent_rebate')
+            ->find();
         if (!$row) {
             $this->error(__('No Results were found'));
         }
@@ -59,18 +66,30 @@ class Siteset extends Backend
             $this->error(__('You have no permission'));
         }
         if (false === $this->request->isPost()) {
+            $row['agent_config'] = $row['agent_config']??AgentConfig::get(['agent_id' => 0]);
             $this->view->assign('row', $row);
-
             return $this->view->fetch();
         }
+
         $params = $this->request->post('row/a');
         if (empty($params)) {
             $this->error(__('Parameter %s can not be empty', ''));
         }
         $params = $this->preExcludeFields($params);
+        $upConfig = $params['agent_config'];
         $result = false;
         Db::startTrans();
         try {
+            if(!empty($upConfig)){
+                $upConfig['agent_id'] = $row['id'];
+                if ($row['agent_config']){
+                    AgentConfig::where('id',$row['agent_config']['id'] )->update($upConfig);
+                }else{
+                    AgentConfig::create($upConfig);
+                }
+
+            }
+
             //是否采用模型验证
             if ($this->modelValidate) {
                 $name = str_replace("\\model\\", "\\validate\\", get_class($this->model));

@@ -2,6 +2,7 @@
 
 namespace app\admin\model\basicset;
 
+use app\common\model\AgentConfig;
 use think\Model;
 
 
@@ -29,12 +30,10 @@ class Siteset extends Model
     ];
     
 
-    
-
-
-
-
-
+    public function agentConfig()
+    {
+        return  $this->hasOne(AgentConfig::class, 'agent_id', 'id');
+    }
 
 
 }
