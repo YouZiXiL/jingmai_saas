@@ -10,6 +10,7 @@ use think\addons\Service;
 use think\Cache;
 use think\Config;
 use think\Db;
+use think\Exception;
 use think\Lang;
 use think\Response;
 use think\Validate;
@@ -55,6 +56,7 @@ class Ajax extends Backend
 
     /**
      * 上传文件
+     * @throws Exception
      */
     public function upload()
     {
@@ -109,7 +111,7 @@ class Ajax extends Backend
             try {
                 $upload = new Upload($file);
                 $attachment = $upload->upload();
-            } catch (UploadException $e) {
+            } catch (Exception $e) {
                 $this->error($e->getMessage());
             }
 

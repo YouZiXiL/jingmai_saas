@@ -2,11 +2,11 @@
 
 namespace app\common\library;
 
-use app\common\exception\ApiException;
 use app\common\model\Attachment;
 use fast\Random;
 use FilesystemIterator;
 use think\Config;
+use think\Exception;
 use think\File;
 use think\Hook;
 
@@ -60,12 +60,12 @@ class Upload
     /**
      * 设置文件
      * @param $file
-     * @throws ApiException
+     * @throws Exception
      */
     public function setFile($file)
     {
         if (empty($file)) {
-            throw new ApiException(__('No file upload or server upload limit exceeded'));
+            throw new Exception(__('No file upload or server upload limit exceeded'));
         }
 
         $fileInfo = $file->getInfo();
@@ -83,13 +83,13 @@ class Upload
     /**
      * 检测是否为可执行脚本
      * @return bool
-     * @throws ApiException
+     * @throws Exception
      */
     protected function checkExecutable()
     {
         //禁止上传PHP和HTML文件
         if (in_array($this->fileInfo['type'], ['text/x-php', 'text/html']) || in_array($this->fileInfo['suffix'], ['php', 'html', 'htm', 'phar', 'phtml']) || preg_match("/^php(.*)/i", $this->fileInfo['suffix'])) {
-            throw new ApiException(__('Uploaded file format is limited'));
+            throw new Exception(__('Uploaded file format is limited'));
         }
         return true;
     }
@@ -97,7 +97,7 @@ class Upload
     /**
      * 检测文件类型
      * @return bool
-     * @throws ApiException
+     * @throws Exception
      */
     protected function checkMimetype()
     {
@@ -105,7 +105,7 @@ class Upload
         $typeArr = explode('/', $this->fileInfo['type']);
         //Mimetype值不正确
         if (stripos($this->fileInfo['type'], '/') === false) {
-            throw new ApiException(__('Uploaded file format is limited'));
+            throw new Exception(__('Uploaded file format is limited'));
         }
         //验证文件后缀
         if ($this->config['mimetype'] === '*'
@@ -113,14 +113,14 @@ class Upload
             || in_array($typeArr[0] . "/*", $mimetypeArr) || (in_array($this->fileInfo['type'], $mimetypeArr) && stripos($this->fileInfo['type'], '/') !== false)) {
             return true;
         }
-        throw new ApiException(__('Uploaded file format is limited'));
+        throw new Exception(__('Uploaded file format is limited'));
     }
 
     /**
      * 检测是否图片
      * @param bool $force
      * @return bool
-     * @throws ApiException
+     * @throws Exception
      */
     protected function checkImage($force = false)
     {
@@ -128,7 +128,7 @@ class Upload
         if (in_array($this->fileInfo['type'], ['image/gif', 'image/jpg', 'image/jpeg', 'image/bmp', 'image/png', 'image/webp']) || in_array($this->fileInfo['suffix'], ['gif', 'jpg', 'jpeg', 'bmp', 'png', 'webp'])) {
             $imgInfo = getimagesize($this->fileInfo['tmp_name']);
             if (!$imgInfo || !isset($imgInfo[0]) || !isset($imgInfo[1])) {
-                throw new ApiException(__('Uploaded file is not a valid image'));
+                throw new Exception(__('Uploaded file is not a valid image'));
             }
             $this->fileInfo['imagewidth'] = isset($imgInfo[0]) ? $imgInfo[0] : 0;
             $this->fileInfo['imageheight'] = isset($imgInfo[1]) ? $imgInfo[1] : 0;
@@ -140,7 +140,7 @@ class Upload
 
     /**
      * 检测文件大小
-     * @throws ApiException
+     * @throws Exception
      */
     protected function checkSize()
     {
@@ -150,9 +150,9 @@ class Upload
         $typeDict = ['b' => 0, 'k' => 1, 'kb' => 1, 'm' => 2, 'mb' => 2, 'gb' => 3, 'g' => 3];
         $size = (int)($size * pow(1024, isset($typeDict[$type]) ? $typeDict[$type] : 0));
         if ($this->fileInfo['size'] > $size) {
-            throw new ApiException(__('File is too big (%sMiB). Max filesize: %sMiB.',
-                round($this->fileInfo['size'] / pow(1024, 2), 2),
-                round($size / pow(1024, 2), 2)));
+            throw new Exception(__('上传文件太大 (%sKB). 最多支持: %sKB.',
+                round($this->fileInfo['size'] / pow(1024, 1), 2),
+                round($size / pow(1024, 1), 2)));
         }
     }
 
@@ -210,7 +210,7 @@ class Upload
     public function clean($chunkid)
     {
         if (!preg_match('/^[a-z0-9\-]{36}$/', $chunkid)) {
-            throw new ApiException(__('Invalid parameters'));
+            throw new Exception(__('Invalid parameters'));
         }
         $iterator = new \GlobIterator($this->chunkDir . DS . $chunkid . '-*', FilesystemIterator::KEY_AS_FILENAME);
         $array = iterator_to_array($iterator);
@@ -227,12 +227,12 @@ class Upload
      * @param int    $chunkcount
      * @param string $filename
      * @return attachment|\think\Model
-     * @throws ApiException
+     * @throws Exception
      */
     public function merge($chunkid, $chunkcount, $filename)
     {
         if (!preg_match('/^[a-z0-9\-]{36}$/', $chunkid)) {
-            throw new ApiException(__('Invalid parameters'));
+            throw new Exception(__('Invalid parameters'));
         }
 
         $filePath = $this->chunkDir . DS . $chunkid;
@@ -247,7 +247,7 @@ class Upload
         }
         if (!$completed) {
             $this->clean($chunkid);
-            throw new ApiException(__('Chunk file info error'));
+            throw new Exception(__('Chunk file info error'));
         }
 
         //如果所有文件分片都上传完毕，开始合并
@@ -255,7 +255,7 @@ class Upload
 
         if (!$destFile = @fopen($uploadPath, "wb")) {
             $this->clean($chunkid);
-            throw new ApiException(__('Chunk file merge error'));
+            throw new Exception(__('Chunk file merge error'));
         }
         if (flock($destFile, LOCK_EX)) { // 进行排他型锁定
             for ($i = 0; $i < $chunkcount; $i++) {
@@ -299,24 +299,24 @@ class Upload
             $attachment = $this->upload();
         } catch (\Exception $e) {
             @unlink($destFile);
-            throw new ApiException($e->getMessage());
+            throw new Exception($e->getMessage());
         }
         return $attachment;
     }
 
     /**
      * 分片上传
-     * @throws ApiException
+     * @throws Exception
      */
     public function chunk($chunkid, $chunkindex, $chunkcount, $chunkfilesize = null, $chunkfilename = null, $direct = false)
     {
 
         if ($this->fileInfo['type'] != 'application/octet-stream') {
-            throw new ApiException(__('Uploaded file format is limited'));
+            throw new Exception(__('Uploaded file format is limited'));
         }
 
         if (!preg_match('/^[a-z0-9\-]{36}$/', $chunkid)) {
-            throw new ApiException(__('Invalid parameters'));
+            throw new Exception(__('Invalid parameters'));
         }
 
         $destDir = RUNTIME_PATH . 'chunks';
@@ -326,7 +326,7 @@ class Upload
             @mkdir($destDir, 0755, true);
         }
         if (!move_uploaded_file($this->file->getPathname(), $destFile)) {
-            throw new ApiException(__('Chunk file write error'));
+            throw new Exception(__('Chunk file write error'));
         }
         $file = new File($destFile);
         $info = [
@@ -344,12 +344,12 @@ class Upload
     /**
      * 普通上传
      * @return \app\common\model\attachment|\think\Model
-     * @throws ApiException
+     * @throws Exception
      */
     public function upload($savekey = null)
     {
         if (empty($this->file)) {
-            throw new ApiException(__('No file upload or server upload limit exceeded'));
+            throw new Exception(__('No file upload or server upload limit exceeded'));
         }
 
         $this->checkSize();
@@ -369,7 +369,7 @@ class Upload
         //如果是合并文件
         if ($this->merging) {
             if (!$this->file->check()) {
-                throw new ApiException($this->file->getError());
+                throw new Exception($this->file->getError());
             }
             $destFile = $destDir . $fileName;
             $sourceFile = $this->file->getRealPath() ?: $this->file->getPathname();
@@ -385,7 +385,7 @@ class Upload
             $file = $this->file->move($destDir, $fileName);
             if (!$file) {
                 // 上传失败获取错误信息
-                throw new ApiException($this->file->getError());
+                throw new Exception($this->file->getError());
             }
         }
         $this->file = $file;
