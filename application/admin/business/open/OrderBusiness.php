@@ -190,10 +190,13 @@ class OrderBusiness extends Backend
                     unset($channel[$key]);
                     continue 2;
             }
+
+            $agentFreight = sprintf("%.2f",$agentFreight + $item['freightInsured']);
             // 用户运费 + 附加费用
             if(isset($item['extFreightFlag']) ){
                 $agentFreight += $item['extFreight'];
             }
+
             // 代理商结算金额 （ 运费 + 保价费）
             $agentPrice = sprintf("%.2f",$agentFreight + $item['freightInsured']);
 
@@ -224,7 +227,7 @@ class OrderBusiness extends Backend
             $item['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
             $item['users_shouzhong']= 0;//用户首重
             $item['users_xuzhong']= 0;//用户续重
-
+            $item['freight'] = $agentFreight;
             $item['senderInfo']=$param['sender'];//寄件人信息
             $item['receiverInfo']=$param['receiver'];//收件人信息
             $item['info'] = $param['info']; // 其他信息：如物品重量保价费等
@@ -234,7 +237,7 @@ class OrderBusiness extends Backend
 
             $requireId = SnowFlake::createId();
             cache( $requireId, json_encode($item), $this->ttl);
-            $list[$key]['freight']= $agentFreight;
+            $list[$key]['freight']= $agentPrice;
             $list[$key]['tagType']= $item['tagType'];
             $list[$key]['channelLogoUrl']= $item['channelLogoUrl'];
             $list[$key]['channelId']= $item['channelId'];

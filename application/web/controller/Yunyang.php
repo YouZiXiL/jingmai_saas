@@ -729,7 +729,13 @@ class Yunyang extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
-        $order=db('orders')->where("channel_tag","<>","同城")->where('pay_status','<>',0)->field('id,waybill,sender_province,receive_province,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status,aftercoupon,couponpapermoney')->order('id','desc')->where('user_id',$this->user->id)->page($param['page'],10);
+        $order=db('orders')
+            ->where("channel_tag","<>","同城")
+            ->where('pay_status','<>',0)
+            ->field('id,waybill,sender_province,receive_province,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status,aftercoupon,couponpapermoney')
+            ->order('id','desc')
+            ->where('user_id',$this->user->id)
+            ->page($param['page'],10);
         if (!empty($param['search_field'])){
             $res=$order->where('receiver_mobile|sender_mobile|waybill|receiver',$param['search_field'])->select();
         }elseif(!empty($param['no_pay'])){
@@ -1038,6 +1044,7 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
         $order=db('orders')->field('id,waybill,item_name,weight,final_weight,overload_price')->where('overload_status',1)->where('id',$id)->where('user_id',$this->user->id)->find();
+        if(!$order) return R::error('没有超重信息');
         $order['weight'] = $order['weight'] . 'kg';
         $order['final_weight'] = $order['final_weight'] . 'kg';
         $data=[
@@ -1163,7 +1170,7 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
         $order=db('orders')->field('id,waybill,item_name,haocai_freight')->where('consume_status',1)->where('id',$id)->where('user_id',$this->user->id)->find();
-
+        if (!$order) return R::error('没有耗材信息');
         $data=[
             'status'=>200,
             'data'=>$order,
