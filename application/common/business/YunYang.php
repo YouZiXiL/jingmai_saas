@@ -97,6 +97,9 @@ class YunYang{
         return json_decode($res, true);
     }
 
+
+
+
     /**
      * 查询渠道价格
      * @param string $content
@@ -117,6 +120,7 @@ class YunYang{
         }
         $qudao_close=explode('|', $agent_info['qudao_close']);
         $qudao_close[] = '德邦'; // 云洋禁用德邦
+        $qudao_close[] = '顺丰'; // 云洋禁用德邦
 
         foreach ($data['result'] as $k=>&$v){
             if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
@@ -282,5 +286,52 @@ class YunYang{
             .json_encode($result, JSON_UNESCAPED_UNICODE)
         );
         return $result;
+    }
+
+    /**
+     * 查询价格参数封装
+     * @param $jijian_address
+     * @param $shoujian_address
+     * @param $param
+     * @return array
+     */
+    public function queryPriceParams($jijian_address,$shoujian_address, $param )
+    {
+        $yyContent = [
+            'channelTag'=>$param['channel_tag'], // 智能|重货
+            'sender'=> $jijian_address['name'],
+            'senderMobile'=>$jijian_address['mobile'],
+            'senderProvince'=>$jijian_address['province'],
+            'senderCity'=>$jijian_address['city'],
+            'senderCounty'=>$jijian_address['county'],
+            'senderLocation'=>$jijian_address['location'],
+            'senderAddress'=>$jijian_address['province'].$jijian_address['city'].$jijian_address['county'].$jijian_address['location'],
+            'receiver'=>$shoujian_address['name'],
+            'receiverMobile'=>$shoujian_address['mobile'],
+            'receiveProvince'=>$shoujian_address['province'],
+            'receiveCity'=>$shoujian_address['city'],
+            'receiveCounty'=>$shoujian_address['county'],
+            'receiveLocation'=>$shoujian_address['location'],
+            'receiveAddress'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
+            'weight'=>$param['weight'],
+            'packageCount'=>$param['package_count'],
+            'insured' => isset($param['insured'])?(int) $param['insured']:0,
+            'vloumLong' => isset($param['vloum_long'])?(int)$param['vloum_long']:0 ,
+            'vloumWidth' => isset($param['vloum_width'])?(int) $param['vloum_width']:0,
+            'vloumHeight' => isset($param['vloum_height'])?(int) $param['vloum_height']:0,
+        ];
+
+        return [
+            'url' => $this->baseUlr,
+            'data' => $this->setParma('CHECK_CHANNEL_INTELLECT',$yyContent),
+        ];
+    }
+
+    /**
+     * 预下单，计算代理商及用户价格
+     * @return void
+     */
+    public function advanceHandle(){
+
     }
 }
