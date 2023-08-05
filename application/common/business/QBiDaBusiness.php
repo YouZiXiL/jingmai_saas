@@ -2,8 +2,10 @@
 
 namespace app\common\business;
 
+use app\common\config\Channel;
 use app\common\model\Order;
 use app\web\controller\Common;
+use think\Exception;
 
 class QBiDaBusiness
 {
@@ -53,6 +55,91 @@ class QBiDaBusiness
         return $this->utils->httpRequest($url,[], 'POST',$header );
     }
 
+    /**
+     * 查询价格参数封装
+     * @param $jijian_address
+     * @param $shoujian_address
+     * @param $param
+     * @return array
+     */
+    public function queryPriceParams($jijian_address, $shoujian_address, $param){
+        $content = [
+            "sendPhone"=> $jijian_address['mobile'],
+            "sendAddress"=>$jijian_address['province'].$jijian_address['city'].$jijian_address['county'].$jijian_address['location'],
+            "receiveAddress"=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
+            "weight"=>$param['weight'],
+            "packageNum"=>$param['package_count'],
+            "goodsValue"=> $param['insured'],
+            "length"=> $param['vloum_long'],
+            "width"=> $param['vloum_width'],
+            "height"=> $param['vloum_height'],
+            "payMethod"=> 3,//线上寄付:3
+            "expressType"=>1,//快递类型 1:快递
+            "productList"=>[
+                ["productCode"=> 5],
+//                    ["productCode"=> 6],
+//                    ["productCode"=> 7],
+//                    ["productCode"=> 8],
+            ]];
+        return [
+            'url' => $this->baseUlr.'getPriceList',
+            'data' => $content,
+            'header' => $this->setParam()
+        ];
+    }
+
+    /**
+     * 预下单，计算代理商及用户价格
+     * @return array
+     * @throws Exception
+     */
+    public function advanceHandle($content, $agent_info, $param){
+        $content = json_decode($content, true);
+        if (!empty($content['code'])){
+            recordLog('channel-price-err', 'QBD: ' . json_encode($content, JSON_UNESCAPED_UNICODE));
+            throw new Exception('收件或寄件信息错误,请仔细填写');
+        }
+
+        recordLog('channel-price', 'QBD: ' . json_encode($content, JSON_UNESCAPED_UNICODE));
+        $qudao_close = explode('|', $agent_info['qudao_close']);
+        $arr=[];
+        $time=time();
+        foreach ($content['data'] as $k=>&$v){
+            if(empty($v["limitWeight"])){
+
+            } else{
+                $v['oldName'] = $v['channelName'];
+                if(strpos($v['channelName'], '新户')){
+                    $v['isNew'] = (bool)strpos($v['channelName'], '新户');
+                    $channelTag = '顺丰新';
+                }else{
+                    $v['isNew'] = false;
+                    $channelTag = '顺丰';
+                }
+
+                $v['channelName'] = 'JX-顺丰标快';
+                if($v['isNew']){
+                    $v["agent_price"]=number_format($v["channelFee"]  + $v["guarantFee"],2);
+                    $v["users_price"]=$v["agent_price"];
+                }else{
+                    $v["agent_price"]=number_format($v["originalFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$v["guarantFee"],2);
+                    $v["users_price"]=number_format($v["originalFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
+                }
+                $v["final_price"]=number_format( $v["users_price"] + $v["guarantFee"],2);
+
+                $v["insured"]=$param['insured'];
+                $v["channel_merchant"]= Channel::$qbd;
+                $v['jijian_id']=$param['jijian_id'];//寄件id
+                $v['shoujian_id']=$param['shoujian_id'];//收件id
+                $v['weight']=$param['weight'];//重量
+                $v['package_count']=$param['package_count'];//包裹数量
+                $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>$channelTag,'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
+                $v["insert_id"]=$insert_id;
+                $arr[] = $v;
+            }
+        }
+        return $arr;
+    }
 
     /**
      * 下单接口处理
