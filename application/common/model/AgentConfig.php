@@ -14,4 +14,11 @@ class AgentConfig extends Model
     ];
 
 
+    public function getKfQrcodeAttr($value,$data){
+        if (empty($value)){
+            return request()->domain() . $value;
+        }
+        return $value;
+    }
+
 }
