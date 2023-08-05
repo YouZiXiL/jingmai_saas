@@ -79,9 +79,11 @@ class Couponlists extends Backend
             ->where('a.papercode', 'LIKE', "%{$search}%")
             ->join('couponlist c','a.papercode = c.papercode', 'LEFT')
             ->join('users u','c.user_id = u.id', 'LEFT')
+            ->join('orders o','o.couponid = c.id', 'LEFT')
             ->field('a.id,a.agent_id,a.name,a.papercode,a.gain_way,
                 a.money,a.type,a.scene,a.uselimits,a.state,a.validdatestart,
                 a.validdateend,a.limitdate,a.createtime,
+                o.out_trade_no,
                 u.mobile'
             )
             ->order($sort, $order)
