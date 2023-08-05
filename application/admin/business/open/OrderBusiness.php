@@ -157,9 +157,9 @@ class OrderBusiness extends Backend
                 continue;
             }
             switch ($item['tagType']){
-                case  '申通':
-                case  '圆通':
-                case  '极兔':
+                case '申通':
+                case '圆通':
+                case '极兔':
                 case '中通':
                 case '韵达':
                 case '菜鸟':
