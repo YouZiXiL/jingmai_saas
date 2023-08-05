@@ -15,7 +15,14 @@ class AgentConfig extends Model
 
 
     public function getKfQrcodeAttr($value,$data){
-        if (empty($value)){
+        if (!empty($value)){
+            return request()->domain() . $value;
+        }
+        return $value;
+    }
+
+    public function getMpQrcodeAttr($value,$data){
+        if (!empty($value)){
             return request()->domain() . $value;
         }
         return $value;

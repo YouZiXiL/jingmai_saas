@@ -2,16 +2,12 @@
 
 namespace app\admin\model\basicset;
 
-use app\common\model\AgentConfig;
+use app\admin\model\AgentConfig;
 use think\Model;
 
 
 class Siteset extends Model
 {
-
-    
-
-    
 
     // 表名
     protected $name = 'admin';

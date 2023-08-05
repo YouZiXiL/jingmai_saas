@@ -3,7 +3,7 @@
 namespace app\admin\controller\basicset;
 
 use app\common\controller\Backend;
-use app\common\model\AgentConfig;
+use app\admin\model\AgentConfig;
 use think\Db;
 use think\Exception;
 use think\exception\DbException;

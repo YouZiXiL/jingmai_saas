@@ -332,17 +332,12 @@ class Login extends Controller
         //file_put_contents('get_config.txt',$param['app_id'].PHP_EOL,FILE_APPEND);
         $agentAuth=db('agent_auth')->where('app_id',$param['app_id'])->field('agent_id,map_key')->find();
         $config = Admin::where('id',$agentAuth['agent_id'])
-            ->with(['agentConfig' => function($query){
-                $query->field('agent_id,kf_qrcode,kf_url,kf_type');
-            }])
+            ->with('agentConfig' )
             ->field('id,zizhu,zhonghuo,coupon,wx_guanzhu,qywx_id,
                 kf_url,wx_title,ordtips,ordtips_title,ordtips_cnt,zhongguo_tips,button_txt,
                 order_tips,bujiao_tips,banner,add_tips,share_tips,share_pic,wx_map_key'
             )
             ->find();
-        if (!empty($config['agent_config']['kf_qrcode'])){
-            $config['agent_config']['kf_qrcode'] = request()->domain() . $config['agent_config']['kf_qrcode'] ;
-        }
         $config['banner']=explode('|', $config['banner']);
         if ($agentAuth['map_key']) $config['wx_map_key'] = $agentAuth['map_key'];
         return json(['status'=>200,'data'=>$config,'msg'=>'成功']);
