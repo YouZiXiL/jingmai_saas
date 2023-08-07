@@ -496,11 +496,11 @@ class Wxcallback extends Controller
             $weight=floor($orders['weight']-$pamar['calWeight']);
             if ($weight>0&&$pamar['calWeight']!=0&&empty($orders['final_weight_time'])){
                 $tralight_weight=$weight;//超轻重量
-                if ($orders['tag_type']=='顺丰'){
-                    $tralight_amt=$orders['freight']-$pamar['freight'];//超轻金额
-                    $admin_xuzhong=$tralight_amt/$tralight_weight;//平台续重单价
-                    $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_sf_ratio']/100;//代理商续重
-                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+                if ($orders['tag_type']=='顺丰快递'){
+                    $tralight_amt=$orders['freight']-$pamar['freight']; //超轻金额
+                    $admin_xuzhong=$tralight_amt/$tralight_weight; //平台续重单价
+                    $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['sf_agent_ratio']/100;//代理商续重
+                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['sf_users_ratio']/100;//用户续重
                     $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
                     $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                     $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
@@ -552,11 +552,11 @@ class Wxcallback extends Controller
             if ($orders['weight']<$pamar['calWeight']&&empty($orders['final_weight_time'])){
                 $up_data['overload_status']=1;
                 $overload_weight=ceil($pamar['calWeight']-$orders['weight']);//超出重量
-                if ($orders['tag_type']=='顺丰'){
+                if ($orders['tag_type']=='顺丰快递'){
                     $overload_amt=$pamar['freight']-$orders['freight'];//超出金额
                     $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
-                    $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_sf_ratio']/100;//代理商续重
-                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+                    $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['sf_agent_ratio']/100;//代理商续重
+                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['sf_users_ratio']/100;//用户续重
                     $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
                     $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                     $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
