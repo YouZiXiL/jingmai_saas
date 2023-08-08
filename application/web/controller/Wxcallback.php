@@ -1512,18 +1512,20 @@ class Wxcallback extends Controller
                         );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付成功下单失败  执行退款操作
+                        $errMsg = $yyResult['message'];
                         $update=[
                             'pay_status'=>2,
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                            'yy_fail_reason'=>$yyResult['message'],
+                            'yy_fail_reason'=>$errMsg,
                             'order_status'=>'下单失败咨询客服',
                             'out_refund_no'=>$out_refund_no,
                         ];
+                        if ($yyResult['code'] == 0) $errMsg = '下单失败';
                         $data = [
                             'type'=>3,
                             'order_id'=>$orders['id'],
                             'out_refund_no' => $out_refund_no,
-                            'reason'=>$yyResult['message'],
+                            'reason'=>$errMsg,
                         ];
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');
