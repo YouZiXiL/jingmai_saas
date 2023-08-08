@@ -3493,7 +3493,7 @@ class Wxcallback extends Controller
                 return "SUCCESS";
             }
 
-            $isNew = $orders['tag_type'] == '顺丰新';
+            $isNew = $orders['tag_type'] == '顺丰新户';
 
             $wxOrder = $orders['pay_type'] == 1; // 微信订单
             $aliOrder = $orders['pay_type'] == 2; // 支付宝订单
