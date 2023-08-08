@@ -224,7 +224,7 @@ class Orderslist extends Backend
             if ($res['code']!=1){
                 $this->error($res['message']);
             }
-        }else if($row['channel_tag']=='顺丰'){
+        }else if($row['channel_tag']==Channel::$qbd){
             $content=[
                 "genre"=>1,
                 'orderNo'=>$row['shopbill']
