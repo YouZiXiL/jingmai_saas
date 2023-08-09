@@ -1505,11 +1505,6 @@ class Wxcallback extends Controller
                     $yy = new \app\common\business\YunYang();
                     $yyResult = $yy->createOrderHandle($orders, $record);
                     if ($yyResult['code']!=1){
-                        recordLog('channel-create-order-err',
-                            '订单ID：'. $orders['out_trade_no']. PHP_EOL.
-                            '云洋：'.json_encode($yyResult, JSON_UNESCAPED_UNICODE) . PHP_EOL.
-                            '请求参数：' . $record
-                        );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付成功下单失败  执行退款操作
                         $errMsg = $yyResult['message'];
