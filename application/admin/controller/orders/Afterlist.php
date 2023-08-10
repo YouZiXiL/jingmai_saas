@@ -373,7 +373,7 @@ class Afterlist extends Backend
             //发送公众号模板消息
             $AgentAuth=AgentAuth::get(['agent_id'=>$row['agent_id'],'auth_type'=>1]);//授权的公众号
 
-            if ($AgentAuth && $orders['pay_type']){
+            if ($AgentAuth && $orders['pay_type'] == 1){
                 if ($params['cope_status']==1){
                     $first='反馈处理完成-'.__('Salf_type '.$row['salf_type']);
                     $keyword2='运单号:'.$row['waybill'].'已处理完成';
