@@ -2,8 +2,10 @@
 
 namespace app\web\controller;
 
+use app\web\model\Users;
 use app\common\business\AliBusiness;
 use app\common\business\JiLu;
+use app\common\business\RebateListController;
 use app\common\business\WanLi;
 use app\common\business\WxBusiness;
 use app\common\library\alipay\AliOpen;
@@ -39,9 +41,14 @@ class Test extends Controller
      * @throws Exception
      */
     public function test(){
-        $agentAuth = AgentAuth::where('id', 109)->value('auth_token');
-
-        return R::ok($agentAuth);
+        $agentAuth = Admin::where('id', 23)->find();
+        $orders = Order::where('id', 51703)->find();
+        $user = Users::where('id', 221)->find();
+        // XD1687236998288763783
+        $rebateList = new RebateListController();
+        $result = $rebateList->handle($orders,$agentAuth, $user);
+        dd($result);
+        return R::ok($result);
 
     }
 
@@ -443,6 +450,22 @@ class Test extends Controller
             'callback'=> $this->domain.'/web/wxcallback/send_sms'
         ],'POST',['Content-Type: application/x-www-form-urlencoded']);
         return R::ok($res);
+    }
+
+    /**
+     * fhd取消订单
+     * @return \think\response\Json
+     */
+    public function fhd_cancel_order(){
+
+        $content=[
+            'expressCode'=> 'RCP',
+            'orderId'=> 'XD1691631905822380127',
+            'reason'=>'不要了'
+        ];
+        $common = new Common();
+        $resultJson=$common->fhd_api('cancelExpressOrder',$content);
+        return R::ok( json_decode($resultJson) );
     }
 
 }
