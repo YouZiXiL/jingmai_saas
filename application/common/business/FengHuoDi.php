@@ -2,6 +2,7 @@
 
 namespace app\common\business;
 
+use app\common\config\Channel;
 use app\common\config\ProfitConfig;
 use app\web\controller\Common;
 
@@ -117,7 +118,7 @@ class FengHuoDi
         $fhdResult['weight']=$param['weight'];//重量
         $fhdResult['package_count']=$param['package_count'];//包裹数量
         $fhdResult['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
-        $fhdResult['channel_merchant'] = 'FHD';
+        $fhdResult['channel_merchant'] = Channel::$fhd;
         $fhdResult['channel']='德邦';
         $fhdResult['freight']=sprintf("%.2f",$total['fright']*0.68);
         $fhdResult['send_start_time']=$time;
