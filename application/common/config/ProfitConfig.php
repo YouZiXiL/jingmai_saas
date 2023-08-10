@@ -4,5 +4,5 @@ namespace app\common\config;
 
 class ProfitConfig
 {
-    public static float $fhd = 0.68;
+    public static float $fhd = 0.70;
 }
