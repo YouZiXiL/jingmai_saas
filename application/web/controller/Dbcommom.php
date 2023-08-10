@@ -83,6 +83,7 @@ class Dbcommom
         }catch (\Exception $e){
             recordLog('agent-amount',
                 '[error]-('. $e->getLine() . ')-' . $e->getMessage(). PHP_EOL.
+                "参数-- 代理商：{$id}, 改变类型：{$setType}, 金额：{$amount}, 资金类型：{$logType}, 备注：{$remark}" . PHP_EOL.
                 $e->getTraceAsString()
             );
             // 回滚事务
