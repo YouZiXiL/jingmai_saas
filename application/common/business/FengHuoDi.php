@@ -120,7 +120,7 @@ class FengHuoDi
         $fhdResult['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
         $fhdResult['channel_merchant'] = Channel::$fhd;
         $fhdResult['channel']='德邦';
-        $fhdResult['freight']=sprintf("%.2f",$total['fright']*0.68);
+        $fhdResult['freight']=sprintf("%.2f",$total['fright']* ProfitConfig::$fhd);
         $fhdResult['send_start_time']=$time;
         $fhdResult['send_end_time']=$sendEndTime;
         $fhdResult['tagType']='德邦大件快递360';
