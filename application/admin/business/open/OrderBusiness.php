@@ -136,19 +136,21 @@ class OrderBusiness extends Backend
 
     /**
      * 云洋代理商价格计算
-     * @throws Exception
      */
     public function yyPriceHandle(string $content, array $agent_info, array $param){
         $data= json_decode($content, true);
         if ($data['code']!=1){
             recordLog('channel-price-err','云洋-' . $content);
-            throw new Exception('收件或寄件信息错误,请仔细填写');
+            $errMsg = $data['message']??$content;
+            if ($errMsg == '渠道不可用，Disable！状态码：Disable') $errMsg = '用黑名单';
+            $this->error($errMsg);
         }
         // 被关闭的渠道
         $qudao_close=explode('|', $agent_info['qudao_close']);
-        $qudao_close[] = '德邦'; // 云洋禁用德邦
+        // $qudao_close[] = '德邦'; // 云洋禁用德邦
         // 返回参数
         $list = [];
+        $dbCount = 0; // 德邦出现次数
         $channel = $data['result'];
         foreach ($channel as $key => &$item){
 
@@ -171,7 +173,8 @@ class OrderBusiness extends Backend
                     $agentFreight=$agent_shouzhong+$agent_xuzhong*$xzWeight; //代理商运费
                     break;
                 case '顺丰':
-                    $agentFreight=$item['freight']+$item['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
+                case 'EMS':
+                    $agentFreight=$item['freight']+$item['freight']*$agent_info['sf_agent_ratio']/100;//代理商价格
                     $admin_shouzhong=0;//平台首重
                     $admin_xuzhong=0;//平台续重
                     $agent_shouzhong=0;//代理商首重
@@ -199,6 +202,13 @@ class OrderBusiness extends Backend
 
             // 代理商结算金额 （ 运费 + 保价费）
             $agentPrice = sprintf("%.2f",$agentFreight + $item['freightInsured']);
+
+            if($item['tagType'] == '德邦'){
+                $tagCodeArr = ['A','B','C','D','E','F','G'];
+                $tagCode = $tagCodeArr[$dbCount];
+                $item['tagType'] = "德邦JX{$tagCode}";
+                $dbCount ++;
+            }
 
             if($item['tagType'] == '菜鸟'){
                 $caiNiaoEnable = false; // 菜鸟是否可用
@@ -280,11 +290,6 @@ class OrderBusiness extends Backend
         $yunYang = new YunYang();
         $result = $yunYang->createOrderHandle($orders, $record);
         if ($result['code'] != 1) {
-            recordLog('channel-create-order-err',
-                '订单ID：'. $orders['out_trade_no']. PHP_EOL.
-                '云洋：'.json_encode($result, JSON_UNESCAPED_UNICODE) . PHP_EOL.
-                '请求参数：' . $record
-            );
             $updateOrder=[
                 'id' => $orderInfo->id,
                 'pay_status'=> 2,
@@ -430,7 +435,7 @@ class OrderBusiness extends Backend
             $item['channelId'] = $item['expressChannel'];
 
             $item['agent_price'] = number_format($agent_price, 2);
-            $item['final_price']=  $item['final_price'];
+            $item['final_price']=  $item['agent_price'];
             $item['freight']=  $item['final_price'];
 
             $item['senderInfo']=$param['sender'];//寄件人信息
@@ -559,9 +564,9 @@ class OrderBusiness extends Backend
      * @return array
      */
     public function fhdPriceHandle(string $content, array $agent_info, array $param){
-        $param['tagType'] = '德邦';
-        $param['type'] = 'RCP';
-        $param['channel'] = '德邦大件快递360';
+        $tagType = $param['tagType']?? '德邦360';
+        $type = $param['type'] ?? 'RCP';
+        $channel = $param['channel'] ?? '德邦360';
         $result=json_decode($content,true);
         if($result['rcode'] != 0 || $result['scode'] != 0) {
             recordLog('channel-price-err','风火递' . $content. PHP_EOL);
@@ -601,7 +606,7 @@ class OrderBusiness extends Backend
         $data['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
         $data['channelId']='';
         $data['expressCode']='DBKD';
-        $data['freight']=sprintf("%.2f",$total['fright']*0.68);
+        $data['freight']=sprintf("%.2f",$total['fright'] * ProfitConfig::$fhd);
         $data['send_start_time']=$time;
         $data['send_end_time']=$sendEndTime;
 
@@ -610,9 +615,9 @@ class OrderBusiness extends Backend
         $data['info'] = $param['info']; // 其他信息：如物品重量保价费等
 
         $data['channel_tag'] = $param['channelTag']; // 渠道类型
-        $data['channel']= $param['channel'];
-        $data['tagType']= $param['tagType'];
-        $data['db_type']=$param['type'];
+        $data['channel']= $channel;
+        $data['tagType']= $tagType;
+        $data['db_type']=$type;
         $data['channel_merchant'] = Channel::$fhd; // 渠道商
         $requireId = SnowFlake::createId();
         cache( $requireId, json_encode($data), $this->ttl);
@@ -620,7 +625,7 @@ class OrderBusiness extends Backend
         return [
             'freight'=>$data['agent_price'], // 用户价格
             'requireId'=>(string) $requireId,
-            'tagType'=>$data['tagType'], // 快递类型
+            'tagType'=>$tagType, // 快递类型
             'channel'=>'',
             'channelLogoUrl'=> 'https://admin.bajiehuidi.com/assets/img/express/db.png', // 快递类型
         ];
@@ -768,8 +773,10 @@ class OrderBusiness extends Backend
             $item['isNew'] = (bool)strpos($item['channelName'], '新户');
             $item['freight'] = number_format($item["channelFee"] ,2);
             if($item['isNew']){
+                $channelTag = '顺丰新户';
                 $item["agent_price"]=number_format($item["channelFee"]  + $item["guarantFee"],2);
             }else{
+                $channelTag = '顺丰快递';
                 $item["agent_price"]=number_format($item["originalFee"] + ($item["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$item["guarantFee"],2);
             }
             $item["final_price"]=$item["agent_price"];
@@ -777,15 +784,16 @@ class OrderBusiness extends Backend
             $item['senderInfo']=$paramData['sender'];
             $item['receiverInfo']=$paramData['receiver'];//收件id
             $item['channel'] = $item['channelName'];
-            $item['tagType'] = 'JX-顺丰标快';
+            $item['channelName'] = 'JX-顺丰标快';
+            $item['tagType'] = $channelTag;
             $item['channelId'] = $item['type'];
-            $item['channel_tag'] = '智能'; // 渠道类型
+            $item['channel_tag'] = Channel::$qbd; // 渠道类型
             $item['channel_merchant'] = Channel::$qbd; // 渠道商
             $requireId = SnowFlake::createId();
             cache($requireId, json_encode($item), $this->ttl);
 
             $list[$key]['freight'] = $item['agent_price'];
-            $list[$key]['tagType'] = $item['tagType'];
+            $list[$key]['tagType'] =  $item['channelName'];
             $list[$key]['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/sf.png';
             $list[$key]['requireId']= (string) $requireId;
 

@@ -112,7 +112,6 @@ class Order extends Backend
         list($yy, $fhd, $qbd) = $response;
 
         $paramData['channelTag'] = '智能';
-
         $yyRes = $orderBusiness->yyPriceHandle($yy, $agent_info, $paramData);
         $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData);
         $qbdRes = $orderBusiness->qbdPriceHandle($qbd, $agent_info, $paramData);
