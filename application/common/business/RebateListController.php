@@ -3,6 +3,8 @@
 namespace app\common\business;
 
 use app\web\model\Rebatelist;
+use app\web\model\Users;
+use think\Db;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\Exception;
@@ -66,28 +68,36 @@ class RebateListController
      * 订单签收计算返佣
      */
     public function handle($orders, $agent_info, $users){
+        Db::startTrans();
         try {
             // 返佣
-            $rebateModal=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
-            if (!$rebateModal) return false;
-            if(empty($users['invitercode'])) return false;
-            if($orders['pay_type'] != 1) return false;
-            $rebate = $rebateModal->toArray();
+            $rebate=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+            if (!$rebate) throw new Exception('没有返佣订单');
+            if(empty($users['invitercode'])) throw new Exception('用户没有邀请人');
+            if($orders['pay_type'] != 1) throw new Exception('非微信小程序');
+            if($rebate['state'] != 0) throw new Exception('返佣状态为：'.$rebate['state']);
             $price = abs($rebate['final_price'] + $orders['overload_price'] - $orders['tralight_price']) ;
             $immRebate =(float) number_format($price*($agent_info["imm_rate"]??0)/100,2);
             $midRebate = 0;
             if(!empty($users['fainvitercode']))  $midRebate =(float) number_format($price*($agent_info["midd_rate"]??0)/100,2);
-            $rebate=[
+            $amount =  $immRebate + $midRebate;
+            $update=[
                 "final_price"=> $price,
                 "payinback"=> $orders['overload_price'] !== 0 ? $orders['overload_price'] : -$orders['tralight_price'], //补交费用 为负则表示超轻
                 "state"=> 5,
                 "imm_rebate"=> $immRebate,
                 "mid_rebate"=> $midRebate,
-                "rebate_amount"=> $immRebate + $midRebate,
+                "rebate_amount"=> $amount,
                 "out_trade_no"=>$orders["out_trade_no"],
                 "updatetime"=>time()
             ];
-            $rebateModal->isUpdate()->save($rebate);
+
+            $beneficiary = Users::get(['myinvitecode' => $users['invitercode']]);
+            if(empty($beneficiary)) return false;
+            $totalAmount = $beneficiary['money'] += $amount;
+            $beneficiary->isUpdate()->save(['money' => $totalAmount]);
+            $rebate->isUpdate()->save($update);
+            Db::commit();
             return true;
         }catch (Exception $exception){
             recordLog('rebate-err',
@@ -95,6 +105,7 @@ class RebateListController
                 $exception->getMessage() . PHP_EOL .
                 $exception->getTraceAsString()
             );
+            Db::rollback();
             return false;
         }
 
