@@ -3165,10 +3165,10 @@ class Wxcallback extends Controller
             !empty($orders['vloum_height']) &&($content['height'] = $orders['vloum_height']);
             !empty($orders['bill_remark']) &&($content['remark'] = $orders['bill_remark']);
             $data=$Common->shunfeng_api('http://api.wanhuida888.com/openApi/doOrder',$content);
+            recordLog('qbd-create-order','订单：'. $orders["out_trade_no"] .  PHP_EOL.
+                '请求参数：' . json_encode($content, JSON_UNESCAPED_UNICODE) . PHP_EOL.
+                '返回结果：'. json_encode($data, JSON_UNESCAPED_UNICODE));
             if (!empty($data['code'])){
-                recordLog('channel-create-order-err', 'Q必达-下单失败' . PHP_EOL .
-                    '请求参数：' . json_encode($content, JSON_UNESCAPED_UNICODE) . PHP_EOL.
-                    '返回结果：'. json_encode($data, JSON_UNESCAPED_UNICODE));
                 $out_refund_no=$Common->get_uniqid();//下单退款订单号
                 //支付成功下单失败  执行退款操作
                 $update=[
