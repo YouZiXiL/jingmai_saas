@@ -340,6 +340,8 @@ class Login extends Controller
             ->find();
         $config['banner']=explode('|', $config['banner']);
         if ($agentAuth['map_key']) $config['wx_map_key'] = $agentAuth['map_key'];
+
+        recordLog('agent-config', json_encode($config, JSON_UNESCAPED_UNICODE));
         return json(['status'=>200,'data'=>$config,'msg'=>'成功']);
     }
 
