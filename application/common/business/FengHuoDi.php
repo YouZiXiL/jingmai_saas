@@ -123,7 +123,7 @@ class FengHuoDi
         $fhdResult['freight']=sprintf("%.2f",$total['fright']* ProfitConfig::$fhd);
         $fhdResult['send_start_time']=$time;
         $fhdResult['send_end_time']=$sendEndTime;
-        $fhdResult['tagType']='德邦大件快递360';
+        $fhdResult['tagType']='德邦快递JX';
         $fhdResult['db_type']='RCP';
         $fhdResult['content']=$content;
         $fhdResult['insured']  = isset($param['insured'])?(int) $param['insured']:0;
