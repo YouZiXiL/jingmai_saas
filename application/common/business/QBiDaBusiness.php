@@ -111,12 +111,12 @@ class QBiDaBusiness
                 $v['oldName'] = $v['channelName'];
                 if(strpos($v['channelName'], '新户')){
                     $v['isNew'] = (bool)strpos($v['channelName'], '新户');
-                    $channelTag = '顺丰新';
+                    $channelTag = '顺丰新户';
                 }else{
                     $v['isNew'] = false;
-                    $channelTag = '顺丰';
+                    $channelTag = '顺丰快递';
                 }
-
+                $item['channel'] = $v['channelName'];
                 $v['channelName'] = 'JX-顺丰标快';
                 if($v['isNew']){
                     $v["agent_price"]=number_format($v["channelFee"]  + $v["guarantFee"],2);
@@ -126,16 +126,22 @@ class QBiDaBusiness
                     $v["users_price"]=number_format($v["originalFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
                 }
                 $v["final_price"]=number_format( $v["users_price"] + $v["guarantFee"],2);
-
+                $v['tagType'] = $channelTag;
+                $v['channel_tag'] = Channel::$qbd;
                 $v["insured"]=$param['insured'];
                 $v["channel_merchant"]= Channel::$qbd;
                 $v['jijian_id']=$param['jijian_id'];//寄件id
                 $v['shoujian_id']=$param['shoujian_id'];//收件id
                 $v['weight']=$param['weight'];//重量
                 $v['package_count']=$param['package_count'];//包裹数量
-                $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>$channelTag,'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
+                $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>  $v['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
                 $v["insert_id"]=$insert_id;
-                $arr[] = $v;
+                $arr[] = [
+                    'final_price' => $v["final_price"],
+                    'insert_id' => $insert_id,
+                    'channelName' => $v['channelName'],
+                    'channelMerchant' =>$v["channel_merchant"],
+                ];
             }
         }
         return $arr;

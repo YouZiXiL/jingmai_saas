@@ -14,6 +14,7 @@ use think\Request;
 use think\response\Json;
 use WeChatPay\Crypto\Rsa;
 use WeChatPay\Formatter;
+use app\common\business\YunYang;
 use function fast\e;
 
 class Shunfeng extends Controller
@@ -71,14 +72,26 @@ class Shunfeng extends Controller
                 throw new Exception('收件或寄件信息错误');
             }
 
-            $agent_info=db('admin')->field('agent_db_ratio,sf_agent_ratio,sf_users_ratio,qudao_close')->where('id',$this->user->agent_id)->find();
+            $agent_info=db('admin')
+                ->field('agent_db_ratio,sf_agent_ratio,sf_users_ratio,qudao_close')
+                ->where('id',$this->user->agent_id)->find();
+
+            $yunYang = new YunYang();
+            $yyParma = $yunYang->queryPriceParams($jijian_address, $shoujian_address, $param);
 
             $qbdBusiness = new QBiDaBusiness();
-            $content = $qbdBusiness->queryPriceParams($jijian_address, $shoujian_address, $param);
-            // $result = $this->common->shunfeng_api("http://api.wanhuida888.com/openApi/getPriceList",$content);
-            $response =  $this->common->multiRequest($content);
-            list($qbdRes) = $response;
-            $result = $qbdBusiness->advanceHandle($qbdRes, $agent_info, $param);
+            $qbdParam = $qbdBusiness->queryPriceParams($jijian_address, $shoujian_address, $param);
+            $response =  $this->common->multiRequest($yyParma, $qbdParam);
+            list($yyRes, $qbdRes) = $response;
+            $yy = $yunYang->advanceHandleBySF($yyRes, $agent_info, $param);
+            $qbd = $qbdBusiness->advanceHandle($qbdRes, $agent_info, $param);
+            $result = array_merge_recursive($yy,$qbd);
+            $result = array_filter($result, function($subArray) {
+                return !empty($subArray);
+            });
+            usort($result, function ($a, $b){
+                return $a['final_price'] <=> $b['final_price'];
+            });
             return json(['status'=>200,'data'=>$result,'msg'=>'成功']);
         }
         catch ( Exception $e){
@@ -183,7 +196,7 @@ class Shunfeng extends Controller
             'freight'=>$check_channel_intellect['channelFee'],//渠道价格
             'serviceCharge'=>$check_channel_intellect['serviceCharge'],//服务费
             'channel_id'=>$check_channel_intellect['productCode'],
-            'tag_type'=>$info['channel_tag'],
+            'tag_type'=>$check_channel_intellect['tagType'],
             'admin_shouzhong'=>0,
             'admin_xuzhong'=>0,
             'agent_shouzhong'=>0,

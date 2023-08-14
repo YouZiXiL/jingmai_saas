@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\admin\model\User;
 use app\web\model\Users;
 use app\common\business\AliBusiness;
 use app\common\business\JiLu;
@@ -26,6 +27,7 @@ use think\exception\DbException;
 use think\Log;
 use think\Queue;
 use think\Request;
+use think\response\Json;
 
 class Test extends Controller
 {
@@ -41,10 +43,11 @@ class Test extends Controller
      * @throws Exception
      */
     public function test(){
+
         $agentAuth = Admin::where('id', 23)->find();
-        $orders = Order::where('id', 51703)->find();
-        $user = Users::where('id', 221)->find();
-        // XD1687236998288763783
+        $orders = Order::where('id', 1)->find();
+        $user = Users::where('id', 222)->find();
+        // XD1691636395720662614
         $rebateList = new RebateListController();
         $result = $rebateList->handle($orders,$agentAuth, $user);
         dd($result);
@@ -298,7 +301,7 @@ class Test extends Controller
     /**
      * 极鹭订单详情
      * @param $expressId
-     * @return \think\response\Json
+     * @return Json
      */
     public function getOrderInfoByJl($expressId){
         $jiLu = new JiLu();
@@ -310,7 +313,7 @@ class Test extends Controller
     /**
      * 云洋物流轨迹
      * @param $waybill
-     * @return \think\response\Json
+     * @return Json
      * @throws DbException
      */
     public function yyTrance($waybill){
@@ -364,7 +367,7 @@ class Test extends Controller
 
     /**
      * 获取母版列表
-     * @return string|\think\response\Json
+     * @return string|Json
      */
     public function queryTemplatelib(){
         $aliopen = Alipay::start()->open();
@@ -380,7 +383,7 @@ class Test extends Controller
 
     /**
      * 发送超重信息
-     * @return \think\response\Json
+     * @return Json
      * @throws DbException
      * @throws \Exception
      */
@@ -401,7 +404,7 @@ class Test extends Controller
 
     /**
      * 发送超重信息
-     * @return \think\response\Json
+     * @return Json
      * @throws DbException
      * @throws \Exception
      */
@@ -421,7 +424,7 @@ class Test extends Controller
 
     /**
      * 获取模版消息列表
-     * @return \think\response\Json
+     * @return Json
      * @throws DbException
      * @throws \think\Exception
      */
@@ -454,7 +457,7 @@ class Test extends Controller
 
     /**
      * fhd取消订单
-     * @return \think\response\Json
+     * @return Json
      */
     public function fhd_cancel_order(){
 
@@ -468,4 +471,23 @@ class Test extends Controller
         return R::ok( json_decode($resultJson) );
     }
 
+    /**
+     * @throws DbException
+     * @throws Exception
+     * @throws \JsonException
+     */
+    public function createOrder(){
+        $order = Order::get(['id' => input('id')]);
+        $result = $order->save(input());
+        dd($result);
+    }
+
+    public function createUser(){
+        $user = Users::get(['id' => input('id')]);
+        if ($user){
+            return R::error('用户已经存在');
+        }
+        $result = Users::create(input());
+        dd($result);
+    }
 }

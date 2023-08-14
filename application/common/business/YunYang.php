@@ -101,14 +101,14 @@ class YunYang{
 
 
     /**
-     * 查询渠道价格
+     * 预下单，计算代理商及用户价格
      * @param string $content
      * @param array $agent_info
      * @param array $param
      * @return array
      * @throws Exception
      */
-    public function queryPriceHandle(string $content, array $agent_info, array $param){
+    public function advanceHandle(string $content, array $agent_info, array $param){
         if (empty($content)){
             recordLog('channel-price-err','云洋-数据不存在' . $content. PHP_EOL);
             return [];
@@ -119,8 +119,7 @@ class YunYang{
             throw new Exception($data['message']);
         }
         $qudao_close=explode('|', $agent_info['qudao_close']);
-        $qudao_close[] = '德邦'; // 云洋禁用德邦
-        $qudao_close[] = '顺丰'; // 云洋禁用德邦
+        $qudao_close[] = '顺丰'; // 云洋禁用顺丰
 
         foreach ($data['result'] as $k=>&$v){
             if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
@@ -128,9 +127,9 @@ class YunYang{
                 continue;
             }
             switch ($v['tagType']){
-                case  '申通':
-                case  '圆通':
-                case  '极兔':
+                case '申通':
+                case '圆通':
+                case '极兔':
                 case '中通':
                 case '韵达':
                 case '菜鸟':
@@ -146,6 +145,7 @@ class YunYang{
                     $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
                     break;
                 case '顺丰':
+                case 'EMS':
                     $agent_price=$v['freight']+$v['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
                     $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
                     $admin_shouzhong=0;//平台首重
@@ -169,9 +169,12 @@ class YunYang{
                 default:
                     continue 2;
             }
+
+
+
             if($v['tagType'] == '菜鸟'){
                 $caiNiaoEnable = false; // 菜鸟是否可用
-                if(isset($item['appointTimes'])) {
+                if(isset($v['appointTimes'])) {
                     foreach ($v['appointTimes'] as $appointTime) {
                         if ($appointTime['date'] == date('Y-m-d') && $appointTime['dateSelectable']) {
                             foreach ($appointTime['timeList'] as $time) {
@@ -216,7 +219,6 @@ class YunYang{
             $list[$k]['tag_type']=$v['tagType'];
         }
 
-
         if(isset($list)){
             $result = [];
             // 去除一个价格高的圆通
@@ -241,6 +243,93 @@ class YunYang{
         }
     }
 
+
+    /**
+     * 顺丰、EMS 价格计算
+     * @param $content
+     * @param $agent_info
+     * @param $param
+     * @return array
+     * @throws Exception
+     */
+    public function advanceHandleBySF($content, $agent_info, $param)
+    {
+        if (empty($content)){
+            recordLog('channel-price-err','云洋-数据不存在' . $content. PHP_EOL);
+            return [];
+        }
+        $data= json_decode($content, true);
+        if ($data['code']!=1){
+            recordLog('channel-price-err','云洋-查价失败:' . PHP_EOL . $content);
+            throw new Exception($data['message']);
+        }
+        $list = [];
+        foreach ($data['result'] as $item){
+            if ($item['tagType'] == '顺丰' || $item['tagType'] == 'EMS'){
+                $data = $this->priceSf($item, $agent_info);
+                $insert_id = $this->storagePrice($data,$param,$item);
+                $list[] = [
+                    'final_price' => $data['users']['price'],
+                    'insert_id' => $insert_id,
+                    'channelName' => $item['tagType'],
+                    'channelMerchant' => Channel::$yy,
+                ];
+            }
+        }
+        return $list;
+    }
+
+    /**
+     * 顺丰快递计算相关价格
+     * @param $channel
+     * @param $agent_info
+     * @return array
+     */
+    protected function priceSf($channel, $agent_info){
+        $agent_price = $channel['freight'] + $channel['freight'] * $agent_info['sf_agent_ratio']/100;//代理商价格
+        $users_price= $agent_price + $agent_price * $agent_info['sf_users_ratio']/100;//用户价格
+        if(isset($channel['extFreightFlag'])){
+            $users_price = $users_price + $channel['extFreight'];
+            $agent_price = $agent_price + $channel['extFreight'];
+        }
+        $finalPrice=  sprintf("%.2f",$users_price + $channel['freightInsured']);//用户拿到的价格=用户运费价格+保价费
+        $agentPrice =  sprintf("%.2f",$agent_price + $channel['freightInsured']);//代理商结算
+
+        $admin = [ 'oneWeight' => 0, 'moreWeight' => 0 ];
+        $agent = [ 'oneWeight' => 0, 'moreWeight' => 0, 'price' => $agentPrice];
+        $users = [ 'oneWeight' => 0, 'moreWeight' => 0, 'price' => $finalPrice ];
+        return compact('admin', 'agent', 'users');
+    }
+
+    /**
+     * 存储渠道价格，作为下单数据，
+     * @param $data array 计算好的价格数据（平台，代理商，用户）
+     * @param $param array 前端发来的数据
+     * @param $channel array 渠道返回的数据
+     * @return int|string
+     */
+    protected function storagePrice(array $data, array $param, array $channel){
+        extract($data);
+        $channel['agent_price']= $agent['price'];// 代理商结算金额
+        $channel['final_price']= $users['price'];//用户支付总价
+        $channel['admin_shouzhong']=sprintf("%.2f",$admin['oneWeight']);//平台首重
+        $channel['admin_xuzhong']=sprintf("%.2f",$admin['moreWeight']);//平台续重
+        $channel['agent_shouzhong']=sprintf("%.2f",$agent['oneWeight']);//代理商首重
+        $channel['agent_xuzhong']=sprintf("%.2f",$agent['moreWeight']);//代理商续重
+        $channel['users_shouzhong']=sprintf("%.2f",$users['oneWeight']);//用户首重
+        $channel['users_xuzhong']=sprintf("%.2f",$users['moreWeight']);//用户续重
+        $channel['jijian_id']=$param['jijian_id'];//寄件id
+        $channel['shoujian_id']=$param['shoujian_id'];//收件id
+        $channel['weight']=$param['weight'];//重量
+        $channel['channel_merchant'] = Channel::$yy;
+        $channel['package_count']=$param['package_count'];//包裹数量
+        $channel['insured']  = isset($param['insured'])?(int) $param['insured']:0;
+        $channel['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
+        $channel['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
+        $channel['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
+        $channelTag = $param['channel_tag']??'智能';
+        return db('check_channel_intellect')->insertGetId(['channel_tag'=>$channelTag,'content'=>json_encode($channel,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
+    }
     /**
      * 支付成功时的下单逻辑
      * @param $orders
@@ -282,8 +371,9 @@ class YunYang{
         $record = json_encode($content, JSON_UNESCAPED_UNICODE);
         $result = $this->utils->yunyang_api('ADD_BILL_INTELLECT',$content);
         recordLog('yy-create-order',
-            '订单：'.$orders['out_trade_no']. PHP_EOL
-            .json_encode($result, JSON_UNESCAPED_UNICODE)
+            '订单ID：'. $orders['out_trade_no']. PHP_EOL.
+            '返回参数：'.json_encode($result, JSON_UNESCAPED_UNICODE) . PHP_EOL.
+            '请求参数：' . $record
         );
         return $result;
     }
@@ -298,7 +388,7 @@ class YunYang{
     public function queryPriceParams($jijian_address,$shoujian_address, $param )
     {
         $yyContent = [
-            'channelTag'=>$param['channel_tag'], // 智能|重货
+            'channelTag'=>$param['channel_tag']??'智能',
             'sender'=> $jijian_address['name'],
             'senderMobile'=>$jijian_address['mobile'],
             'senderProvince'=>$jijian_address['province'],
@@ -327,11 +417,5 @@ class YunYang{
         ];
     }
 
-    /**
-     * 预下单，计算代理商及用户价格
-     * @return void
-     */
-    public function advanceHandle(){
 
-    }
 }

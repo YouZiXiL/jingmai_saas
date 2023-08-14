@@ -7,6 +7,7 @@ use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
 use app\common\business\OrderBusiness;
 use app\common\config\Channel;
+use app\common\config\ProfitConfig;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\Upload;
@@ -268,7 +269,7 @@ class Yunyang extends Controller
                         ->where('mch_code', Channel::$jilu)
                         ->find();
                 }
-                $yyPackage = $yunYang->queryPriceHandle($response[0], $agent_info, $param);
+                $yyPackage = $yunYang->advanceHandle($response[0], $agent_info, $param);
                 $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
 //                $jiluPackage = $jiLu->queryPriceHandleBackup($response[2], $agent_info, $param, $profit);
                 if($jiluCost){
@@ -292,7 +293,9 @@ class Yunyang extends Controller
                     }
                     return $a['final_price'] <=> $b['final_price'];
                 });
-            }else{
+            }
+            else{
+                // 重货
                 $fhdContent['serviceInfoList'] = [
                     [
                         'code'=>'INSURE','value'=>$param['insured']*100,
@@ -302,7 +305,6 @@ class Yunyang extends Controller
                     ]
                 ];
                 $res=$this->common->fhd_api('predictExpressOrder',$fhdContent);
-                file_put_contents('check_channel_intellect.txt',json_encode($fhdContent).PHP_EOL,FILE_APPEND);
 
                 $res=json_decode($res,true);
                 foreach ($res['data']['predictInfo']['detail'] as $k=>$v){
@@ -313,7 +315,7 @@ class Yunyang extends Controller
                         $total['fb']=$v['caculateFee'];
                     }
                 }
-                $agent_price=$total['fright']*0.68+$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
+                $agent_price=$total['fright']* ProfitConfig::$fhd +$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
                 $users_price=$agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
                 $admin_shouzhong=0;//平台首重
                 $admin_xuzhong=0;//平台续重
@@ -337,8 +339,8 @@ class Yunyang extends Controller
                 $res['package_count']=$param['package_count'];//包裹数量
                 $res['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
                 $res['channel']='德邦-精准汽运';
-                $res['channel_merchant'] = 'FHD';
-                $res['freight']=sprintf("%.2f",$total['fright']*0.68);
+                $res['channel_merchant'] = Channel::$fhd;
+                $res['freight']=sprintf("%.2f",$total['fright'] * ProfitConfig::$fhd);
                 $res['send_start_time']=$time;
                 $res['send_end_time']=$sendEndTime;
                 $res['tagType']='德邦重货';
@@ -363,7 +365,6 @@ class Yunyang extends Controller
                     ]
                 ];
                 $res=$this->common->fhd_api('predictExpressOrder',$fhdContent);
-                file_put_contents('check_channel_intellect.txt',json_encode($fhdContent).PHP_EOL,FILE_APPEND);
 
                 $res=json_decode($res,true);
                 foreach ($res['data']['predictInfo']['detail'] as $k=>$v){
@@ -374,7 +375,7 @@ class Yunyang extends Controller
                         $total['fb']=$v['caculateFee'];
                     }
                 }
-                $agent_price=$total['fright']*0.68+$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
+                $agent_price=$total['fright'] * ProfitConfig::$fhd + $total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
                 $users_price=$agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
                 $admin_shouzhong=0;//平台首重
                 $admin_xuzhong=0;//平台续重
@@ -398,9 +399,10 @@ class Yunyang extends Controller
                 $res['package_count']=$param['package_count'];//包裹数量
                 $res['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
                 $res['channel']='德邦-精准卡航';
-                $res['freight']=sprintf("%.2f",$total['fright']*0.68);
+                $res['freight']=sprintf("%.2f",$total['fright'] * ProfitConfig::$fhd);
                 $res['send_start_time']=$time;
                 $res['send_end_time']=$sendEndTime;
+                $res['channel_merchant']=Channel::$fhd;
                 $res['tagType']='德邦重货';
                 $res['db_type']='JZKH';
 
@@ -475,8 +477,6 @@ class Yunyang extends Controller
             if ($agent_info['amount']<$check_channel_intellect['agent_price']){
                 return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,无法下单']);
             }
-
-
 
             $agentAuthModel=AgentAuth::where('app_id',$this->user->app_id)
                 ->field('id,waybill_template,pay_template,material_template')
