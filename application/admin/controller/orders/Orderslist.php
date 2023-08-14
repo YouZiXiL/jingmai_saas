@@ -188,17 +188,6 @@ class Orderslist extends Backend
                 $orderBusiness = new OrderBusiness();
                 $orderBusiness->orderCancel($orderModel);
             }
-        } else if ($row['channel_tag']=='重货'){
-            $content=[
-                'expressCode'=>'DBKD',
-                'orderId'=>$row['out_trade_no'],
-                'reason'=>'不要了'
-            ];
-            $res=$common->fhd_api('cancelExpressOrder',$content);
-            $res=json_decode($res,true);
-            if ($res['rcode']!=0){
-                $this->error($res['errorMsg']);
-            }
         }else if($row['channel_merchant'] == Channel::$fhd){
             $content=[
                 'expressCode'=> $row['db_type'],
@@ -213,18 +202,18 @@ class Orderslist extends Backend
                 '返回结果-'. $resultJson
             );
             if($res['rcode'] != 0){
-                return R::error('取消失败请联系客服');
+                $this->error($resultJson);
             }
-        }else if($row['channel_tag']=='智能'){
+        }else if($row['channel_merchant']== Channel::$yy){
             $content=[
                 'shopbill'=>$row['shopbill'],
             ];
-
             $res=$common->yunyang_api('CANCEL',$content);
+            recordLog('order-cancer', '云洋订单ID：'.$row['out_trade_no'] .PHP_EOL.  json_encode($res, JSON_UNESCAPED_UNICODE));
             if ($res['code']!=1){
                 $this->error($res['message']);
             }
-        }else if($row['channel_tag']==Channel::$qbd){
+        }else if($row['channel_merchant']==Channel::$qbd){
             $content=[
                 "genre"=>1,
                 'orderNo'=>$row['shopbill']

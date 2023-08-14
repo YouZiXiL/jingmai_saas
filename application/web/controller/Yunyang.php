@@ -924,7 +924,7 @@ class Yunyang extends Controller
                     'shopbill'=>$row['shopbill']
                 ];
                 $res=$this->common->yunyang_api('CANCEL',$content);
-                recordLog('order-cancer', '云洋取消订单失败' . json_encode($res));
+                recordLog('order-cancer', '云洋订单ID：'.$row['out_trade_no'] .PHP_EOL.  json_encode($res, JSON_UNESCAPED_UNICODE));
                 if ($res['code']!=1){
                     return json(['status'=>400,'data'=>'','msg'=>$res['message']]);
                 }

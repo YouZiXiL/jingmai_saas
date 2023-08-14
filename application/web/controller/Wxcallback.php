@@ -434,7 +434,6 @@ class Wxcallback extends Controller
 
             $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
             $xcx_access_token = null;
-
             $wxOrder = $orders['pay_type'] == 1;
             $aliOrder = $orders['pay_type'] == 2;
             $autoOrder = $orders['pay_type'] == 3;
@@ -445,10 +444,6 @@ class Wxcallback extends Controller
             } else{
                 $superB = null;
             }
-
-
-
-
             if($wxOrder){
                 $agent_auth_xcx=db('agent_auth')
                     ->where('agent_id',$orders['agent_id'])
@@ -469,6 +464,10 @@ class Wxcallback extends Controller
             $up_data=[
                 'final_freight'=>$receive['total_freight'],
             ];
+
+            if(empty($orders['waybill'])){
+                $up_data['waybill'] = $pamar['waybill'];
+            }
 
             if(!empty($pamar['comments'])){
                 $up_data['comments'] = $pamar['comments'];
@@ -636,7 +635,7 @@ class Wxcallback extends Controller
 
             }
 
-            db('orders')->where('waybill',$pamar['waybill'])->update($up_data);
+            db('orders')->where('shopbill',$pamar['shopbill'])->update($up_data);
 
             //发送小程序订阅消息(运单状态)
             if ($orders['order_status']=='派单中' || $orders['order_status']=='已派单'){
