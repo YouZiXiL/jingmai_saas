@@ -264,8 +264,12 @@ class YunYang{
             throw new Exception($data['message']);
         }
         $list = [];
-        foreach ($data['result'] as $item){
+        foreach ($data['result'] as $key => $item){
             if ($item['tagType'] == '顺丰' || $item['tagType'] == 'EMS'){
+                if (($item['allowInsured']==0&&$param['insured']!=0)){
+                    unset($item[$key]);
+                    continue;
+                }
                 $data = $this->priceSf($item, $agent_info);
                 $insert_id = $this->storagePrice($data,$param,$item);
                 $list[] = [

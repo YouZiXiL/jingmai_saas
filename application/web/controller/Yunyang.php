@@ -278,7 +278,7 @@ class Yunyang extends Controller
 
 
                 $packageList = $yyPackage;
-                if(isset($jiluPackage))  $packageList[] = $jiluPackage;
+                if(!empty($jiluPackage))  $packageList[] = $jiluPackage;
 
                 if(!empty($fhdDb)) $packageList[] = $fhdDb;
                 usort($packageList, function ($a, $b){

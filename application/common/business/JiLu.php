@@ -139,7 +139,7 @@ class JiLu
      * @return array
      */
     public function queryPriceHandle(array $cost, array $agent_info, array $param ,array $profit){
-
+        if($param['insured']) return []; // 不支持保价费
         $weight = $param['weight']; // 下单重量
         $sequelWeight = $weight-1; // 续重重量
         $qudao_close = explode('|', $agent_info['qudao_close']);
