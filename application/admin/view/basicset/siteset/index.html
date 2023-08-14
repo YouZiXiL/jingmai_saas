@@ -87,7 +87,7 @@
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">客服类型:</label>
         <div class="col-xs-12 col-sm-8">
-            {:build_radios("row[agent_config][kf_type]",["1"=>"客服链接","2"=>"客服二维码"], $row.agent_config.kf_type)}
+            {:build_radios("row[agent_config][kf_type]",["1"=>"客服二维码","2"=>"客服链接"], $row.agent_config.kf_type)}
         </div>
     </div>
 
@@ -122,7 +122,7 @@
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">关注类型:</label>
         <div class="col-xs-12 col-sm-8">
-            {:build_radios("row[agent_config][mp_type]",["1"=>"公众号文章","2"=>"公众号二维码"], $row.agent_config.mp_type)}
+            {:build_radios("row[agent_config][mp_type]",["1"=>"公众号二维码","2"=>"公众号文章"], $row.agent_config.mp_type)}
         </div>
     </div>
 
