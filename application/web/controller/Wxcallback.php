@@ -420,6 +420,7 @@ class Wxcallback extends Controller
             ];
             db('yy_callback')->insert($receive);
             $orderModel = Order::where('shopbill',$pamar['shopbill'])->find();
+
             if (!$orderModel){
                 recordLog('channel-callback-err', '云洋-订单不存在：'. json_encode($pamar, JSON_UNESCAPED_UNICODE));
                 return json(['code'=>0, 'message'=>'没有该订单']);
@@ -590,7 +591,6 @@ class Wxcallback extends Controller
                 // 发送耗材短信
                 KD100Sms::run()->material($orders);
             }
-
             if($pamar['type']=='已取消'&&$orders['pay_status']!=2){
                 // 取消订单，给用户退款
                 if($wxOrder){ // 微信
@@ -600,7 +600,8 @@ class Wxcallback extends Controller
                     ];
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
-                } else if($autoOrder){ // 智能下单
+                }
+                else if($autoOrder){ // 智能下单
 
                     $out_refund_no=$common->get_uniqid();//下单退款订单号
                     $update=[
@@ -612,7 +613,8 @@ class Wxcallback extends Controller
                     $DbCommon= new Dbcommom();
                     $DbCommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已取消并退款');
                     return json(['code'=>1, 'message'=>'ok']);
-                }else{ // 支付宝
+                }
+                else{ // 支付宝
                     $refund = Alipay::start()->base()->refund($orders['out_trade_no'],$orders['final_price'],$agent_auth_xcx['auth_token']);
                     if($refund){
                         $out_refund_no=$common->get_uniqid();//下单退款订单号
@@ -632,7 +634,10 @@ class Wxcallback extends Controller
                     $DbCommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已取消并退款');
                     return json(['code'=>1, 'message'=>'ok']);
                 }
-
+                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                    //推送企业微信消息
+                    $common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                }
             }
 
             db('orders')->where('shopbill',$pamar['shopbill'])->update($up_data);
