@@ -120,7 +120,7 @@ class YunYang{
         }
         $qudao_close=explode('|', $agent_info['qudao_close']);
         $qudao_close[] = '顺丰'; // 云洋禁用顺丰
-
+        $dbCount = 0; // 德邦出现次数
         foreach ($data['result'] as $k=>&$v){
             if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
                 unset($data['result'][$k]);
@@ -189,6 +189,12 @@ class YunYang{
                 if(!$caiNiaoEnable){
                     continue;
                 }
+            }
+
+            if($v['tagType'] == '德邦'){
+                // 保留两个德邦
+                if ($dbCount>=2) continue;
+                $dbCount ++;
             }
 
             if(isset($v['extFreightFlag'])){
