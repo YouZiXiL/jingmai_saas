@@ -938,9 +938,8 @@ class Wxcallback extends Controller
                 if($orderStatus == '已开单')  $orderStatus = '运输中';
                 $up_data['order_status']=$orderStatus;
             }
-
-            if(@$result['orderStatusCode']=='CANCEL'){
-                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+            if(!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                if ($orders['weight'] >= $agent_info['wx_im_weight']){
                     //推送企业微信消息
                     $common->wxim_bot($agent_info['wx_im_bot'],$orders);
                 }
@@ -958,8 +957,8 @@ class Wxcallback extends Controller
          * */
 
             if(
-                (
-                    @$result['orderStatusCode']=='GOBACK'
+                (0
+                    //@$result['orderStatusCode']=='GOBACK'
 //                        || @$result['orderStatusCode']=='CANCEL'
 //                        || @$result['orderStatusCode']=='INVALID'
                 )
