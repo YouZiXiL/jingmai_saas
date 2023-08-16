@@ -143,7 +143,6 @@ class JiLu
      * @throws ModelNotFoundException
      */
     public function queryPriceHandle(array $agent_info, array $param, string $sendProvince, string $receiveProvince){
-
         if($param['insured']) return []; // 不支持保价费
         $qudao_close = explode('|', $agent_info['qudao_close']);
         if (in_array('圆通快递',$qudao_close)){
@@ -197,6 +196,8 @@ class JiLu
 
         $list['final_price']=$content['final_price'];
         $list['insert_id']=$insert_id;
+        $list['onePrice']=$content['users_shouzhong'];
+        $list['morePrice']=$content['users_xuzhong'];
         $list['tag_type']=$content['tagType'];
         return $list;
     }
