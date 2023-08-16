@@ -240,11 +240,7 @@ class Yunyang extends Controller
                 $yyParams = $yunYang->queryPriceParams($jijian_address,$shoujian_address, $param);
 
                 $response =  $this->common->multiRequest($yyParams, $fhdParams1, $fhdParams2);
-                recordLog('channel-price', '$response' . json_encode($response[0], JSON_UNESCAPED_UNICODE));
-
                 $yy = $yunYang->advanceHandle($response[0], $agent_info, $param);
-                recordLog('channel-price', '$yy' . json_encode($yy, JSON_UNESCAPED_UNICODE));
-
                 $fhd1 = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param, 'JZQY_LONG');
                 $fhd2 = $fengHuoDi->queryPriceHandle($response[2], $agent_info, $param, 'JZKH');
                 $fhd[] = $fhd1;
@@ -256,8 +252,6 @@ class Yunyang extends Controller
                 usort($result, function ($a, $b){
                     return $a['final_price'] <=> $b['final_price'];
                 });
-
-                recordLog('channel-price', '重货' . json_encode($result, JSON_UNESCAPED_UNICODE));
             }
             if (empty($result)){
                 throw new Exception('没有指定快递渠道请联系客服');

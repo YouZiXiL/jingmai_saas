@@ -153,7 +153,6 @@ class OrderBusiness extends Backend
             if ($errMsg == '渠道不可用，Disable！状态码：Disable') $errMsg = '用黑名单';
             $this->error($errMsg);
         }
-
         $profitBusiness = new ProfitBusiness();
         $profit = $profitBusiness->getProfit($this->auth->id, ['mch_code' => Channel::$yy]);
         // 为了便于查找，转换下数组格式
@@ -238,12 +237,12 @@ class OrderBusiness extends Backend
             $admin = $data['admin'];
             $item['agent_price']= $agent['price'];// 代理商结算金额
             $item['final_price']= $agent['price'];//用户支付总价
-            $item['admin_shouzhong']=$admin['oneWeight'];//平台首重
-            $item['admin_xuzhong']= $admin['moreWeight'];//平台续重
-            $item['agent_shouzhong']= $agent['oneWeight'];//代理商首重
-            $item['agent_xuzhong']= $agent['moreWeight'];//代理商续重
-            $item['users_shouzhong']= $agent['oneWeight'];//用户首重
-            $item['users_xuzhong']= $agent['moreWeight'];//用户续重
+            $item['admin_shouzhong']=$admin['onePrice'];//平台首重
+            $item['admin_xuzhong']= $admin['morePrice'];//平台续重
+            $item['agent_shouzhong']= $agent['onePrice'];//代理商首重
+            $item['agent_xuzhong']= $agent['morePrice'];//代理商续重
+            $item['users_shouzhong']= $agent['onePrice'];//用户首重
+            $item['users_xuzhong']= $agent['morePrice'];//用户续重
             $item['channel_merchant'] = Channel::$yy;
             $item['senderInfo'] = $param['sender'];//寄件人信息
             $item['receiverInfo']= $param['receiver'];//收件人信息
@@ -255,6 +254,9 @@ class OrderBusiness extends Backend
             $requireId = SnowFlake::createId();
             cache( $requireId, json_encode($item), $this->ttl);
             $list[$key]['freight']= $agent['price'];
+            $list[$key]['tagType']= $item['tagType'];
+            $list[$key]['onePrice']= $item['users_shouzhong'];
+            $list[$key]['morePrice']= $item['users_xuzhong'];
             $list[$key]['tagType']= $item['tagType'];
             $list[$key]['channelLogoUrl']= $item['channelLogoUrl'];
             $list[$key]['channelId']= $item['channelId'];
@@ -294,8 +296,8 @@ class OrderBusiness extends Backend
     public function priceTd(array $channelItem, $agent_info, $param){
         $adminOne= $channelItem['price']['priceOne'];//平台首重
         $adminMore = $channelItem['price']['priceMore'];//平台续重
-        $agentOne= sprintf("%.2f", $adminOne + $adminOne * $agent_info['agent_shouzhong']/100);//代理商首重
-        $agentMore= sprintf("%.2f",$adminMore + $adminMore * $agent_info['agent_xuzhong']/100);//代理商续重
+        $agentOne= sprintf("%.2f", $adminOne + $agent_info['agent_shouzhong']);//代理商首重
+        $agentMore= sprintf("%.2f",$adminMore + $agent_info['agent_xuzhong']);//代理商续重
         $moreWeight = $param['info']['weight']-1;//续重重量
         $agentFreight = (float) $agentOne + $agentMore * $moreWeight;//代理商价格
         if(isset($channelItem['extFreightFlag'])){
@@ -303,8 +305,8 @@ class OrderBusiness extends Backend
         }
         $agentPrice =  sprintf("%.2f",$agentFreight + $channelItem['freightInsured']);//代理商结算
 
-        $admin = [ 'oneWeight' => $adminOne, 'moreWeight' => $adminMore ];
-        $agent = [ 'oneWeight' => $agentOne, 'moreWeight' => $agentMore, 'price' => $agentPrice];
+        $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
+        $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
         return compact('admin', 'agent');
     }
 
@@ -321,8 +323,8 @@ class OrderBusiness extends Backend
         }
         $agentPrice =  sprintf("%.2f",$agentFreight + $channelItem['freightInsured']);//代理商结算
 
-        $admin = [ 'oneWeight' => 0, 'moreWeight' => 0 ];
-        $agent = [ 'oneWeight' => 0, 'moreWeight' => 0, 'price' => $agentPrice];
+        $admin = [ 'onePrice' => 0, 'morePrice' => 0 ];
+        $agent = [ 'onePrice' => 0, 'morePrice' => 0, 'price' => $agentPrice];
         return compact('admin', 'agent');
     }
 
@@ -344,8 +346,8 @@ class OrderBusiness extends Backend
             }
             $agentPrice =  sprintf("%.2f",$agentFreight + $channelItem['freightInsured']);//代理商结算
 
-            $admin = [ 'oneWeight' => $adminOne, 'moreWeight' => $adminMore ];
-            $agent = [ 'oneWeight' => $agentOne, 'moreWeight' => $agentMore, 'price' => $agentPrice];
+            $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
+            $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
             return compact('admin', 'agent');
     }
 
@@ -367,8 +369,8 @@ class OrderBusiness extends Backend
         $adminMore = $channelItem['price']['priceMore'];//平台续重
         $agentOne =  sprintf("%.2f",$adminOne + $adminOne * $ratio);
         $agentMore = sprintf("%.2f",$adminMore + $adminMore * $ratio);
-        $admin = [ 'oneWeight' => $adminOne, 'moreWeight' => $adminMore ];
-        $agent = [ 'oneWeight' => $agentOne, 'moreWeight' => $agentMore, 'price' => $agentPrice];
+        $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
+        $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
         return compact('admin', 'agent');
     }
 
@@ -380,14 +382,13 @@ class OrderBusiness extends Backend
      * @return array
      */
     public function priceKy($channelItem,  $profit){
-
         $agentFreight = $channelItem['freight'] + $channelItem['freight'] * $profit['ratio']/100;//代理商价格
         if(isset($channelItem['extFreightFlag'])){
             $agentFreight = $agentFreight + $channelItem['extFreight'];
         }
         $agentPrice =  sprintf("%.2f",$agentFreight + $channelItem['freightInsured']);//代理商结算
-        $admin = [ 'oneWeight' => 0, 'moreWeight' => 0 ];
-        $agent = [ 'oneWeight' => 0, 'moreWeight' => 0, 'price' => $agentPrice];
+        $admin = [ 'onePrice' => 0, 'morePrice' => 0 ];
+        $agent = [ 'onePrice' => 0, 'morePrice' => 0, 'price' => $agentPrice];
         return compact('admin', 'agent');
     }
     /**

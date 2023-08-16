@@ -140,66 +140,71 @@ class YunYang{
                 case '中通':
                 case '韵达':
                 case '菜鸟':
-                    $admin_shouzhong=$v['price']['priceOne'];//平台首重
-                    $admin_xuzhong=$v['price']['priceMore'];//平台续重
-                    $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
-                    $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
-                    $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
-                    $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
-                    $weight=$param['weight']-1;//续重重量
-                    $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
-                    $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
-                    $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+//                    $admin_shouzhong=$v['price']['priceOne'];//平台首重
+//                    $admin_xuzhong=$v['price']['priceMore'];//平台续重
+//                    $agent_shouzhong=$admin_shouzhong+$agent_info['agent_shouzhong'];//代理商首重价格
+//                    $agent_xuzhong=$admin_xuzhong+$agent_info['agent_xuzhong'];//代理商续重价格
+//                    $users_shouzhong=$agent_shouzhong+$agent_info['users_shouzhong'];//用户首重价格
+//                    $users_xuzhong=$agent_xuzhong+$agent_info['users_xuzhong'];//用户续重价格
+//                    $weight=$param['weight']-1;//续重重量
+//                    $xuzhong_price=$users_xuzhong*$weight;//用户续重总价格
+//                    $users_price=$users_shouzhong+$xuzhong_price;//用户总运费价格
+//                    $agent_price=$agent_shouzhong+$agent_xuzhong*$weight;//代理商结算金额
+                    $priceInfo = $this->priceTd($v,$agent_info, $param);
                     break;
                 case '顺丰':
                 case 'EMS':
-                    $agent_price=$v['freight']+$v['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
-                    $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
-                    $admin_shouzhong=0;//平台首重
-                    $admin_xuzhong=0;//平台续重
-                    $agent_shouzhong=0;//代理商首重
-                    $agent_xuzhong=0;//代理商续重
-                    $users_shouzhong=0;//用户首重
-                    $users_xuzhong=0;//用户续重
+//                    $agent_price=$v['freight']+$v['freight']*$agent_info['agent_sf_ratio']/100;//代理商价格
+//                    $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
+//                    $admin_shouzhong=0;//平台首重
+//                    $admin_xuzhong=0;//平台续重
+//                    $agent_shouzhong=0;//代理商首重
+//                    $agent_xuzhong=0;//代理商续重
+//                    $users_shouzhong=0;//用户首重
+//                    $users_xuzhong=0;//用户续重
+                    $priceInfo = $this->priceSf($v,$agent_info);
                     break;
                 case '德邦':
                 case '京东':
-                    $admin_shouzhong=@$v['discountPriceOne'];//平台首重
-                    $admin_xuzhong=@$v['discountPriceMore'];//平台续重
-                    $agent_price=$v['freight']+$v['freight']*$agent_info['db_agent_ratio']/100;//代理商价格
-                    $users_price=$agent_price+$agent_price*$agent_info['db_users_ratio']/100;//用户价格
-                    $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_db_ratio']/100;//代理商首重
-                    $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
-                    $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
-                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+//                    $admin_shouzhong=@$v['discountPriceOne'];//平台首重
+//                    $admin_xuzhong=@$v['discountPriceMore'];//平台续重
+//                    $agent_price=$v['freight']+$v['freight']*$agent_info['db_agent_ratio']/100;//代理商价格
+//                    $users_price=$agent_price+$agent_price*$agent_info['db_users_ratio']/100;//用户价格
+//                    $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_db_ratio']/100;//代理商首重
+//                    $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
+//                    $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
+//                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+                    $priceInfo = $this->priceDb($v, $agent_info);
                     break;
                 case '顺心捷达':
                 case '百世':
-                    $ratio = $profit[$v['tagType']];
-                    $ratioAgent = $ratio['ratio']/100;
-                    $ratioUser = $ratio['user_ratio']/100;
-                    $agent_price=$v['freight']+$v['freight']* $ratioAgent;//代理商价格
-                    $users_price=$agent_price + $agent_price * $ratioUser;//用户价格
-                    $admin_shouzhong= $v['price']['priceOne'];//平台首重
-                    $admin_xuzhong=$v['price']['priceMore'];//平台续重
-
-                    $agent_shouzhong= $admin_shouzhong +  $admin_shouzhong * $ratioAgent;//代理商首重
-                    $agent_xuzhong= $admin_xuzhong +  $admin_xuzhong * $ratioAgent;//代理商续重
-                    $users_shouzhong= $agent_shouzhong + $agent_shouzhong * $ratioUser;//用户首重
-                    $users_xuzhong= $agent_xuzhong + $agent_xuzhong * $ratioUser;//用户续重
+//                    $ratio = $profit[$v['tagType']];
+//                    $ratioAgent = $ratio['ratio']/100;
+//                    $ratioUser = $ratio['user_ratio']/100;
+//                    $agent_price=$v['freight']+$v['freight']* $ratioAgent;//代理商价格
+//                    $users_price=$agent_price + $agent_price * $ratioUser;//用户价格
+//                    $admin_shouzhong= $v['price']['priceOne'];//平台首重
+//                    $admin_xuzhong=$v['price']['priceMore'];//平台续重
+//
+//                    $agent_shouzhong= $admin_shouzhong +  $admin_shouzhong * $ratioAgent;//代理商首重
+//                    $agent_xuzhong= $admin_xuzhong +  $admin_xuzhong * $ratioAgent;//代理商续重
+//                    $users_shouzhong= $agent_shouzhong + $agent_shouzhong * $ratioUser;//用户首重
+//                    $users_xuzhong= $agent_xuzhong + $agent_xuzhong * $ratioUser;//用户续重
+                    $priceInfo = $this->priceJd($v, $profit[$v['tagType']]);
                     break;
                 case '跨越':
-                    $ratio = $profit[$v['tagType']];
-                    $ratioAgent = $ratio['ratio']/100;
-                    $ratioUser = $ratio['user_ratio']/100;
-                    $agent_price= $v['freight']+$v['freight'] * $ratioAgent;//代理商价格
-                    $users_price= $agent_price + $agent_price * $ratioUser;//用户价格
-                    $admin_shouzhong= 0;//平台首重
-                    $admin_xuzhong= 0;//平台续重
-                    $agent_shouzhong= 0;//代理商首重
-                    $agent_xuzhong= 0;//代理商续重
-                    $users_shouzhong= 0;//用户首重
-                    $users_xuzhong= 0;//用户续重
+//                    $ratio = $profit[$v['tagType']];
+//                    $ratioAgent = $ratio['ratio']/100;
+//                    $ratioUser = $ratio['user_ratio']/100;
+//                    $agent_price= $v['freight']+$v['freight'] * $ratioAgent;//代理商价格
+//                    $users_price= $agent_price + $agent_price * $ratioUser;//用户价格
+//                    $admin_shouzhong= 0;//平台首重
+//                    $admin_xuzhong= 0;//平台续重
+//                    $agent_shouzhong= 0;//代理商首重
+//                    $agent_xuzhong= 0;//代理商续重
+//                    $users_shouzhong= 0;//用户首重
+//                    $users_xuzhong= 0;//用户续重
+                    $priceInfo = $this->priceKy($v, $profit[$v['tagType']]);
                     break;
                 default:
                     continue 2;
@@ -232,32 +237,33 @@ class YunYang{
                 $dbCount ++;
             }
 
-            if(isset($v['extFreightFlag'])){
-                $users_price = $users_price + $v['extFreight'];
-                $agent_price = $agent_price + $v['extFreight'];
-            }
-            $finalPrice=sprintf("%.2f",$users_price+$v['freightInsured']);//用户拿到的价格=用户运费价格+保价费
-            $v['final_price']=$finalPrice;//用户支付总价
-            $v['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
-            $v['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
-            $v['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
-            $v['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
-            $v['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
-            $v['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-            $v['agent_price']=sprintf("%.2f",$agent_price+$v['freightInsured']);//代理商结算
-            $v['jijian_id']=$param['jijian_id'];//寄件id
-            $v['shoujian_id']=$param['shoujian_id'];//收件id
-            $v['weight']=$param['weight'];//重量
-            $v['channel_merchant'] = Channel::$yy;
-            $v['package_count']=$param['package_count'];//包裹数量
-            $v['insured']  = isset($param['insured'])?(int) $param['insured']:0;
-            $v['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
-            $v['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
-            $v['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
-            $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
-            $list[$k]['final_price']=$finalPrice;
-            $list[$k]['insert_id']=$insert_id;
-            $list[$k]['tag_type']=$v['tagType'];
+            $insert_id = $this->storagePrice($priceInfo,$param,$v);
+//            $finalPrice=sprintf("%.2f",$users_price+$v['freightInsured']);//用户拿到的价格=用户运费价格+保价费
+//            $v['final_price']=$finalPrice;//用户支付总价
+//            $v['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
+//            $v['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
+//            $v['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
+//            $v['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
+//            $v['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
+//            $v['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
+//            $v['agent_price']=sprintf("%.2f",$agent_price+$v['freightInsured']);//代理商结算
+//            $v['jijian_id']=$param['jijian_id'];//寄件id
+//            $v['shoujian_id']=$param['shoujian_id'];//收件id
+//            $v['weight']=$param['weight'];//重量
+//            $v['channel_merchant'] = Channel::$yy;
+//            $v['package_count']=$param['package_count'];//包裹数量
+//            $v['insured']  = isset($param['insured'])?(int) $param['insured']:0;
+//            $v['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
+//            $v['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
+//            $v['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
+//            $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
+//
+            extract($priceInfo);
+            $list[$k]['final_price'] =$user['price'];
+            $list[$k]['insert_id'] = $insert_id;
+            $list[$k]['onePrice'] =  $user['onePrice'];
+            $list[$k]['morePrice'] = $user['morePrice'];
+            $list[$k]['tag_type'] = $v['tagType'];
         }
 
         if(isset($list)){
@@ -314,7 +320,7 @@ class YunYang{
                 $data = $this->priceSf($item, $agent_info);
                 $insert_id = $this->storagePrice($data,$param,$item);
                 $list[] = [
-                    'final_price' => $data['users']['price'],
+                    'final_price' => $data['user']['price'],
                     'insert_id' => $insert_id,
                     'channelName' => $item['tagType'],
                     'channelMerchant' => Channel::$yy,
@@ -340,10 +346,10 @@ class YunYang{
         $finalPrice=  sprintf("%.2f",$users_price + $channel['freightInsured']);//用户拿到的价格=用户运费价格+保价费
         $agentPrice =  sprintf("%.2f",$agent_price + $channel['freightInsured']);//代理商结算
 
-        $admin = [ 'oneWeight' => 0, 'moreWeight' => 0 ];
-        $agent = [ 'oneWeight' => 0, 'moreWeight' => 0, 'price' => $agentPrice];
-        $users = [ 'oneWeight' => 0, 'moreWeight' => 0, 'price' => $finalPrice ];
-        return compact('admin', 'agent', 'users');
+        $admin = [ 'onePrice' => 0, 'morePrice' => 0 ];
+        $agent = [ 'onePrice' => 0, 'morePrice' => 0, 'price' => $agentPrice];
+        $user = [ 'onePrice' => 0, 'morePrice' => 0, 'price' => $finalPrice ];
+        return compact('admin', 'agent', 'user');
     }
 
     /**
@@ -356,13 +362,13 @@ class YunYang{
     protected function storagePrice(array $data, array $param, array $channel){
         extract($data);
         $channel['agent_price']= $agent['price'];// 代理商结算金额
-        $channel['final_price']= $users['price'];//用户支付总价
-        $channel['admin_shouzhong']=sprintf("%.2f",$admin['oneWeight']);//平台首重
-        $channel['admin_xuzhong']=sprintf("%.2f",$admin['moreWeight']);//平台续重
-        $channel['agent_shouzhong']=sprintf("%.2f",$agent['oneWeight']);//代理商首重
-        $channel['agent_xuzhong']=sprintf("%.2f",$agent['moreWeight']);//代理商续重
-        $channel['users_shouzhong']=sprintf("%.2f",$users['oneWeight']);//用户首重
-        $channel['users_xuzhong']=sprintf("%.2f",$users['moreWeight']);//用户续重
+        $channel['final_price']= $user['price'];//用户支付总价
+        $channel['admin_shouzhong']= $admin['onePrice'];//平台首重
+        $channel['admin_xuzhong']= $admin['morePrice'];//平台续重
+        $channel['agent_shouzhong']= $agent['onePrice'];//代理商首重
+        $channel['agent_xuzhong']= $agent['morePrice'];//代理商续重
+        $channel['users_shouzhong']= $user['onePrice'];//用户首重
+        $channel['users_xuzhong']= $user['morePrice'];//用户续重
         $channel['jijian_id']=$param['jijian_id'];//寄件id
         $channel['shoujian_id']=$param['shoujian_id'];//收件id
         $channel['weight']=$param['weight'];//重量
@@ -462,5 +468,123 @@ class YunYang{
         ];
     }
 
+
+
+    /**
+     * 云洋四通一达运费计算
+     * @param array $channelItem
+     * @param $agent_info
+     * @param $param
+     * @return array
+     */
+    public function priceTd(array $channelItem, $agent_info, $param){
+        $adminOne= $channelItem['price']['priceOne'];//平台首重
+        $adminMore = $channelItem['price']['priceMore'];//平台续重
+        $agentOne= bcadd($adminOne , $agent_info['agent_shouzhong'],2);//代理商首重
+        $agentMore= bcadd( $adminMore ,  $agent_info['agent_xuzhong'],2);//代理商续重
+        $userOne= bcadd(  $agentOne,  $agent_info['users_shouzhong'],2);//代理商续重
+        $userMore= bcadd(  $agentMore,  $agent_info['users_xuzhong'],2);//代理商续重
+        $moreWeight = $param['weight']-1;//续重重量
+        $agentFreight = bcadd( $agentOne , $agentMore * $moreWeight,2);// 代理运费
+        $usersFreight = bcadd( $userOne , $userMore * $moreWeight,2 );//用户运费
+        if(isset($channelItem['extFreightFlag'])){
+            $agentFreight = bcadd($agentFreight, $channelItem['extFreight']);
+            $usersFreight = bcadd($usersFreight, $channelItem['extFreight']);
+        }
+        $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
+        $usersPrice =  bcadd($usersFreight, $channelItem['freightInsured'], 2); //代理商结算
+
+        $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
+        $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
+        $user = [ 'onePrice' => $userOne, 'morePrice' => $userMore, 'price' => $usersPrice];
+        return compact('admin', 'agent', 'user');
+    }
+
+    /**
+     * 德邦京东运费计算
+     * @param $channelItem
+     * @param $agent_info
+     * @return array
+     */
+    public function priceDb($channelItem, $agent_info){
+        $ratioAgent = $agent_info['db_agent_ratio']/100; // 平台给代理商德邦上浮比例
+        $ratioUser = $agent_info['db_users_ratio']/100; // 代理商给用户德邦上浮比例
+
+        $adminOne= $channelItem['discountPriceOne'];//平台首重
+        $adminMore= $channelItem['discountPriceMore'];//平台续重
+        $agentOne = bcadd($adminOne, $adminOne * $ratioAgent,2);//代理商首重
+        $agentMore = bcadd($adminMore , $adminMore * $ratioAgent, 2);//代理商续重
+        $userOne = bcadd($agentOne, $agentOne * $ratioUser,2);//用户首重
+        $userMore = bcadd($agentMore, $agentMore * $ratioUser,2);//用户续重
+
+        $agentFreight = $channelItem['freight'] + $channelItem['freight'] * $ratioAgent;//代理商价格
+        $userFreight = $agentFreight + $agentFreight * $ratioUser;//用户价格
+
+        if(isset($channelItem['extFreightFlag'])){
+            $agentFreight = bcadd($agentFreight, $channelItem['extFreight']);
+            $userFreight = bcadd($userFreight, $channelItem['extFreight']);
+        }
+        $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
+        $userPrice =  bcadd($userFreight, $channelItem['freightInsured'], 2); //代理商结算
+
+        $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
+        $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
+        $user = [ 'onePrice' => $userOne, 'morePrice' => $userMore, 'price' => $userPrice];
+        return compact('admin', 'agent', 'user');
+    }
+
+    /**
+     * 顺心捷达,百世，运费计算
+     * @param $channelItem
+     * @param $profit
+     * @return array
+     */
+    public function priceJd($channelItem,  $profit){
+        $ratioAgent = $profit['ratio']/100;
+        $ratioUser = $profit['user_ratio']/100;
+
+        $adminOne = $channelItem['price']['priceOne'];//平台首重
+        $adminMore = $channelItem['price']['priceMore'];//平台续重
+        $agentOne =  bcadd($adminOne, $adminOne * $ratioAgent, 2);
+        $agentMore = bcadd($adminMore, $adminMore * $ratioAgent, 2);
+        $userOne =  bcadd($agentOne, $agentOne * $ratioUser, 2);
+        $userMore = bcadd($agentMore, $agentMore * $ratioUser, 2);
+        $agentFreight = $channelItem['freight'] + $channelItem['freight'] * $ratioAgent;//代理商价格
+        $userFreight = $agentFreight + $agentFreight * $ratioUser;//用户价格
+        if(isset($channelItem['extFreightFlag'])){
+            $agentFreight = $agentFreight + $channelItem['extFreight'];
+            $userFreight = $userFreight + $channelItem['extFreight'];
+        }
+        $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
+        $userPrice =  bcadd($userFreight, $channelItem['freightInsured'], 2); //代理商结算
+        $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
+        $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
+        $user = [ 'onePrice' => $userOne, 'morePrice' => $userMore, 'price' => $userPrice];
+        return compact('admin', 'agent', 'user');
+    }
+
+    /**
+     * 跨越价格结算
+     * @param $channelItem
+     * @param $profit
+     * @return array
+     */
+    public function priceKy($channelItem,  $profit){
+        $ratioAgent = $profit['ratio']/100;
+        $ratioUser = $profit['user_ratio']/100;
+
+        $agentFreight = $channelItem['freight'] + $channelItem['freight'] * $ratioAgent;//代理商价格
+        $userFreight = $agentFreight + $agentFreight * $ratioUser;//代理商价格
+        if(isset($channelItem['extFreightFlag'])){
+            $agentFreight = $agentFreight + $channelItem['extFreight'];
+            $userFreight = $agentFreight + $channelItem['extFreight'];
+        }
+        $agentPrice =  sprintf("%.2f",$agentFreight + $channelItem['freightInsured']);//代理商结算
+        $userPrice =  sprintf("%.2f",$userFreight + $channelItem['freightInsured']);//代理商结算
+        $admin = [ 'onePrice' => 0, 'morePrice' => 0 ];
+        $agent = [ 'onePrice' => 0, 'morePrice' => 0, 'price' => $agentPrice];
+        $user = [ 'onePrice' => 0, 'morePrice' => 0, 'price' => $userPrice];
+        return compact('admin', 'agent', 'user');
+    }
 
 }
