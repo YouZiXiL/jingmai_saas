@@ -153,6 +153,7 @@ class OrderBusiness extends Backend
             if ($errMsg == '渠道不可用，Disable！状态码：Disable') $errMsg = '用黑名单';
             $this->error($errMsg);
         }
+        dd($data);
         $profitBusiness = new ProfitBusiness();
         $profit = $profitBusiness->getProfit($this->auth->id, ['mch_code' => Channel::$yy]);
         // 为了便于查找，转换下数组格式
@@ -330,6 +331,8 @@ class OrderBusiness extends Backend
 
     /**
      * 云洋德邦运费计算
+     * 德邦物流：最低计费首重30kg
+     * 德邦快递：最低计费首重3kg
      * @param array $channelItem
      * @param $agent_info
      * @return array
@@ -352,7 +355,8 @@ class OrderBusiness extends Backend
     }
 
     /**
-     * 顺心捷达，百世，跨越
+     * 顺心捷达，百世，计算价格
+     * 捷达:起步38.00元, 按每公斤计费。
      * @param $channelItem
      * @param $profit
      * @return array
@@ -376,7 +380,7 @@ class OrderBusiness extends Backend
 
 
     /**
-     * 跨越
+     * 跨越按折扣价计算。无首重续重。
      * @param $channelItem
      * @param $profit
      * @return array

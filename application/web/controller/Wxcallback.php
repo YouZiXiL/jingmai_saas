@@ -539,9 +539,9 @@ class Wxcallback extends Controller
                 }
                 else if($orders['tag_type']=='德邦快递'|| $orders['tag_type']=='德邦物流' || $orders['tag_type']=='德邦'){
                     $overload_amt=$pamar['freight']-$orders['freight'];//超出金额
-                    $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
-                    $agent_xuzhong=$admin_xuzhong + $admin_xuzhong * $agent_info['db_agent_ratio']/100;//代理商续重
-                    $users_xuzhong=$agent_xuzhong + $agent_xuzhong * $agent_info['db_users_ratio']/100;//用户续重
+                    $admin_xuzhong= $orders['admin_xuzhong'] ?? $overload_amt/$overload_weight;//平台续重单价
+                    $agent_xuzhong= $orders['agent_xuzhong'] ?? $admin_xuzhong + $admin_xuzhong * $agent_info['db_agent_ratio']/100;//代理商续重
+                    $users_xuzhong= $orders['users_xuzhong'] ?? $agent_xuzhong + $agent_xuzhong * $agent_info['db_users_ratio']/100;//用户续重
                     $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
                     $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                     $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重

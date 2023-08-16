@@ -140,22 +140,32 @@ class YunYang{
                 case '中通':
                 case '韵达':
                 case '菜鸟':
-                    $priceInfo = $this->priceTd($v,$agent_info, $param);
+                    $priceInfo = $this->priceHandleA($v,$agent_info, $param);
                     break;
-                case '顺丰':
                 case 'EMS':
-                    $priceInfo = $this->priceSf($v,$agent_info);
+                case '顺丰':
+                    $ratioAgent = $agent_info['sf_agent_ratio']/100;
+                    $ratioUser = $agent_info['sf_users_ratio']/100;
+                    $priceInfo = $this->priceHandleD($v, $ratioAgent, $ratioUser);
                     break;
                 case '德邦':
                 case '京东':
-                    $priceInfo = $this->priceDb($v, $agent_info);
+                    $ratioAgent = $agent_info['db_agent_ratio']/100; // 平台给代理商德邦上浮比例
+                    $ratioUser = $agent_info['db_users_ratio']/100; // 代理商给用户德邦上浮比例
+                    $priceInfo = $this->priceHandleC($v, $ratioAgent, $ratioUser);
                     break;
                 case '顺心捷达':
                 case '百世':
-                    $priceInfo = $this->priceJd($v, $profit[$v['tagType']]);
+                    $ratio = $profit[$v['tagType']];
+                    $ratioAgent = $ratio['ratio']/100; // 平台给代理商上浮比例
+                    $ratioUser = $ratio['user_ratio']/100; // 代理商给用户上浮比例
+                    $priceInfo = $this->priceHandleB($v, $ratioAgent, $ratioUser);
                     break;
                 case '跨越':
-                    $priceInfo = $this->priceKy($v, $profit[$v['tagType']]);
+                    $ratio = $profit[$v['tagType']];
+                    $ratioAgent = $ratio['ratio']/100; // 平台给代理商上浮比例
+                    $ratioUser = $ratio['user_ratio']/100; // 代理商给用户上浮比例
+                    $priceInfo = $this->priceHandleD($v, $ratioAgent, $ratioUser);
                     break;
                 default:
                     continue 2;
@@ -248,7 +258,9 @@ class YunYang{
                     unset($item[$key]);
                     continue;
                 }
-                $data = $this->priceSf($item, $agent_info);
+                $ratioAgent = $agent_info['sf_agent_ratio']/100;
+                $ratioUser = $agent_info['sf_users_ratio']/100;
+                $data = $this->priceHandleD($item, $ratioAgent, $ratioUser);
                 $insert_id = $this->storagePrice($data,$param,$item);
                 $list[] = [
                     'final_price' => $data['user']['price'],
@@ -402,13 +414,13 @@ class YunYang{
 
 
     /**
-     * 云洋四通一达运费计算
+     * 四通一达，极兔，菜鸟运费计算
      * @param array $channelItem
      * @param $agent_info
      * @param $param
      * @return array
      */
-    public function priceTd(array $channelItem, $agent_info, $param){
+    public function priceHandleA(array $channelItem, $agent_info, $param){
         $adminOne= $channelItem['price']['priceOne'];//平台首重
         $adminMore = $channelItem['price']['priceMore'];//平台续重
         $agentOne= bcadd($adminOne , $agent_info['agent_shouzhong'],2);//代理商首重
@@ -432,15 +444,15 @@ class YunYang{
     }
 
     /**
-     * 德邦京东运费计算
+     * 德邦，京东，运费计算
+     * 德邦物流：最低计费首重30kg
+     * 德邦快递：最低计费首重3kg
      * @param $channelItem
-     * @param $agent_info
+     * @param $ratioAgent
+     * @param $ratioUser
      * @return array
      */
-    public function priceDb($channelItem, $agent_info){
-        $ratioAgent = $agent_info['db_agent_ratio']/100; // 平台给代理商德邦上浮比例
-        $ratioUser = $agent_info['db_users_ratio']/100; // 代理商给用户德邦上浮比例
-
+    public function priceHandleC($channelItem, $ratioAgent, $ratioUser){
         $adminOne= $channelItem['discountPriceOne'];//平台首重
         $adminMore= $channelItem['discountPriceMore'];//平台续重
         $agentOne = bcadd($adminOne, $adminOne * $ratioAgent,2);//代理商首重
@@ -465,15 +477,14 @@ class YunYang{
     }
 
     /**
-     * 顺心捷达,百世，运费计算
+     * 顺心捷达，百世，计算价格
+     * 捷达:起步38.00元, 按每公斤计费。
      * @param $channelItem
-     * @param $profit
+     * @param $ratioAgent
+     * @param $ratioUser
      * @return array
      */
-    public function priceJd($channelItem,  $profit){
-        $ratioAgent = $profit['ratio']/100;
-        $ratioUser = $profit['user_ratio']/100;
-
+    public function priceHandleB($channelItem, $ratioAgent, $ratioUser){
         $adminOne = $channelItem['price']['priceOne'];//平台首重
         $adminMore = $channelItem['price']['priceMore'];//平台续重
         $agentOne =  bcadd($adminOne, $adminOne * $ratioAgent, 2);
@@ -488,6 +499,7 @@ class YunYang{
         }
         $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
         $userPrice =  bcadd($userFreight, $channelItem['freightInsured'], 2); //代理商结算
+
         $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
         $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
         $user = [ 'onePrice' => $userOne, 'morePrice' => $userMore, 'price' => $userPrice];
@@ -495,15 +507,14 @@ class YunYang{
     }
 
     /**
-     * 跨越价格结算
+     * 顺丰，跨越，EMS计算价格
+     * 按折扣价计算。无首重续重。
      * @param $channelItem
-     * @param $profit
+     * @param $ratioAgent
+     * @param $ratioUser
      * @return array
      */
-    public function priceKy($channelItem,  $profit){
-        $ratioAgent = $profit['ratio']/100;
-        $ratioUser = $profit['user_ratio']/100;
-
+    public function priceHandleD($channelItem,$ratioAgent, $ratioUser){
         $agentFreight = $channelItem['freight'] + $channelItem['freight'] * $ratioAgent;//代理商价格
         $userFreight = $agentFreight + $agentFreight * $ratioUser;//代理商价格
         if(isset($channelItem['extFreightFlag'])){
