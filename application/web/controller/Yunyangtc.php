@@ -83,7 +83,7 @@ class Yunyangtc extends Controller
             // 组装门店参数
             $shopParam = [
                 "contactName"=> $param['name'], //联系人姓名
-                "shopName"=>  $param['name'], //门店名称
+                "shopName"=>  $param['address'], //门店名称
                 "shopAddress"=>  $param['address'], //门店地址
                 "cityName"=>  $param['city'], //所在城市
                 "industryType"=>  9, //"行业类型 1:餐饮 \n" +
@@ -165,6 +165,8 @@ class Yunyangtc extends Controller
 
             return json($data);
         }catch (Exception $e){
+            recordLog('address', '同城添加地址失败：('.$e->getLine() .')-' . $e->getMessage() . PHP_EOL
+            . $e->getTraceAsString());
             $data=[
                 'status'=>400,
                 'data'=>'',

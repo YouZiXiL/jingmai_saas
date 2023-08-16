@@ -50,7 +50,9 @@ class WanLi
         $resJson = $this->utils->httpRequest($url, $data, 'POST');
         $res = json_decode($resJson, true);
         if ($res['code'] != 200){
-            Log::error("创建门店失败：{$resJson}");
+            recordLog('wanli', '创建门店失败：'
+                .'返回参数-：' . $resJson . PHP_EOL
+                .'请求参数-：' . json_encode($content,JSON_UNESCAPED_UNICODE) );
             throw new Exception("创建门店失败:{$resJson}");
         }
         return  $res['data']['shopId'];
