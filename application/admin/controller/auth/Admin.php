@@ -168,13 +168,11 @@ class Admin extends Backend
                         exception($this->model->getError());
                     }
                     $profitModal = new Profit();
-
                     foreach ($profit as &$item) {
                         $item['agent_id'] = $agentId;
                         $item['user_one_weight'] = 1.2;
                         $item['user_more_weight'] = 1.2;
                     }
-
                     $profitModal->saveAll($profit);
 
                     //过滤不允许的组别,避免越权

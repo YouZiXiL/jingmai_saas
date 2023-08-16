@@ -78,14 +78,16 @@ class Order extends Backend
 
     /**
      * 查询渠道价格
-     * @param YunYang $yunYang
      * @throws Exception
      * @throws DataNotFoundException
      * @throws ModelNotFoundException
      * @throws DbException
      */
-    public function query(YunYang $yunYang){
+    public function query(){
         $paramData = input();
+        if ($paramData['info']['insured'] && $paramData['info']['insured']<1000){
+            $this->error('保价金额不能小于1000');
+        }
         if($paramData['info']['weight']<=60){
             $this->kdQuery($paramData);
         }else{
@@ -105,21 +107,21 @@ class Order extends Backend
      */
     public function kdQuery($paramData){
         $agent_info=db('admin')->where('id',$this->auth->id)->find();
+        $channelTag = '智能';
 
         $orderBusiness = new OrderBusiness();
-        $queryParam = $orderBusiness->setParamByPrice($paramData);
-        $response =  $orderBusiness->multiPrice($queryParam);
+        $yyQuery = $orderBusiness->yyQueryPrice($paramData, $channelTag);
+        $fhdQuery = $orderBusiness->fhdQueryPrice($paramData, 'RCP');
+        $qbdQuery = $orderBusiness->qbdQueryPrice($paramData);
+
+        $response =  $orderBusiness->multiPrice([$yyQuery, $fhdQuery, $qbdQuery]);
         list($yy, $fhd, $qbd) = $response;
 
-        $paramData['channelTag'] = '智能';
-        $yyRes = $orderBusiness->yyPriceHandle($yy, $agent_info, $paramData);
-        $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData);
+        $yyRes = $orderBusiness->yyPriceHandle($yy, $agent_info, $paramData, $channelTag);
+        $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData, $channelTag);
         $qbdRes = $orderBusiness->qbdPriceHandle($qbd, $agent_info, $paramData);
 
-        $jiLu = new JiLu();
-        $jlCost = $jiLu->getCost($paramData['sender']['province'], $paramData['receiver']['province']);
-        $profit = $jiLu->getProfitToAgent($agent_info['id']);
-        $jlRes = $jlCost?$orderBusiness->jlPriceHandle($jlCost, $agent_info, $paramData, $profit):[];
+        $jlRes = $orderBusiness->jlPriceHandle($agent_info, $paramData);
 
         $priceList = array_merge_recursive($yyRes, $qbdRes) ;
         !empty($jlRes) && $priceList[] = $jlRes;
@@ -140,17 +142,16 @@ class Order extends Backend
     private function wlQuery($paramData)
     {
         $orderBusiness = new OrderBusiness();
-        $fhdQuery = $orderBusiness->fhdFormatPrice($paramData, 'JZQY_LONG');
-        $fengHuoDi = new FengHuoDi();
-        $setParam = $fengHuoDi->setParam($fhdQuery);
-        $resultJson = $fengHuoDi->queryPrice($setParam);
-        $agent_info=db('admin')->where('id',$this->auth->id)->find();
+        $channelTag = '重货';
+        $yyQuery = $orderBusiness->yyQueryPrice($paramData, $channelTag);
+        $fhdQuery = $orderBusiness->fhdQueryPrice($paramData, 'JZQY_LONG');
 
-        $paramData['channelTag'] = '重货';
-        $paramData['tagType'] = '德邦重货';
-        $paramData['type'] = 'JZQY_LONG';
-        $paramData['channel'] = '德邦重货';
-        $list[] = $orderBusiness->fhdPriceHandle($resultJson, $agent_info, $paramData);
+        $response =  $orderBusiness->multiPrice([$yyQuery, $fhdQuery]);
+        list($yy, $fhd) = $response;
+
+        $agent_info=db('admin')->where('id',$this->auth->id)->find();
+        $list = $orderBusiness->yyPriceHandle($yy, $agent_info, $paramData, $channelTag);
+        $list[] = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData, $channelTag);
         $this->success('ok','', $list);
     }
 

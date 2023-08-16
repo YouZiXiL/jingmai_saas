@@ -5,6 +5,8 @@ namespace app\common\business;
 use app\common\config\Channel;
 use app\common\config\ProfitConfig;
 use app\web\controller\Common;
+use think\Exception;
+use think\view\driver\Php;
 
 class FengHuoDi
 {
@@ -25,7 +27,7 @@ class FengHuoDi
      * @param  $content
      * @return array
      */
-    public function setParam( $content){
+    public function setParam($content){
         $pid=13513;
         list($msec, $sec) = explode(' ', microtime());
         $timeStamp= (float)sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
@@ -65,15 +67,73 @@ class FengHuoDi
         return $this->utils->httpRequest($url, $content, 'POST',['Content-Type = application/x-www-form-urlencoded; charset=utf-8']);
     }
 
+    /**
+     * 组装查询价格参数
+     * @param $param
+     * @param $sender
+     * @param $receiver
+     * @param $type
+     * @return array
+     */
+    public function setQueryPriceParam($param,  $sender, $receiver, $type){
+
+        $time=time();
+        $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
+        $content = [
+            'expressCode'=>'DBKD',
+            'orderInfo'=>[
+                'orderId'=>$this->utils->get_uniqid(),
+                'sendStartTime'=>date("Y-m-d H:i:s",$time),
+                'sendEndTime'=>date("Y-m-d H:i:s",$sendEndTime),
+                'sender'=>[
+                    'name'=>$sender['name'],
+                    'mobile'=>$sender['mobile'],
+                    'address'=>[
+                        'province'=>$sender['province'],
+                        'city'=>$sender['city'],
+                        'district'=>$sender['county'],
+                        'detail'=>$sender['location'],
+                    ],
+                ],
+                'receiver'=>[
+                    'name'=>$receiver['name'],
+                    'mobile'=>$receiver['mobile'],
+                    'address'=>[
+                        'province'=>$receiver['province'],
+                        'city'=>$receiver['city'],
+                        'district'=>$receiver['county'],
+                        'detail'=>$receiver['location'],
+                    ],
+                ],
+            ],
+            'packageInfo'=>[
+                'weight'=>(int)$param['weight']*1000,
+                'volume'=>'0',
+            ],
+            'serviceInfoList' => [
+                [ 'code'=>'INSURE','value'=>(int)$param['insured']*100, ],
+                [ 'code'=>'TRANSPORT_TYPE','value'=> $type, ]
+            ]
+        ];
+        return [
+            'url' => $this->baseUlr.'predictExpressOrder',
+            'data' => $this->setParam($content),
+            'type' => true,
+            'header' => ['Content-Type = application/x-www-form-urlencoded; charset=utf-8']
+        ];
+
+    }
+
 
     /**
      * 查询价格处理函数
      * @param  $content string
      * @param $agent_info array 代理商
      * @param $param array 前端传来的参数
+     * @param string $tag
      * @return array|null 返回前端需要的参数
      */
-    public function queryPriceHandle(string $content, array $agent_info, array $param){
+    public function queryPriceHandle(string $content, array $agent_info, array $param, string $tag = 'RCP'){
         $result=json_decode($content,true);
         if($result['rcode'] != 0 || $result['scode'] != 0) {
             recordLog('channel-price-err','风火递' . $content. PHP_EOL);
@@ -83,6 +143,17 @@ class FengHuoDi
         if (in_array('德邦',$qudao_close)){
             return [];
         }
+
+        if($param['channel_tag'] == '智能'){
+            $tagType = '德邦';
+            $channel = '德邦快递JX';
+            $type ='RCP';
+        }else{
+            $tagType = '德邦';
+            $channel = '德邦物流JX';
+            $type = $tag;
+        }
+
         $time=time();
         $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
         if(empty($result['data']['predictInfo']['detail'])) return [];
@@ -119,12 +190,12 @@ class FengHuoDi
         $fhdResult['package_count']=$param['package_count'];//包裹数量
         $fhdResult['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
         $fhdResult['channel_merchant'] = Channel::$fhd;
-        $fhdResult['channel']='德邦';
+        $fhdResult['channel']= $channel;
         $fhdResult['freight']=sprintf("%.2f",$total['fright']* ProfitConfig::$fhd);
         $fhdResult['send_start_time']=$time;
         $fhdResult['send_end_time']=$sendEndTime;
-        $fhdResult['tagType']='德邦快递JX';
-        $fhdResult['db_type']='RCP';
+        $fhdResult['tagType']= $tagType;
+        $fhdResult['db_type']= $type;
         $fhdResult['content']=$content;
         $fhdResult['insured']  = isset($param['insured'])?(int) $param['insured']:0;
         $fhdResult['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
@@ -135,7 +206,7 @@ class FengHuoDi
         return [
             'final_price'=>$finalPrice, // 用户价格
             'insert_id'=>$insert_id,
-            'tag_type'=>$fhdResult['channel'], // 快递类型
+            'tag_type'=>$tagType, // 快递类型
         ];
     }
 

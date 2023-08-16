@@ -7,8 +7,10 @@ use app\common\business\AfterSale;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
 use app\common\business\OrderBusiness;
+use app\common\business\ProfitBusiness;
 use app\common\business\RebateListController;
 use app\common\business\WanLi;
+use app\common\config\Channel;
 use app\common\config\ProfitConfig;
 use app\common\library\alipay\Alipay;
 use app\common\library\KD100Sms;
@@ -504,10 +506,6 @@ class Wxcallback extends Controller
                     if($superB){
                         $agent_default_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB->agent_default_sf_ratio/100;//超级B 默认续重价格
                         $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB->agent_sf_ratio/100;//超级B 达标续重价格
-
-
-                        $root_tralight_amt=$tralight_weight*$agent_xuzhong;
-                        $root_default_tralight_amt=$tralight_weight*$agent_default_xuzhong;
                     }
 
                 }else{
@@ -524,7 +522,6 @@ class Wxcallback extends Controller
                 $up_data['tralight_price']=$users_tralight_amt;
                 $up_data['agent_tralight_price']=$agent_tralight_amt;
             }
-
             // 超重
             if ($orders['weight']<$pamar['calWeight']&&empty($orders['final_weight_time'])){
                 $up_data['overload_status']=1;
@@ -539,19 +536,38 @@ class Wxcallback extends Controller
                     $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                     $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
                     $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
-
-                    if($superB){
-                        $agent_default_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB->agent_default_sf_ratio/100;//
-                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB->agent_sf_ratio/100;//
-                        $root_overload_amt=$overload_weight*$agent_xuzhong;
-                        $root_default_overload_amt=$overload_weight*$agent_default_xuzhong;
-                    }
-
-                }else{
-                    if($superB){
-                        $root_overload_amt=$overload_weight*($superB->agent_xuzhong/$agent_info['agent_xuzhong'])*$orders['agent_xuzhong'];
-                        $root_default_overload_amt=$overload_weight*($superB->agent_default_xuzhong/$agent_info['agent_xuzhong'])*$orders['agent_xuzhong'];
-                    }
+                }
+                else if($orders['tag_type']=='德邦快递'|| $orders['tag_type']=='德邦物流' || $orders['tag_type']=='德邦'){
+                    $overload_amt=$pamar['freight']-$orders['freight'];//超出金额
+                    $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
+                    $agent_xuzhong=$admin_xuzhong + $admin_xuzhong * $agent_info['db_agent_ratio']/100;//代理商续重
+                    $users_xuzhong=$agent_xuzhong + $agent_xuzhong * $agent_info['db_users_ratio']/100;//用户续重
+                    $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
+                    $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
+                    $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
+                    $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
+                    $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
+                }
+                else if($orders['tag_type']=='顺心捷达'|| $orders['tag_type']=='百世' || $orders['tag_type']=='跨越'){
+                    $profitBusiness = new ProfitBusiness();
+                    $profit = $profitBusiness->getProfit($agent_info['id'], ['mch_code' => Channel::$yy]);
+                    // 为了便于查找，转换下数组格式
+                    $express = array_column($profit, 'express');
+                    $profit = array_combine($express, $profit);
+                    $ratio = $profit[$orders['tag_type']];
+                    $ratioAgent = $ratio['ratio']/100; // 平台给代理商的上浮比例
+                    $ratioUser = $ratio['user_ratio']/100;  // 代理商给用户的上浮比例
+                    $overload_amt=$pamar['freight']-$orders['freight'];//超出金额
+                    $admin_xuzhong = $orders['admin_xuzhong'] ??  $overload_amt/$overload_weight;//平台续重单价
+                    $agent_xuzhong = $orders['agent_xuzhong'] ?? $admin_xuzhong + $admin_xuzhong * $ratioAgent;//代理商续重
+                    $users_xuzhong= $orders['users_xuzhong'] ?? $agent_xuzhong + $agent_xuzhong * $ratioUser;//用户续重
+                    $up_data['admin_xuzhong']=  sprintf("%.2f",$admin_xuzhong);//平台续重单价
+                    $up_data['agent_xuzhong']= sprintf("%.2f",$agent_xuzhong);//代理商续重
+                    $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
+                    $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
+                    $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
+                }
+                else{
                     $users_overload_amt=bcmul($overload_weight,$orders['users_xuzhong'],2);//用户补缴金额
                     $agent_overload_amt=bcmul($overload_weight,$orders['agent_xuzhong'],2);//代理补缴金额
                 }
@@ -1513,10 +1529,6 @@ class Wxcallback extends Controller
                     $jiLu = new JiLu();
                     $resultJson = $jiLu->createOrderHandle($orders, $record);
                     $result = json_decode($resultJson, true);
-                    recordLog('jilu-create-order',
-                        '订单：'.$orders['out_trade_no']. PHP_EOL .
-                        '返回：'.$resultJson
-                    );
                     if ($result['code']!=1){ // 下单失败
                         recordLog('channel-create-order-err',
                             '订单：'.$orders['out_trade_no']. PHP_EOL .

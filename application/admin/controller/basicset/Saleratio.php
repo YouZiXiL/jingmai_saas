@@ -2,10 +2,14 @@
 
 namespace app\admin\controller\basicset;
 
+use app\common\business\ProfitBusiness;
+use app\common\config\Channel;
 use app\common\controller\Backend;
 use app\common\model\Profit;
 use app\web\controller\Common;
 use think\Db;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
@@ -64,11 +68,8 @@ class Saleratio extends Backend
             $common = new Common();
             $agentCode = $common->generateShortCode($this->auth->id);
             $link =  request()->host() . "/u/" . $agentCode;
-
-            $profit = Profit::where('agent_id', $this->auth->id)->select();
-            if(empty($profit)){
-                $profit = Profit::where('agent_id', 0)->select();
-            }
+            $profitBusiness = new ProfitBusiness();
+            $profit = $profitBusiness->getProfit($this->auth->id);
             $this->view->assign('agent_id', $this->auth->id);
             $this->view->assign('profit', $profit);
             $this->view->assign('link', $link);
@@ -99,12 +100,7 @@ class Saleratio extends Backend
             $result = $row->save($params);
 
             $profitModal = new Profit();
-            $profit = $profitModal->where('agent_id', $this->auth->id)->value('id');
-            if($profit){
-                foreach ($profitValue as &$item) {
-                    $item['id'] = $profit;
-                }
-            }
+
             $profitModal->saveAll(array_values($profitValue));
             Db::commit();
         } catch (ValidateException|PDOException|\Exception $e) {
@@ -118,6 +114,34 @@ class Saleratio extends Backend
     }
 
 
+    /**
+     * 获取代理商利润。有的代理商没设置利润，没设置利润的部分按默认利润走。
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
+     */
+    public function mergeProfit($agentId, $where = []){
+        // 默认利润
+        $profitDefaultDb = db('profit')
+            ->where('agent_id', 0)
+            ->where($where)
+            ->select();
+        // 代理商利润
+        $profitDb = db('profit')
+            ->where('agent_id',  $agentId)
+            ->where($where)
+            ->select();
+        if(!$profitDb) return $profitDefaultDb;
+
+        $keys = array_column((array)$profitDefaultDb, 'express');
+        $profitDefault = array_combine($keys, (array)$profitDefaultDb);
+
+        $keys2 = array_column((array)$profitDb, 'express');
+        $profit = array_combine($keys2, (array)$profitDb);
+
+
+        return array_values(array_merge($profitDefault, $profit)) ;
+    }
 
 
 }

@@ -89,29 +89,40 @@
     </div>
     {volist name="$row:profit" id="vo" key="key" }
     {if $vo.agent_id }
-        <input name="profit[{$vo:mch_code}][id]" value="{$vo:id}" class="hidden" />
+        <input name="profit[{$vo.id}][id]" value="{$vo.id}" class="hidden" />
     {else /}
-        <input name="profit[{$vo:mch_code}][user_one_weight]" value="{$vo.user_one_weight}" class="hidden" />
-        <input name="profit[{$vo:mch_code}][user_more_weight]" value="{$vo.user_more_weight}" class="hidden" />
+
+        <input name="profit[{$vo.id}][agent_id]" value="{$row.id}" class="hidden" />
+        <input name="profit[{$vo.id}][one_weight]" value="{$vo.one_weight}" class="hidden" />
+        <input name="profit[{$vo.id}][more_weight]" value="{$vo.more_weight}" class="hidden" />
+        <input name="profit[{$vo.id}][ratio]" value="{$vo.ratio}" class="hidden" />
     {/if}
-    <input name="profit[{$vo:mch_code}][agent_id]" value="{$row.id}" class="hidden" />
-    <input name="profit[{$vo:mch_code}][mch_name]" value="{$vo.mch_name}" class="hidden" />
-    <input name="profit[{$vo:mch_code}][mch_code]" value="{$vo.mch_code}" class="hidden"  />
-    <input name="profit[{$vo:mch_code}][express]" value="{$vo.express}" class="hidden"  />
-    <div class="form-group d-flex row-center">
-        <label  for="one_weight" class="control-label col-xs-12 col-sm-3">{$vo:mch_name}首重价格:</label>
+    <input name="profit[{$vo.id}][mch_name]" value="{$vo.mch_name}" class="hidden" />
+    <input name="profit[{$vo.id}][mch_code]" value="{$vo.mch_code}" class="hidden"  />
+    <input name="profit[{$vo.id}][express]" value="{$vo.express}" class="hidden"  />
+    <input name="profit[{$vo.id}][type]" value="{$vo.type}" class="hidden"  />
+
+    {if condition ="($vo.type == 1)"}
+    <div class="form-group ">
+        <label  for="one_weight" class="control-label col-xs-12 col-sm-2">{$vo.mch_name}{$vo.express}首重价格:</label>
         <div class="col-xs-12 col-sm-8">
-            <input id="one_weight" class="form-control" step="0.01" name="profit[{$vo:mch_code}][one_weight]" type="number" value="{$vo.one_weight}">
+            <input id="one_weight" class="form-control" step="0.01" name="profit[{$vo.id}][one_weight]" type="number" value="{$vo.one_weight}">
         </div>
-        <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip">-鲸喜圆通</p>
     </div>
-    <div class="form-group d-flex a-center">
-        <label  for="more_weight" class="control-label col-xs-12 col-sm-3">{$vo:mch_name}续重价格:</label>
+    <div class="form-group ">
+        <label  for="more_weight" class="control-label col-xs-12 col-sm-2">{$vo.mch_name}{$vo.express}续重价格:</label>
         <div class="col-xs-12 col-sm-8">
-            <input id="more_weight" class="form-control" step="0.01" name="profit[{$vo:mch_code}][more_weight]" type="number" value="{$vo.more_weight}">
+            <input id="more_weight" class="form-control" step="0.01" name="profit[{$vo.id}][more_weight]" type="number" value="{$vo.more_weight}">
         </div>
-        <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip">-鲸喜圆通</p>
     </div>
+    {else if condition ="($vo.type == 2)"}
+    <div class="form-group">
+        <label  for="ratio" class="control-label col-xs-12 col-sm-2">{$vo.mch_name}{$vo.express}上浮比例:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="ratio" class="form-control" step="0.01" name="profit[{$vo.id}][ratio]" type="number" value="{$vo.ratio}">
+        </div>
+    </div>
+    {/if}
     {/volist}
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Agent_db_ratio')}:</label>

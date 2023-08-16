@@ -490,4 +490,12 @@ class Test extends Controller
         $result = Users::create(input());
         dd($result);
     }
+
+    // 给代理商扣款
+    public function set_agent_amount(){
+        $orders = Order::get(['out_trade_no' => 'xxx']);
+        $db= new Dbcommom();
+        $db->set_agent_amount($orders['agent_id'],'setDec',$orders['agent_price'],0,'运单号：'. $orders['waybill'].' 下单支付成功');
+        return R::ok();
+    }
 }

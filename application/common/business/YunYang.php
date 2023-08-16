@@ -118,6 +118,13 @@ class YunYang{
             recordLog('channel-price-err','云洋-查价失败:' . PHP_EOL . $content);
             throw new Exception($data['message']);
         }
+
+        $profitBusiness = new ProfitBusiness();
+        $profit = $profitBusiness->getProfit($agent_info['id'], ['mch_code' => Channel::$yy]);
+        // 为了便于查找，转换下数组格式
+        $express = array_column($profit, 'express');
+        $profit = array_combine($express, $profit);
+
         $qudao_close=explode('|', $agent_info['qudao_close']);
         $qudao_close[] = '顺丰'; // 云洋禁用顺丰
         $dbCount = 0; // 德邦出现次数
@@ -157,14 +164,42 @@ class YunYang{
                     break;
                 case '德邦':
                 case '京东':
-                    $agent_price=$v['freight']+$v['freight']*$agent_info['agent_db_ratio']/100;//代理商价格
-                    $users_price=$agent_price+$agent_price*$agent_info['users_shouzhong_ratio']/100;//用户价格
                     $admin_shouzhong=@$v['discountPriceOne'];//平台首重
                     $admin_xuzhong=@$v['discountPriceMore'];//平台续重
+                    $agent_price=$v['freight']+$v['freight']*$agent_info['db_agent_ratio']/100;//代理商价格
+                    $users_price=$agent_price+$agent_price*$agent_info['db_users_ratio']/100;//用户价格
                     $agent_shouzhong=$admin_shouzhong+$admin_shouzhong*$agent_info['agent_db_ratio']/100;//代理商首重
                     $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['agent_db_ratio']/100;//代理商续重
                     $users_shouzhong=$agent_shouzhong+$agent_shouzhong*$agent_info['users_shouzhong_ratio']/100;//用户首重
                     $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['users_shouzhong_ratio']/100;//用户续重
+                    break;
+                case '顺心捷达':
+                case '百世':
+                    $ratio = $profit[$v['tagType']];
+                    $ratioAgent = $ratio['ratio']/100;
+                    $ratioUser = $ratio['user_ratio']/100;
+                    $agent_price=$v['freight']+$v['freight']* $ratioAgent;//代理商价格
+                    $users_price=$agent_price + $agent_price * $ratioUser;//用户价格
+                    $admin_shouzhong= $v['price']['priceOne'];//平台首重
+                    $admin_xuzhong=$v['price']['priceMore'];//平台续重
+
+                    $agent_shouzhong= $admin_shouzhong +  $admin_shouzhong * $ratioAgent;//代理商首重
+                    $agent_xuzhong= $admin_xuzhong +  $admin_xuzhong * $ratioAgent;//代理商续重
+                    $users_shouzhong= $agent_shouzhong + $agent_shouzhong * $ratioUser;//用户首重
+                    $users_xuzhong= $agent_xuzhong + $agent_xuzhong * $ratioUser;//用户续重
+                    break;
+                case '跨越':
+                    $ratio = $profit[$v['tagType']];
+                    $ratioAgent = $ratio['ratio']/100;
+                    $ratioUser = $ratio['user_ratio']/100;
+                    $agent_price= $v['freight']+$v['freight'] * $ratioAgent;//代理商价格
+                    $users_price= $agent_price + $agent_price * $ratioUser;//用户价格
+                    $admin_shouzhong= 0;//平台首重
+                    $admin_xuzhong= 0;//平台续重
+                    $agent_shouzhong= 0;//代理商首重
+                    $agent_xuzhong= 0;//代理商续重
+                    $users_shouzhong= 0;//用户首重
+                    $users_xuzhong= 0;//用户续重
                     break;
                 default:
                     continue 2;

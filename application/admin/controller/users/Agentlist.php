@@ -2,7 +2,9 @@
 
 namespace app\admin\controller\users;
 
+use app\admin\controller\basicset\Saleratio;
 use app\admin\model\orders\Orderslist;
+use app\common\business\ProfitBusiness;
 use app\common\controller\Backend;
 use app\common\model\Profit;
 use app\web\controller\Common;
@@ -96,10 +98,10 @@ class Agentlist extends Backend
         if (!$row) {
             $this->error(__('No Results were found'));
         }
-        $profit = Profit::where('agent_id', $ids)->select();
-        if (empty($profit)) $profit = Profit::where('agent_id', 0)->select();
-        if (empty($profit)) $this->error('没有设置利润');
-        $row['profit'] = $profit;
+
+        $profitBusiness = new ProfitBusiness();
+        $row['profit'] = $profitBusiness->getProfit($ids);
+
         $adminIds = $this->getDataLimitAdminIds();
         if (is_array($adminIds) && !in_array($row[$this->dataLimitField], $adminIds)) {
             $this->error(__('You have no permission'));

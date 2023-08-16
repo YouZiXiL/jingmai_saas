@@ -1,6 +1,7 @@
 <?php
 
 namespace app\common\business;
+use app\admin\controller\basicset\Saleratio;
 use app\common\config\Channel;
 use app\common\model\Profit;
 use app\web\controller\Common;
@@ -132,22 +133,29 @@ class JiLu
 
     /**
      * 渠道查询价格
-     * @param array $cost
      * @param array $agent_info
      * @param array $param
-     * @param array $profit
+     * @param $sendProvince string 发件省份
+     * @param $receiveProvince string 收件省份
      * @return array
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
      */
-    public function queryPriceHandle(array $cost, array $agent_info, array $param ,array $profit){
+    public function queryPriceHandle(array $agent_info, array $param, string $sendProvince, string $receiveProvince){
+
         if($param['insured']) return []; // 不支持保价费
-        $weight = $param['weight']; // 下单重量
-        $sequelWeight = $weight-1; // 续重重量
         $qudao_close = explode('|', $agent_info['qudao_close']);
         if (in_array('圆通快递',$qudao_close)){
             return [];
         }
 
+        $cost = $this->getCost($sendProvince, $receiveProvince);
+        if(empty($cost)) return [];
+        $profit = $this->getProfitToAgent($agent_info['id']);
 
+        $weight = $param['weight']; // 下单重量
+        $sequelWeight = $weight-1; // 续重重量
         $oneWeight = $cost['one_weight']; // 平台首重单价
         $reWeight = $cost['more_weight']; // 平台续重单价
         $freight = $oneWeight + $reWeight * $sequelWeight; // 平台预估运费
@@ -297,15 +305,8 @@ class JiLu
      */
     public function getProfitToAgent($agentId)
     {
-        $profit = db('profit')->where('agent_id', $agentId)
-            ->where('mch_code', 'JILU')
-            ->find();
-        if(empty($profit)){
-            $profit = db('profit')->where('agent_id', 0)
-                ->where('mch_code', 'JILU')
-                ->find();
-        }
-        return $profit;
+        $profitBusiness = new ProfitBusiness();
+        return $profitBusiness->getProfitFind($agentId, ['mch_code' => Channel::$jilu, 'express' => '圆通']);
     }
 
 }

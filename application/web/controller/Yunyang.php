@@ -191,6 +191,7 @@ class Yunyang extends Controller
             if (empty($param['insured'])){
                 $param['insured']=0;
             }
+
             $jijian_address=db('users_address')->where('id',$param['jijian_id'])->find();
             $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
             if (empty($jijian_address)||empty($shoujian_address)){
@@ -204,84 +205,23 @@ class Yunyang extends Controller
             }
             $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
 
-            $time=time();
-            $sendEndTime=strtotime(date('Y-m-d'.'17:00:00',strtotime("+1 day")));
 
 
-            $fhdContent = [
-                'expressCode'=>'DBKD',
-                'orderInfo'=>[
-                    'orderId'=>$this->common->get_uniqid(),
-                    'sendStartTime'=>date("Y-m-d H:i:s",$time),
-                    'sendEndTime'=>date("Y-m-d H:i:s",$sendEndTime),
-                    'sender'=>[
-                        'name'=>$jijian_address['name'],
-                        'mobile'=>$jijian_address['mobile'],
-                        'address'=>[
-                            'province'=>$jijian_address['province'],
-                            'city'=>$jijian_address['city'],
-                            'district'=>$jijian_address['county'],
-                            'detail'=>$jijian_address['location'],
-                        ],
-                    ],
-                    'receiver'=>[
-                        'name'=>$shoujian_address['name'],
-                        'mobile'=>$shoujian_address['mobile'],
-                        'address'=>[
-                            'province'=>$shoujian_address['province'],
-                            'city'=>$shoujian_address['city'],
-                            'district'=>$shoujian_address['county'],
-                            'detail'=>$shoujian_address['location'],
-                        ],
-                    ],
-                ],
-                'packageInfo'=>[
-                    'weight'=>(int)$param['weight']*1000,
-                    'volume'=>'0',
-                ],
-            ];
-
+            $fengHuoDi = new FengHuoDi();
+            $yunYang = new \app\common\business\YunYang();
+            // 组装查询参数
             if ($param['channel_tag']=='智能'){
-
-                $jiLu = new JiLu();
-                $jiluCost = $jiLu->getCost($jijian_address['province'], $shoujian_address['province']);
-                $fhdContent['serviceInfoList'] = [
-                    [ 'code'=>'INSURE','value'=>(int)$param['insured']*100, ],
-                    [ 'code'=>'TRANSPORT_TYPE','value'=>'RCP', ]
-                ];
-
-                $fengHuoDi = new FengHuoDi();
-                $fhdParams = [
-                    'url' => $fengHuoDi->baseUlr.'predictExpressOrder',
-                    'data' => $fengHuoDi->setParam($fhdContent),
-                    'type' => true,
-                    'header' => ['Content-Type = application/x-www-form-urlencoded; charset=utf-8']
-                ];
-
-                $yunYang = new \app\common\business\YunYang();
+                $fhdParams = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'RCP');
                 $yyParams = $yunYang->queryPriceParams($jijian_address,$shoujian_address, $param);
                 $response =  $this->common->multiRequest($yyParams, $fhdParams);
-                $profit = db('profit')->where('agent_id', $this->user->agent_id)
-                    ->where('mch_code', Channel::$jilu)
-                    ->find();
-                if(empty($profit)){
-                    $profit = db('profit')->where('agent_id', 0)
-                        ->where('mch_code', Channel::$jilu)
-                        ->find();
-                }
                 $yyPackage = $yunYang->advanceHandle($response[0], $agent_info, $param);
                 $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
-//                $jiluPackage = $jiLu->queryPriceHandleBackup($response[2], $agent_info, $param, $profit);
-                if($jiluCost){
-                    $jiluPackage = $jiLu->queryPriceHandle($jiluCost, $agent_info, $param, $profit);
-                }
-
-
-                $packageList = $yyPackage;
-                if(!empty($jiluPackage))  $packageList[] = $jiluPackage;
-
-                if(!empty($fhdDb)) $packageList[] = $fhdDb;
-                usort($packageList, function ($a, $b){
+                $jiLu = new JiLu();
+                $jiluPackage = $jiLu->queryPriceHandle($agent_info, $param,$jijian_address['province'], $shoujian_address['province']);
+                $result = $yyPackage;
+                if(!empty($jiluPackage))  $result[] = $jiluPackage;
+                if(!empty($fhdDb)) $result[] = $fhdDb;
+                usort($result, function ($a, $b){
                     if (empty($a['final_price']) || empty($b['final_price'])) {
                         if (empty($a['final_price'])) {
                             unset($a);
@@ -295,133 +235,34 @@ class Yunyang extends Controller
                 });
             }
             else{
-                // 重货
-                $fhdContent['serviceInfoList'] = [
-                    [
-                        'code'=>'INSURE','value'=>$param['insured']*100,
-                    ],
-                    [
-                        'code'=>'TRANSPORT_TYPE','value'=>'JZQY_LONG',
-                    ]
-                ];
-                $res=$this->common->fhd_api('predictExpressOrder',$fhdContent);
+                $fhdParams1 = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'JZQY_LONG');
+                $fhdParams2 = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'JZKH');
+                $yyParams = $yunYang->queryPriceParams($jijian_address,$shoujian_address, $param);
 
-                $res=json_decode($res,true);
-                foreach ($res['data']['predictInfo']['detail'] as $k=>$v){
-                    if ($v['priceEntryCode']=='FRT'){
-                        $total['fright']=$v['caculateFee'];
-                    }
-                    if ($v['priceEntryCode']=='BF'){
-                        $total['fb']=$v['caculateFee'];
-                    }
-                }
-                $agent_price=$total['fright']* ProfitConfig::$fhd +$total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
-                $users_price=$agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
-                $admin_shouzhong=0;//平台首重
-                $admin_xuzhong=0;//平台续重
-                $agent_shouzhong=0;//代理商首重
-                $agent_xuzhong=0;//代理商续重
-                $users_shouzhong=0;//用户首重
-                $users_xuzhong=0;//用户续重
+                $response =  $this->common->multiRequest($yyParams, $fhdParams1, $fhdParams2);
+                recordLog('channel-price', '$response' . json_encode($response[0], JSON_UNESCAPED_UNICODE));
 
-                $finalPrice=sprintf("%.2f",$users_price+($total['fb']??0));//用户拿到的价格=用户运费价格+保价费
-                $res['final_price']=$finalPrice;//用户支付总价
-                $res['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
-                $res['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
-                $res['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
-                $res['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
-                $res['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
-                $res['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                $res['agent_price']=sprintf("%.2f",$agent_price+($total['fb']??0));//代理商结算
-                $res['jijian_id']=$param['jijian_id'];//寄件id
-                $res['shoujian_id']=$param['shoujian_id'];//收件id
-                $res['weight']=$param['weight'];//重量
-                $res['package_count']=$param['package_count'];//包裹数量
-                $res['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
-                $res['channel']='德邦-精准汽运';
-                $res['channel_merchant'] = Channel::$fhd;
-                $res['freight']=sprintf("%.2f",$total['fright'] * ProfitConfig::$fhd);
-                $res['send_start_time']=$time;
-                $res['send_end_time']=$sendEndTime;
-                $res['tagType']='德邦重货';
-                $res['db_type']='JZQY_LONG';
+                $yy = $yunYang->advanceHandle($response[0], $agent_info, $param);
+                recordLog('channel-price', '$yy' . json_encode($yy, JSON_UNESCAPED_UNICODE));
 
-                $res['insured']  = isset($param['insured'])?(int) $param['insured']:0;
-                $res['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
-                $res['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
-                $res['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
+                $fhd1 = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param, 'JZQY_LONG');
+                $fhd2 = $fengHuoDi->queryPriceHandle($response[2], $agent_info, $param, 'JZKH');
+                $fhd[] = $fhd1;
+                $fhd[] = $fhd2;
+                $result = array_merge_recursive($yy, $fhd);
+                $result = array_filter($result, function($subArray) {
+                    return !empty($subArray);
+                });
+                usort($result, function ($a, $b){
+                    return $a['final_price'] <=> $b['final_price'];
+                });
 
-                $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($res,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
-                $packageList[0]['final_price']=$finalPrice;
-                $packageList[0]['insert_id']=$insert_id;
-                $packageList[0]['tag_type']=$res['channel'];
-
-                $fhdContent['serviceInfoList'] = [
-                    [
-                        'code'=>'INSURE','value'=>$param['insured']*100,
-                    ],
-                    [
-                        'code'=>'TRANSPORT_TYPE','value'=>'JZKH',
-                    ]
-                ];
-                $res=$this->common->fhd_api('predictExpressOrder',$fhdContent);
-
-                $res=json_decode($res,true);
-                foreach ($res['data']['predictInfo']['detail'] as $k=>$v){
-                    if ($v['priceEntryCode']=='FRT'){
-                        $total['fright']=$v['caculateFee'];
-                    }
-                    if ($v['priceEntryCode']=='BF'){
-                        $total['fb']=$v['caculateFee'];
-                    }
-                }
-                $agent_price=$total['fright'] * ProfitConfig::$fhd + $total['fright']*$agent_info['db_agent_ratio']/100;//代理商价格
-                $users_price=$agent_price+$total['fright']*$agent_info['db_users_ratio']/100;//用户价格
-                $admin_shouzhong=0;//平台首重
-                $admin_xuzhong=0;//平台续重
-                $agent_shouzhong=0;//代理商首重
-                $agent_xuzhong=0;//代理商续重
-                $users_shouzhong=0;//用户首重
-                $users_xuzhong=0;//用户续重
-
-                $finalPrice=sprintf("%.2f",$users_price+($total['fb']??0));//用户拿到的价格=用户运费价格+保价费
-                $res['final_price']=$finalPrice;//用户支付总价
-                $res['admin_shouzhong']=sprintf("%.2f",$admin_shouzhong);//平台首重
-                $res['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重
-                $res['agent_shouzhong']=sprintf("%.2f",$agent_shouzhong);//代理商首重
-                $res['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
-                $res['users_shouzhong']=sprintf("%.2f",$users_shouzhong);//用户首重
-                $res['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                $res['agent_price']=sprintf("%.2f",$agent_price+($total['fb']??0));//代理商结算
-                $res['jijian_id']=$param['jijian_id'];//寄件id
-                $res['shoujian_id']=$param['shoujian_id'];//收件id
-                $res['weight']=$param['weight'];//重量
-                $res['package_count']=$param['package_count'];//包裹数量
-                $res['freightInsured']=sprintf("%.2f",$total['fb']??0);//保价费用
-                $res['channel']='德邦-精准卡航';
-                $res['freight']=sprintf("%.2f",$total['fright'] * ProfitConfig::$fhd);
-                $res['send_start_time']=$time;
-                $res['send_end_time']=$sendEndTime;
-                $res['channel_merchant']=Channel::$fhd;
-                $res['tagType']='德邦重货';
-                $res['db_type']='JZKH';
-
-                $res['insured']  = isset($param['insured'])?(int) $param['insured']:0;
-                $res['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
-                $res['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
-                $res['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
-
-
-                $insert_id=db('check_channel_intellect')->insertGetId(['channel_tag'=>$param['channel_tag'],'content'=>json_encode($res,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
-                $packageList[1]['final_price']=$finalPrice;
-                $packageList[1]['insert_id']=$insert_id;
-                $packageList[1]['tag_type']=$res['channel'];
+                recordLog('channel-price', '重货' . json_encode($result, JSON_UNESCAPED_UNICODE));
             }
-            if (empty($packageList)){
+            if (empty($result)){
                 throw new Exception('没有指定快递渠道请联系客服');
             }
-
-            return json(['status'=>200,'data'=>$packageList,'msg'=>'成功']);
+            return json(['status'=>200,'data'=>$result,'msg'=>'成功']);
         }catch (\Exception $e){
             $content = '（' . $e->getLine().'）：'.$e->getMessage() . PHP_EOL .
             $e->getTraceAsString() . PHP_EOL .
@@ -435,11 +276,12 @@ class Yunyang extends Controller
 
 
     /**
-     * 下单接口
+     * 下单接口creat
      */
     function create_order(): Json
     {
         $param=$this->request->param();
+
         if(empty($param['insert_id'])||empty($param['item_name'])){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
@@ -565,11 +407,15 @@ class Yunyang extends Controller
             $orderBusiness->create($orderData, $check_channel_intellect, $agent_info);
 
             return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
-        }catch (Exception $e){
+        }catch (\Exception $e){
+            $errMsg = $e->getMessage();
+            if (strpos($errMsg, '此商家的收款功能已被限制') !== false) {
+                $errMsg = '此商家的收款功能已被限制';
+            }
             recordLog('create-order-err',
                 $e->getLine().'：'.$e->getMessage().PHP_EOL
                 .$e->getTraceAsString() );
-            return json(['status'=>400, 'data'=>'', 'msg'=>$e->getMessage()]);
+            return json(['status'=>400, 'data'=>'', 'msg'=> $errMsg]);
         }
 
     }
@@ -843,7 +689,6 @@ class Yunyang extends Controller
     /**
      * 取消订单
      * @return Json
-     * @throws DbException|Exception
      */
     function order_cancel(): Json
     {
