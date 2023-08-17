@@ -1027,10 +1027,9 @@ class OrderBusiness extends Backend
         $agentMore= bcadd( $adminMore ,  $agent_info['agent_xuzhong'],2);//代理商续重
         $agentFreight = bcadd( $agentOne , $agentMore * $moreWeight,2);// 代理运费
         if(isset($channelItem['extFreightFlag'])){
-            $agentFreight = bcadd($agentFreight, $channelItem['extFreight']);
+            $agentFreight = bcadd($agentFreight, $channelItem['extFreight'],2);
         }
         $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
-
         $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
         $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
         return compact('admin', 'agent');
@@ -1058,7 +1057,6 @@ class OrderBusiness extends Backend
     /**
      * 德邦，京东运费计算
      * 德邦物流：最低计费首重30kg
-     * 德邦快递：最低计费首重3kg
      * @param $channelItem
      * @param float $ratioAgent
      * @return array
@@ -1073,7 +1071,7 @@ class OrderBusiness extends Backend
         $agentFreight = $channelItem['freight'] + $channelItem['freight'] * $ratioAgent;//代理商价格
 
         if(isset($channelItem['extFreightFlag'])){
-            $agentFreight = bcadd($agentFreight, $channelItem['extFreight']);
+            $agentFreight = bcadd($agentFreight, $channelItem['extFreight'],2);
         }
         $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
 

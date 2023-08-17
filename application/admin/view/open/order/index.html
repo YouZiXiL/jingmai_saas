@@ -196,7 +196,14 @@
                         <img class="rounded-50" width="32" height="32" :src="item.channelLogoUrl" />
 
                         <div class="d-inline-flex a-center">
-                            <span class="mr-2">{{item.tagType}} - 预收</span><span class="text-danger font-xl font-weight">{{item.freight}}</span><span class="px-1">元</span>
+                            <span class="mr-2">{{item.tagType}} - 预收</span>
+                            <span class="text-danger font-xl font-weight">{{item.freight}}</span>
+                            <span class="px-1">元</span>
+                            <div v-if="item.onePrice">
+                                <span class="px-1">首重：{{item.onePrice}}</span>
+                                <span class="px-1">续重：{{item.morePrice}}</span>
+                            </div>
+
                         </div>
                     </el-radio>
                 </div>

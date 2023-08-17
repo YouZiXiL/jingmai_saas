@@ -433,8 +433,8 @@ class YunYang{
         $agentFreight = bcadd( $agentOne , $agentMore * $moreWeight,2);// 代理运费
         $usersFreight = bcadd( $userOne , $userMore * $moreWeight,2 );//用户运费
         if(isset($channelItem['extFreightFlag'])){
-            $agentFreight = bcadd($agentFreight, $channelItem['extFreight']);
-            $usersFreight = bcadd($usersFreight, $channelItem['extFreight']);
+            $agentFreight = bcadd($agentFreight, $channelItem['extFreight'],2);
+            $usersFreight = bcadd($usersFreight, $channelItem['extFreight'],2);
         }
         $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
         $usersPrice =  bcadd($usersFreight, $channelItem['freightInsured'], 2); //代理商结算
@@ -448,7 +448,6 @@ class YunYang{
     /**
      * 德邦，京东，运费计算
      * 德邦物流：最低计费首重30kg
-     * 德邦快递：最低计费首重3kg
      * @param $channelItem
      * @param $ratioAgent
      * @param $ratioUser
@@ -466,8 +465,8 @@ class YunYang{
         $userFreight = $agentFreight + $agentFreight * $ratioUser;//用户价格
 
         if(isset($channelItem['extFreightFlag'])){
-            $agentFreight = bcadd($agentFreight, $channelItem['extFreight']);
-            $userFreight = bcadd($userFreight, $channelItem['extFreight']);
+            $agentFreight = bcadd($agentFreight, $channelItem['extFreight'],2);
+            $userFreight = bcadd($userFreight, $channelItem['extFreight'],2);
         }
         $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
         $userPrice =  bcadd($userFreight, $channelItem['freightInsured'], 2); //代理商结算
