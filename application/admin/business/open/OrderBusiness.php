@@ -180,22 +180,30 @@ class OrderBusiness extends Backend
                 case '中通':
                 case '韵达':
                 case '菜鸟':
-                    $data = $this->priceTd($item, $agent_info, $param);
+                    $moreWeight = $param['info']['weight']-1; //续重重量
+                    $priceInfo = $this->priceHandleA($item,$agent_info, $moreWeight);
                     break;
                 case '顺丰':
                 case 'EMS':
-                    $data = $this->priceSf($item, $agent_info);
+                    $ratioAgent = $agent_info['sf_agent_ratio']/100;
+                    $priceInfo = $this->priceHandleD($item, $ratioAgent);
                     break;
                 case '德邦':
                 case '京东':
-                    $data = $this->priceDb($item, $agent_info);
+                    $ratioAgent = $agent_info['db_agent_ratio']/100; // 平台给代理商德邦上浮比例
+                    $priceInfo = $this->priceHandleC($item, $ratioAgent);
                     break;
                 case '顺心捷达':
                 case '百世':
-                    $data = $this->priceJd($item, $profit[$item['tagType']]);
+                    $ratio = $profit[$item['tagType']];
+                    $ratioAgent = $ratio['ratio']/100; // 平台给代理商上浮比例
+                    $priceInfo = $this->priceHandleB($item, $ratioAgent);
                     break;
                 case '跨越':
-                    $data = $this->priceKy($item, $profit[$item['tagType']]);
+                    $ratio = $profit[$item['tagType']];
+                    $ratioAgent = $ratio['ratio']/100; // 平台给代理商上浮比例
+                    $ratioUser = $ratio['user_ratio']/100; // 代理商给用户上浮比例
+                    $priceInfo = $this->priceHandleD($item, $ratioAgent, $ratioUser);
                     break;
                 default:
                     unset($channel[$key]);
@@ -233,8 +241,8 @@ class OrderBusiness extends Backend
                 }
             }
 
-            $agent = $data['agent'];
-            $admin = $data['admin'];
+            $agent = $priceInfo['agent'];
+            $admin = $priceInfo['admin'];
             $item['agent_price']= $agent['price'];// 代理商结算金额
             $item['final_price']= $agent['price'];//用户支付总价
             $item['admin_shouzhong']=$admin['onePrice'];//平台首重
@@ -247,7 +255,6 @@ class OrderBusiness extends Backend
             $item['senderInfo'] = $param['sender'];//寄件人信息
             $item['receiverInfo']= $param['receiver'];//收件人信息
             $item['info'] = $param['info']; // 其他信息：如物品重量保价费等
-
             $item['channel_tag'] = $channelTag; // 渠道类型
             $item['channel_merchant'] = 'YY'; // 渠道商
 
@@ -479,7 +486,7 @@ class OrderBusiness extends Backend
         $reWeight = $cost['more_weight']; // 平台续重单价
         $freight = $oneWeight + $reWeight * $sequelWeight; // 平台预估运费
 
-        $agentOne = $oneWeight+ $profit['one_weight']; //代理商首单价
+        $agentOne = $oneWeight + $profit['one_weight']; //代理商首单价
         $agentMore = $reWeight  + $profit['more_weight']; //代理商续单价
         $agentPrice = $agentOne + $agentMore * $sequelWeight;
 
@@ -508,6 +515,8 @@ class OrderBusiness extends Backend
         $list['tagType']=$content['tagType'];
         $list['channelId']=$content['channelId'];
         $list['channel']=$content['channel'];
+        $list['onePrice']= $content['agent_shouzhong'];
+        $list['morePrice']= $content['agent_xuzhong'];
         $list['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
         $list['requireId']=(string)$requireId;
 
@@ -738,6 +747,8 @@ class OrderBusiness extends Backend
             'requireId'=>(string) $requireId,
             'tagType'=>$tagType, // 快递类型
             'channel'=>'',
+            'onePrice'=> 0,
+            'morePrice'=> 0,
             'channelLogoUrl'=> 'https://admin.bajiehuidi.com/assets/img/express/db.png', // 快递类型
         ];
     }
@@ -905,6 +916,8 @@ class OrderBusiness extends Backend
 
             $list[$key]['freight'] = $item['agent_price'];
             $list[$key]['tagType'] =  $item['channelName'];
+            $list[$key]['onePrice']= 0;
+            $list[$key]['morePrice']= 0;
             $list[$key]['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/sf.png';
             $list[$key]['requireId']= (string) $requireId;
 
@@ -997,6 +1010,100 @@ class OrderBusiness extends Backend
             'data' => $qbdQuery,
             'header' => $qBiDa->setParam()
         ];
+    }
+
+    /**
+     * 四通一达，极兔，菜鸟运费计算
+     * @param array $channelItem
+     * @param array $agent_info
+     * @param array $param
+     * @return array
+     */
+    private function priceHandleA(array $channelItem, array $agent_info, $moreWeight)
+    {
+        $adminOne= $channelItem['price']['priceOne'];//平台首重
+        $adminMore = $channelItem['price']['priceMore'];//平台续重
+        $agentOne= bcadd($adminOne , $agent_info['agent_shouzhong'],2);//代理商首重
+        $agentMore= bcadd( $adminMore ,  $agent_info['agent_xuzhong'],2);//代理商续重
+        $agentFreight = bcadd( $agentOne , $agentMore * $moreWeight,2);// 代理运费
+        if(isset($channelItem['extFreightFlag'])){
+            $agentFreight = bcadd($agentFreight, $channelItem['extFreight']);
+        }
+        $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
+
+        $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
+        $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
+        return compact('admin', 'agent');
+    }
+
+    /**
+     * 顺丰，跨越，EMS计算价格
+     * 按折扣价计算。无首重续重。
+     * @param $channelItem
+     * @param float $ratioAgent
+     * @return array
+     */
+    private function priceHandleD($channelItem, float $ratioAgent)
+    {
+        $agentFreight = $channelItem['freight'] + $channelItem['freight'] * $ratioAgent;//代理商价格
+        if(isset($channelItem['extFreightFlag'])){
+            $agentFreight = $agentFreight + $channelItem['extFreight'];
+        }
+        $agentPrice =  sprintf("%.2f",$agentFreight + $channelItem['freightInsured']);//代理商结算
+        $admin = [ 'onePrice' => 0, 'morePrice' => 0 ];
+        $agent = [ 'onePrice' => 0, 'morePrice' => 0, 'price' => $agentPrice];
+        return compact('admin', 'agent');
+    }
+
+    /**
+     * 德邦，京东运费计算
+     * 德邦物流：最低计费首重30kg
+     * 德邦快递：最低计费首重3kg
+     * @param $channelItem
+     * @param float $ratioAgent
+     * @return array
+     */
+    private function priceHandleC($channelItem, float $ratioAgent)
+    {
+        $adminOne= $channelItem['discountPriceOne'];//平台首重
+        $adminMore= $channelItem['discountPriceMore'];//平台续重
+        $agentOne = bcadd($adminOne, $adminOne * $ratioAgent,2);//代理商首重
+        $agentMore = bcadd($adminMore , $adminMore * $ratioAgent, 2);//代理商续重
+
+        $agentFreight = $channelItem['freight'] + $channelItem['freight'] * $ratioAgent;//代理商价格
+
+        if(isset($channelItem['extFreightFlag'])){
+            $agentFreight = bcadd($agentFreight, $channelItem['extFreight']);
+        }
+        $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
+
+        $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
+        $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
+        return compact('admin', 'agent');
+    }
+
+    /**
+     * 顺心捷达，百世，计算价格
+     * 捷达:起步38.00元, 按每公斤计费。
+     * @param $channelItem
+     * @param float $ratioAgent
+     * @return array
+     */
+    private function priceHandleB($channelItem, float $ratioAgent)
+    {
+        $adminOne = $channelItem['price']['priceOne'];//平台首重
+        $adminMore = $channelItem['price']['priceMore'];//平台续重
+        $agentOne =  bcadd($adminOne, $adminOne * $ratioAgent, 2);
+        $agentMore = bcadd($adminMore, $adminMore * $ratioAgent, 2);
+        $agentFreight = $channelItem['freight'] + $channelItem['freight'] * $ratioAgent;//代理商价格
+        if(isset($channelItem['extFreightFlag'])){
+            $agentFreight = $agentFreight + $channelItem['extFreight'];
+        }
+        $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
+
+        $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
+        $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
+        return compact('admin', 'agent');
     }
 
 }
