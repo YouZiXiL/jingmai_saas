@@ -153,7 +153,6 @@ class OrderBusiness extends Backend
             if ($errMsg == '渠道不可用，Disable！状态码：Disable') $errMsg = '用黑名单';
             $this->error($errMsg);
         }
-        dd($data);
         $profitBusiness = new ProfitBusiness();
         $profit = $profitBusiness->getProfit($this->auth->id, ['mch_code' => Channel::$yy]);
         // 为了便于查找，转换下数组格式

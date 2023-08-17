@@ -206,6 +206,8 @@ class FengHuoDi
         return [
             'final_price'=>$finalPrice, // 用户价格
             'insert_id'=>$insert_id,
+            'onePrice' => 0,
+            'morePrice' => 0,
             'tag_type'=>$tagType, // 快递类型
         ];
     }

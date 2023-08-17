@@ -264,6 +264,8 @@ class YunYang{
                 $insert_id = $this->storagePrice($data,$param,$item);
                 $list[] = [
                     'final_price' => $data['user']['price'],
+                    'onePrice' => $data['user']['onePrice'],
+                    'morePrice' => $data['user']['morePrice'],
                     'insert_id' => $insert_id,
                     'channelName' => $item['tagType'],
                     'channelMerchant' => Channel::$yy,

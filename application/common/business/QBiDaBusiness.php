@@ -125,7 +125,7 @@ class QBiDaBusiness
                     $v["agent_price"]=number_format($v["originalFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$v["guarantFee"],2);
                     $v["users_price"]=number_format($v["originalFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
                 }
-                $v["final_price"]=number_format( $v["users_price"] + $v["guarantFee"],2);
+                $v["final_price"]=bcadd( $v["users_price"], $v["guarantFee"],2);
                 $v['tagType'] = $channelTag;
                 $v['channel_tag'] = Channel::$qbd;
                 $v["insured"]=$param['insured'];
@@ -139,6 +139,8 @@ class QBiDaBusiness
                 $arr[] = [
                     'final_price' => $v["final_price"],
                     'insert_id' => $insert_id,
+                    'onePrice' => 0,
+                    'morePrice' => 0,
                     'channelName' => $v['channelName'],
                     'channelMerchant' =>$v["channel_merchant"],
                 ];
