@@ -39,7 +39,8 @@
         "alibabacloud/dysmsapi-20170525": "^2.0",
       "ext-openssl": "*",
       "ext-dom": "*",
-      "ext-libxml": "*"
+      "ext-libxml": "*",
+      "ext-sodium": "*"
     },
     "config": {
         "preferred-install": "dist",

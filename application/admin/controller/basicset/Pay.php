@@ -119,13 +119,16 @@ class Pay extends Backend
                 $associated_data = $result['data'][0]['encrypt_certificate']['associated_data'];
                 $nonce = $result['data'][0]['encrypt_certificate']['nonce'];
                 $plaintext = sodium_crypto_aead_aes256gcm_decrypt(base64_decode($ciphertext), $associated_data, $nonce, $params['wx_mchprivatekey']);
+                if (empty($plaintext)){
+                    $this->error('解密证书失败');
+                }
                 $params['wx_serial_no']=$result['data'][0]['serial_no'];
                 file_put_contents('uploads/apiclient_key/' . $params['wx_mchid'] . '.pem', $params['wx_platformcertificate']);
                 file_put_contents('uploads/platform_key/' . $params['wx_mchid'] . '.pem', $plaintext);
             }
             $result = $row->allowField(true)->save($params);
             Db::commit();
-        } catch (ValidateException|PDOException|Exception $e) {
+        } catch (ValidateException|PDOException|Exception|\SodiumException $e) {
             Db::rollback();
             Log::error('支付配置err：'.$e->getLine().":" . $e->getMessage().$e->getTraceAsString());
             $this->error($e->getMessage());
