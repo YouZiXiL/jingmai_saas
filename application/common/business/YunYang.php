@@ -531,4 +531,53 @@ class YunYang{
         return compact('admin', 'agent', 'user');
     }
 
+    /**
+     * 计算代理商和用户的续重单价
+     * @param $up_data
+     * @param $adminMore
+     * @param $orders
+     * @param $agent_info
+     * @return void
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function overweightHandle(&$up_data, $adminMore, $orders, $agent_info){
+
+        switch ($orders['tag_type']){
+            case 'EMS':
+            case '顺丰':
+                $agentMore= bcadd($adminMore, $adminMore * $agent_info['sf_agent_ratio']/100, 2) ;//代理商续重
+                $userMore=  bcadd($agentMore, $agentMore * $agent_info['sf_users_ratio']/100,2);//用户续重
+                break;
+            case '德邦':
+            case '德邦快递':
+            case '德邦物流':
+                $agentMore= bcadd($adminMore, $adminMore * $agent_info['db_agent_ratio']/100, 2) ;//代理商续重
+                $userMore=  bcadd($agentMore, $agentMore * $agent_info['db_users_ratio']/100,2);//用户续重
+                break;
+            case '顺心捷达':
+            case '百世':
+            case '跨越':
+                $profitBusiness = new ProfitBusiness();
+                $profit = $profitBusiness->getProfit($agent_info['id'], ['mch_code' => Channel::$yy]);
+                // 为了便于查找，转换下数组格式
+                $express = array_column($profit, 'express');
+                $profit = array_combine($express, $profit);
+                $ratio = $profit[$orders['tag_type']];
+                $ratioAgent = $ratio['ratio']/100; // 平台给代理商的上浮比例
+                $ratioUser = $ratio['user_ratio']/100;  // 代理商给用户的上浮比例
+
+                $agentMore= bcadd($adminMore, $adminMore*$ratioAgent, 2);//代理商续重
+                $userMore=  bcadd($agentMore,$agentMore*$ratioUser, 2);//用户续重
+                break;
+            default:
+                $agentMore = $orders['agent_xuzhong']; // 代理商续重单价
+                $userMore = $orders['users_xuzhong']; // 用户续重单价
+        }
+        $up_data['admin_xuzhong'] = $adminMore; // 平台续重
+        $up_data['agent_xuzhong']= $agentMore;//代理商续重
+        $up_data['users_xuzhong']= $userMore;//用户续重
+    }
+
 }

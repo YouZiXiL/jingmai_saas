@@ -488,100 +488,60 @@ class Wxcallback extends Controller
              if ($orders['final_weight']==0){
                  $up_data['final_weight']=$pamar['calWeight'];
              }
+
             //超轻处理
-            $weight=floor($orders['weight']-$pamar['calWeight']);
-            if ($weight>0&&$pamar['calWeight']!=0&&empty($orders['final_weight_time'])){
-                $tralight_weight=$weight;//超轻重量
-                if ($orders['tag_type']=='顺丰' || $orders['tag_type']=='EMS'){
-                    $tralight_amt=$orders['freight']-$pamar['freight']; //超轻金额
-                    $admin_xuzhong=$tralight_amt/$tralight_weight; //平台续重单价
-                    $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['sf_agent_ratio']/100;//代理商续重
-                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['sf_users_ratio']/100;//用户续重
-                    $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
-                    $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
-                    $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                    $users_tralight_amt=$tralight_weight*$up_data['users_xuzhong'];//代理商给用户退款金额
-                    $agent_tralight_amt=$tralight_weight*$up_data['agent_xuzhong'];//平台给代理商退余额
-
-                    if($superB){
-                        $agent_default_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB->agent_default_sf_ratio/100;//超级B 默认续重价格
-                        $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$superB->agent_sf_ratio/100;//超级B 达标续重价格
-                    }
-
-                }else{
-                    $users_tralight_amt=$tralight_weight*$orders['users_xuzhong'];//代理商给用户退款金额
-                    $agent_tralight_amt=$tralight_weight*$orders['agent_xuzhong'];//平台给代理商退余额
-                    if($superB){
-                        $root_tralight_amt=$tralight_weight*($superB->agent_xuzhong/$agent_info['agent_xuzhong'])*$orders['agent_xuzhong'];
-                        $root_default_tralight_amt=$tralight_weight*($superB->agent_default_xuzhong/$agent_info['agent_xuzhong'])*$orders['agent_xuzhong'];
-                    }
+            if ($orders['weight'] > $pamar['calWeight'] && $pamar['calWeight']!=0 && empty($orders['final_weight_time'])){
+                $lightWeight = floor($orders['weight']-$pamar['calWeight']); //超轻重量
+                $agentMore = $orders['agent_xuzhong'];
+                $userMore = $orders['users_xuzhong'];
+                if(empty((float)$agentMore)){
+                    // 计算续重单价
+                    $lightAmt = abs($orders['freight'] - $pamar['freight']); //超出金额
+                    $adminMore = bcdiv($lightAmt, $lightWeight,2);
+                    $yunYang = new \app\common\business\YunYang();
+                    $yunYang->overweightHandle($up_data,  $adminMore, $orders, $agent_info );
+                    $agentMore = $up_data['agent_xuzhong'];
+                    $userMore = $up_data['users_xuzhong'];
                 }
 
                 $up_data['tralight_status']=1;
                 $up_data['final_weight_time']=time();
-                $up_data['tralight_price']=$users_tralight_amt;
-                $up_data['agent_tralight_price']=$agent_tralight_amt;
+                $up_data['agent_tralight_price']=  bcmul($lightWeight,  $agentMore,2);;
+                $up_data['tralight_price']=  bcmul($lightWeight,  $userMore,2);;
+
             }
             // 超重
-            if ($orders['weight']<$pamar['calWeight']&&empty($orders['final_weight_time'])){
+            if ($orders['weight'] < $pamar['calWeight']&&empty($orders['final_weight_time'])){
                 $up_data['overload_status']=1;
-                $overload_weight=ceil($pamar['calWeight']-$orders['weight']);//超出重量
-                if ($orders['tag_type']=='顺丰'|| $orders['tag_type']=='EMS'){
-                    $overload_amt=$pamar['freight']-$orders['freight'];//超出金额
-                    $admin_xuzhong=$overload_amt/$overload_weight;//平台续重单价
-                    $agent_xuzhong=$admin_xuzhong+$admin_xuzhong*$agent_info['sf_agent_ratio']/100;//代理商续重
-                    $users_xuzhong=$agent_xuzhong+$agent_xuzhong*$agent_info['sf_users_ratio']/100;//用户续重
-                    $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
-                    $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
-                    $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                    $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
-                    $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
+                //超出重量
+                $overloadWeight = ceil($pamar['calWeight'] - $orders['weight']);
+                $agentMore = $orders['agent_xuzhong'];
+                $userMore = $orders['users_xuzhong'];
+                // 计算续重单价
+                if(empty((float)$agentMore)){
+                    //超出金额
+                    $overloadAmt = abs($pamar['freight'] - $orders['freight']) ;
+                    $adminMore = bcdiv($overloadAmt,$overloadWeight,2);
+                    $yunYang = new \app\common\business\YunYang();
+                    $yunYang->overweightHandle($up_data,  $adminMore, $orders, $agent_info );
+                    $agentMore = $up_data['agent_xuzhong'];
+                    $userMore = $up_data['users_xuzhong'];
                 }
-                else if($orders['tag_type']=='德邦快递'|| $orders['tag_type']=='德邦物流' || $orders['tag_type']=='德邦'){
-                    $overload_amt=$pamar['freight']-$orders['freight'];//超出金额
-                    $admin_xuzhong= $orders['admin_xuzhong'] ?? $overload_amt/$overload_weight;//平台续重单价
-                    $agent_xuzhong= $orders['agent_xuzhong'] ?? $admin_xuzhong + $admin_xuzhong * $agent_info['db_agent_ratio']/100;//代理商续重
-                    $users_xuzhong= $orders['users_xuzhong'] ?? $agent_xuzhong + $agent_xuzhong * $agent_info['db_users_ratio']/100;//用户续重
-                    $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
-                    $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
-                    $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                    $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
-                    $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
-                }
-                else if($orders['tag_type']=='顺心捷达'|| $orders['tag_type']=='百世' || $orders['tag_type']=='跨越'){
-                    $profitBusiness = new ProfitBusiness();
-                    $profit = $profitBusiness->getProfit($agent_info['id'], ['mch_code' => Channel::$yy]);
-                    // 为了便于查找，转换下数组格式
-                    $express = array_column($profit, 'express');
-                    $profit = array_combine($express, $profit);
-                    $ratio = $profit[$orders['tag_type']];
-                    $ratioAgent = $ratio['ratio']/100; // 平台给代理商的上浮比例
-                    $ratioUser = $ratio['user_ratio']/100;  // 代理商给用户的上浮比例
-                    $overload_amt=$pamar['freight']-$orders['freight'];//超出金额
-                    $admin_xuzhong = $orders['admin_xuzhong'] ??  $overload_amt/$overload_weight;//平台续重单价
-                    $agent_xuzhong = $orders['agent_xuzhong'] ?? $admin_xuzhong + $admin_xuzhong * $ratioAgent;//代理商续重
-                    $users_xuzhong= $orders['users_xuzhong'] ?? $agent_xuzhong + $agent_xuzhong * $ratioUser;//用户续重
-                    $up_data['admin_xuzhong']=  sprintf("%.2f",$admin_xuzhong);//平台续重单价
-                    $up_data['agent_xuzhong']= sprintf("%.2f",$agent_xuzhong);//代理商续重
-                    $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                    $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
-                    $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
-                }
-                else{
-                    $users_overload_amt=bcmul($overload_weight,$orders['users_xuzhong'],2);//用户补缴金额
-                    $agent_overload_amt=bcmul($overload_weight,$orders['agent_xuzhong'],2);//代理补缴金额
-                }
-                $up_data['overload_price']=$users_overload_amt;//用户超重金额
-                $up_data['agent_overload_price']=$agent_overload_amt;//代理商超重金额
+
+                //代理超重金额
+                $up_data['agent_overload_price'] = bcmul($overloadWeight,  $agentMore,2);
+                //用户超重金额
+                $up_data['overload_price'] = bcmul($overloadWeight, $userMore,2);
+
                 $data = [
                     'type'=>1,
-                    'agent_overload_amt' =>$agent_overload_amt,
+                    'agent_overload_amt' =>$up_data['agent_overload_price'],
                     'order_id' => $orders['id'],
                     'xcx_access_token'=>$xcx_access_token,
                     'open_id'=>$users?$users['open_id']:'',
                     'template_id'=>$agent_auth_xcx['pay_template']??null,
-                    'cal_weight'=>$overload_weight .'kg',
-                    'users_overload_amt'=>$users_overload_amt.'元'
+                    'cal_weight'=>$overloadWeight .'kg',
+                    'users_overload_amt'=>$up_data['overload_price'] . '元'
                 ];
 
                 // 将该任务推送到消息队列，等待对应的消费者去执行
@@ -938,12 +898,7 @@ class Wxcallback extends Controller
                 if($orderStatus == '已开单')  $orderStatus = '运输中';
                 $up_data['order_status']=$orderStatus;
             }
-            if(!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
-                if ($orders['weight'] >= $agent_info['wx_im_weight']){
-                    //推送企业微信消息
-                    $common->wxim_bot($agent_info['wx_im_bot'],$orders);
-                }
-            }
+
 
 
             /*
@@ -957,34 +912,36 @@ class Wxcallback extends Controller
          * */
 
             if(
-                (0
-                    //@$result['orderStatusCode']=='GOBACK'
-//                        || @$result['orderStatusCode']=='CANCEL'
-//                        || @$result['orderStatusCode']=='INVALID'
-                )
+                ( @$result['orderStatusCode']=='GOBACK' || @$result['orderStatusCode']=='CANCEL' || @$result['orderStatusCode']=='INVALID'  )
                 &&$orders['pay_status']!=2
             ){
-                $data = [
-                    'type'=>4,
-                    'order_id' => $orders['id'],
-                ];
-
-                // 退优惠券
-                if(!empty($orders["couponid"])){
-                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                    if($couponinfo){
-                        $couponinfo->state=1;
-                        $couponinfo->save();
-                        $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
-                        if($coupon){
-                            $coupon->state = 3;
-                            $coupon->save();
-                        }
+                if(!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                    if ($orders['weight'] >= $agent_info['wx_im_weight']){
+                        //推送企业微信消息
+                        $common->wxim_bot($agent_info['wx_im_bot'],$orders);
                     }
                 }
-
-                // 将该任务推送到消息队列，等待对应的消费者去执行
-                Queue::push(DoJob::class, $data,'way_type');
+//                $data = [
+//                    'type'=>4,
+//                    'order_id' => $orders['id'],
+//                ];
+//
+//                // 退优惠券
+//                if(!empty($orders["couponid"])){
+//                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+//                    if($couponinfo){
+//                        $couponinfo->state=1;
+//                        $couponinfo->save();
+//                        $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+//                        if($coupon){
+//                            $coupon->state = 3;
+//                            $coupon->save();
+//                        }
+//                    }
+//                }
+//
+//                // 将该任务推送到消息队列，等待对应的消费者去执行
+//                Queue::push(DoJob::class, $data,'way_type');
             }
 
 
