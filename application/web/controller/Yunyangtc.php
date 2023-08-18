@@ -83,7 +83,7 @@ class Yunyangtc extends Controller
             // 组装门店参数
             $shopParam = [
                 "contactName"=> $param['name'], //联系人姓名
-                "shopName"=>  $param['address'], //门店名称
+                "shopName"=> str_pad($param['name'], 4, "名", STR_PAD_LEFT) , //门店名称
                 "shopAddress"=>  $param['address'], //门店地址
                 "cityName"=>  $param['city'], //所在城市
                 "industryType"=>  9, //"行业类型 1:餐饮 \n" +
