@@ -180,8 +180,7 @@ class OrderBusiness extends Backend
                 case '中通':
                 case '韵达':
                 case '菜鸟':
-                    $moreWeight = $param['info']['weight']-1; //续重重量
-                    $priceInfo = $this->priceHandleA($item,$agent_info, $moreWeight);
+                    $priceInfo = $this->priceHandleA($item,$agent_info);
                     break;
                 case '顺丰':
                 case 'EMS':
@@ -479,8 +478,11 @@ class OrderBusiness extends Backend
         $cost = $jiLu->getCost($param['sender']['province'], $param['receiver']['province']);
         if(!$cost) return [];
         $profit = $jiLu->getProfitToAgent($agent_info['id']);
-
         $weight = $param['info']['weight'];
+        $volume = (int) $param['info']['vloumHeight'] * (int)$param['info']['vloumLong'] * (int)$param['info']['vloumWidth'];
+        $weight2 = ceil($volume/6000); // 极鹭圆通抛比是6000
+        // 用户填写的重量和按抛比算的重量取大的
+        $weight = max($weight, $weight2);
         $sequelWeight = $weight -1; // 续重重量
         $oneWeight = $cost['one_weight']; // 平台首重单价
         $reWeight = $cost['more_weight']; // 平台续重单价
@@ -659,7 +661,7 @@ class OrderBusiness extends Backend
             ],
             'packageInfo'=>[
                 'weight'=>(int)$paramData['info']['weight']*1000,
-                'volume'=>'0',
+                'volume'=> (int) $paramData['info']['vloumHeight'] * (int)$paramData['info']['vloumLong'] * (int)$paramData['info']['vloumWidth'],
             ],
             'serviceInfoList' => [
                 [ 'code'=>'INSURE','value'=> (int)$paramData['info']['insured']*100, ],
@@ -1016,13 +1018,14 @@ class OrderBusiness extends Backend
      * 四通一达，极兔，菜鸟运费计算
      * @param array $channelItem
      * @param array $agent_info
-     * @param array $param
      * @return array
      */
-    private function priceHandleA(array $channelItem, array $agent_info, $moreWeight)
+    private function priceHandleA(array $channelItem, array $agent_info)
     {
-        $adminOne= $channelItem['price']['priceOne'];//平台首重
-        $adminMore = $channelItem['price']['priceMore'];//平台续重
+        $adminOne= $channelItem['price']['priceOne'];//平台首重单价
+        $adminMore = $channelItem['price']['priceMore'];//平台续重单价
+        $adminMorePrice = $channelItem['freight'] - $adminOne;//平台续重总价
+        $moreWeight = ceil($adminMorePrice/$adminMore); // 续重重量
         $agentOne= bcadd($adminOne , $agent_info['agent_shouzhong'],2);//代理商首重
         $agentMore= bcadd( $adminMore ,  $agent_info['agent_xuzhong'],2);//代理商续重
         $agentFreight = bcadd( $agentOne , $agentMore * $moreWeight,2);// 代理运费
@@ -1032,6 +1035,7 @@ class OrderBusiness extends Backend
         $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
         $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
         $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
+
         return compact('admin', 'agent');
     }
 
