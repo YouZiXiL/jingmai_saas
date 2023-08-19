@@ -133,6 +133,9 @@ class QBiDaBusiness
                 $v['jijian_id']=$param['jijian_id'];//寄件id
                 $v['shoujian_id']=$param['shoujian_id'];//收件id
                 $v['weight']=$param['weight'];//重量
+                $v['vloum_long']=$param['vloum_long'];//长
+                $v['vloum_width']=$param['vloum_width'];//宽
+                $v['vloum_height']=$param['vloum_height'];//高
                 $v['package_count']=$param['package_count'];//包裹数量
                 $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>  $v['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
                 $v["insert_id"]=$insert_id;
