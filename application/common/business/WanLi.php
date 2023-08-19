@@ -135,15 +135,15 @@ class WanLi
             "outShopCode" => $orders['out_trade_no'],
             "fromSenderName"=> $orders['sender'], //发货人姓名(点到点模式下必填)
             "fromMobile"=> $orders['sender_mobile'], //发货人手机号(点到点模式下必填)
-            "fromLng" => @$senderCoordinate[0],
-            "fromLat" => @$senderCoordinate[1],
+            "fromLng" => $senderCoordinate[0],
+            "fromLat" => $senderCoordinate[1],
             "fromAddress"=>$orders['sender_address'],
             "fromAddressDetail"=>$orders['sender_location'],
 
             "toReceiverName"=>$orders['receiver'],
             "toMobile"=>$orders['receiver_mobile'],
-            "toLng" => @$receiveCoordinate[0],
-            "toLat"=> @$receiveCoordinate[1],
+            "toLng" => $receiveCoordinate[0],
+            "toLat"=> $receiveCoordinate[1],
             "toAddress"=>$orders['receive_address'],
             "toAddressDetail" => $orders['receive_location'],
 
@@ -151,7 +151,12 @@ class WanLi
             "weight"=> (int) $orders['weight'] //物品重量,单位KG
         ];
         $data = $this->setParma($parma);
-        return $this->utils->httpRequest($url, $data,'POST');
+        $result =  $this->utils->httpRequest($url, $data,'POST');
+        recordLog('wanli-create-order',
+            '下单参数：' .   json_encode($data,JSON_UNESCAPED_UNICODE) . PHP_EOL .
+                '返回参数：' . $result
+        );
+        return $result;
     }
 
     /**

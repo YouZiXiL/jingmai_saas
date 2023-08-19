@@ -1428,7 +1428,6 @@ class Wxcallback extends Controller
                     Log::info('万利下单:'. $orders['out_trade_no']);
                     $res = (new WanLi())->createOrder($orders);
                     $result = json_decode($res,true);
-                    Log::info("万利下单结果：". $res);
                     if($result['code'] != 200){
                         recordLog('channel-create-order-err',
                             '万利：'.$res . PHP_EOL
@@ -1991,11 +1990,9 @@ class Wxcallback extends Controller
             $Dbcommmon= new Dbcommom();
 
             if($orders['channel_tag'] == '同城'){
-                Log::info('万利下单' . $orders['out_trade_no']);
                 $res = (new WanLi())->createOrder($orders);
                 $result = json_decode($res,true);
                 if($result['code'] != 200){
-                    Log::error('同城下单失败：'.$res);
                     $out_refund_no=$Common->get_uniqid();//下单退款订单号
                     //支付成功下单失败  执行退款操作
                     $update=[
@@ -2019,7 +2016,6 @@ class Wxcallback extends Controller
                         $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                     }
                 }else{
-                    Log::error('同城下单成功：'.$res);
                     $users=db('users')->where('id',$orders['user_id'])->find();
 
                     $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
