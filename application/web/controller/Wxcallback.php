@@ -1792,7 +1792,12 @@ class Wxcallback extends Controller
             $Dbcommmon->set_agent_amount($orders['agent_id'],'setInc',$final_amount,5,'账户余额充值：'.$orders['amount'].'元，到账：'.$final_amount.'元');
             exit('success');
         }catch (\Exception $e){
-            file_put_contents('re_change.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+            recordLog('recharge', '(' . $e->getLine() . ')-' .
+                $e->getMessage(). PHP_EOL .
+                $e->getTraceAsString(). PHP_EOL .
+                '参数：' . json_encode(input(), JSON_UNESCAPED_UNICODE)
+            );
+            // file_put_contents('re_change.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
             exit('success');
         }
     }
