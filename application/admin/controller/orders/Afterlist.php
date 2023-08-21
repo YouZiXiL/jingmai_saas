@@ -309,6 +309,7 @@ class Afterlist extends Backend
                 $orders->allowField(true)->save($up_data);
                 $remark='请通知用户单号已作废，请勿再使用！后期如有物流信息会重新扣除退回金额';
             }
+
             //超重核重处理
             if ($row['salf_type']==1&&$params['cope_status']==1){
 
@@ -341,7 +342,7 @@ class Afterlist extends Backend
                     if($orders['agent_overload_price']<=$agent_overload_amt){
                         throw new Exception('计算错误');
                     }
-                    if ($orders['overload_status']==2) {
+                    if ($orders['overload_status']==2 && $orders->pay_type == 1) {
                         $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
                         $wx_pay=$common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
                         $wx_pay
