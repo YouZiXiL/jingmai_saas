@@ -70,6 +70,13 @@ class Orderslist extends Backend
      */
     public function index()
     {
+        $showAuth = false;
+        $groups = $this->auth->getGroupIds()[0];
+        // 只有超管，管理员和客服展示
+        if(in_array($groups, [1,3,8])){
+            $showAuth = true;
+        }
+        $this->assignconfig('show',$showAuth);
         $this->relationSearch = true;
         $this->searchFields='waybill,out_trade_no,sender,sender_mobile,receiver,receiver_mobile';
         //设置过滤方法
@@ -90,7 +97,10 @@ class Orderslist extends Backend
         }
         $list = $list
             ->where($where)
-            ->field('id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,overload_price,pay_type,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
+            ->field('id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,
+            out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,channel_merchant,
+            pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,
+            overload_price,pay_type,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
             ->where('pay_status','<>',0)
             ->where('channel_tag','<>','同城')
             ->with([
@@ -108,6 +118,7 @@ class Orderslist extends Backend
             ->paginate($limit);
 
         foreach ($list as $k=>&$v){
+            $v['show'] = $showAuth;
             if ($v['pay_status']==2||$v['pay_status']==4){
                     $v['profit']='0.00';
             }else{
@@ -144,7 +155,7 @@ class Orderslist extends Backend
                 $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight-$tralight_price-$couponpapermoney,$amount,2);
             }
         }
-        $result = ['total' => $list->total(), 'rows' => $list->items()];
+        $result = ['total' => $list->total(),'rows' => $list->items()];
         return json($result);
     }
 

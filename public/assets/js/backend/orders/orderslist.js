@@ -1,7 +1,7 @@
+/* jshint esversion: 6 */
+
 define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], function ($, undefined, Backend, Table, Form ,ClipboardJS) {
-
     var Controller = {
-
         index: function () {
             var copy_out_trade_no = new ClipboardJS('.btn-copy-out_trade_no');
             copy_out_trade_no.on('success', function () {
@@ -56,76 +56,63 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                 searchFormVisible:true,
                 columns: [
                     [
-                        {field: 'id', title: __('Id'), visible: false},
-                        {field: 'waybill', title: __('Waybill'), operate: 'LIKE', formatter:function (value) {
-                            if (value!=null){
-                                return '<a style="color:#195967;" href="https://www.baidu.com/s?wd='+value+'"  target="_blank"  class="btn btn-xs btn-waybill">' + value + '</a><code data-toggle="tooltip" data-clipboard-text="'+value+'" class="fa fa-files-o btn btn-xs btn-copy-waybill"></code>';
-                            }else{
-                                return '<span style="color:#195967;">-</span>';
-                            }
-                            }},
-                        {field: 'out_trade_no', title: __('Out_trade_no'),operate: 'LIKE',events:{
+                        {field: 'id', title: __('Id'), operate: false , visible: false},
+                        {field: 'waybill', title: __('waybill'), visible: false},
+                        {field: 'out_trade_no', title: __('out_trade_no'), visible: false},
+                        {
+                            field: 'waybill',
+                            title: '订单详情',
+                            operate: false ,
+                            events:{
                                 'click .btn-out_trade_no': function (e, value, row) {
                                     Fast.api.open('orders/orderslist/detail?ids='+row.id,'订单详情');
                                     //Layer.alert("该行数据为: <code>" + JSON.stringify(row) + "</code>");
                                 },
-                            }, formatter:function (value) {
-                                return '<a style="color:rgba(154,30,30,0.92);" class="btn btn-xs btn-out_trade_no">' + value + '</a><code data-toggle="tooltip" data-clipboard-text="'+value+'" class="fa fa-files-o btn btn-xs btn-copy-out_trade_no"></code>';
-                            }},
+                            },
+                            formatter:function (value, row) {
+                                function getTime(){
+                                    const date = new Date(row.create_time);
+                                    const year = date.getFullYear();
+                                    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+                                    const day = ('0' + date.getDate()).slice(-2);
+                                    const hours = ('0' + date.getHours()).slice(-2);
+                                    const minutes = ('0' + date.getMinutes()).slice(-2);
+                                    const seconds = ('0' + date.getSeconds()).slice(-2);
 
-                        {field: 'comments', title: __('Comments') ,operate: false,table: table, buttons: [
-                                {
-                                    name: 'comments',
-                                    text: __('快递员'),
-                                    title: __('快递员'),
-                                    classname: 'btn btn-xs btn-success btn-magic btn-ajax',
-                                    icon: 'fa fa-user-o',
-                                    url: 'orders/orderslist/comments',
-                                    success: function (data) {
-                                        if (data == null) data = '无'
-                                        // 弹出层自定义按钮
-                                        layer.alert(data, {
-                                            btn: ['复制', '取消'],
-                                            btn1: function(index, layero) {
-                                                // 获取要复制的文本
-                                                const textToCopy = data;
+                                    return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+                                }
 
-                                                // 复制文本到剪贴板
-                                                const $temp = $("<input>");
-                                                $("body").append($temp);
-                                                $temp.val(textToCopy).select();
-                                                document.execCommand("copy");
-                                                $temp.remove();
+                                let waybill = '<div class="p-1">  <span class="text-muted">运单号：-</span></div>';
+                                if (value!=null){
+                                    waybill = `
+                                        <div class="p-1 d-flex a-center"> 
+                                             <span class="text-muted">运单号：</span> <a href="https://www.baidu.com/s?wd='+value+'"  target="_blank"  class="text-blue btn-waybill"> ${value}  </a>
+                                             <span data-toggle="tooltip" data-clipboard-text="${value}" class="fa fa-files-o text-blue btn btn-xs btn-copy-waybill"></span>
+                                        </div>`;
+                                }
 
-                                                // 关闭弹出层
-                                                layer.close(index);
 
-                                                // 弹出复制成功提示
-                                                layer.msg('已复制到剪贴板', {icon: 1});
-                                            },
-                                            btn2: function(index, layero) {
-                                                // 取消操作
-                                                layer.close(index);
-                                            }
-                                        });
-                                        //如果需要阻止成功提示，则必须使用return false;
-                                        return false;
-                                    },
-                                    error: function (data, ret) {
-
-                                        Layer.alert(ret.msg);
-                                        return false;
-                                    }
-                                },
-                            ], formatter: Table.api.formatter.buttons},
-                        {field: 'sender', title: __('Sender'), operate: false},
-                        {field: 'sender_mobile', title: __('Sender_mobile'), operate: 'LIKE'},
-                        {field: 'receiver', title: __('Receiver'), operate: false},
-                        {field: 'receiver_mobile', title: __('Receiver_mobile'), operate: 'LIKE'},
-                        {field: 'tag_type', title: __('Tag_type'), operate: 'LIKE'},
-                        {field: 'pay_status', title: __('Pay_status'), searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1'),"2":__('Pay_status 2'),"3":__('Pay_status 3'),"4":__('Pay_status 4'),"5":__('Pay_status 5'),"6":__('Pay_status 6'),"7":__('Pay_status 7')}, formatter: Table.api.formatter.normal},
-                        {field: 'order_status', title: __('Order_status'), operate: 'LIKE',formatter: Table.api.formatter.normal},
-                        {field: 'overload_status', title: __('Overload_status'), searchList: {"0":__('Overload_status 0'),"1":__('Overload_status 1'),"2":__('Overload_status 2')},events:{
+                                return ` <div class="py-2" style="display: flex; flex-direction: column; align-items: start"> 
+                                        ${waybill}
+                                        <div class="p-1 d-flex a-center "> 
+                                            <span class="text-muted">订单号：</span><span class="btn-out_trade_no"> ${row.out_trade_no} </span>
+                                            <span data-toggle="tooltip" data-clipboard-text="${row.out_trade_no}" class="fa fa-files-o text-muted btn btn-xs btn-copy-out_trade_no"></span>
+                                        </div>
+                                        <div class="p-1 d-flex a-center">
+                                            <span class="text-muted">快递员：</span><button id="btn-comments" data-id="${row.id}" class="btn btn-success-light btn-xs">查看快递员信息</button>
+                                         </div>
+                                         <div class="p-1 d-flex a-center">
+                                            <span class="text-muted">快递公司：</span><span>${row.tag_type}</span>
+                                         </div>
+                                         <div class="p-1 d-flex a-center">
+                                            <span class="text-muted">下单时间：</span><span class="datetimerange">${getTime()}</span>
+                                         </div>
+                                    </div>                               
+                                `;
+                        }},
+                        {
+                            field: 'order_status', title: '状态信息',
+                            events:{
                                 'click .btn-overload_status': function (e, value, row) {
                                     Layer.confirm('确定已经处理超重问题了？', {
                                         title: "处理超重",
@@ -145,14 +132,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                         return true;
                                     });
                                 },
-                            },formatter: function (value, row, index) {
-                                if (value==='1'){
-                                    return '<button class="btn btn-xs btn-warning btn-overload_status">'+__('Overload_status 1')+'</button>';
-                                }else{
-                                    return Table.api.formatter.normal.call(this,value,row,index);
-                                }
-                            }},
-                        {field: 'consume_status', title: __('Consume_status'), searchList: {"0":__('Consume_status 0'),"1":__('Consume_status 1'),"2":__('Consume_status 2')}, events:{
                                 'click .btn-consume_status': function (e, value, row) {
                                     Layer.confirm('确定已经处理耗材问题了？', {
                                         title: "处理耗材",
@@ -172,88 +151,184 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                         return true;
                                     });
                                 },
-                            },formatter: function (value, row, index) {
-                                if (value==='1'){
-                                    return '<button class="btn btn-xs btn-warning btn-consume_status">'+__('Consume_status 1')+'</button>';
-                                }else{
-                                    return Table.api.formatter.normal.call(this,value,row,index);
+                            },
+                            formatter: function (value, row, index){
+                                console.log('row', row)
+                                console.log('index', index)
+                                let color = 'text-muted';
+                                let orderColor = 'text-blue';
+                                let payStatus = '-';
+                                let payClass = color;
+
+                                let overloadStatus = '-';
+                                let overloadClass = color;
+
+                                let consumeStatus = '-';
+                                let consumeColor = color;
+
+                                if(row.pay_status === '1'){
+                                    payStatus = '已支付';
+                                    payClass = 'text-success';
+                                }if(row.pay_status === '2'){
+                                    payStatus = '已退款';
                                 }
-                            }},
-                        {field: 'overload_price', title: __('Overload_price'), operate: false, formatter: function (value, row) {
-                                if (row.overload_status==='1'){
-                                    return '<span style="color:#ff0000;">'+value+'元</span>';
-                                }else{
-                                    return '<span ">'+value+'元</span>';
+                                if(row.overload_status === '1'){
+                                    overloadStatus = '待处理';
+                                    overloadClass = 'btn-overload_status btn btn-xs btn-danger-light';
+                                }else if(row.overload_status === '2'){
+                                    overloadStatus = '已处理';
+                                    overloadClass = 'text-success';
+
                                 }
+
+                                if(row.consume_status === '1'){
+                                    consumeStatus = '待处理';
+                                    consumeColor = 'btn-consume_status btn btn-xs btn-danger-light';
+                                }else if(row.consume_status === '2'){
+                                    consumeStatus = '已处理';
+                                    consumeColor = 'text-success';
+                                }
+                                return ` <div class="py-2" style="display: flex; flex-direction: column; align-items: start">
+                                    <div class="p-1">  
+                                       <span class="text-muted">运单状态：</span><span class="${orderColor}" >${value}</span>
+                                    </div>
+                                    <div class="p-1">  
+                                       <span class="text-muted">支付状态：</span>
+                                       <span class="${payClass}" >${payStatus}</span>
+                                    </div>
+                                    <div class="p-1">  
+                                       <span class="text-muted">超重状态：</span>
+                                       <span class="${overloadClass}" >${overloadStatus}</span>
+                                    </div>
+                                    <div class="p-1 d-flex a-center">  
+                                       <span class="text-muted">耗材状态：</span>
+                                       <span class="${consumeColor}" >${consumeStatus}</span>
+                                    </div>
+                                </div>                               
+                                `;
+
                             }},
-                        {field: 'haocai_freight', title: __('Haocai_freight'), operate: false, formatter: function (value, row) {
-                                        if (row.consume_status==='1'){
-                                            return '<span style="color:#ff0000;">'+value+'元</span>';
-                                        }else{
-                                            return '<span>'+value+'元</span>';
-                                        }
-                            }},
-                        {field: 'weight', title: __('Weight'), operate: false, formatter: function (value) {
-                                    return '<span >'+value+'kg</span>';
-                            }},
-                        {field: 'final_weight', title: __('Final_weight'), operate: false,formatter: function (value) {
-                                return '<span>'+value+'kg</span>';
-                            }},
-                        {field: 'item_name', title: __('Item_name') ,operate: false, cellStyle:function () {
-                                return{
-                                    css:{
+
+                        {field: 'sender', title: __('客户信息'), operate: false, formatter: function (value, row, index){
+                                return ` <div class="py-2" style="display: flex; flex-direction: column; align-items: start">
+                                    <div class="p-1">  
+                                       <span class="text-muted">寄件人：</span><span>${value}</span>
+                                    </div>
+                                    <div class="p-1">  
+                                       <span class="text-muted">手机号：</span><span>${row.sender_mobile}</span>
+                                    </div>
+                                    <div class="p-1">  
+                                       <span class="text-muted">收件人：</span><span>${row.receiver}</span>
+                                    </div>
+                                    <div class="p-1">  
+                                       <span class="text-muted">手机号：</span><span>${row.receiver_mobile}</span>
+                                    </div>
+                                </div>`;
+                        }},
+                        {field: 'aftercoupon', title: __('金额信息'), operate: false,formatter: function (value, row) {
+                            let payPrice = value?value:row.final_price;
+                            let couponpapermoneyHidden = row.couponpapermoney?'':'hidden';
+                            let overloadHidden = 'hidden';
+                            let overloadClass = '';
+                            let haocaiHidden = 'hidden';
+                            let haocaiClass = '';
+                            if(row.overload_status === '1' ){
+                                overloadHidden = '';
+                                overloadClass = 'text-danger';
+                            }else if(row.overload_status === '2'){
+                                overloadHidden = '';
+                            }
+
+                            if(row.consume_status === '1' ){
+                                haocaiHidden = '';
+                                haocaiClass = 'text-danger';
+                            }else if(row.overload_status === '2'){
+                                haocaiHidden = '';
+                            }
+                            return `
+                                <div class="py-2 d-flex flex-column a-start">
+                                    <div class="p-1">  
+                                       <span class="text-muted">下单金额：</span><span>${row.final_price} 元</span>
+                                    </div>
+                                    <div class="p-1">  
+                                       <span class="text-muted">支付金额：</span><span>${payPrice} 元</span>
+                                    </div>
+                                    <div class="p-1 ${couponpapermoneyHidden}" >  
+                                       <span class="text-muted">优惠券金额：</span><span>${row.couponpapermoney} 元</span>
+                                    </div>
+                                    <div class="p-1">  
+                                       <span class="text-muted">结算金额：</span><span>${row.agent_price} 元</span>
+                                    </div>
+                                    <div class="p-1 ${overloadHidden}">  
+                                       <span class="text-muted">超重金额：</span><span class="${overloadClass}">${row.overload_price} 元</span>
+                                    </div>
+                                    <div class="p-1 ${haocaiHidden}">  
+                                       <span class="text-muted">耗材金额：</span><span class="${haocaiClass}">${row.haocai_freight} 元</span>
+                                    </div>
+                                     <div class="p-1">  
+                                       <span class="text-muted">续重单价：</span><span>${row.users_xuzhong} 元</span>
+                                    </div>
+                                    <div class="p-1">  
+                                       <span class="text-muted">订单利润：</span><span>${row.profit} 元</span>
+                                    </div>
+                                </div>
+                            `;
+
+                        }},
+                        {field: 'weight', title: __('货物信息'), operate: false, formatter: function (value, row) {
+
+                            return `
+                                <style>
+                                    .item_name{
                                         "max-width":"100px !important",
                                         "overflow":"hidden",
                                         "white-space":"nowrap",
                                         "text-overflow":"ellipsis",
                                     }
-                                };
-                            }},
-                        {field: 'usersinfo.mobile',operate: 'Like',visible:false, title: __('Nick_name')},
-
-                        {field: 'users_xuzhong', title: __('Users_xuzhong'), operate: false, formatter: function (value) {
-                                return '<span>'+value+'元</span>';
-                            }},
-                        {field: 'final_price', title: __('Final_price'), operate: false,formatter: function (value) {
-                                return '<span>'+value+'元</span>';
-                            }},
-                        {field: 'couponpapermoney', title: __('优惠券金额'), operate: false,formatter: function (value) {
-                                if (value==null){
-                                    return '<span>0.00元</span>';
-                                }else{
-                                    return '<span style="color:#42980c;">'+value+'元</span>';
-                                }
-                            }},
-                        {field: 'aftercoupon', title: __('支付金额'), operate: false,formatter: function (value, row) {
-                                if (value==null){
-                                    return '<span>'+row.final_price+'元</span>';
-                                }else{
-                                    return '<span>'+value+'元</span>';
-                                }
-
-                            }},
-
-                        {field: 'agent_price', title: __('Agent_price'), operate: false, formatter: function (value) {
-                                return '<span ">'+value+'元</span>';
-                            }},
-                        {field: 'profit', title: __('利润'), operate: false, formatter: function (value) {
-                                return '<span ">'+value+'元</span>';
-                            }},
-                        {field: 'auth.name', title: __('归属账号'), operate: false, formatter:function(value, row){
-                                console.log('row', row)
-                                return value?value:'智能下单'
-                            }},
-                        {field: 'auth.wx_auth', title: __('授权平台'), operate: false,formatter: function (value, row) {
-                                if (value==='1'){
-                                    return '<buttons class="btn btn-xs btn-success">微信</buttons>';
-                                }else if(value==='2'){
-                                    return '<buttons class="btn btn-xs btn-info">支付宝</buttons>';
-                                }else{
-                                    return '<buttons class="btn btn-xs btn-error-light">智能下单</buttons>';
-                                }
-
+                                </style>
+                                <div class="py-2 d-flex flex-column a-start">
+                                    <div class="p-1">  
+                                       <span class="text-muted">货物重量：</span><span>${value} kg</span>
+                                    </div>
+                                     <div class="p-1">  
+                                       <span class="text-muted">计费重量：</span><span>${row.final_weight} kg</span>
+                                    </div>
+                                     <div class="p-1">  
+                                       <span class="text-muted item_name">物品名称：</span><span>${row.item_name}</span>
+                                    </div>
+                               </div>
+                            `;
                         }},
-                        {field: 'create_time', title: __('Create_time'),operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
+                        {field: 'auth.name', title: __('其他信息'), operate: false, formatter:function(value, row){
+                            let auth = '';
+                            let authClass = 'text-muted';
+
+                            if(row.pay_type === '1'){
+                                auth = '微信';
+                                authClass = 'text-success';
+                            }else if(row.pay_type === '2'){
+                                auth = '支付宝';
+                                authClass = 'text-blue';
+                            }else if(row.pay_type === '3'){
+                                auth = '智能下单';
+                                authClass = 'text-yellow';
+                            }
+                            let hidden = Config.show?'':'hidden';
+                            return `
+                                <div class="py-2 d-flex flex-column a-start">
+                                    <div class="p-1">  
+                                       <span class="text-muted">授权平台：</span><span class="${authClass}">${auth}</span>
+                                    </div>
+                                    <div class="p-1">  
+                                       <span class="text-muted">归属账号：</span><span>${value?value:''}</span>
+                                    </div>
+                                     <div ${hidden} class="p-1">  
+                                       <span class="text-muted">渠道商：</span><span>${row.channel_merchant}</span>
+                                    </div>
+                               </div>
+                            `;
+                        }},
+                        {field: 'create_time', title: __('Create_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime, visible: false},
 
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,
                             buttons: [
@@ -442,8 +517,50 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
         api: {
             bindevent: function () {
                 Form.api.bindevent($("form[role=form]"));
-            }
-        }
+            },
+        },
     };
+
     return Controller;
+});
+
+
+$(document).on('click', '#btn-comments', function (event) {
+    event.stopPropagation();
+    let id = $('#btn-comments').data('id');
+    Fast.api.ajax({
+        url: `orders/orderslist/comments/ids/${id}`
+    }, function (data,ret) { //success
+        if (data == null) data = '无'
+        // 弹出层自定义按钮
+        layer.alert(data, {
+            btn: ['复制', '取消'],
+            btn1: function(index, layero) {
+                // 获取要复制的文本
+                const textToCopy = data;
+
+                // 复制文本到剪贴板
+                const $temp = $("<input>");
+                $("body").append($temp);
+                $temp.val(textToCopy).select();
+                document.execCommand("copy");
+                $temp.remove();
+
+                // 关闭弹出层
+                layer.close(index);
+
+                // 弹出复制成功提示
+                layer.msg('已复制到剪贴板', {icon: 1});
+            },
+            btn2: function(index, layero) {
+                // 取消操作
+                layer.close(index);
+            }
+        });
+        //如果需要阻止成功提示，则必须使用return false;
+        return false;
+    }, function (data,ret) { //error
+        Layer.alert(ret.msg);
+        return false;
+    });
 });

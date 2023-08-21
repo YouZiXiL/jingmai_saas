@@ -43,7 +43,7 @@ class Test extends Controller
      * @throws Exception
      */
     public function test(){
-
+        $str = str_pad('熊大', 8, "A", STR_PAD_RIGHT);
         $agentAuth = Admin::where('id', 23)->find();
         $orders = Order::where('id', 1)->find();
         $user = Users::where('id', 222)->find();
