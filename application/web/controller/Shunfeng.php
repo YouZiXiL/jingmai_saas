@@ -108,29 +108,7 @@ class Shunfeng extends Controller
 
 
     }
-    function order_test(): Json{
-        $param=$this->request->param();
-        $orders=db('orders')->where('out_trade_no',$param['out_trade_no'])->find();
 
-        $content=[
-            "productCode"=>$orders['channel_id'],
-            "senderPhone"=>$orders['sender_mobile'],
-            "senderName"=>$orders['sender'],
-            "senderAddress"=>$orders['sender_address'],
-            "receiveAddress"=>$orders['receive_address'],
-            "receivePhone"=>$orders['receiver_mobile'],
-            "receiveName"=>$orders['receiver'],
-            "goods"=>$orders['item_name'],
-            "packageNum"=>$orders['package_count'],
-            'weight'=>$orders['weight'],
-            "payMethod"=>3,
-            "thirdOrderNo"=>$orders["out_trade_no"]
-        ];
-
-        $data=$this->common->shunfeng_api('http://api.wanhuida888.com/openApi/doOrder',$content);
-        return json(['status'=>200,'data'=>$data,'msg'=>'成功']);
-
-    }
 
     /**
      * 下单接口
@@ -241,11 +219,12 @@ class Shunfeng extends Controller
             'originalFee'=>$check_channel_intellect['originalFee'],
             'create_time'=>time()
         ];
-        !empty($param['bill_remark']) &&($data['bill_remark'] = $param['bill_remark']);
-        !empty($check_channel_intellect['insured']) &&($data['insured'] = $check_channel_intellect['insured']);
-        !empty($check_channel_intellect['vloum_long']) &&($data['vloum_long'] = $check_channel_intellect['vloumLong']);
-        !empty($check_channel_intellect['vloum_width']) &&($data['vloum_width'] = $check_channel_intellect['vloum_width']);
-        !empty($check_channel_intellect['vloum_height']) &&($data['vloum_height'] = $check_channel_intellect['vloum_height']);
+
+        $data['bill_remark'] = $param['bill_remark'] ?? '';
+        $data['insured'] = $check_channel_intellect['insured'] ?? 0;
+        $data['vloum_long'] = $check_channel_intellect['vloum_long'] ?? 0;
+        $data['vloum_width'] = $check_channel_intellect['vloum_width'] ?? 0;
+        $data['vloum_height'] = $check_channel_intellect['vloum_height'] ?? 0;
         $couponmoney=0;
         if(!empty($param["couponid"])){
             $couponinfo=Couponlist::get(["id"=>$param["couponid"],"state"=>1]);
