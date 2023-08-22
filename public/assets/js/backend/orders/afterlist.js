@@ -98,7 +98,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     },
                                 }
                             }},
-                        {field: 'cope_status', title: __('Cope_status'), searchList: {"0":__('Cope_status 0'),"1":__('Cope_status 1'),"2":__('Cope_status 2'),"3":__('Cope_status 3')}, formatter: Table.api.formatter.status},
+                        {field: 'cope_status', title: __('Cope_status'), searchList: {"0":__('Cope_status 0'),"1":__('Cope_status 1'),"2":__('Cope_status 2'),"3":__('Cope_status 3'),"4":__('Cope_status 4')}, formatter: Table.api.formatter.status},
 
                         {field: 'create_time', title: __('Create_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         //{field: 'update_time', title: __('Update_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
@@ -115,7 +115,31 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         return row.cope_status === '0';
                                     }
                                 },
-                            ], events: Table.api.events.operate, formatter: Table.api.formatter.operate}
+                                {
+                                    name: 'refund',
+                                    title: __('确认'),
+                                    text: __('退款'),
+                                    classname: 'btn btn-xs btn-info btn-ajax',
+                                    icon: 'fa fa-magic',
+                                    confirm: '确认给用户退超轻？',
+                                    url: 'orders/afterlist/refund_light',
+                                    success: function (data, ret) {
+                                        table.bootstrapTable('refresh');
+                                        //Layer.alert(ret.msg);
+                                        //如果需要阻止成功提示，则必须使用return false;
+                                        return true;
+                                    },
+                                    error: function (data, ret) {
+                                        Layer.alert(ret.msg);
+                                        return false;
+                                    },
+                                    visible: function (row) {
+                                        return row.salf_type === '2' && row.cope_status === '4';
+                                    }
+                                },
+                            ],
+                            events: Table.api.events.operate,
+                            formatter: Table.api.formatter.operate}
                     ]
                 ]
             });

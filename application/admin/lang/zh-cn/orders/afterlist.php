@@ -27,6 +27,7 @@ return [
     'Cope_status 1'   => '已完成',
     'Cope_status 2'   => '已驳回',
     'Cope_status 3'   => '撤销申诉',
+    'Cope_status 4'   => '超轻已处理',
     'Cope_content'  => '处理结果',
     'Pic'           => '申诉图片',
     'Salf_num'      => '申诉次数',

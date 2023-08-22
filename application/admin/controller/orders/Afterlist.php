@@ -3,11 +3,13 @@
 namespace app\admin\controller\orders;
 
 
+use app\admin\business\AfterSaleBusiness;
 use app\admin\model\Admin;
 use app\common\business\CouponBusiness;
 use app\common\business\OrderBusiness;
 use app\common\controller\Backend;
 use app\common\library\alipay\Alipay;
+use app\common\model\Order;
 use app\web\controller\Common;
 use app\web\controller\Dbcommom;
 use app\web\model\AgentAuth;
@@ -130,57 +132,25 @@ class Afterlist extends Backend
                     ->where('app_id',$orders['wx_mchid'])
                     ->find();
             }
-
+            // 处理超轻
             if ($row['salf_type']==2){
                 $orders=$orders->get(['id'=>$row['order_id']]);
-                if ($params['cope_status']==1){
+                if ($params['cope_status']==1){ // 审核通过
                     //处理退款
+                    if ($orders['tralight_status'] == 4){
+                        throw new Exception('此订超轻已被驳回');
+                    }
                     if ($orders['tralight_status']!=3){
                         throw new Exception('此订并未反馈超轻');
                     }
                     $agent_tralight_amt=$orders['agent_tralight_price'];//代理退款金额
-                    $users_tralight_amt=$orders['tralight_price']; //代理商退用户金额
-                    $final_price = $orders['final_price']; // 支付金额
                     $Dbcommon= new Dbcommom();
-                    $Common=new Common();
-                    $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'运单号：'.$orders['waybill'].' 超轻增加金额：'.$agent_tralight_amt.'元');
-                    if($orders->pay_type == 1){
-                        //退款时对优惠券判定
-                        if(!empty($orders->couponid)){
-                            $coupon = Couponlist::get($orders->couponid);
-                            if(($orders->final_price-$users_tralight_amt)<$coupon->uselimits || $coupon->uselimits == 0){
-                                $users_tralight_amt-=$coupon->money;
-                                if($users_tralight_amt<0){
-                                    throw new Exception('退款后实付金额 小于优惠券使用门槛');
-                                }
-                                $final_price = $orders->aftercoupon; // 实际支付金额
-                                $coupon["state"]=1;
-                                $coupon->save();
-                            }
-                        }
 
-                        $wx_pay=$Common->wx_pay($orders['wx_mchid'],$orders['wx_mchcertificateserial']);
-                        $out_tralight_no=$Common->get_uniqid();//超轻退款订单号
-                        //下单退款
-                        $wx_pay
-                            ->chain('v3/refund/domestic/refunds')
-                            ->post(['json' => [
-                                'out_trade_no' => $orders['out_trade_no'],
-                                'out_refund_no'=>$out_tralight_no,
-                                'reason'=>'超轻订单：运单号 '.$orders['waybill'],
-                                'amount'       => [
-                                    'refund'   => (int)bcmul($users_tralight_amt,100),
-                                    'total'    =>(int)bcmul($final_price,100),
-                                    'currency' => 'CNY'
-                                ],
-                            ]]);
-                        $remark='超轻退回金额：'.$agent_tralight_amt.'元';
-                    }
-                    elseif ($orders->pay_type == 2){
-                        $orderBusiness = new OrderBusiness();
-                        $orderBusiness->orderCancel($orders);
-                    }
+                    $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'运单号：'.$orders['waybill'].' 超轻增加金额：'.$agent_tralight_amt.'元');
+
+
                     $orders->allowField(true)->save(['tralight_status'=>2]);
+                    $params['cope_status']=4;
                 }else{
                     $orders->allowField(true)->save(['tralight_status'=>4]);
                 }
@@ -426,6 +396,22 @@ class Afterlist extends Backend
             $this->error(__('No rows were updated'));
         }
         $this->success();
+    }
+
+    /**
+     * 退款超轻费
+     * @param $ids
+     * @return void
+     * @throws DbException
+     * @throws Exception
+     */
+    public function refund_light($ids){
+        $after = $this->model->get($ids);
+        $business = new AfterSaleBusiness();
+        $business->refundLight($after['order_id']);
+        $after->save(['cope_status' => 1]);
+        $this->success('退款成功');
+
     }
 
 
