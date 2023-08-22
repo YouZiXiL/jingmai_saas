@@ -124,7 +124,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     waybill = `
                                         <div class="p-1 d-flex a-center"> 
                                              <span class="text-muted">运单号：</span> <a href="https://www.baidu.com/s?wd=${value}"  target="_blank"  class="text-blue btn-waybill"> ${value}  </a>
-                                             <span data-toggle="tooltip" data-clipboard-text="${value}" class="fa fa-files-o text-blue btn btn-xs btn-copy-waybill"></span>
+                                             <span data-toggle="tooltip" data-clipboard-text="${value}" class="fa fa-files-o text-muted btn btn-xs btn-copy-waybill"></span>
                                         </div>`;
                                 }
 
@@ -132,7 +132,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                 return `<div class="py-2" style="display: flex; flex-direction: column; align-items: start">
                                         ${waybill}
                                         <div class="p-1 d-flex a-center "> 
-                                            <span class="text-muted">订单号：</span><span class="btn-out_trade_no"> ${row.out_trade_no} </span>
+                                            <span class="text-muted">订单号：</span><span class="text-blue btn-out_trade_no"> ${row.out_trade_no} </span>
                                             <span data-toggle="tooltip" data-clipboard-text="${row.out_trade_no}" class="fa fa-files-o text-muted btn btn-xs btn-copy-out_trade_no"></span>
                                         </div>
                                         <div class="p-1 d-flex a-center">
