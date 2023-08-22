@@ -57,8 +57,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                 columns: [
                     [
                         {field: 'id', title: __('Id'), operate: false , visible: false},
-                        {field: 'waybill', title: __('waybill'), visible: false},
-                        {field: 'out_trade_no', title: __('out_trade_no'), visible: false},
+
                         {
                             field: 'waybill',
                             title: '订单详情',
@@ -68,10 +67,48 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     Fast.api.open('orders/orderslist/detail?ids='+row.id,'订单详情');
                                     //Layer.alert("该行数据为: <code>" + JSON.stringify(row) + "</code>");
                                 },
+                                'click .btn-comments': function (e, value, row) {
+                                    Fast.api.ajax({
+                                        url: `orders/orderslist/comments/ids/${row.id}`
+                                    }, function (data,ret) { //success
+                                        if (data == null) data = '无'
+                                        // 弹出层自定义按钮
+                                        layer.alert(data, {
+                                            btn: ['复制', '取消'],
+                                            btn1: function(index, layero) {
+                                                // 获取要复制的文本
+                                                const textToCopy = data;
+
+                                                // 复制文本到剪贴板
+                                                const $temp = $("<input>");
+                                                $("body").append($temp);
+                                                $temp.val(textToCopy).select();
+                                                document.execCommand("copy");
+                                                $temp.remove();
+
+                                                // 关闭弹出层
+                                                layer.close(index);
+
+                                                // 弹出复制成功提示
+                                                layer.msg('已复制到剪贴板', {icon: 1});
+                                            },
+                                            btn2: function(index, layero) {
+                                                // 取消操作
+                                                layer.close(index);
+                                            }
+                                        });
+                                        //如果需要阻止成功提示，则必须使用return false;
+                                        return false;
+                                    }, function (data,ret) { //error
+                                        Layer.alert(ret.msg);
+                                        return false;
+                                    });
+
+                                }
                             },
                             formatter:function (value, row) {
                                 function getTime(){
-                                    const date = new Date(row.create_time);
+                                    const date = new Date(row.create_time * 1000);
                                     const year = date.getFullYear();
                                     const month = ('0' + (date.getMonth() + 1)).slice(-2);
                                     const day = ('0' + date.getDate()).slice(-2);
@@ -86,20 +123,20 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                 if (value!=null){
                                     waybill = `
                                         <div class="p-1 d-flex a-center"> 
-                                             <span class="text-muted">运单号：</span> <a href="https://www.baidu.com/s?wd='+value+'"  target="_blank"  class="text-blue btn-waybill"> ${value}  </a>
+                                             <span class="text-muted">运单号：</span> <a href="https://www.baidu.com/s?wd=${value}"  target="_blank"  class="text-blue btn-waybill"> ${value}  </a>
                                              <span data-toggle="tooltip" data-clipboard-text="${value}" class="fa fa-files-o text-blue btn btn-xs btn-copy-waybill"></span>
                                         </div>`;
                                 }
 
 
-                                return ` <div class="py-2" style="display: flex; flex-direction: column; align-items: start"> 
+                                return `<div class="py-2" style="display: flex; flex-direction: column; align-items: start">
                                         ${waybill}
                                         <div class="p-1 d-flex a-center "> 
                                             <span class="text-muted">订单号：</span><span class="btn-out_trade_no"> ${row.out_trade_no} </span>
                                             <span data-toggle="tooltip" data-clipboard-text="${row.out_trade_no}" class="fa fa-files-o text-muted btn btn-xs btn-copy-out_trade_no"></span>
                                         </div>
                                         <div class="p-1 d-flex a-center">
-                                            <span class="text-muted">快递员：</span><button id="btn-comments" data-id="${row.id}" class="btn btn-success-light btn-xs">查看快递员信息</button>
+                                            <span class="text-muted">快递员：</span><button data-id="${row.id}" class="btn btn-success-light btn-comments btn-xs">查看快递员信息</button>
                                          </div>
                                          <div class="p-1 d-flex a-center">
                                             <span class="text-muted">快递公司：</span><span>${row.tag_type}</span>
@@ -109,9 +146,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                          </div>
                                     </div>                               
                                 `;
-                        }},
+                            }
+                        },
                         {
-                            field: 'order_status', title: '状态信息',
+                            field: 'order_status', title: '状态信息', operate: false,
                             events:{
                                 'click .btn-overload_status': function (e, value, row) {
                                     Layer.confirm('确定已经处理超重问题了？', {
@@ -189,20 +227,20 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     consumeColor = 'text-success';
                                 }
                                 return ` <div class="py-2" style="display: flex; flex-direction: column; align-items: start">
-                                    <div class="p-1">  
-                                       <span class="text-muted">运单状态：</span><span class="${orderColor}" >${value}</span>
+                                    <div class="p-1 d-flex a-center">  
+                                       <span class="text-muted">运单状态：</span><span class="${orderColor}">${value}</span>
                                     </div>
-                                    <div class="p-1">  
+                                    <div class="p-1 d-flex a-center">  
                                        <span class="text-muted">支付状态：</span>
-                                       <span class="${payClass}" >${payStatus}</span>
+                                       <span class="${payClass}">${payStatus}</span>
                                     </div>
-                                    <div class="p-1">  
+                                    <div class="p-1 d-flex a-center">  
                                        <span class="text-muted">超重状态：</span>
-                                       <span class="${overloadClass}" >${overloadStatus}</span>
+                                       <span class="${overloadClass}">${overloadStatus}</span>
                                     </div>
                                     <div class="p-1 d-flex a-center">  
                                        <span class="text-muted">耗材状态：</span>
-                                       <span class="${consumeColor}" >${consumeStatus}</span>
+                                       <span class="${consumeColor}">${consumeStatus}</span>
                                     </div>
                                 </div>                               
                                 `;
@@ -328,6 +366,16 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                </div>
                             `;
                         }},
+                        {field: 'waybill', title: __('waybill'), visible: false},
+                        {field: 'out_trade_no', title: __('out_trade_no'), visible: false},
+                        {field: 'sender_mobile', title: __('Sender_mobile'), operate: 'LIKE', visible: false},
+                        {field: 'receiver_mobile', title: __('Receiver_mobile'), operate: 'LIKE', visible: false},
+                        {field: 'pay_status', title: __('Pay_status'), searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1'),"2":__('Pay_status 2'),"3":__('Pay_status 3'),"4":__('Pay_status 4'),"5":__('Pay_status 5'),"6":__('Pay_status 6'),"7":__('Pay_status 7')}, visible: false},
+                        {field: 'overload_status', title: __('Overload_status'), searchList: {"0":__('Overload_status 0'),"1":__('Overload_status 1'),"2":__('Overload_status 2')},visible: false},
+                        {field: 'consume_status', title: __('Consume_status'), searchList: {"0":__('Consume_status 0'),"1":__('Consume_status 1'),"2":__('Consume_status 2')},visible: false},
+
+                        {field: 'tag_type', title: __('Tag_type'), operate: 'LIKE', visible: false},
+                        {field: 'order_status', title: __('Order_status'), operate: 'LIKE', visible: false},
                         {field: 'create_time', title: __('Create_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime, visible: false},
 
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,
@@ -481,7 +529,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                             }
                         }
                     ]
-                    ]
+                ]
 
             });
 
@@ -525,9 +573,13 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
 });
 
 
-$(document).on('click', '#btn-comments', function (event) {
+$(document).on('click', '.btn-comments', function (event) {
+    return;
+    console.log('////////////////////////');
     event.stopPropagation();
-    let id = $('#btn-comments').data('id');
+
+    let id = $('.btn-comments').data('id');
+    console.log('id', id)
     Fast.api.ajax({
         url: `orders/orderslist/comments/ids/${id}`
     }, function (data,ret) { //success
