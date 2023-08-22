@@ -1362,7 +1362,7 @@ class Wxcallback extends Controller
                                 }
                             }
                         }
-                        if($orders['tag_type'] == '京东'){
+                        if($orders['tag_type'] == '京东' || $orders['tag_type'] == '德邦'){
                             Queue::push(TrackJob::class, $orders['id'], 'track');
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');

@@ -317,7 +317,6 @@ class Test extends Controller
      * @throws DbException
      */
     public function yyTrance($waybill){
-
         $yunYang = new \app\common\business\YunYang();
         $res = $yunYang->queryTrance($waybill);
         $result = json_decode($res, true);
