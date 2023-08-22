@@ -83,7 +83,7 @@ class Shunfeng extends Controller
             $qbdParam = $qbdBusiness->queryPriceParams($jijian_address, $shoujian_address, $param);
             $response =  $this->common->multiRequest($yyParma, $qbdParam);
             list($yyRes, $qbdRes) = $response;
-            $yy = [];//  $yunYang->advanceHandleBySF($yyRes, $agent_info, $param);
+            $yy =  $yunYang->advanceHandleBySF($yyRes, $agent_info, $param);
             $qbd = $qbdBusiness->advanceHandle($qbdRes, $agent_info, $param);
             $result = array_merge_recursive($yy,$qbd);
             $result = array_filter($result, function($subArray) {

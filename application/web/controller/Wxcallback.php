@@ -3282,8 +3282,10 @@ class Wxcallback extends Controller
     function q_callback(){
         $params = $this->request->param();
         try {
+            $paramsJson = json_encode($params , JSON_UNESCAPED_UNICODE);
+            recordLog('channel-callback', 'Q必达-' . PHP_EOL  . $paramsJson );
             $content = $params;
-            $content['data'] = json_encode($params['data'], JSON_UNESCAPED_UNICODE);
+            $content['data'] = $paramsJson;
 
             db('q_callback')->insert($content);
             $common= new Common();
