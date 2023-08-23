@@ -121,8 +121,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     text: __('退款'),
                                     classname: 'btn btn-xs btn-info btn-ajax',
                                     icon: 'fa fa-magic',
-                                    confirm: '确认给用户退超轻？',
-                                    url: 'orders/afterlist/refund_light',
+                                    confirm: '确认给用户退款？',
+                                    url: 'orders/afterlist/refund',
                                     success: function (data, ret) {
                                         table.bootstrapTable('refresh');
                                         //Layer.alert(ret.msg);
@@ -134,7 +134,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         return false;
                                     },
                                     visible: function (row) {
-                                        return row.salf_type === '2' && row.cope_status === '4';
+                                        return (row.salf_type === '2' || row.salf_type === '3' ) && row.cope_status === '4';
                                     }
                                 },
                             ],

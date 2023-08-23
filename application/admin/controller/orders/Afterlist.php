@@ -143,12 +143,6 @@ class Afterlist extends Backend
                     if ($orders['tralight_status']!=3){
                         throw new Exception('此订并未反馈超轻');
                     }
-                    $agent_tralight_amt=$orders['agent_tralight_price'];//代理退款金额
-                    $Dbcommon= new Dbcommom();
-
-                    $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'运单号：'.$orders['waybill'].' 超轻增加金额：'.$agent_tralight_amt.'元');
-
-
                     $orders->allowField(true)->save(['tralight_status'=>2]);
                     $params['cope_status']=4;
                 }else{
@@ -157,7 +151,7 @@ class Afterlist extends Backend
             }
 
             //取消订单处理
-            if ((empty($row['salf_type'])&&$params['cope_status']==1)||($row['salf_type']==3&&$params['cope_status']==1)){
+            if ((empty($row['salf_type'])&&$params['cope_status']==1)){
                 $orders=$orders->get(['id'=>$row['order_id']]);
                 if ($orders['pay_status']!=1 && $orders['pay_status']!=3 ){
                     throw new Exception('此订单已取消');
@@ -277,6 +271,16 @@ class Afterlist extends Backend
 
 
                 $orders->allowField(true)->save($up_data);
+                $remark='请通知用户单号已作废，请勿再使用！后期如有物流信息会重新扣除退回金额';
+            }
+
+            // 现结/到付,并审核通过
+            if(($row['salf_type']==3&&$params['cope_status']==1)){
+                $orders=$orders->get(['id'=>$row['order_id']]);
+                if ($orders['pay_status']!=1 && $orders['pay_status']!=3 ){
+                    throw new Exception('此订单已取消');
+                }
+                $params['cope_status']=4;
                 $remark='请通知用户单号已作废，请勿再使用！后期如有物流信息会重新扣除退回金额';
             }
 
@@ -405,10 +409,17 @@ class Afterlist extends Backend
      * @throws DbException
      * @throws Exception
      */
-    public function refund_light($ids){
+    public function refund($ids){
         $after = $this->model->get($ids);
         $business = new AfterSaleBusiness();
-        $business->refundLight($after['order_id']);
+        if($after['salf_type'] == 2){
+            // 退超轻费
+            $business->refundLight($after['order_id']);
+        }else if($after['salf_type'] == 3){
+            // 现结/到付 退款
+            $business->refund($after['order_id']);
+        }
+
         $after->save(['cope_status' => 1]);
         $this->success('退款成功');
 

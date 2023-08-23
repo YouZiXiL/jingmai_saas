@@ -128,11 +128,12 @@ class AliBase
      * @return mixed
      * @throws Exception
      */
-    public function refund($outTradeNo, $refundAmount, $appAuthToken = null)
+    public function refund($outTradeNo, $refundAmount, $appAuthToken = null, $refundReason = '取消订单')
     {
         $object = new stdClass();
         $object->refund_amount = $refundAmount;
         $object->out_trade_no = $outTradeNo;
+        $object->refund_reason = $refundReason;
         $json = json_encode($object);
         $request = new AlipayTradeRefundRequest();
         $request->setBizContent($json);
