@@ -54,17 +54,17 @@ class Shunfeng extends Controller
             if($bujiao){
                 throw new Exception('请先补缴欠费运单');
             }
-            if (empty($param['insured'])){
+            if (empty((int)$param['insured'])){
                 $param['insured']=0;
             }
-            if (empty($param['vloum_long'])){
-                $param['vloum_long']=10;
+            if (empty((int)$param['vloum_long'])){
+                $param['vloum_long']= 0; // 10;
             }
-            if (empty($param['vloum_width'])){
-                $param['vloum_width']=2;
+            if (empty((int)$param['vloum_width'])){
+                $param['vloum_width']= 0; //2;
             }
-            if (empty($param['vloum_height'])){
-                $param['vloum_height']=5;
+            if (empty((int)$param['vloum_height'])){
+                $param['vloum_height']=0; //5;
             }
             $jijian_address=db('users_address')->where('id',$param['jijian_id'])->find();
             $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
@@ -83,7 +83,13 @@ class Shunfeng extends Controller
             $qbdParam = $qbdBusiness->queryPriceParams($jijian_address, $shoujian_address, $param);
             $response =  $this->common->multiRequest($yyParma, $qbdParam);
             list($yyRes, $qbdRes) = $response;
+            recordLog('shunfeng-test', json_encode($param, JSON_UNESCAPED_UNICODE));
+            recordLog('shunfeng-test', '云洋：' . $yyRes);
+            recordLog('shunfeng-test', 'qbd：' . $qbdRes);
+
             $yy =  $yunYang->advanceHandleBySF($yyRes, $agent_info, $param);
+            recordLog('shunfeng-test', json_encode($yy, JSON_UNESCAPED_UNICODE));
+
             $qbd = $qbdBusiness->advanceHandle($qbdRes, $agent_info, $param);
             $result = array_merge_recursive($yy,$qbd);
             $result = array_filter($result, function($subArray) {
