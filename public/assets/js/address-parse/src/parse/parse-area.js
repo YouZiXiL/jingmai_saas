@@ -51,7 +51,7 @@ class ParseArea {
 
     for (const code in AREA.city_list) {
       const city = AREA.city_list[code];
-      if (city.length > 2) {
+      if (city.length > 2 ) {
         ParseArea.CityShort[code] = CityKeys.reduce((v, key) => v.replace(key, ''), city);
       }
     }
@@ -90,6 +90,7 @@ class ParseArea {
 
     // 正向解析
     this.results.unshift(...ParseArea.parseByProvince(address));
+    console.log('this.results', this.results)
     if (parseAll || !this.results[0] || !this.results[0].__parse) {
       // 逆向城市解析  通过所有CityShort匹配
       this.results.unshift(...ParseArea.parseByCity(address));
@@ -183,6 +184,7 @@ class ParseArea {
           address = address.substr(index).trim();
         }
         result.province = province;
+        console.log('省份', result.province)
         result.code = code;
         let _address = address.substr(provinceLength);
         if (_address.charAt(0) !== '市' || _address.indexOf(province) > -1) {
@@ -252,15 +254,12 @@ class ParseArea {
     for (const city of cityList) {
       let index = address.indexOf(city.name);
       const shortCity = index > -1 ? '' : ParseArea.CityShort[city.code];
+
       const cityLength = shortCity ? shortCity.length : city.name.length;
       if (shortCity) {
         index = address.indexOf(shortCity);
-        if(index === -1 && shortCity === '重庆县'){
-          // 处理特殊的地址
-          index = address.indexOf('重庆市县');
-        }
       }
-      if (index > -1 && (_result.index === -1 || _result.index > index || (!shortCity && _result.isShort)) || shortCity) {
+      if (index > -1 && (_result.index === -1 || _result.index > index || (!shortCity && _result.isShort) )) {
         _result.city = city.name;
         _result.code = city.code;
         _result.index = index;
@@ -278,7 +277,6 @@ class ParseArea {
           }
         }
       }
-
       if (index > -1 && index < 3) {
         result.city = city.name;
         result.code = city.code;
@@ -312,6 +310,7 @@ class ParseArea {
    */
   static parse_area_by_city(address, result) {
     const areaList = Utils.getTargetAreaListByCode('area', result.code);
+    console.log('区域列表',areaList)
     const _result = {
       area: '',
       code: '',
