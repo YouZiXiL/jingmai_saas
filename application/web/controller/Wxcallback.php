@@ -3371,7 +3371,8 @@ class Wxcallback extends Controller
                 "updatetime"=>time()
             ];
             $up_data=[];
-            if(@$params["pushType"]==1){
+            if(@$params["pushType"]==1){ // 快递状态变更
+                // 运单状态$params["data"]["status"]， 0：预下单 1：待取件 2：运输中 5：已签收 6：取消订单 7：终止揽收 8：特殊关闭 9：已退款
                 $up_data=[
                     "order_status"=> $params["data"]["status"]."-".$params["data"]["desc"]
                 ];
@@ -3449,6 +3450,11 @@ class Wxcallback extends Controller
                     ];
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
+                    // 推送企业微信给客服
+                    if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                        //推送企业微信消息
+                        $common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                    }
                 }
             }
             elseif (@$params["pushType"]==2){
