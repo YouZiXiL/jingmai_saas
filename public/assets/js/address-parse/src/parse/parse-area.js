@@ -90,7 +90,6 @@ class ParseArea {
 
     // 正向解析
     this.results.unshift(...ParseArea.parseByProvince(address));
-    console.log('this.results', this.results)
     if (parseAll || !this.results[0] || !this.results[0].__parse) {
       // 逆向城市解析  通过所有CityShort匹配
       this.results.unshift(...ParseArea.parseByCity(address));
@@ -167,6 +166,7 @@ class ParseArea {
       __parse: false
     };
     let address = addressBase;
+    // 省份列表
     for (const code in province_list) {
       const province = province_list[code];
       let index = address.indexOf(province);
@@ -196,12 +196,11 @@ class ParseArea {
             }
           }
         }
+
         let __address = ParseArea.parse_city_by_province(address, result);
-        console.log('__address',__address)
         if (!result.city) {
           __address = ParseArea.parse_area_by_province(address, result);
         }
-        console.log('_address', result.city)
         if (result.city) {
           result.__parse = true;
           address = __address;
@@ -229,6 +228,7 @@ class ParseArea {
         }
       }
     }
+
     if (result.code) {
       results.unshift({...result, details: address.trim()});
     }
@@ -241,6 +241,7 @@ class ParseArea {
    */
   static parse_city_by_province(address, result) {
     const cityList = Utils.getTargetAreaListByCode('city', result.code);
+    console.log('城市列表', cityList)
     const _result = {
       city: '',
       code: '',
@@ -254,8 +255,12 @@ class ParseArea {
       const cityLength = shortCity ? shortCity.length : city.name.length;
       if (shortCity) {
         index = address.indexOf(shortCity);
+        if(index === -1 && shortCity === '重庆县'){
+          // 处理特殊的地址
+          index = address.indexOf('重庆市县');
+        }
       }
-      if (index > -1 && (_result.index === -1 || _result.index > index || (!shortCity && _result.isShort))) {
+      if (index > -1 && (_result.index === -1 || _result.index > index || (!shortCity && _result.isShort)) || shortCity) {
         _result.city = city.name;
         _result.code = city.code;
         _result.index = index;
@@ -273,6 +278,7 @@ class ParseArea {
           }
         }
       }
+
       if (index > -1 && index < 3) {
         result.city = city.name;
         result.code = city.code;

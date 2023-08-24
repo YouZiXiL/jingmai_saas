@@ -416,6 +416,7 @@
             // 解析地址
             parseSender(text){
                 const result = AddressParse.parse(text)
+                console.log('解析', result)
                 if(result.length<=0) return
                 let res = result[0]
                 this.sender = [res.province , res.city , res.area]

@@ -1,8 +1,10 @@
+/* jshint esversion: 6 */
 /**
  * address-parse
  * MIT License
  * By www.asseek.com
  */
+
 import AREA from '../area.js';
 import Utils from './utils.js';
 import ParseArea from './parse-area.js';
@@ -45,9 +47,7 @@ class ParseAddress {
       this.address = this.address.replace(/ {2,}/, ' ');
       const firstName = ParseAddress.parseName({details: this.address});
 
-      console.log('address', this.address);
       results = ParseAddress.ParseArea.parse(this.address, parseAll);
-      console.log('results', results);
       for (let result of results) {
         Object.assign(result, this.result);
         result.name = result.name.trim();
@@ -165,7 +165,6 @@ class ParseAddress {
         if (index !== 0) continue;
         result.details = result.details.substr(result[key].length);
       }
-      console.log('ary1', ary)
     }
 
   }

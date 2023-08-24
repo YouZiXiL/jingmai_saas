@@ -10467,15 +10467,11 @@ var provinceData = [
                         "code": "500156",
                         "name": "武隆区"
                     },
-                    {
-                        "code": "500231",
-                        "name": "垫江县"
-                    },
                 ]
             },
             {
                 "code": "5002",
-                "name": "县",
+                "name": "重庆县",
                 "children": [
                     {
                         "code": "500229",
