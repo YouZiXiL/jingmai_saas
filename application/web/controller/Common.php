@@ -196,6 +196,7 @@ class Common
             $header = $item['header']??['Content-Type: application/json; charset=utf-8'];
             curl_setopt($curl, CURLOPT_POSTFIELDS,$data );
             curl_setopt($curl, CURLOPT_HTTPHEADER,$header);
+            recordLog('shunfeng-test', '请求参数-' . $data);
             $curlGroup[] = $curl;
         }
 

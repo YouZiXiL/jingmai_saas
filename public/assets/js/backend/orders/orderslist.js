@@ -210,6 +210,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                 }if(row.pay_status === '2'){
                                     payStatus = '已退款';
                                 }
+
+                                if(row.order_status === '已取消'){
+                                    orderColor = 'text-danger';
+                                }
+
                                 if(row.overload_status === '1'){
                                     overloadStatus = '待处理';
                                     overloadClass = 'btn-overload_status btn btn-xs btn-danger-light';
@@ -351,7 +356,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                 auth = '智能下单';
                                 authClass = 'text-yellow';
                             }
-                            let hidden = Config.show?'':'hidden';
+                            let authHidden = Config.show?'':'hidden'; // 对代理因此
+                                let reasonHidden = 'hidden';
+                                if(row.cancel_reason && row.order_status === '已取消'){
+                                    reasonHidden = '';
+                                }
                             return `
                                 <div class="py-2 d-flex flex-column a-start">
                                     <div class="p-1">  
@@ -360,8 +369,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     <div class="p-1">  
                                        <span class="text-muted">归属账号：</span><span>${value?value:''}</span>
                                     </div>
-                                     <div ${hidden} class="p-1">  
+                                     <div ${authHidden} class="p-1">  
                                        <span class="text-muted">渠道商：</span><span>${row.channel_merchant}</span>
+                                    </div>
+                                     <div ${reasonHidden} class="p-1">  
+                                       <span class="text-muted">取消原因：</span><span>${row.cancel_reason}</span>
                                     </div>
                                </div>
                             `;

@@ -101,7 +101,7 @@ class Orderslist extends Backend
             ->where($where)
             ->field('id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,
             out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,channel_merchant,
-            pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,
+            pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,cancel_reason,
             overload_price,pay_type,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
             ->where('pay_status','<>',0)
             ->where('channel_tag','<>','同城')
