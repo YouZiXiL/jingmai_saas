@@ -83,7 +83,7 @@ class Yunyangtc extends Controller
             // 组装门店参数
             $shopParam = [
                 "contactName"=> $param['name'], //联系人姓名
-                "shopName"=> str_pad($param['name'], 8, "A", STR_PAD_LEFT) , //门店名称
+                "shopName"=> str_pad($param['name'], 11, "A", STR_PAD_LEFT) , //门店名称
                 "shopAddress"=>  $param['address'], //门店地址
                 "cityName"=>  $param['city'], //所在城市
                 "industryType"=>  9, //"行业类型 1:餐饮 \n" +
@@ -294,7 +294,7 @@ class Yunyangtc extends Controller
             // 组装门店参数
             $shopParam = [
                 "contactName"=> $jijian_address['name'], //联系人姓名
-                "shopName"=>  $jijian_address['name'], //门店名称
+                "shopName"=>  str_pad($jijian_address['name'], 11, "A", STR_PAD_LEFT) , //门店名称
                 "shopAddress"=>  $jijian_address['address'], //门店地址
                 "cityName"=>  $jijian_address['city'], //所在城市
                 "industryType"=>  9, //"行业类型 1:餐饮 \n" +
@@ -306,7 +306,6 @@ class Yunyangtc extends Controller
             ];
 
             if(!$jijian_address['shop_id']){
-                Log::info('创建门店');
                 $out_trade_no='TC'.$this->common->get_uniqid();
                 $shopParam["outShopId"] = $out_trade_no; //外部方门店id
                 // 获取门店id
@@ -316,7 +315,6 @@ class Yunyangtc extends Controller
                     'out_shop_id' => $out_trade_no,
                 ]);
             }else{
-                Log::info('更新门店');
                 $shopId = $jijian_address['shop_id'];
                 $out_trade_no = $jijian_address['out_shop_id'];
                 // 更新门店

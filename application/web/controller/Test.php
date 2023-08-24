@@ -43,14 +43,8 @@ class Test extends Controller
      * @throws Exception
      */
     public function test(){
-        $str = str_pad('熊大', 8, "A", STR_PAD_RIGHT);
-        $agentAuth = Admin::where('id', 23)->find();
-        $orders = Order::where('id', 1)->find();
-        $user = Users::where('id', 222)->find();
-        // XD1691636395720662614
-        $rebateList = new RebateListController();
-        $result = $rebateList->handle($orders,$agentAuth, $user);
-        dd($result);
+        $str = str_pad("林建英", 11, "A", STR_PAD_LEFT);
+        dd($str);
         return R::ok($result);
 
     }
