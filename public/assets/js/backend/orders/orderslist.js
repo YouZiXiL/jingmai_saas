@@ -285,7 +285,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                             if(row.consume_status === '1' ){
                                 haocaiHidden = '';
                                 haocaiClass = 'text-danger';
-                            }else if(row.overload_status === '2'){
+                            }else if(row.consume_status === '2'){
                                 haocaiHidden = '';
                             }
                             return `
