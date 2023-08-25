@@ -476,6 +476,10 @@ var provinceData = [
                         "name": "信都区"
                     },
                     {
+                        "code": '130505',
+                        "name": '任泽区',
+                    },
+                    {
                         "code": "130521",
                         "name": "邢台县"
                     },
