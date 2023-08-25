@@ -211,7 +211,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     payStatus = '已退款';
                                 }
 
-                                if(row.order_status === '已取消'){
+                                if(row.order_status === '已取消' || row.order_status === '已作废'){
                                     orderColor = 'text-danger';
                                 }
 
