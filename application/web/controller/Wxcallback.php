@@ -540,7 +540,7 @@ class Wxcallback extends Controller
                     'xcx_access_token'=>$xcx_access_token,
                     'open_id'=>$users?$users['open_id']:'',
                     'template_id'=>$agent_auth_xcx['pay_template']??null,
-                    'cal_weight'=>$overloadWeight .'kg',
+                    'cal_weight'=>ceil($pamar['calWeight']) .'kg',
                     'users_overload_amt'=>$up_data['overload_price'] . '元'
                 ];
 
@@ -841,7 +841,7 @@ class Wxcallback extends Controller
                         'xcx_access_token'=>$xcx_access_token,
                         'open_id'=>$users['open_id']??'',
                         'template_id'=>$agent_auth_xcx['pay_template']??null,
-                        'cal_weight'=>$overload_weight .'kg',
+                        'cal_weight'=>$up_data['final_weight'] .'kg',
                         'users_overload_amt'=>$users_overload_amt.'元'
                     ];
                     if($users_overload_amt > 0){
@@ -2351,7 +2351,7 @@ class Wxcallback extends Controller
                         'xcx_access_token'=>$xcx_access_token,
                         'open_id'=>$users['open_id'],
                         'template_id'=>$agent_auth_xcx['pay_template']??null,
-                        'cal_weight'=>$overload_weight .'kg',
+                        'cal_weight'=>$pamar['calWeight'] .'kg',
                         'users_overload_amt'=>$up_data['overload_price'].'元'
                     ];
                     $up_data['tralight_price']=$up_data['overload_price'];
@@ -2391,31 +2391,6 @@ class Wxcallback extends Controller
                 //发送小程序订阅消息(运单状态)
                 if ($orders['order_status']=='派单中'|| $orders['order_status']=='已派单'){
                     //如果未 计入 并且 没有补缴 则计入
-
-//                    if( $rebatelist->state !=2 && $rebatelist->state !=3 && $rebatelist->state !=4){
-//                        if(!empty($rebatelist["invitercode"])){
-//                            $fauser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["invitercode"]]);
-//
-//                            if(!empty($fauser)){
-//                                $fauser->money+=$rebatelist->imm_rebate??0;
-//                                $fauser->save();
-//                                $rebatelistdata["isimmstate"]=1;
-//                            }
-//                        }
-//                        if(!empty($rebatelist["fainvitercode"])){
-//                            $gruser=\app\web\model\Users::get(["myinvitecode"=>$rebatelist["fainvitercode"]]);
-//                            if(!empty($gruser)){
-//                                $gruser->money+=$rebatelist->mid_rebate??0;
-//                                $gruser->save();
-//                                $rebatelistdata["ismidstate"]=1;
-//
-//                            }
-//                        }
-//                        $rebatelistdata["state"]=5;
-//                    }
-                    if($rebatelist->state ==2){
-                        $rebatelistdata["state"]=4;
-                    }
                     //超级 B 分润 + 返佣（返佣用自定义比例 ） 返佣表需添加字段：1、基本比例分润字段 2、达标比例分润字段
                     if(!empty($users["rootid"])){
 
@@ -3589,7 +3564,7 @@ class Wxcallback extends Controller
                         'xcx_access_token'=>$xcx_access_token??null,
                         'open_id'=>$users?$users['open_id']:null,
                         'template_id'=>$agent_auth_xcx['pay_template']??null,
-                        'cal_weight'=>$overload_weight .'kg',
+                        'cal_weight'=>$pamar['weightFee'] .'kg',
                         'users_overload_amt'=>$up_data['agent_overload_price'].'元'
                     ];
                     // 将该任务推送到消息队列，等待对应的消费者去执行
@@ -3807,7 +3782,7 @@ class Wxcallback extends Controller
                             'xcx_access_token'=>$xcx_access_token,
                             'open_id'=>$users?$users['open_id']:'',
                             'template_id'=>$wxOrder?$agent_auth_xcx['pay_template']:null,
-                            'cal_weight'=>$addWeight .'kg',
+                            'cal_weight'=>$actualWeight .'kg',
                             'users_overload_amt'=>$update['overload_price'].'元'
                         ];
                         // 将该任务推送到消息队列，等待对应的消费者去执行
