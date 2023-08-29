@@ -712,7 +712,7 @@ class Wxcallback extends Controller
             $orders = $orderModel->toArray();
             if($orders['order_status'] == '正常签收')  return json(['code'=>0, 'message'=>'订单已签收']);
             if ($orders['order_status']=='已取消'  || $orders['order_status']=='已作废'){
-                if (isset($result['orderStatusCode']) &&  $result['orderStatusCode']=='GOT') {
+                if ($content['orderStatusCode']=='GOT' ||  $content['orderStatusCode']=='COST') {
                     $afterSale = new AfterSale();
                     if( $content['waybillCode'] != $orders['waybill']){
                         $afterSale->alterWaybill($content, $orders);
@@ -768,7 +768,7 @@ class Wxcallback extends Controller
             if (isset($result['orderEvent']['comments'])){
                 $up_data['yy_fail_reason'] = $result['orderEvent']['comments'];
             }
-            if (!empty($result['orderStatusCode'])  && $result['orderStatusCode']=='GOT'){
+            if ($content['orderStatusCode']=='GOT' ||  $content['orderStatusCode']=='COST'){
                 if( $content['waybillCode'] != $orders['waybill']){
                     $afterSale = new AfterSale();
                     $afterSale->alterWaybill($content, $orders);

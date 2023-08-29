@@ -686,7 +686,8 @@ class Yunyang extends Controller
      */
     function order_cancel(): Json
     {
-        $id=$this->request->param('id');
+        $id = input('id');
+        $cancelReason = input('reason');
         try {
             if (empty($id)){
                 return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
@@ -774,6 +775,7 @@ class Yunyang extends Controller
                 ->where('id',$id)
                 ->where('user_id',$this->user->id)
                 ->update([
+                    'cancel_reason' => $cancelReason,
                     'cancel_time'=>time(),
                 ]);
             // 退还优惠券
