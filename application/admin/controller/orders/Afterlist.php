@@ -287,7 +287,6 @@ class Afterlist extends Backend
             //超重核重处理
             if ($row['salf_type']==1&&$params['cope_status']==1){
 
-
                 $orders=$orders->get(['id'=>$row['order_id']]);
 
                 if ($orders['overload_status']==0){
@@ -313,6 +312,9 @@ class Afterlist extends Backend
                     $overload_weight=$params['cal_weight']-$orders['weight'];//超出重量
                     $users_overload_amt=bcmul(ceil($overload_weight),$orders['users_xuzhong'],2);//用户补缴金额
                     $agent_overload_amt=bcmul(ceil($overload_weight),$orders['agent_xuzhong'],2);//代理补缴金额
+                    if($orders->pay_type == 3){
+                        $users_overload_amt = $agent_overload_amt;
+                    }
                     if($orders['agent_overload_price']<=$agent_overload_amt){
                         throw new Exception('计算错误');
                     }

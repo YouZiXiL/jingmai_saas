@@ -104,7 +104,8 @@ class DoJob
                     );
                 }
 
-            }elseif ($data['type']==2){
+            }
+            elseif ($data['type']==2){
                 $orders=db('orders')->where('id',$data['order_id'])->find();
                 try {
                     if (empty($orders['consume_time'])){
@@ -170,7 +171,8 @@ class DoJob
                     );
                 }
 
-            }elseif ($data['type']==3){
+            }
+            elseif ($data['type']==3){ // 下单失败
                 $orders=db('orders')->where('id',$data['order_id'])->find();
                 try {
                     if( $orders['pay_type'] == 1 ){
@@ -213,7 +215,8 @@ class DoJob
                     );
                 }
 
-            }elseif ($data['type']==4){
+            }
+            elseif ($data['type']==4){ // 取消订单
                 $row=db('orders')->where('id',$data['order_id'])->find();
                 try {
                     $totalAmount=$row['aftercoupon']??$row['final_price'];
