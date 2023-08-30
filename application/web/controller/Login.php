@@ -146,7 +146,6 @@ class Login extends Controller
                 $user_id = $user_info['id'];
                 $phone =  $data['mobile']??$user_info['mobile']??null;
             }
-
             if ($s){
                 $data=['status'=>200,'data'=>$_3rd_session,'msg'=>'登录成功'];
                 $session=[

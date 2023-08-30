@@ -12,6 +12,7 @@ use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\Upload;
 use app\common\model\Order;
+use app\common\model\User;
 use app\web\model\Admin;
 use app\web\model\AgentAuth;
 use app\web\model\Couponlist;
@@ -315,12 +316,17 @@ class Yunyang extends Controller
             }
 
             $jijian_address=db('users_address')->where('id',$check_channel_intellect['jijian_id'])->find();
+            $userMobile = $this->user->mobile ?? db('users')->where(['id' => $this->user->id])->value('mobile');
             //黑名单
             $blacklist=db('agent_blacklist')
-                ->where('agent_id',$this->user->agent_id)
-                ->where('mobile',$jijian_address['mobile'])
-                ->whereOr('mobile', $this->user->mobile)
+                ->where(function ($query){
+                    $query->where('agent_id', $this->user->agent_id);
+                })->where(function ($query) use ($userMobile, $jijian_address) {
+                    $query->where('mobile',$jijian_address['mobile'])
+                        ->whereOr('mobile', $userMobile);
+                })
                 ->find();
+
             if ($blacklist){
                 return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
             }
