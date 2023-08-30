@@ -2,6 +2,7 @@
 
 namespace app\web\controller;
 
+use app\admin\model\basicset\Banner;
 use app\common\library\alipay\AliConfig;
 use app\common\library\alipay\AliConfigB;
 use app\common\library\alipay\Alipay;
@@ -339,11 +340,13 @@ class Login extends Controller
             )
             ->find();
         $config['banner']=explode('|', $config['banner']);
+        $config['bannerData'] = Banner::where('agent_id', $agentAuth['agent_id'])->select();
         if ($agentAuth['map_key']) $config['wx_map_key'] = $agentAuth['map_key'];
 
         recordLog('agent-config', json_encode($config, JSON_UNESCAPED_UNICODE));
         return json(['status'=>200,'data'=>$config,'msg'=>'成功']);
     }
+
 
     /**
      * 地址解析
