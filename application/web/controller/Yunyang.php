@@ -314,6 +314,16 @@ class Yunyang extends Controller
                 return json(['status'=>400,'data'=>'','msg'=>'该商户余额不足,无法下单']);
             }
 
+            $jijian_address=db('users_address')->where('id',$check_channel_intellect['jijian_id'])->find();
+            //黑名单
+            $blacklist=db('agent_blacklist')
+                ->where('agent_id',$this->user->agent_id)
+                ->where('mobile',$jijian_address['mobile'])
+                ->whereOr('mobile', $this->user->mobile)
+                ->find();
+            if ($blacklist){
+                return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
+            }
             $agentAuthModel=AgentAuth::where('app_id',$this->user->app_id)
                 ->field('id,waybill_template,pay_template,material_template')
                 ->find();
@@ -546,7 +556,7 @@ class Yunyang extends Controller
         $order=db('orders')
             ->where("channel_tag","<>","同城")
             ->where('pay_status','<>',0)
-            ->field('id,waybill,sender_province,receive_province,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status,aftercoupon,couponpapermoney')
+            ->field('id,waybill,sender_province,receive_province,tag_type,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status,aftercoupon,couponpapermoney')
             ->order('id','desc')
             ->where('user_id',$this->user->id)
             ->page($param['page'],10);

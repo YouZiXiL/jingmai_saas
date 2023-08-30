@@ -502,6 +502,7 @@ class Orderslist extends Backend
 
     /**
      * 拉黑用户
+     * @throws \Exception
      */
     function blacklist($ids=null,$remark=null){
 
@@ -511,18 +512,9 @@ class Orderslist extends Backend
             $this->error(__('No Results were found'));
         }
         $Blacklist=new Blacklist();
-        $blacklistinfo=$Blacklist->get(['mobile'=>$row['sender_mobile']]);
-        $UsersInfo = new Userslist();
-        if($row['pay_type'] != 3){
-            $UsersInfo = $UsersInfo->get(['id'=>$row['user_id']]);
-            $mobile = $UsersInfo['mobile'];
-        }else{
-            $mobile = $row['sender_mobile'];
-        }
-        $blackUserinfo=$Blacklist->get(['mobile'=>$mobile]);
-
-
-        if (!$blacklistinfo){
+        $blackSenderInfo=$Blacklist->get(['mobile'=>$row['sender_mobile']]);
+        // 拉黑发件人
+        if (!$blackSenderInfo){
             $data[]= [
                 'agent_id'=>$row['agent_id'],
                 'mobile'=>$row['sender_mobile'],
@@ -531,15 +523,23 @@ class Orderslist extends Backend
                 'create_time'=>time()
             ];
         }
-        if (!$blackUserinfo){
-            $data[]= [
-                'agent_id'=>$row['agent_id'],
-                'mobile'=>$mobile,
-                'name'=>$row['sender'],
-                'remark'=>$remark,
-                'create_time'=>time()
-            ];
+        // 拉黑下单用户
+        $UsersInfo = new Userslist();
+        if($row['pay_type'] != 3){
+            $UsersInfo = $UsersInfo->get(['id'=>$row['user_id']]);
+            $mobile = $UsersInfo['mobile'];
+            $blackUserinfo=$Blacklist->get(['mobile'=>$mobile]);
+            if (!$blackUserinfo){
+                $data[]= [
+                    'agent_id'=>$row['agent_id'],
+                    'mobile'=>$mobile,
+                    'name'=>$row['sender'],
+                    'remark'=>$remark,
+                    'create_time'=>time()
+                ];
+            }
         }
+
         $Blacklist->saveAll($data);
         $this->success('成功');
 

@@ -126,7 +126,8 @@ class Login extends Controller
                 $user_id=$user->id;
                 $phone = $user_info['mobile'];
 
-            } else {
+            }
+            else {
                 $data=[
                     'login_time' => $time,
                     'agent_id'   => $agent_id,
@@ -142,8 +143,8 @@ class Login extends Controller
 
                 }
                 $s=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
-                $user_id=$user_info->id;
-                $phone =  $data['mobile']??null;
+                $user_id = $user_info['id'];
+                $phone =  $data['mobile']??$user_info['mobile']??null;
             }
 
             if ($s){
