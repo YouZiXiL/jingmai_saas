@@ -18,7 +18,6 @@ class WxBusiness
 
     /**
      * 获取访问令牌
-     * @return void
      * @throws DbException
      * @throws Exception
      */
@@ -138,6 +137,64 @@ class WxBusiness
         if ($res['errcode']!=0){
             recordLog('wx-shouquan', "获取个人模板列表失败" . $resJson . PHP_EOL);
             exit('获取个人模板列表失败');
+        }
+        return $res;
+    }
+
+    public function getWxTemplate(){
+
+    }
+
+    /**
+     * 公众号获取已添加至账号下所有模板列表
+     * @throws DbException
+     * @throws Exception
+     */
+    public function mpGetPrivateTemplate(string $appId)
+    {
+        $resJson=$this->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token='. $this->getAccessToken($appId) );
+        $res=json_decode($resJson,true);
+        if ( isset($res['errcode'])){
+            recordLog('wx-shouquan', "公众号获取已添加至账号下所有模板列表失败" . $resJson . PHP_EOL);
+            exit('公众号获取已添加至账号下所有模板列表失败');
+        }
+        return $res;
+    }
+
+    /**
+     * 公众号获取所在行业信息
+     * @throws DbException
+     * @throws Exception
+     */
+    public function mpGetIndustry(string $appId)
+    {
+        $resJson=$this->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_industry?access_token='. $this->getAccessToken($appId) );
+        $res=json_decode($resJson,true);
+        if ( isset($res['errcode'])){
+            recordLog('wx-shouquan', "公众号获取所在行业信息失败" . $resJson . PHP_EOL);
+            exit('公众号获取所在行业信息失败');
+        }
+        return $res;
+    }
+
+    /**
+     * 公众号设置所属行业
+     * @param string $accessToken 公众号令牌
+     * @return mixed|void
+     */
+    public function mpSetIndustry(string $accessToken)
+    {
+        $resJson=$this->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_set_industry?access_token='. $accessToken ,
+            [ "industry_id1" =>"13", "industry_id2" =>"14", ],
+            'post'
+        );
+        $res=json_decode($resJson,true);
+        if ( $res['errcode']!=0){
+            recordLog('wx-shouquan', "公众号设置所属行业失败" . $resJson . PHP_EOL);
+            if ($res['errcode'] == 43100){
+                exit('更改所示行业的频率太高。请到微信后台手动设置。' . $resJson);
+            }
+            exit('公众号设置所属行业失败：' . $resJson);
         }
         return $res;
     }

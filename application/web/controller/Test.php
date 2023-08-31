@@ -491,4 +491,41 @@ class Test extends Controller
         $db->set_agent_amount($orders['agent_id'],'setDec',$orders['agent_price'],0,'运单号：'. $orders['waybill'].' 下单支付成功');
         return R::ok();
     }
+
+    /**
+     * 公众号获取已添加至账号下所有模板列表
+     * @return Json
+     * @throws DbException
+     * @throws Exception
+     */
+    public function mpGetPrivateTemplate(){
+        $wxBusiness = new WxBusiness();
+        $result = $wxBusiness->mpGetPrivateTemplate('wxc7a7d608a4f1fa02');
+        return R::ok($result);
+    }
+
+    /**
+     * 公众号获取所在行业信息
+     * @return Json
+     * @throws DbException
+     * @throws Exception
+     */
+    public function mpGetIndustry(){
+        $wxBusiness = new WxBusiness();
+        $result = $wxBusiness->mpGetIndustry('wxc7a7d608a4f1fa02');
+        return R::ok($result);
+    }
+
+    /**
+     * 公众号设置所在行业信息
+     * @return Json
+     * @throws DbException
+     * @throws Exception
+     */
+    public function mpSetIndustry(){
+        $wxBusiness = new WxBusiness();
+        $accessToken = $wxBusiness->getAccessToken('wxc7a7d608a4f1fa02');
+        $result = $wxBusiness->mpSetIndustry($accessToken);
+        return R::ok($result);
+    }
 }

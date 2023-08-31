@@ -9675,8 +9675,8 @@ var provinceData = [
                     },
                     {
                         "code": "450127",
-                        "name": "横县"
-                    }
+                        "name": "横州市"
+                    },
                 ]
             },
             {

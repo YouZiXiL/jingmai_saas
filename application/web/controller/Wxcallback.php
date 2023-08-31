@@ -10,6 +10,7 @@ use app\common\business\OrderBusiness;
 use app\common\business\ProfitBusiness;
 use app\common\business\RebateListController;
 use app\common\business\WanLi;
+use app\common\business\WxBusiness;
 use app\common\config\Channel;
 use app\common\config\ProfitConfig;
 use app\common\library\alipay\Alipay;
@@ -283,9 +284,13 @@ class Wxcallback extends Controller
                 $data['pay_template']=$overload['priTmplId']; // 小程序超重补交模板
                 $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
             }else{ // 公众号
+                $wxBusiness = new WxBusiness();
+                // 设置所属行业
+                $wxBusiness->mpSetIndustry($authorization_info['authorizer_access_token']);
+
+                // 获取已添加模版列表
                 $resJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token='.$authorization_info['authorizer_access_token']);
                 $res=json_decode($resJson,true);
-
                 if (!array_key_exists('template_list',$res)){
                     recordLog('wx-shouquan', "获取消息模版失败" . $resJson . PHP_EOL);
                     exit('获取消息模版失败');
@@ -302,6 +307,7 @@ class Wxcallback extends Controller
                         }
                     }
                 }
+
 
                 $fankuiJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token='.$authorization_info['authorizer_access_token'],[
                     // 'template_id_short'=>'OPENTM407358422' , //添加 运单状态通知模板
