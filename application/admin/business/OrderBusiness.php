@@ -81,10 +81,10 @@ class OrderBusiness extends Backend
             if ($orders['pay_status']!=2){
                 if($orders['pay_type'] == 1 ){
                     // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
-                    $merchantPrivateKeyFilePath = file_get_contents('./public/uploads/apiclient_key/'.$orders['wx_mchid'].'.pem');
+                    $merchantPrivateKeyFilePath = file_get_contents(root_path().'/public/uploads/apiclient_key/'.$orders['wx_mchid'].'.pem');
                     $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
                     // 从本地文件中加载「微信支付平台证书」，用来验证微信支付应答的签名
-                    $platformCertificateFilePath =file_get_contents('./public/uploads/platform_key/'.$orders['wx_mchid'].'.pem');
+                    $platformCertificateFilePath =file_get_contents(root_path().'/public/uploads/platform_key/'.$orders['wx_mchid'].'.pem');
                     $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
                     // 从「微信支付平台证书」中获取「证书序列号」
                     $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
