@@ -474,7 +474,7 @@ class Wxcallback extends Controller
                 'final_freight'=>$receive['total_freight'],
             ];
 
-            if(empty($orders['waybill'])){
+            if(empty($orders['waybill']) || $orders['waybill'] == '运单号分配中'){
                 $up_data['waybill'] = $pamar['waybill'];
             }
 
