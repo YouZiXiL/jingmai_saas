@@ -414,7 +414,7 @@ class OrderBusiness extends Backend
                 'id' => $orderInfo->id,
                 'pay_status'=> 2,
                 'yy_fail_reason'=>$result['message'],
-                'order_status'=>'下单失败咨询客服',
+                'order_status'=>'下单失败',
             ];
             $orderInfo->isUpdate(true)->save($updateOrder);
             $this->error($result['message']);
@@ -605,7 +605,7 @@ class OrderBusiness extends Backend
                 'id' => $orderInfo->id,
                 'pay_status'=> 2,
                 'yy_fail_reason'=>$errMsg,
-                'order_status'=>'下单失败咨询客服',
+                'order_status'=>'下单失败',
             ];
             $orderInfo->isUpdate()->save($updateOrder);
             $this->error($resultJson);
@@ -772,7 +772,7 @@ class OrderBusiness extends Backend
                 'id' => $orderInfo->id,
                 'pay_status'=> 2,
                 'yy_fail_reason'=>$result['errorMsg'],
-                'order_status'=>'下单失败咨询客服',
+                'order_status'=>'下单失败',
             ];
 
             $orderInfo->isUpdate(true)->save($updateOrder);
@@ -947,7 +947,7 @@ class OrderBusiness extends Backend
                 'id' => $orderInfo->id,
                 'pay_status'=> 2,
                 'yy_fail_reason'=>$data['msg'],
-                'order_status'=>'下单失败咨询客服',
+                'order_status'=>'下单失败',
             ];
             $orderInfo->isUpdate(true)->save($update);
             $this->error($data['msg']);

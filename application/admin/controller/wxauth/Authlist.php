@@ -72,12 +72,15 @@ class Authlist extends Backend
         }
         [$where, $sort, $order, $offset, $limit] = $this->buildparams();
         if (in_array(2,$this->auth->getGroupIds())) {
-            $list = $this->model->where("agent_id", $this->auth->id);
+            $list = $this->model->where("authlist.agent_id", $this->auth->id);
         } else {
             $list = $this->model;
         }
+        $search = input('search');
+        if (!empty($search)){
+            $list = $list ->where('name' , 'like', "%{$search}%");
+        }
         $list = $list
-            ->where($where)
             ->with([
                 'admininfo'=>function($query){
                     $query->WithField('nickname,agent_expire_time,mobile');

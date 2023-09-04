@@ -61,6 +61,11 @@ class Orderslist extends Model
         ];
     }
 
+    public function getPayTypeList()
+    {
+        return ['1' => __('Pay_type 1'), '2' => __('Pay_type 2'), '3' => __('Pay_type 3')];
+    }
+
     public function getOverloadStatusList()
     {
         return ['0' => __('Overload_status 0'), '1' => __('Overload_status 1'), '2' => __('Overload_status 2')];
@@ -70,6 +75,7 @@ class Orderslist extends Model
     {
         return ['0' => __('Consume_status 0'), '1' => __('Consume_status 1'), '2' => __('Consume_status 2')];
     }
+
 
 
     public function getCreateTimeTextAttr($value, $data)

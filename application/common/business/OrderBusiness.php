@@ -99,7 +99,7 @@ class OrderBusiness
             $update = [
                 'id'=> $order['id'],
                 'pay_status' => 2,
-                'order_status' => '下单失败咨询客服',
+                'order_status' => '下单失败',
                 'out_refund_no' => $out_refund_no,
                 'yy_fail_reason'=> $errMsg,
             ];

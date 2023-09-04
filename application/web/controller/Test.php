@@ -471,8 +471,13 @@ class Test extends Controller
      */
     public function createOrder(){
         $order = Order::get(['id' => input('id')]);
-        $result = $order->save(input());
-        dd($result);
+        if ($order){
+            $result = $order->save(input());
+        }else{
+            $result = Order::create(input());
+        }
+
+        return R::ok($result);
     }
 
     public function createUser(){

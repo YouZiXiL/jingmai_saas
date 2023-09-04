@@ -48,6 +48,7 @@ class Orderslist extends Backend
         parent::_initialize();
         $this->model = new \app\admin\model\orders\Orderslist;
         $this->view->assign("payStatusList", $this->model->getPayStatusList());
+        $this->view->assign("payTypeList", $this->model->getPayTypeList());
         $this->view->assign("overloadStatusList", $this->model->getOverloadStatusList());
         $this->view->assign("consumeStatusList", $this->model->getConsumeStatusList());
         $this->view->assign("salfTypeList", $this->model->getSalfTypeList());

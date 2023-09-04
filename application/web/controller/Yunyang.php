@@ -589,7 +589,13 @@ class Yunyang extends Controller
         if (empty($param['id'])){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
-        $order=db('orders')->field('id,waybill,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,receive_address,comments,item_pic,overload_status,pay_status,consume_status,aftercoupon,couponpapermoney')->where('id',$param['id'])->where('user_id',$this->user->id)->find();
+        $order=db('orders')->field(
+            'id,waybill,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,yy_fail_reason,
+            receive_address,comments,item_pic,overload_status,weight,final_weight,haocai_freight,overload_price,insured,insured_price,final_price,pay_status,consume_status,aftercoupon,couponpapermoney,create_time'
+        )
+            ->where('id',$param['id'])
+            ->where('user_id',$this->user->id)
+            ->find();
         if(empty($order)){
             return json(['status'=>400,'data'=>'','msg'=>'此订单不存在']);
         }

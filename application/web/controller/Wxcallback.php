@@ -1327,7 +1327,7 @@ class Wxcallback extends Controller
                             'pay_status'=>2,
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                             'yy_fail_reason'=>$errMsg,
-                            'order_status'=>'下单失败咨询客服',
+                            'order_status'=>'下单失败',
                             'out_refund_no'=>$out_refund_no,
                         ];
                         if (isset($yyResult['code']) && $yyResult['code'] == 0) $errMsg = '下单失败';
@@ -1389,7 +1389,7 @@ class Wxcallback extends Controller
                             'pay_status'=>2,
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                             'yy_fail_reason'=>$result['errorMsg'],
-                            'order_status'=>'下单失败咨询客服',
+                            'order_status'=>'下单失败',
                             'out_refund_no'=>$out_refund_no,
                         ];
                         $data = [
@@ -1445,7 +1445,7 @@ class Wxcallback extends Controller
                             'pay_status'=>2,
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                             'yy_fail_reason'=>$result['message'],
-                            'order_status'=>'下单失败咨询客服',
+                            'order_status'=>'下单失败',
                             'out_refund_no'=>$out_refund_no,
                         ];
                         $data = [
@@ -1512,7 +1512,7 @@ class Wxcallback extends Controller
                             'pay_status'=>2,
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                             'yy_fail_reason'=>$errMsg,
-                            'order_status'=>'下单失败咨询客服',
+                            'order_status'=>'下单失败',
                             'out_refund_no'=>$out_refund_no,
                             'shopbill'=>$result['data']['expressId']??'',
                         ];
@@ -2085,7 +2085,7 @@ class Wxcallback extends Controller
                         'pay_status'=>2,
                         'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                         'yy_fail_reason'=>$data['message'],
-                        'order_status'=>'下单失败咨询客服',
+                        'order_status'=>'下单失败',
                         'out_refund_no'=>$out_refund_no,
                     ];
 
@@ -2702,7 +2702,7 @@ class Wxcallback extends Controller
                     'pay_status'=>2,
                     'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                     'refill_fail_reason'=>$data['errmsg'],
-                    'order_status'=>'下单失败咨询客服',
+                    'order_status'=>'下单失败',
                     'out_refund_no'=>$out_refund_no,
                 ];
 
@@ -2874,7 +2874,7 @@ class Wxcallback extends Controller
                     'pay_status'=>2,
                     'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                     'refill_fail_reason'=>$data['errmsg'],
-                    'order_status'=>'下单失败咨询客服',
+                    'order_status'=>'下单失败',
                     'out_refund_no'=>$out_refund_no,
                 ];
 
@@ -2995,7 +2995,7 @@ class Wxcallback extends Controller
                     'pay_status'=>2,
                     'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                     'refill_fail_reason'=>$data['errmsg'],
-                    'order_status'=>'下单失败咨询客服',
+                    'order_status'=>'下单失败',
                     'out_refund_no'=>$out_refund_no,
                 ];
 
@@ -3129,7 +3129,7 @@ class Wxcallback extends Controller
                     'pay_status'=>2,
                     'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                     'yy_fail_reason'=>$data['msg'],
-                    'order_status'=>'下单失败咨询客服',
+                    'order_status'=>'下单失败',
                     'out_refund_no'=>$out_refund_no,
                 ];
 
