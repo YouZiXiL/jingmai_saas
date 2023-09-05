@@ -255,6 +255,10 @@ class Orderslist extends Backend
 
     /**
      * 反馈异常
+     * salf_type = 0：超重反馈
+     * salf_type = 1：超重反馈
+     * salf_type = 2：超轻反馈
+     * salf_type = 3：现结/到付
      * @param $ids
      * @return string|void
      * @throws DbException
@@ -283,7 +287,7 @@ class Orderslist extends Backend
             $this->error(__('Parameter %s can not be empty', ''));
         }
         if ($Afterlist){
-            $this->error(__('此订单已反馈超轻，待客服核实'));
+            $this->error(__('此订单已反馈异常，待客服核实'));
         }
 
         if ($row['pay_status']!=1 && $row['pay_status']!=3){

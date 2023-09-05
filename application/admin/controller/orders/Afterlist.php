@@ -90,6 +90,16 @@ class Afterlist extends Backend
         return json($result);
     }
 
+    /**
+     * 操作
+     * cope_status=1：通过审核，cope_status=2：审核不通过
+     * salf_type=2：超轻订单
+     * salf_type=3：现结/到付订单
+     * @param $ids
+     * @return string|void
+     * @throws DbException
+     * @throws Exception
+     */
     function caozuo($ids=null){
         $Dbcommon= new Dbcommom();
         $common=new Common();
@@ -135,8 +145,8 @@ class Afterlist extends Backend
             // 处理超轻
             if ($row['salf_type']==2){
                 $orders=$orders->get(['id'=>$row['order_id']]);
+                $agent_tralight_amt=$orders['agent_tralight_price'];//代理退款金额
                 if ($params['cope_status']==1){ // 审核通过
-                    //处理退款
                     if ($orders['tralight_status'] == 4){
                         throw new Exception('此订超轻已被驳回');
                     }
@@ -145,6 +155,11 @@ class Afterlist extends Backend
                     }
                     $orders->allowField(true)->save(['tralight_status'=>2]);
                     $params['cope_status']=4;
+                    if($orders['pay_status'] == 1){
+                        // 给代理商退超轻款
+                        $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'运单号：'.$orders['waybill'].' 超轻增加金额：'.$agent_tralight_amt.'元');
+                    }
+
                 }else{
                     $orders->allowField(true)->save(['tralight_status'=>4]);
                 }
@@ -282,6 +297,13 @@ class Afterlist extends Backend
                 }
                 $params['cope_status']=4;
                 $remark='请通知用户单号已作废，请勿再使用！后期如有物流信息会重新扣除退回金额';
+                if($orders['pay_status'] == 1){
+                    //代理商增加余额  退款
+                    //代理结算金额 代理运费+保价金+耗材+超重
+                    $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已取消并退款');
+
+                }
+
             }
 
             //超重核重处理

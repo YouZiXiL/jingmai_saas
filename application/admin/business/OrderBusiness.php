@@ -38,8 +38,6 @@ class OrderBusiness extends Backend
                 'out_refund_no' => $out_refund_no,
             ];
             $orderModel->isUpdate()->save($update);
-            $DbCommon = new Dbcommom();
-            $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, '运单号：' . $order['waybill'] . ' 已取消并退款');
         } else if ($aliOrder) { // 支付宝
             $agentAuth = AgentAuth::where('id', $order['auth_id'])->value('auth_token');
             // 执行退款操作
@@ -59,12 +57,6 @@ class OrderBusiness extends Backend
                 $update['pay_status'] = 4;
             }
             $orderModel->isUpdate()->save($update);
-            if($order['pay_status'] == 1){
-                // 只有支付成功的订单，取消操作时才给商家退款
-                $DbCommon = new Dbcommom();
-                $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, '运单号：' . $order['waybill'] . ' 已取消并退款');
-            }
-
         }
     }
 
@@ -195,10 +187,6 @@ class OrderBusiness extends Backend
 
                 $orders->isUpdate()->save($up_data);
 
-                //代理商增加余额  退款
-                //代理结算金额 代理运费+保价金+耗材+超重
-                $Dbcommon=new Dbcommom();
-                $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已取消并退款');
 
                 if(!empty($orders["couponid"])){
                     // 返还优惠券

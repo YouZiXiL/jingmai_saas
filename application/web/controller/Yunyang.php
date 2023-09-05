@@ -328,6 +328,7 @@ class Yunyang extends Controller
                 ->find();
 
             if ($blacklist){
+                recordLog('blacklist', "下单人手机号：{$userMobile}。寄件人手机号：{$jijian_address['mobile']}");
                 return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
             }
             $agentAuthModel=AgentAuth::where('app_id',$this->user->app_id)
