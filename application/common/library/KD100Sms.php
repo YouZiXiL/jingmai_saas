@@ -105,8 +105,7 @@ class KD100Sms
         if ($agent_info['agent_sms']<=0){
             return false;
         }
-
-        $res=$this->utils->httpRequest('https://apisms.kuaidi100.com/sms/send.do',[
+        $sendData = [
             'sign'=>strtoupper(md5($this->key.$this->userid)),
             'userid'=>$this->userid,
             'seller'=>'鲸喜',
@@ -115,8 +114,11 @@ class KD100Sms
             'content'=>$content,
             'outorder'=>$out_trade_no,
             'callback'=> $this->domain.'/web/wxcallback/send_sms'
-        ],'POST',['Content-Type: application/x-www-form-urlencoded']);
-        recordLog('sms',  '单号：' . $order['waybill'].PHP_EOL.$res);
+        ];
+        $res=$this->utils->httpRequest('https://apisms.kuaidi100.com/sms/send.do',$sendData,'POST',['Content-Type: application/x-www-form-urlencoded']);
+        recordLog('sms',  '单号：' . $order['waybill'].PHP_EOL.
+            '发送参数：' . json_encode($sendData, JSON_UNESCAPED_UNICODE) . PHP_EOL.
+            '返回参数：' . $res);
         $result = json_decode($res, true);
         if(isset($result) && @$result['status']==1) {
             // 发送成功代理商短信次数

@@ -16,6 +16,7 @@ use app\common\model\User;
 use app\web\model\Admin;
 use app\web\model\AgentAuth;
 use app\web\model\Couponlist;
+use fast\Date;
 use stdClass;
 use think\Controller;
 use think\Exception;
@@ -73,6 +74,7 @@ class Yunyang extends Controller
                     'province'=>$param['province'],
                     'city'=>$param['city'],
                     'county'=>$param['county'],
+                    'update_time' => date('Y-m-d H:i:s'),
                     'location'=>str_replace(PHP_EOL, '', $param['location']),
                 ]);
                 $data=[
@@ -154,7 +156,11 @@ class Yunyang extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
-        $db=db('users_address')->order('id','desc')->page($param['page'],10)->where('type',"<>",2)->where('user_id',$this->user->id);
+        $db=db('users_address')
+            ->where('type',"<>",2)
+            ->where('user_id',$this->user->id)
+            ->page($param['page'],10)
+            ->order('update_time','desc');
         if (!empty($param['search_field'])){
             $res=$db->where('name|mobile',$param['search_field'])->select();
         }else{
