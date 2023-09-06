@@ -262,6 +262,49 @@
             <el-button type="primary" @click="addressVisible = false"> 确 定 </el-button>
         </span>
     </el-dialog>
+    <el-dialog
+            title="提示"
+            :visible.sync="orderInfoVisible" >
+                <div class="mb-5" style="text-align: center">
+                    <i class="el-icon-success text-success" style="font-size: 60px"></i>
+                    <div class="font-lg font-weight mt-2">下单成功</div>
+                    <div v-if="orderInfo.waybill">
+                        <span class="text-light-muted font-weight"> 快递单号：</span>
+                        <span>{{orderInfo.waybill}}</span>
+                        <i @click="copyOrderNo(orderInfo.waybill)" class="el-icon-document-copy" style="cursor: pointer"></i>
+                    </div>
+                </div>
+                <div class="order-info" style="text-align: start">
+                    <div class="hidden">
+快递单号：{{orderInfo.waybill}} </div>
+                    <div>
+                        <span class="text-light-muted font-weight">
+寄件人姓名：{{orderInfo.sender}} </span>
+                    </div>
+                    <div><span class="text-light-muted font-weight">
+寄件人电话：{{orderInfo.sender_mobile}} </span></div>
+                    <div><span class="text-light-muted font-weight">
+寄件人地址：{{orderInfo.sender_address}} </span></div>
+                    <el-divider></el-divider>
+                    <div><span class="text-light-muted font-weight">
+收件人姓名：{{orderInfo.receiver}}</span></div>
+                    <div><span class="text-light-muted font-weight">
+收件人电话：{{orderInfo.receiver_mobile}}</span></div>
+                    <div><span class="text-light-muted font-weight">
+收件人地址：{{orderInfo.receive_address}}</span></div>
+                    <el-divider></el-divider>
+                    <div><span class="text-light-muted font-weight">
+下单物品：{{orderInfo.item_name}}</span></div>
+                    <div><span class="text-light-muted font-weight">
+下单重量：{{orderInfo.weight}}</span></div>
+                    <div><span class="text-light-muted font-weight">
+订单状态：{{orderInfo.order_status}}</span></div>
+                </div>
+        <div slot="footer" class="dialog-footer">
+            <el-button type="primary" @click="copyOrderInfo" plain>复制订单</el-button>
+            <el-button type="primary" plain @click="onChannel">继续下单</el-button>
+        </div>
+    </el-dialog>
 
 </div>
 </body>
@@ -304,7 +347,9 @@
         data: function() {
             return {
                 channelVisible: false, // 模态框
+                orderInfoVisible: false, // 模态框
                 addressVisible: false, // 模态框
+                orderInfo: {}, // 订单详情
                 sender: [], // 发件人省市区
                 receiver: [], // 发件人省市区
                 provinceList: [],
@@ -456,6 +501,7 @@
 
             // 查询渠道
             onChannel(){
+                this.orderInfoVisible = false
                 this.$refs['ruleForm'].validate((valid) => {
                     if (valid) {
                         Fast.api.ajax({
@@ -502,13 +548,16 @@
                     if (this.isAddReceiver){
                         this.saveAddress(this.formData.receiver)
                     }
-                    this.getOrderInfo(data)
-                    this.$notify.success({
-                        title: '下单成功：',
-                        dangerouslyUseHTMLString: true,
-                        message: this.getOrderInfo(data),
-                    });
-                    navigator.clipboard.writeText($('.order-info').text())
+                    this.orderInfoVisible = true
+                    this.orderInfo = data;
+
+                    // this.getOrderInfo(data)
+                    // this.$notify.success({
+                    //     title: '下单成功：',
+                    //     dangerouslyUseHTMLString: true,
+                    //     message: this.getOrderInfo(data),
+                    // });
+                    // navigator.clipboard.writeText($('.order-info').text())
                     return false
                 }, (data,ret) => { //error
                     console.log('data', data)
@@ -630,8 +679,18 @@
             parseName(name){
                 const pattern = /(寄件人姓名|收件人姓名|寄件人|收件人)\s*/g;
                 return name.replace(pattern, '')
-            }
+            },
 
+            // 复制订单信息
+            copyOrderInfo(){
+                navigator.clipboard.writeText($('.order-info').text())
+                Toastr.success("复制成功");
+            },
+            // 复制订单编号
+            copyOrderNo(orderNo){
+                navigator.clipboard.writeText(orderNo)
+                Toastr.success("复制成功");
+            }
         }
     })
 
