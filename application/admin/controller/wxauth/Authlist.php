@@ -343,6 +343,7 @@ class Authlist extends Backend
                 ['privacy_key'=>'PhoneNumber','privacy_text'=>'推送提醒'],
                 ['privacy_key'=>'AlbumWriteOnly','privacy_text'=>'海报保存'],
                 ['privacy_key'=>'Location','privacy_text'=>'定位收件人寄件人位置，用于收发快递服务'],
+                ['privacy_key'=>'Clipboard','privacy_text'=>'复制快递单号'],
             ],
             'owner_setting'=>['contact_email'=>'1037124449@qq.com','notice_method'=>'通过弹窗提醒用户'],
 
