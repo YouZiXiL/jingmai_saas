@@ -198,4 +198,16 @@ class WxBusiness
         }
         return $res;
     }
+
+    /**
+     * 查询小程序用户隐私保护指引
+     */
+    public function getPrivacySetting($accessToken){
+        $resJson=$this->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/component/getprivacysetting?access_token='. $accessToken ,
+            [ "privacy_ver" => "2" ],
+            'post'
+        );
+        return json_decode($resJson,true);
+
+    }
 }

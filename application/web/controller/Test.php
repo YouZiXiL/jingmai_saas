@@ -533,4 +533,19 @@ class Test extends Controller
         $result = $wxBusiness->mpSetIndustry($accessToken);
         return R::ok($result);
     }
+
+    /**
+     * 查询小程序用户隐私保护指引
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
+     * @throws Exception
+     */
+    public function getPrivacySetting(){
+        $wxBusiness = new WxBusiness();
+//        $openAccessToken = $wxBusiness->getOpenAccessToken();
+        $openAccessToken = $wxBusiness->getAccessToken('wx20a0814c2c7feb3d');
+        $result = $wxBusiness->getPrivacySetting($openAccessToken);
+        return R::ok($result);
+    }
 }

@@ -737,10 +737,14 @@ class Yunyang extends Controller
                     'orderId'=>$row['out_trade_no'],
                     'reason'=>'不要了'
                 ];
-                $res=$this->common->fhd_api('cancelExpressOrder',$content);
-                file_put_contents('order_cancel.txt',$res .PHP_EOL,FILE_APPEND);
-                $res=json_decode($res,true);
-                if (!$res['data']['result']){
+                $resultJson=$this->common->fhd_api('cancelExpressOrder',$content);
+                recordLog('cancel-order',
+                    '重货-'.PHP_EOL.
+                    '订单-'. $row['out_trade_no']  .PHP_EOL.
+                    '返回结果-'. $resultJson
+                );
+                $res=json_decode($resultJson,true);
+                if ( empty($res['data']['result']) ){
                     return json(['status'=>400,'data'=>'','msg'=>'取消失败请联系客服']);
                 }
             }else if($row['channel_merchant'] == Channel::$jilu){
@@ -785,6 +789,11 @@ class Yunyang extends Controller
                     'orderNo'=>$row['shopbill']
                 ];
                 $res=$this->common->shunfeng_api("http://api.wanhuida888.com/openApi/doCancel",$content);
+                recordLog('cancel-order',
+                    'Q必达-'.PHP_EOL.
+                    '订单-'. $row['out_trade_no']  .PHP_EOL.
+                    '返回结果-'. json_encode($res, JSON_UNESCAPED_UNICODE)
+                );
                 if ($res['code']!=0){
                     return R::error($res['msg']);
                 }
