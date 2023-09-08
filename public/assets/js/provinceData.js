@@ -5103,7 +5103,7 @@ var provinceData = [
                     },
                     {
                         "code": "341822",
-                        "name": "广德县"
+                        "name": "广德市"
                     },
                     {
                         "code": "341823",
