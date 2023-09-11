@@ -474,6 +474,22 @@ class Common
         ],'POST');
     }
 
+    /**
+     * 渠道商余额推送
+     * @param array $content
+     * @return void
+     */
+    function wxrobot_balance(array $content){
+        $data = $this->httpRequest('https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=72aaea5b-f6bd-4a1d-9c2b-ed6f913a362b',['msgtype'=>'markdown',
+            'markdown'=>[
+                'content'=> '<font color="comment">渠道商余额提醒</font>'.PHP_EOL.
+                    '> 渠道商：<font color="info">' .$content['name']. '</font>'. PHP_EOL .
+                    '> 余额：<font color="info">' .$content['price']. '</font>'. PHP_EOL
+
+            ]
+        ],'POST');
+    }
+
     public function chongzhi($path,$data){
         $content=[
             "userid"=>$this->userid,

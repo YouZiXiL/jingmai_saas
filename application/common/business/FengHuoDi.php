@@ -53,8 +53,10 @@ class FengHuoDi
     {
         $url = $this->baseUlrV2 . 'getExpressSettleAccountList';
         $data = $this->setParam((object)[]);
-        return $this->utils->httpRequest($url, $data, 'POST',['Content-Type = application/x-www-form-urlencoded; charset=utf-8']);
-
+        $resJson = $this->utils->httpRequest($url, $data, 'POST',['Content-Type = application/x-www-form-urlencoded; charset=utf-8']);
+        $result = json_decode($resJson,true);
+        if($result['scode'] != 0) return $result['data'];
+        return number_format( $result['data'][0]['amount']/100, 2, '.', '');
     }
 
     /**

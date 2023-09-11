@@ -49,11 +49,7 @@ class Common extends Backend
 
     public function fhdBalance(){
         $fhd = new FengHuoDi();
-        $res = $fhd->queryBalance();
-        $result = json_decode($res,true);
-        if($result['scode'] != 0) return $result['data'];
-        return number_format( $result['data'][0]['amount']/100, 2, '.', '');
-
+        return $fhd->queryBalance();
     }
 
     public function qbdBalance(){
