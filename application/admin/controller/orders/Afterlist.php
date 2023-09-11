@@ -373,44 +373,46 @@ class Afterlist extends Backend
             $AgentAuth=AgentAuth::get(['agent_id'=>$row['agent_id'],'auth_type'=>1]);//授权的公众号
 
             if ($AgentAuth && $orders['pay_type'] == 1){
-                if ($params['cope_status']==1){
-                    $first='反馈处理完成-'.__('Salf_type '.$row['salf_type']);
-                    $keyword2='运单号:'.$row['waybill'].'已处理完成';
-                    $keyword3 = '反馈处理完成-'.__('Salf_type '.$row['salf_type']);
-                }else{
-                    $first='反馈处理驳回通知';
-                    $keyword2='运单号:'.$row['waybill'];
-                    $remark='如有异议，可重新提交反馈申请！';
-                    $keyword3 = '反馈处理驳回，如有异议，可重新提交反馈申请！';
+                try {
+                    if ($params['cope_status']==1){
+                        $first='反馈处理完成-'.__('Salf_type '.$row['salf_type']);
+                        $keyword2='运单号:'.$row['waybill'].'已处理完成';
+                        $keyword3 = '反馈处理完成-'.__('Salf_type '.$row['salf_type']);
+                    }else{
+                        $first='反馈处理驳回通知';
+                        $keyword2='运单号:'.$row['waybill'];
+                        $remark='如有异议，可重新提交反馈申请！';
+                        $keyword3 = '反馈处理驳回，如有异议，可重新提交反馈申请！';
+                    }
+                    $common=new Common();
+                    if(strtotime($AgentAuth['update_time'])> strtotime('2023-06-07') ){
+                        $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/template/send?access_token='.$common->get_authorizer_access_token($AgentAuth['app_id']),[
+                            'touser'=>$Admin['open_id'],  //接收者openid
+                            'template_id'=>$AgentAuth['after_template'],
+                            //'url'=>'http://mp.weixin.qq.com',  //模板跳转链接
+                            'data'=>[
+                                'keyword1'=>['value'=> $row['waybill']],
+                                'keyword2'=>['value'=>$params['cope_content']],
+                                'keyword3'=>['value'=>$keyword3],
+                            ]
+                        ],'POST');
+                    }
+                    else{
+                        $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/template/send?access_token='.$common->get_authorizer_access_token($AgentAuth['app_id']),[
+                            'touser'=>$Admin['open_id'],  //接收者openid
+                            'template_id'=>$AgentAuth['after_template'],
+                            //'url'=>'http://mp.weixin.qq.com',  //模板跳转链接
+                            'data'=>[
+                                'first'=>['value'=>$first],
+                                'keyword1'=>['value'=>$params['cope_content']],
+                                'keyword2'=>['value'=>$keyword2],
+                                'remark'  =>['value'=>$remark,'color'=>'#ff0000']
+                            ]
+                        ],'POST');
+                    }
+                }catch (\Exception $exception){
+                    Log::error("模版消息发送失败：" . $exception->getMessage() . $exception->getTraceAsString());
                 }
-
-                $common=new Common();
-                if(strtotime($AgentAuth['update_time'])> strtotime('2023-06-07') ){
-                    $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/template/send?access_token='.$common->get_authorizer_access_token($AgentAuth['app_id']),[
-                        'touser'=>$Admin['open_id'],  //接收者openid
-                        'template_id'=>$AgentAuth['after_template'],
-                        //'url'=>'http://mp.weixin.qq.com',  //模板跳转链接
-                        'data'=>[
-                            'keyword1'=>['value'=> $row['waybill']],
-                            'keyword2'=>['value'=>$params['cope_content']],
-                            'keyword3'=>['value'=>$keyword3],
-                        ]
-                    ],'POST');
-                }else{
-                    $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/template/send?access_token='.$common->get_authorizer_access_token($AgentAuth['app_id']),[
-                        'touser'=>$Admin['open_id'],  //接收者openid
-                        'template_id'=>$AgentAuth['after_template'],
-                        //'url'=>'http://mp.weixin.qq.com',  //模板跳转链接
-                        'data'=>[
-                            'first'=>['value'=>$first],
-                            'keyword1'=>['value'=>$params['cope_content']],
-                            'keyword2'=>['value'=>$keyword2],
-                            'remark'  =>['value'=>$remark,'color'=>'#ff0000']
-                        ]
-                    ],'POST');
-                }
-
-
             }
 
             $result = $row->allowField(true)->save($params);
