@@ -218,7 +218,10 @@ class WanLi
     public function getWalletBalance(){
         $url = $this->baseUlr .  '/api/v1/wallet/balance';
         $data = $this->setParma([]);
-        return $this->utils->httpRequest($url, $data,'POST');
+        $resJson = $this->utils->httpRequest($url, $data,'POST');
+        $res = json_decode($resJson,true);
+        if($res['code'] != 200) return  $res['message'];
+        return number_format($res['data']['usableAmt']/100, 2,'.','');
 
     }
 

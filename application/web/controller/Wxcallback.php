@@ -8,6 +8,7 @@ use app\common\business\FengHuoDi;
 use app\common\business\JiLu;
 use app\common\business\OrderBusiness;
 use app\common\business\ProfitBusiness;
+use app\common\business\QBiDaBusiness;
 use app\common\business\RebateListController;
 use app\common\business\WanLi;
 use app\common\business\WxBusiness;
@@ -1372,6 +1373,16 @@ class Wxcallback extends Controller
                             Queue::push(TrackJob::class, $orders['id'], 'track');
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
+                        // 云洋账号余额
+                        $balance = $yy->queryBalance();
+                        if($balance <= 500){
+                            //推送企业微信消息
+                            $Common->wxrobot_balance([
+                                'name' => '云洋',
+                                'price' => $balance,
+                            ]);
+                        }
+
                     }
                     break;
                 case 'FHD':
@@ -1428,11 +1439,20 @@ class Wxcallback extends Controller
                             }
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['waybillCode'].' 下单支付成功');
+                        $balance = $fhd->queryBalance();
+                        if($balance){
+                            //推送企业微信消息
+                            $Common->wxrobot_balance([
+                                'name' => '风火递',
+                                'price' => $balance,
+                            ]);
+                        }
                     }
                     break;
                 case 'wanli':
                     Log::info('万利下单:'. $orders['out_trade_no']);
-                    $res = (new WanLi())->createOrder($orders);
+                    $wanli = new WanLi();
+                    $res = $wanli->createOrder($orders);
                     $result = json_decode($res,true);
                     if($result['code'] != 200){
                         recordLog('channel-create-order-err',
@@ -1484,6 +1504,14 @@ class Wxcallback extends Controller
                             }
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0, ' 下单支付成功');
+                        $balance = $wanli->getWalletBalance();
+                        if($balance){
+                            //推送企业微信消息
+                            $Common->wxrobot_balance([
+                                'name' => '万利',
+                                'price' => $balance,
+                            ]);
+                        }
                     }
                     break;
                 case 'JILU':
@@ -1552,6 +1580,14 @@ class Wxcallback extends Controller
                             }
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['expressNo'].' 下单支付成功');
+                        $balance = $jiLu->queryBalance();
+                        if($balance){
+                            //推送企业微信消息
+                            $Common->wxrobot_balance([
+                                'name' => '极鹭',
+                                'price' => $balance,
+                            ]);
+                        }
                     }
                     break;
             }
@@ -3169,6 +3205,15 @@ class Wxcallback extends Controller
                     }
                 }
                 $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybillNo'].' 下单支付成功');
+                $qbd = new QBiDaBusiness();
+                $balance = $qbd->queryBalance();
+                if($balance){
+                    //推送企业微信消息
+                    $Common->wxrobot_balance([
+                        'name' => 'Q必达',
+                        'price' => $balance,
+                    ]);
+                }
             }
             db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($update);
             exit('success');

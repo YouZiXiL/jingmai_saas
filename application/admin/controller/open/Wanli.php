@@ -21,10 +21,7 @@ class Wanli extends Controller
      */
     public function index(Bs $wanLi)
     {
-        $result = $wanLi->getWalletBalance();
-        $result = json_decode($result,true);
-        if($result['code'] != 200) $wanliAmt = $result['message'];
-        $wanliAmt = $result['data']['usableAmt'];
+        $wanliAmt = $wanLi->getWalletBalance();
         $this->view->assign("wanliAmt",$wanliAmt);
         return $this->view->fetch();
     }

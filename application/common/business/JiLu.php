@@ -83,6 +83,10 @@ class JiLu
         return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
     }
 
+    /**
+     * 查询余额
+     * @return bool|string
+     */
     public function queryBalance(){
         $content = [
             "startDate"=> date('Y-m-d H:i:s', strtotime('-1 day')),
@@ -91,7 +95,10 @@ class JiLu
             "pageSize"=> 10,
         ];
         $parma = $this->setParma('OUTCOME_ORDER', $content);
-        return $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
+        $res = $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
+        $result = json_decode($res, true);
+        if($result['code'] != 1) return $result['msg'];
+        return $result['data']['balance'];
     }
 
     /**

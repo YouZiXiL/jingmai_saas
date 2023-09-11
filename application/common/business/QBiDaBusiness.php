@@ -52,7 +52,10 @@ class QBiDaBusiness
     public function queryBalance(){
         $url = $this->baseUlr . 'fund';
         $header =  $this->setParam();
-        return $this->utils->httpRequest($url,[], 'POST',$header );
+        $res = $this->utils->httpRequest($url,[], 'POST',$header );
+        $result = json_decode($res, true);
+        if($result['code'] != 0) return $result['msg'];
+        return $result['data']['balance'];
     }
 
     /**
