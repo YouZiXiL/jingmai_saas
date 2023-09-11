@@ -919,8 +919,7 @@ class Wxcallback extends Controller
          * */
 
             if(
-                ( @$result['orderStatusCode']=='GOBACK' || @$result['orderStatusCode']=='CANCEL' || @$result['orderStatusCode']=='INVALID'  )
-                &&$orders['pay_status']!=2
+                ( @$result['orderStatusCode']=='GOBACK' || @$result['orderStatusCode']=='CANCEL' )  &&$orders['pay_status']!=2
             ){
                 if(!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                     if ($orders['weight'] >= $agent_info['wx_im_weight']){
@@ -928,27 +927,36 @@ class Wxcallback extends Controller
                         $common->wxim_bot($agent_info['wx_im_bot'],$orders);
                     }
                 }
-//                $data = [
-//                    'type'=>4,
-//                    'order_id' => $orders['id'],
-//                ];
-//
-//                // 退优惠券
-//                if(!empty($orders["couponid"])){
-//                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-//                    if($couponinfo){
-//                        $couponinfo->state=1;
-//                        $couponinfo->save();
-//                        $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
-//                        if($coupon){
-//                            $coupon->state = 3;
-//                            $coupon->save();
-//                        }
-//                    }
-//                }
-//
-//                // 将该任务推送到消息队列，等待对应的消费者去执行
-//                Queue::push(DoJob::class, $data,'way_type');
+            }else if(@$result['orderStatusCode']=='INVALID' && $orders['pay_status']!=2 ) {
+                if(!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                    if ($orders['weight'] >= $agent_info['wx_im_weight']){
+                        //推送企业微信消息
+                        $common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                    }
+                }
+                $up_data['order_status']='已作废';
+
+                $data = [
+                    'type'=>4,
+                    'order_id' => $orders['id'],
+                ];
+
+                // 退优惠券
+                if(!empty($orders["couponid"])){
+                    $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                    if($couponinfo){
+                        $couponinfo->state=1;
+                        $couponinfo->save();
+                        $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                        if($coupon){
+                            $coupon->state = 3;
+                            $coupon->save();
+                        }
+                    }
+                }
+
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $data,'way_type');
             }
 
 
@@ -1581,13 +1589,14 @@ class Wxcallback extends Controller
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['expressNo'].' 下单支付成功');
                         $balance = $jiLu->queryBalance();
-                        if($balance){
+                        if($balance < 500 ){
                             //推送企业微信消息
                             $Common->wxrobot_balance([
                                 'name' => '极鹭',
                                 'price' => $balance,
                             ]);
                         }
+
                     }
                     break;
             }
@@ -3464,9 +3473,9 @@ class Wxcallback extends Controller
                         $rebatelistdata["state"]=4;
                     }
 
-                }elseif ($params["data"]["status"]==6){
+                }
+                elseif ($params["data"]["status"]==6 || $params["data"]["status"]==7){
                     $rebatelistdata["state"]=3;
-
                     $rebatelistdata["cancel_time"]=time();
                     $up_data['cancel_time']=time();
 
