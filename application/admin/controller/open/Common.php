@@ -41,10 +41,7 @@ class Common extends Backend
 
     public function jlBalance(){
         $jiLu = new JiLu();
-        $res = $jiLu->queryBalance();
-        $result = json_decode($res, true);
-        if($result['code'] != 1) return $result['msg'];
-        return $result['data']['balance'];
+        return $jiLu->queryBalance();
     }
 
     public function fhdBalance(){
@@ -54,18 +51,12 @@ class Common extends Backend
 
     public function qbdBalance(){
         $qbd = new QBiDaBusiness();
-        $res = $qbd->queryBalance();
-        $result = json_decode($res, true);
-        if($result['code'] != 0) return $result['msg'];
-        return $result['data']['balance'];
+        return $qbd->queryBalance();
     }
 
     public function wlBalance(){
         $wanli = new WanLi();
-        $resWanli = $wanli->getWalletBalance();
-        $resWanli = json_decode($resWanli,true);
-        if($resWanli['code'] != 200) return  $resWanli['message'];
-        return number_format($resWanli['data']['usableAmt']/100, 2,'.','');
+        return $wanli->getWalletBalance();
     }
 
 
