@@ -65,8 +65,13 @@ class YunYang{
      */
     public function queryBalance(){
         $data = $this->setParma('QUERY_BALANCE', (object)[]);
-        $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
-        return json_decode($res, true);
+        $resJson = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
+        $res = json_decode($resJson, true);
+        if ($res['code'] != 200){
+            Log::info('云洋查询余额失败：'. $resJson);
+            return $res['message'];
+        }
+        return $res['result']["keyong"];
     }
 
     public function queryTrance($waybill){

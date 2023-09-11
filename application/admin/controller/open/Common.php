@@ -36,12 +36,7 @@ class Common extends Backend
      */
     public function yyBalance(){
         $yy = new YunYang();
-        $result = $yy->queryBalance();
-        if ($result['code'] != 200){
-            Log::info('云洋查询余额失败：'. json_encode($result, JSON_UNESCAPED_UNICODE));
-            return $result['message'];
-        }
-        return $result['result']["keyong"];
+        return $yy->queryBalance();
     }
 
     public function jlBalance(){
