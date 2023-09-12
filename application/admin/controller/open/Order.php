@@ -144,14 +144,14 @@ class Order extends Backend
         $orderBusiness = new OrderBusiness();
         $channelTag = '重货';
         $yyQuery = $orderBusiness->yyQueryPrice($paramData, $channelTag);
-        $fhdQuery = $orderBusiness->fhdQueryPrice($paramData, 'JZQY_LONG');
+        // $fhdQuery = $orderBusiness->fhdQueryPrice($paramData, 'JZQY_LONG');
 
-        $response =  $orderBusiness->multiPrice([$yyQuery, $fhdQuery]);
-        list($yy, $fhd) = $response;
+        $response =  $orderBusiness->multiPrice([$yyQuery]);
+        list($yy) = $response;
 
         $agent_info=db('admin')->where('id',$this->auth->id)->find();
         $list = $orderBusiness->yyPriceHandle($yy, $agent_info, $paramData, $channelTag);
-        $list[] = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData, $channelTag);
+//        $list[] = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData, $channelTag);
         $this->success('ok','', $list);
     }
 
