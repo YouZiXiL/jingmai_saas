@@ -242,23 +242,24 @@ class Yunyang extends Controller
                 });
             }
             else{
-                $fhdParams1 = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'JZQY_LONG');
-                $fhdParams2 = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'JZKH');
+//                $fhdParams1 = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'JZQY_LONG');
+//                $fhdParams2 = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'JZKH');
                 $yyParams = $yunYang->queryPriceParams($jijian_address,$shoujian_address, $param);
 
-                $response =  $this->common->multiRequest($yyParams, $fhdParams1, $fhdParams2);
+                $response =  $this->common->multiRequest($yyParams);
                 $yy = $yunYang->advanceHandle($response[0], $agent_info, $param);
-                $fhd1 = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param, 'JZQY_LONG');
-                $fhd2 = $fengHuoDi->queryPriceHandle($response[2], $agent_info, $param, 'JZKH');
-                $fhd[] = $fhd1;
-                $fhd[] = $fhd2;
-                $result = array_merge_recursive($yy, $fhd);
-                $result = array_filter($result, function($subArray) {
-                    return !empty($subArray);
-                });
-                usort($result, function ($a, $b){
-                    return $a['final_price'] <=> $b['final_price'];
-                });
+                $result = $yy;
+//                $fhd1 = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param, 'JZQY_LONG');
+//                $fhd2 = $fengHuoDi->queryPriceHandle($response[2], $agent_info, $param, 'JZKH');
+//                $fhd[] = $fhd1;
+//                $fhd[] = $fhd2;
+//                $result = array_merge_recursive($yy, $fhd);
+//                $result = array_filter($yy, function($subArray) {
+//                    return !empty($subArray);
+//                });
+//                usort($result, function ($a, $b){
+//                    return $a['final_price'] <=> $b['final_price'];
+//                });
             }
             if (empty($result)){
                 throw new Exception('没有指定快递渠道请联系客服');
