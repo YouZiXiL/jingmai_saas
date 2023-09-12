@@ -435,8 +435,8 @@ class Wxcallback extends Controller
                 return json(['code'=>0, 'message'=>'没有该订单']);
             }
             $orders = $orderModel->toArray();
-            if ($orders['order_status']=='已取消'){
-                throw new Exception('订单已取消：'. $orders['out_trade_no']);
+            if ($orders['pay_status']=='2'){
+                throw new Exception('订单已退款：'. $orders['out_trade_no']);
             }
             if($orders['order_status']=='已签收'){
                 throw new Exception('订单已签收：'. $orders['out_trade_no']);
@@ -455,11 +455,18 @@ class Wxcallback extends Controller
                 $superB = null;
             }
             if($wxOrder){
-                $agent_auth_xcx=db('agent_auth')
-                    ->where('agent_id',$orders['agent_id'])
-                    ->where('wx_auth',1)
-                    ->where('auth_type',2)
-                    ->find();
+                if (empty($orders['auth_id'])){
+                    $agent_auth_xcx=db('agent_auth')
+                        ->where('agent_id',$orders['agent_id'])
+                        ->where('wx_auth',1)
+                        ->where('auth_type',2)
+                        ->find();
+                } else{
+                    $agent_auth_xcx=db('agent_auth')
+                        ->where('id',$orders['auth_id'])
+                        ->find();
+                }
+
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
             }
 
@@ -483,15 +490,8 @@ class Wxcallback extends Controller
                 $up_data['comments'] = $pamar['comments'];
             }
 
-            if(!empty($pamar['type'])){
-                $up_data['order_status']=$pamar['type'];
-            }
-
             $up_data['final_weight'] = $pamar['calWeight'];
 
-            if(!empty($pamar['type'])){
-                $up_data['order_status']=$pamar['type'];
-            }
              if ($orders['final_weight']==0){
                  $up_data['final_weight']=$pamar['calWeight'];
              }
@@ -621,6 +621,9 @@ class Wxcallback extends Controller
                     //推送企业微信消息
                     $common->wxim_bot($agent_info['wx_im_bot'],$orders);
                 }
+            }else if(!empty($pamar['type'])){
+                // 订单状态
+                $up_data['order_status']=$pamar['type'];
             }
 
             db('orders')->where('shopbill',$pamar['shopbill'])->update($up_data);
