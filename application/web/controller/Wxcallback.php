@@ -455,18 +455,9 @@ class Wxcallback extends Controller
                 $superB = null;
             }
             if($wxOrder){
-                if (empty($orders['auth_id'])){
-                    $agent_auth_xcx=db('agent_auth')
-                        ->where('agent_id',$orders['agent_id'])
-                        ->where('wx_auth',1)
-                        ->where('auth_type',2)
-                        ->find();
-                } else{
-                    $agent_auth_xcx=db('agent_auth')
-                        ->where('id',$orders['auth_id'])
-                        ->find();
-                }
-
+                $agent_auth_xcx=db('agent_auth')
+                    ->where('id',$orders['auth_id'])
+                    ->find();
                 $xcx_access_token=$common->get_authorizer_access_token($agent_auth_xcx['app_id']);
             }
 
