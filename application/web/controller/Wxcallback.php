@@ -3406,11 +3406,12 @@ class Wxcallback extends Controller
                 "updatetime"=>time()
             ];
             $up_data=[];
+            if($params["waybillNo"] && empty($orders['waybill'])){
+                $up_data["waybill"]=$params["waybillNo"];
+            }
             if(@$params["pushType"]==1){ // 快递状态变更
                 // 运单状态$params["data"]["status"]， 0：预下单 1：待取件 2：运输中 5：已签收 6：取消订单 7：终止揽收 8：特殊关闭 9：已退款
-                $up_data=[
-                    "order_status"=> $params["data"]["status"]."-".$params["data"]["desc"]
-                ];
+                $up_data['order_status']= $params["data"]["status"]."-".$params["data"]["desc"];
 
                 if($params["data"]["status"]==1){
                     //发送小程序订阅消息(运单状态)
@@ -3493,9 +3494,7 @@ class Wxcallback extends Controller
                 }
             }
             elseif (@$params["pushType"]==2){
-                $up_data=[
-                    'final_freight'=>$params["data"]['totalFee']
-                ];
+                $up_data['final_freight']=$params["data"]['totalFee'];
                 $up_data['final_weight']=$params["data"]['weightFee'];
                 $up_data['haocai_freight'] = 0;
                 $haocai = 0;
@@ -3640,7 +3639,7 @@ class Wxcallback extends Controller
             }
             $rebatelist->save($rebatelistdata);
 
-            db('orders')->where('waybill',$params['waybillNo'])->update($up_data);
+            db('orders')->where('out_trade_no',$params['thirdOrderNo'])->update($up_data);
             exit("SUCCESS");
         }
         catch (Exception $e){
