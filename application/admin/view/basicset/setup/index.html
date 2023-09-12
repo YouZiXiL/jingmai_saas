@@ -1,0 +1,64 @@
+
+<div  id="config-setup" v-cloak>
+
+    <el-card class="box-card" shadow="never">
+        <div>
+            <el-form label-width="80px" :model="formData" ref="ruleForm" >
+            <div class="mt-4 mb-2" style=" font-weight: 500">余额变动提醒：</div>
+            <div class="border py-4" >
+                <div v-for="(item, index) in formData.data">
+                    <el-form-item :label="item.label">
+                        <el-input-number v-model="formData.data[index].value" :min="0" ></el-input-number>
+                    </el-form-item>
+                </div>
+
+                <el-button class="ml-5" type="primary" @click="onSubmit">确 定</el-button>
+            </div>
+            </el-form>
+        </div>
+
+
+    </el-card>
+
+</div>
+
+<!-- 弹窗 -->
+
+<script type="module">
+    new Vue({
+        el: '#config-setup',
+        data: function() {
+            return {
+                formData:{
+                    data:[],
+                },
+            }
+        },
+        created(){
+            this.formData.data =  JSON.parse(`{$row}`)
+        },
+
+        methods:{
+            onSubmit(){
+                this.dialogFormVisible = false
+                Fast.api.ajax({
+                    url: 'basicset/setup/update',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    data: JSON.stringify({
+                        ...this.formData
+                    })
+                },  (data) => { //success
+                    console.log(data)
+                    location.reload()
+                    return true
+                }, (data,ret) => { //error
+                    return true;
+                });
+            },
+        }
+    })
+
+</script>

@@ -125,11 +125,12 @@ class Orderslist extends Backend
             if ($v['pay_status']==2||$v['pay_status']==4){
                     $v['profit']='0.00';
             }else{
-                //超重
+                //超重已补交
                 if ($v['overload_status']==2){
                     $overload_price=$v['overload_price'];//用户超重
                     //$agent_overload_price=$v['agent_overload_price'];//代理超重
                 }else{
+                    // 不超重或未补缴
                     $overload_price=0;
                     //$agent_overload_price=0;
                 }
@@ -681,7 +682,6 @@ class Orderslist extends Backend
         $this->view->assign("row", $row->toArray());
 
         return $this->view->fetch();
-
     }
 
     /**

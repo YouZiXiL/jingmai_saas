@@ -3,6 +3,8 @@
 namespace app\web\controller;
 
 use app\admin\model\User;
+use app\common\business\QBiDaBusiness;
+use app\common\business\SetupBusiness;
 use app\web\model\Users;
 use app\common\business\AliBusiness;
 use app\common\business\JiLu;
@@ -43,9 +45,12 @@ class Test extends Controller
      * @throws Exception
      */
     public function test(){
-        $str = str_pad("林建英", 11, "A", STR_PAD_LEFT);
-        dd($str);
-        return R::ok($result);
+        dd((int)"ssfefefefew");
+        $qbd = new QBiDaBusiness();
+        $balance = $qbd->queryBalance();
+        $setup= new SetupBusiness();
+        $balanceValue = $setup->getBalanceValue('QBD');
+        return R::ok(['推送配置'=>$balanceValue, '余额'=>$balance]);
 
     }
 
@@ -546,6 +551,17 @@ class Test extends Controller
 //        $openAccessToken = $wxBusiness->getOpenAccessToken();
         $openAccessToken = $wxBusiness->getAccessToken('wx20a0814c2c7feb3d');
         $result = $wxBusiness->getPrivacySetting($openAccessToken);
+        return R::ok($result);
+    }
+
+    /**
+     * 获取授权账号详情
+     * @return Json
+     * @throws DbException
+     */
+    public function getAuthorizerInfo(){
+        $wxBusiness = new WxBusiness();
+        $result = $wxBusiness->getAuthorizerInfo('wxa73953a201268b88');
         return R::ok($result);
     }
 }

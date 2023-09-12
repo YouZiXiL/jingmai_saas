@@ -10,6 +10,7 @@ use app\common\business\OrderBusiness;
 use app\common\business\ProfitBusiness;
 use app\common\business\QBiDaBusiness;
 use app\common\business\RebateListController;
+use app\common\business\SetupBusiness;
 use app\common\business\WanLi;
 use app\common\business\WxBusiness;
 use app\common\config\Channel;
@@ -1377,7 +1378,11 @@ class Wxcallback extends Controller
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
                         // 云洋账号余额
                         $balance = $yy->queryBalance();
-                        if($balance <= 500){
+                        $setup= new SetupBusiness();
+                        // 设置的提醒金额
+                        $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
+                        // 余额变动提醒
+                        if((int)$balance <= (int)$balanceValue){
                             //推送企业微信消息
                             $Common->wxrobot_balance([
                                 'name' => '云洋',
@@ -1442,7 +1447,11 @@ class Wxcallback extends Controller
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['waybillCode'].' 下单支付成功');
                         $balance = $fhd->queryBalance();
-                        if($balance){
+                        $setup= new SetupBusiness();
+                        // 设置的提醒金额
+                        $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
+                        // 余额变动提醒
+                        if((int)$balance <= (int)$balanceValue){
                             //推送企业微信消息
                             $Common->wxrobot_balance([
                                 'name' => '风火递',
@@ -1506,8 +1515,13 @@ class Wxcallback extends Controller
                             }
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0, ' 下单支付成功');
+                        // 余额
                         $balance = $wanli->getWalletBalance();
-                        if($balance){
+                        $setup= new SetupBusiness();
+                        // 设置的提醒金额
+                        $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
+                        // 余额变动提醒
+                        if((int)$balance <= (int)$balanceValue){
                             //推送企业微信消息
                             $Common->wxrobot_balance([
                                 'name' => '万利',
@@ -1582,8 +1596,12 @@ class Wxcallback extends Controller
                             }
                         }
                         $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['expressNo'].' 下单支付成功');
-                        $balance = $jiLu->queryBalance();
-                        if($balance < 500 ){
+                        $balance = $jiLu->queryBalance(); // 余额
+                        $setup= new SetupBusiness();
+                        // 设置的提醒金额
+                        $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
+                        // 余额变动提醒
+                        if((int)$balance <= (int)$balanceValue){
                             //推送企业微信消息
                             $Common->wxrobot_balance([
                                 'name' => '极鹭',
@@ -3209,8 +3227,13 @@ class Wxcallback extends Controller
                 }
                 $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybillNo'].' 下单支付成功');
                 $qbd = new QBiDaBusiness();
+                // 所剩余额
                 $balance = $qbd->queryBalance();
-                if($balance){
+                $setup= new SetupBusiness();
+                // 设置的提醒金额
+                $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
+                // 余额变动提醒
+                if((int)$balance <= (int)$balanceValue){
                     //推送企业微信消息
                     $Common->wxrobot_balance([
                         'name' => 'Q必达',

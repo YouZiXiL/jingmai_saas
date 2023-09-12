@@ -155,7 +155,10 @@ class Shunfeng extends Controller
         }
         $jijian_address=db('users_address')->where('id',$check_channel_intellect['jijian_id'])->find();
         //黑名单
-        $blacklist=db('agent_blacklist')->where('agent_id',$this->user->agent_id)->where('mobile',$jijian_address['mobile'])->find();
+        $blacklist=db('agent_blacklist')
+            ->where('agent_id',$this->user->agent_id)
+            ->where('mobile',$jijian_address['mobile'])
+            ->find();
         if ($blacklist){
             return json(['status'=>400,'data'=>'','msg'=>'此手机号无法下单']);
         }
