@@ -228,18 +228,18 @@ class Yunyang extends Controller
                 $result = $yyPackage;
                 if(!empty($jiluPackage))  $result[] = $jiluPackage;
                 if(!empty($fhdDb)) $result[] = $fhdDb;
-//                usort($result, function ($a, $b){
-//                    if (empty($a['final_price']) || empty($b['final_price'])) {
-//                        if (empty($a['final_price'])) {
-//                            unset($a);
-//                        }
-//                        if (empty($b['final_price'])) {
-//                            unset($b);
-//                        }
-//                        return 0;
-//                    }
-//                    return $a['final_price'] <=> $b['final_price'];
-//                });
+                usort($result, function ($a, $b){
+                    if (empty($a['final_price']) || empty($b['final_price'])) {
+                        if (empty($a['final_price'])) {
+                            unset($a);
+                        }
+                        if (empty($b['final_price'])) {
+                            unset($b);
+                        }
+                        return 0;
+                    }
+                    return $a['final_price'] <=> $b['final_price'];
+                });
             }
             else{
 //                $fhdParams1 = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'JZQY_LONG');

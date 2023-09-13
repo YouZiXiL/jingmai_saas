@@ -500,7 +500,7 @@ class OrderBusiness extends Backend
 
 
         $content['tagType'] = '圆通快递';
-        $content['channelId'] = '5_2';
+        $content['channelId'] = '16_2';//'5_2';
         $content['channel'] = '';
         $content['freight'] =  number_format($freight, 2);
         $content['agent_price'] = number_format($agentPrice, 2);
