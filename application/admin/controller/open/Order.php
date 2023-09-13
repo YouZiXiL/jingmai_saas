@@ -111,21 +111,21 @@ class Order extends Backend
 
         $orderBusiness = new OrderBusiness();
         $yyQuery = $orderBusiness->yyQueryPrice($paramData, $channelTag);
-        $fhdQuery = $orderBusiness->fhdQueryPrice($paramData, 'RCP');
+        // $fhdQuery = $orderBusiness->fhdQueryPrice($paramData, 'RCP');
         $qbdQuery = $orderBusiness->qbdQueryPrice($paramData);
 
-        $response =  $orderBusiness->multiPrice([$yyQuery, $fhdQuery, $qbdQuery]);
-        list($yy, $fhd, $qbd) = $response;
+        $response =  $orderBusiness->multiPrice([$yyQuery, $qbdQuery]);
+        list($yy, $qbd) = $response;
 
         $yyRes = $orderBusiness->yyPriceHandle($yy, $agent_info, $paramData, $channelTag);
-        $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData, $channelTag);
+        // $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData, $channelTag);
         $qbdRes = $orderBusiness->qbdPriceHandle($qbd, $agent_info, $paramData);
 
         $jlRes = $orderBusiness->jlPriceHandle($agent_info, $paramData);
 
         $priceList = array_merge_recursive($yyRes, $qbdRes) ;
         !empty($jlRes) && $priceList[] = $jlRes;
-        !empty($fhdRes) && $priceList[] = $fhdRes;
+        // !empty($fhdRes) && $priceList[] = $fhdRes;
         if (empty($priceList)){
             throw new Exception('没有指定快递渠道请联系客服');
         }
