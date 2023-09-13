@@ -218,28 +218,28 @@ class Yunyang extends Controller
             $yunYang = new \app\common\business\YunYang();
             // 组装查询参数
             if ($param['channel_tag']=='智能'){
-                $fhdParams = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'RCP');
+                // $fhdParams = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'RCP');
                 $yyParams = $yunYang->queryPriceParams($jijian_address,$shoujian_address, $param);
-                $response =  $this->common->multiRequest($yyParams, $fhdParams);
+                $response =  $this->common->multiRequest($yyParams);
                 $yyPackage = $yunYang->advanceHandle($response[0], $agent_info, $param);
-                $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
+                // $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
                 $jiLu = new JiLu();
                 $jiluPackage = $jiLu->queryPriceHandle($agent_info, $param,$jijian_address['province'], $shoujian_address['province']);
                 $result = $yyPackage;
                 if(!empty($jiluPackage))  $result[] = $jiluPackage;
                 if(!empty($fhdDb)) $result[] = $fhdDb;
-                usort($result, function ($a, $b){
-                    if (empty($a['final_price']) || empty($b['final_price'])) {
-                        if (empty($a['final_price'])) {
-                            unset($a);
-                        }
-                        if (empty($b['final_price'])) {
-                            unset($b);
-                        }
-                        return 0;
-                    }
-                    return $a['final_price'] <=> $b['final_price'];
-                });
+//                usort($result, function ($a, $b){
+//                    if (empty($a['final_price']) || empty($b['final_price'])) {
+//                        if (empty($a['final_price'])) {
+//                            unset($a);
+//                        }
+//                        if (empty($b['final_price'])) {
+//                            unset($b);
+//                        }
+//                        return 0;
+//                    }
+//                    return $a['final_price'] <=> $b['final_price'];
+//                });
             }
             else{
 //                $fhdParams1 = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'JZQY_LONG');
