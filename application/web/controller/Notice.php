@@ -71,7 +71,6 @@ class Notice extends Controller
                             'id'=> $orders['id'],
                             'waybill'=>$result['waybill'],
                             'shopbill'=>$result['shopbill'],
-                            'order_status'=>'已付款',
                             'pay_status'=>1,
                         ];
                         $DbCommon->set_agent_amount(
