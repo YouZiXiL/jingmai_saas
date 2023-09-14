@@ -183,7 +183,7 @@ class JiLu
         $content['users_xuzhong']=sprintf("%.2f",$userMore);//用户续重
 
         $content['tagType'] = '圆通快递';
-        $content['channelId'] = '5_2';
+        $content['channelId'] = '16_2';//'5_2';
         $content['channel'] = '圆通';
         $content['freight'] =  number_format($freight, 2);
         $content['agent_price'] = number_format($agentPrice, 2);
