@@ -3718,10 +3718,10 @@ class Wxcallback extends Controller
                 $orderModel = Order::where('shopbill', $expressId)->find();
             }
 
-            if(empty($orderModel)){
-                recordLog('channel-callback-err',  '极鹭-没有订单-' . PHP_EOL . $raw  );
-                return json(['code'=>-1, 'message'=>'没有此订单']);
-            }
+//            if(empty($orderModel)){
+//                recordLog('channel-callback-err',  '极鹭-没有订单-' . PHP_EOL . $raw  );
+//                return json(['code'=>-1, 'message'=>'没有此订单']);
+//            }
             $order = $orderModel->toArray();
             if($order['order_status'] == '已取消'){
                 recordLog('channel-callback-err',  '极鹭-订单已取消-' . PHP_EOL . $raw  );
