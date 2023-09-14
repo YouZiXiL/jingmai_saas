@@ -2,8 +2,6 @@
 
 namespace app\common\business;
 
-use app\admin\model\basicset\Setup;
-use app\common\config\Channel;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\exception\DbException;

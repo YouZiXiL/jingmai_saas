@@ -38,6 +38,11 @@ class Setup extends Backend
         $data = input();
         $data = $data['data'];
         $this->model->saveAll($data);
+        cache("setup:balance:YY" , '', 3600);
+        cache("setup:balance:JILU" , '', 3600);
+        cache("setup:balance:FHD" , '', 3600);
+        cache("setup:balance:QBD" , '', 3600);
+        cache("setup:balance:WANLI" , '', 3600);
         $this->success();
     }
 
