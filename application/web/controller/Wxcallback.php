@@ -489,25 +489,34 @@ class Wxcallback extends Controller
              }
 
             //超轻处理
-            if ($orders['weight'] > $pamar['calWeight'] && $pamar['calWeight']!=0 && empty($orders['final_weight_time'])){
+            if ($orders['weight'] > ceil($pamar['calWeight'])  && $pamar['calWeight']!=0 && empty($orders['final_weight_time'])){
                 $lightWeight = floor($orders['weight']-$pamar['calWeight']); //超轻重量
-                $agentMore = $orders['agent_xuzhong'];
-                $userMore = $orders['users_xuzhong'];
-                if(empty((float)$agentMore)){
-                    // 计算续重单价
-                    $lightAmt = abs($orders['freight'] - $pamar['freight']); //超出金额
-                    $adminMore = bcdiv($lightAmt, $lightWeight,2);
-                    $yunYang = new \app\common\business\YunYang();
-                    $yunYang->overweightHandle($up_data,  $adminMore, $orders, $agent_info );
-                    $agentMore = $up_data['agent_xuzhong'];
-                    $userMore = $up_data['users_xuzhong'];
+                if($orders['freight'] < $pamar['freight']){
+                    $content = [
+                        'title' => '运费异常',
+                        'user' =>  '云洋',
+                        'waybill' =>  $orders['waybill'],
+                        'body' => "订单超轻，运费增加。",
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }else{
+                    $agentMore = $orders['agent_xuzhong'];
+                    $userMore = $orders['users_xuzhong'];
+                    if(empty((float)$agentMore)){
+                        // 计算续重单价
+                        $lightAmt = abs($orders['freight'] - $pamar['freight']); //超出金额
+                        $adminMore = bcdiv($lightAmt, $lightWeight,2);
+                        $yunYang = new \app\common\business\YunYang();
+                        $yunYang->overweightHandle($up_data,  $adminMore, $orders, $agent_info );
+                        $agentMore = $up_data['agent_xuzhong'];
+                        $userMore = $up_data['users_xuzhong'];
+                    }
+                    $up_data['agent_tralight_price']=  bcmul($lightWeight,  $agentMore,2);;
+                    $up_data['tralight_price']=  bcmul($lightWeight,  $userMore,2);;
                 }
 
                 $up_data['tralight_status']=1;
                 $up_data['final_weight_time']=time();
-                $up_data['agent_tralight_price']=  bcmul($lightWeight,  $agentMore,2);;
-                $up_data['tralight_price']=  bcmul($lightWeight,  $userMore,2);;
-
             }
             // 超重
             if ($orders['weight'] < $pamar['calWeight']&&empty($orders['final_weight_time'])){
