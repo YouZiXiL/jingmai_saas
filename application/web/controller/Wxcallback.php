@@ -3703,10 +3703,10 @@ class Wxcallback extends Controller
             $compact = compact('expressNo','expressId','sendType','expressStatus',
                 'expressTrack','actualWeight','raw');
             db('jilu_callback')->insert($compact);
-            if($expressId){
-                $orderModel = Order::where('shopbill', $expressId)->find();
-            }else{
+            if($expressNo){
                 $orderModel = Order::where('waybill', $expressNo)->find();
+            }else{
+                $orderModel = Order::where('shopbill', $expressId)->find();
             }
 
             if(!$orderModel){
@@ -3797,7 +3797,9 @@ class Wxcallback extends Controller
                 if($expressStatus !== null){
                     $update['order_status'] = $jiLu->getOrderStatus($expressStatus);
                 }
-                $update['comments'] = $expressTrack;
+                if (!empty($expressTrack)){
+                    $update['comments'] = $expressTrack;
+                }
                 if($expressStatus == 5 &&$order['pay_status']!=2){ // 已取消
                     $orderBusiness = new OrderBusiness();
                     $orderBusiness->orderCancel($orderModel);
