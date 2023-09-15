@@ -921,7 +921,6 @@ class Yunyangtc extends Controller
             $res = $wanLi->cancelOrder($row['out_trade_no']);
             $result = json_decode($res, true);
             if ($result['code'] != 200){
-                Log::error('万利取消订单失败-'.$row['out_trade_no'].'：'. $res);
                 return R::error($result['message']);
             }
         }else{

@@ -210,4 +210,20 @@ class WxBusiness
         return json_decode($resJson,true);
 
     }
+
+    /**
+     * 查询最新一次审核单状态
+     * @throws DbException
+     * @throws Exception
+     */
+    public function getLatestAuditStatus($appId){
+
+        $resJson=$this->utils->httpRequest('https://api.weixin.qq.com/wxa/get_latest_auditstatus?access_token='. $this->getAccessToken($appId) ,'POST');
+        $res=json_decode($resJson,true);
+dd($res);
+        if ($res['errcode']!=0){
+            recordLog('wx-auth', "查询最新一次审核单状态失败" . $resJson . PHP_EOL);
+            exit('查询最新一次审核单状态失败：' . $resJson);
+        }
+    }
 }

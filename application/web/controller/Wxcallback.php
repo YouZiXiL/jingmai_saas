@@ -1019,8 +1019,11 @@ class Wxcallback extends Controller
     function wanli_callback(WanLi $wanLi){
         $backData = $this->request->param();
         try {
+            $raw = json_encode($backData , JSON_UNESCAPED_UNICODE);
+            recordLog('channel-callback', '万利-' . PHP_EOL.$raw);
             $data = json_decode($backData['data'],true);
             $body = json_decode($data['param'],true) ; // 回调参数
+            $body['raw'] = $raw;
             $body['createTime'] = date('Y-m-d h:i:s', time());
             db('wanli_callback')->strict(false)->insert($body);
             $orderModel = Order::where('out_trade_no',$body['outOrderNo'])->find();
@@ -1071,15 +1074,15 @@ class Wxcallback extends Controller
                 Queue::push(DoJob::class, $data,'way_type');
             }
             else{
-                isset($body['thirdPartyOrderNo']) && $updateOrder['waybill'] = $body['thirdPartyOrderNo']; // 运单号
-                isset($body['cancelMessage'])  &&  $updateOrder['yy_fail_reason'] = $body['cancelMessage']; // 取消原因
+                if(isset($body['thirdPartyOrderNo'])) $updateOrder['waybill'] = $body['thirdPartyOrderNo']; // 运单号
+                if(isset($body['cancelMessage'])) $updateOrder['yy_fail_reason'] = $body['cancelMessage']; // 取消原因
                 if(isset($body['courierName'] )||isset($body['courierMobile']))    $updateOrder['comments'] = "快递员姓名：{$body['courierName']}，电话：{$body['courierMobile']}";
-                isset($body['discountLastMoney'])  &&  $updateOrder['final_freight'] = ceil($body['discountLastMoney']) /100; // 商户成本
-                isset($body['weight'])  &&  $updateOrder['final_weight'] = $body['weight']; // kg
-                isset($body['finishCode'])  &&  $updateOrder['code'] = $body['finishCode']; // 收货码
-                isset($body['sendStatus'])   && $updateOrder['order_status'] = $wanLi->getOrderStatus($body['sendStatus']) ;
-                isset($body['failMessage'])  &&  $updateOrder['yy_fail_reason'] = $body['failMessage']; // 失败原因
-                isset($body['cancelTime'])  &&  $updateOrder['cancel_time'] = strtotime($body['cancelTime']); // 取消时间
+                if(isset($body['discountLastMoney'])) $updateOrder['final_freight'] = ceil($body['discountLastMoney']) /100; // 商户成本
+                if(isset($body['weight'])) $updateOrder['final_weight'] = $body['weight']; // kg
+                if(isset($body['finishCode'])) $updateOrder['code'] = $body['finishCode']; // 收货码
+                if(isset($body['sendStatus'])) $updateOrder['order_status'] = $wanLi->getOrderStatus($body['sendStatus']) ;
+                if(isset($body['failMessage'])) $updateOrder['yy_fail_reason'] = $body['failMessage']; // 失败原因
+                if(isset($body['cancelTime'])) $updateOrder['cancel_time'] = strtotime($body['cancelTime']); // 取消时间
             }
 
             //发送小程序订阅消息(运单状态)
@@ -1470,15 +1473,10 @@ class Wxcallback extends Controller
                     }
                     break;
                 case 'wanli':
-                    Log::info('万利下单:'. $orders['out_trade_no']);
                     $wanli = new WanLi();
                     $res = $wanli->createOrder($orders);
                     $result = json_decode($res,true);
                     if($result['code'] != 200){
-                        recordLog('channel-create-order-err',
-                            '万利：'.$res . PHP_EOL
-                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
-                        );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付成功下单失败  执行退款操作
                         $update=[

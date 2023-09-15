@@ -23,7 +23,7 @@ class WanLi
      * @return array
      */
     public function setParma(array $data){
-        $json = json_encode($data);
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE);
         $timestamp = floor(microtime(true) * 1000);
         $nonce = str_shuffle($timestamp);
         $appid = config('site.wanli_appid');
