@@ -1040,13 +1040,15 @@ class Wxcallback extends Controller
             $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
             $xcx_access_token=$wanLi->utils->get_authorizer_access_token($agent_auth_xcx['app_id']);
             $users=db('users')->where('id',$orders['user_id'])->find();
+
             if($body['sendStatus'] == 60 && $orders['pay_status']!=2){
                 /*
                  取消给用户退款，配送异常看下原因，根据原因决定是否给用户取消退款
                  */
 
                 $returnPrice=$orders['final_price'];
-                if((int)$orders['aftercoupon']) $returnPrice=$orders['aftercoupon'];
+                if($orders['aftercoupon'] > 0) $returnPrice=$orders['aftercoupon'];
+
                 if($body['punishAmount']){
                     // 罚金
                     $updateOrder['punish_price'] = ceil($body['punishAmount'])/100;
@@ -3826,7 +3828,8 @@ class Wxcallback extends Controller
 
 
 
-            }else{ // 重量，补差价
+            }
+            else{ // 重量，补差价
                 // 超重和耗材
                 if(!empty($addpriceInfos)){
                     $jiLu = new JiLu();
@@ -3934,6 +3937,9 @@ class Wxcallback extends Controller
 
             }
 
+            if ($order['id'] == 112003){
+                dd($update);
+            }
             if (!empty($update)){
                 $orderModel->isUpdate(true)->save($update);
             }
