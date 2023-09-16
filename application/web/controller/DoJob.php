@@ -219,8 +219,13 @@ class DoJob
             elseif ($data['type']==4){ // 取消订单
                 $row=db('orders')->where('id',$data['order_id'])->find();
                 try {
-                    $totalAmount=$row['aftercoupon']??$row['final_price'];
-                    $refoundAmount = $data['refund']??$totalAmount;
+
+                    $totalAmount = $row['final_price']; // 总金额
+                    if((int)$row['aftercoupon']) $totalAmount = $row['aftercoupon'];
+
+                    $refoundAmount = $totalAmount; // 退款金额
+                    if((int) $data['refund']) $refoundAmount = $data['refund'];
+
                     if($totalAmount == 0 || $refoundAmount ==0 ) return true;
                     if ($row['pay_status']!=2){
                         if($row['pay_type'] == 1 ){

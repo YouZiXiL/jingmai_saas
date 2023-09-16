@@ -482,15 +482,19 @@ class Wxcallback extends Controller
                 $up_data['comments'] = $pamar['comments'];
             }
 
-            $up_data['final_weight'] = $pamar['calWeight'];
 
-             if ($orders['final_weight']==0){
-                 $up_data['final_weight']=$pamar['calWeight'];
-             }
+
+
+            $finalWeight = $pamar['calWeight'];
+
+            if($pamar['calWeight']<$pamar['parseWeight']){
+                $finalWeight = $pamar['parseWeight'];
+            }
+            $up_data['final_weight'] = $finalWeight;
 
             //超轻处理
-            if ($orders['weight'] > ceil($pamar['calWeight'])  && $pamar['calWeight']!=0 && empty($orders['final_weight_time'])){
-                $lightWeight = floor($orders['weight']-$pamar['calWeight']); //超轻重量
+            if ($orders['weight'] > ceil($finalWeight)  && $finalWeight!=0 && empty($orders['final_weight_time'])){
+                $lightWeight = floor($orders['weight']-$finalWeight); //超轻重量
                 if($orders['freight'] < $pamar['freight']){
                     $content = [
                         'title' => '运费异常',
@@ -519,10 +523,10 @@ class Wxcallback extends Controller
                 $up_data['final_weight_time']=time();
             }
             // 超重
-            if ($orders['weight'] < $pamar['calWeight']&&empty($orders['final_weight_time'])){
+            if ($orders['weight'] < $finalWeight&&empty($orders['final_weight_time'])){
                 $up_data['overload_status']=1;
                 //超出重量
-                $overloadWeight = ceil($pamar['calWeight'] - $orders['weight']);
+                $overloadWeight = ceil($finalWeight - $orders['weight']);
                 $agentMore = $orders['agent_xuzhong'];
                 $userMore = $orders['users_xuzhong'];
                 // 计算续重单价
@@ -548,7 +552,7 @@ class Wxcallback extends Controller
                     'xcx_access_token'=>$xcx_access_token,
                     'open_id'=>$users?$users['open_id']:'',
                     'template_id'=>$agent_auth_xcx['pay_template']??null,
-                    'cal_weight'=>ceil($pamar['calWeight']) .'kg',
+                    'cal_weight'=>ceil($finalWeight) .'kg',
                     'users_overload_amt'=>$up_data['overload_price'] . '元'
                 ];
 
@@ -1019,7 +1023,7 @@ class Wxcallback extends Controller
     function wanli_callback(WanLi $wanLi){
         $backData = $this->request->param();
         try {
-            $raw = json_encode($backData , JSON_UNESCAPED_UNICODE);
+            $raw = json_encode($backData);
             recordLog('channel-callback', '万利-' . PHP_EOL.$raw);
             $data = json_decode($backData['data'],true);
             $body = json_decode($data['param'],true) ; // 回调参数
@@ -1041,17 +1045,15 @@ class Wxcallback extends Controller
                  取消给用户退款，配送异常看下原因，根据原因决定是否给用户取消退款
                  */
 
-                $returnPrice=$orders['aftercoupon']??$orders['final_price'];
+                $returnPrice=$orders['final_price'];
+                if((int)$orders['aftercoupon']) $returnPrice=$orders['aftercoupon'];
                 if($body['punishAmount']){
                     // 罚金
                     $updateOrder['punish_price'] = ceil($body['punishAmount'])/100;
                     if($returnPrice>$updateOrder['punish_price']){
                         $returnPrice = $returnPrice - $updateOrder['punish_price'];
                     }
-
                 }
-
-
                 // 退优惠券
                 if(!empty($orders["couponid"])){
                     $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
@@ -1063,7 +1065,6 @@ class Wxcallback extends Controller
                         $coupon->save();
                     }
                 }
-
                 // 取消订单
                 $data = [
                     'type'=>4,
