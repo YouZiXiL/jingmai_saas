@@ -399,6 +399,7 @@ class Authlist extends Backend
      * @param $ids
      * @return void
      * @throws DbException
+     * @throws \think\Exception
      */
     function audit_app($ids){
         $row = $this->model->get($ids);
@@ -440,6 +441,7 @@ class Authlist extends Backend
      * 查看审核状态
      * @return void
      * @throws DbException
+     * @throws \think\Exception
      */
     function audit_status($ids){
         $row = $this->model->get($ids);
@@ -477,6 +479,11 @@ class Authlist extends Backend
 
     }
 
+    /**
+     * 小程序撤销审核
+     * @throws DbException
+     * @throws \think\Exception
+     */
     function remove_app($ids=null){
         $row = $this->model->get($ids);
         $common=new Common();
@@ -484,6 +491,23 @@ class Authlist extends Backend
         $res=$common->httpRequest('https://api.weixin.qq.com/wxa/undocodeaudit?access_token='.$xcx_access_token);
         $res=json_decode($res,true);
         if ($res['errcode']!=0){
+            if($res['errcode'] == 87012){ // forbid revert this version release: 无法撤销，可能的原因:审核状态不是审核中。
+                // 查询最后一次审核状态
+                $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/get_latest_auditstatus?access_token='. $xcx_access_token,'POST');
+                $res2=json_decode($resJson,true);
+                if($res2['errcode'] != 0){
+                    $this->error('获取审核状态失败：'.$resJson);
+                }
+                if($res2['status'] == 0){ // 审核通过
+                    $row->save([ 'xcx_audit' => 1]);
+                    $this->success('小程序审核成功');
+                }elseif ($res2['status'] == 1){ // 审核失败
+                    $row->save([ 'xcx_audit' => 2,'reason'=>$res2['reason']]);
+                    $this->error('小程序审核失败');
+                }
+            }elseif($res['errcode'] == 87013){
+                $this->error('撤回次数达到上限（每天5次，每个月 10 次）');
+            }
             $this->error($res['errmsg']);
         }
         $row->save(['xcx_audit'=>0]);

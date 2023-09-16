@@ -20,21 +20,14 @@
                     </div>
                 </el-col>
                 <el-col :xs="24" :sm="8" >
-                    <div class="panel-1">
-                        <div class="panel-1_top">
-                            <div class="d-flex flex-column">
-                                <div class="font-big"> 1000万</div>
-                                <div>余额</div>
-                            </div>
-                            <div><i class="el-icon-wallet balance p-2"></i></div>
+                    <div class="panel1">
+                        <div class="panel1-top">
+                            <i class="el-icon-wallet balance p-2"></i>
+                            <div class="title">用户余额：1000万</div>
                         </div>
                         <div class="p-1"></div>
                         <div class="panel1-bottom">
-
-                            <div class="left">
-                                <i class="fa fa-user-o" aria-hidden="true"></i>
-                                充值
-                            </div>
+                            <div class="left">充值</div>
                             <div class="p-1"></div>
                             <div class="right">等级</div>
                         </div>
@@ -43,65 +36,30 @@
             </el-row>
             <el-row :gutter="20">
                 <el-col :xs="12" :sm="4">
-                    <div class="panel-2_1 number-card">
-                        <i class="number-card-icon el-icon-user a-self-start font-xl" style="padding: 16px 20px"></i>
-                        <div class="d-flex flex-column j-center">
-                            <div class="panel-2_table">今日新增用户</div>
-                            <div class="font-big">1000</div>
-                            <div>较昨日增长15.9% ↓</div>
-                        </div>
+                    <div class="panel-2 panel-2_1">
+                        <div class="panel-2_table"> <i class="el-icon-user-solid"></i> 今日新增用户</div>
+                        <div class="panel-2_value">1000</div>
                     </div>
                 </el-col>
                 <el-col :xs="12" :sm="4">
-                    <div class="panel-2_2 number-card">
-                        <i class="number-card-icon a-self-start font-xl"> ￥ </i>
-                        <div class="d-flex flex-column j-center">
-                            <div class="panel-2_table">今日营业额</div>
-                            <div class="font-big">1000</div>
-                            <div>较昨日增长15.9% ↑</div>
-                        </div>
+                    <div class="panel-2 panel-2_2">
+                        <div class="panel-2_table"> ￥ 今日营业额</div>
+                        <div class="panel-2_value">1000</div>
                     </div>
                 </el-col>
-                <el-col :xs="12" :sm="4">
-                    <div class="panel-2_3 number-card">
-                        <i class="number-card-icon a-self-start font-xl"> ￥ </i>
-                        <div class="d-flex flex-column j-center">
-                            <div class="panel-2_table">今日结算额</div>
-                            <div class="font-big">1000</div>
-                            <div>较昨日增长15.9% ↑</div>
-                        </div>
-                    </div>
-                </el-col>
-                <el-col :xs="12" :sm="4">
-                    <div class="panel-2_4 number-card">
-                        <i class="number-card-icon a-self-start font-xl"> ￥ </i>
-                        <div class="d-flex flex-column j-center">
-                            <div class="panel-2_table">今日利润</div>
-                            <div class="font-big">1000</div>
-                            <div>较昨日增长15.9% ↑</div>
-                        </div>
-                    </div>
-                </el-col>
-                <el-col :xs="12" :sm="4">
-                    <div class="panel-2_5 number-card">
-                        <i class="number-card-icon a-self-start font-xl"> ￥ </i>
-                        <div class="d-flex flex-column j-center">
-                            <div class="panel-2_table">今日新增用户</div>
-                            <div class="font-big">1000</div>
-                            <div>较昨日增长15.9% ↑</div>
-                        </div>
-                    </div>
-                </el-col>
-                <el-col :xs="12" :sm="4">
-                    <div class="panel-2_2 number-card">
-                        <i class="number-card-icon a-self-start font-xl"> ￥ </i>
-                        <div class="d-flex flex-column j-center">
-                            <div class="panel-2_table">今日营业额</div>
-                            <div class="font-big">1000</div>
-                            <div>较昨日增长15.9% ↑</div>
-                        </div>
-                    </div>
-                </el-col>
+                <el-col :xs="12" :sm="4"><div class="panel-2 panel-2_3">
+                    <div class="panel-2_table"> ￥ 今日结算额</div>
+                    <div class="panel-2_value">1000</div>
+                </div></el-col>
+                <el-col :xs="12" :sm="4"><div class="panel-2 panel-2_4">
+                    <div class="panel-2_table"> ￥ 今日利润</div>
+                    <div class="panel-2_value">1000</div>
+                </div></el-col>
+                <el-col :xs="12" :sm="4"><div class="panel-2 panel-2_5">
+                    <div class="panel-2_table"><i class="el-icon-user-solid"></i> 今日新增用户</div>
+                    <div class="panel-2_value">1000</div>
+                </div></el-col>
+                <el-col :xs="12" :sm="4"><div class="panel-2 panel-2_6"></div></el-col>
             </el-row>
             <el-row :gutter="20">
                 <el-col :xs="24" :sm="16">
@@ -156,133 +114,40 @@
             setEchartBar(){
                 // 基于准备好的dom，初始化echarts实例
                 const barChart = echarts.init(document.getElementById('dashboard-echart-bar'));
-                const posList = [
-                    'left',
-                    'right',
-                    'top',
-                    'bottom',
-                    'inside',
-                    'insideTop',
-                    'insideLeft',
-                    'insideRight',
-                    'insideBottom',
-                    'insideTopLeft',
-                    'insideTopRight',
-                    'insideBottomLeft',
-                    'insideBottomRight'
-                ];
-
-                barChart.config = {
-                    rotate: 90,
-                    align: 'left',
-                    verticalAlign: 'middle',
-                    position: 'insideBottom',
-                    distance: 15,
-                    onChange: function () {
-                        const labelOption = {
-                            rotate: barChart.config.rotate,
-                            align: barChart.config.align,
-                            verticalAlign: barChart.config.verticalAlign,
-                            position: barChart.config.position,
-                            distance: barChart.config.distance
-                        };
-                        barChart.setOption({
-                            series: [
-                                {
-                                    label: labelOption
-                                },
-                                {
-                                    label: labelOption
-                                },
-                                {
-                                    label: labelOption
-                                },
-                                {
-                                    label: labelOption
-                                }
-                            ]
-                        });
-                    }
-                };
-                const labelOption = {
-                    show: true,
-                    position: barChart.config.position,
-                    distance: barChart.config.distance,
-                    align: barChart.config.align,
-                    verticalAlign: barChart.config.verticalAlign,
-                    rotate: barChart.config.rotate,
-                    formatter: '{c}  {name|{a}}',
-                    fontSize: 16,
-                    rich: {
-                        name: {}
-                    }
-                };
+                // 指定图表的配置项和数据
                 const option = {
-                    color:['#1b9efb', '#ff8394', '#f6d8c1'],
-                    tooltip: {
-                        trigger: 'axis',
-                        axisPointer: {
-                            type: 'shadow'
+                    // 全局调色盘。
+                    color: [
+                        {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#00b6fa' // 0% 处的颜色
+                            }, {
+                                offset: 1, color: 'rgb(183,245,245)' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
                         }
+                    ],
+                    title: {
+                        text: 'ECharts 入门示例'
                     },
+                    tooltip: {},
                     legend: {
-                        data: ['总订单', '已支付', '已取消'],
+                        data: ['销量']
                     },
-                    toolbox: {
-                        show: true,
-                        orient: 'vertical',
-                        left: 'right',
-                        top: 'center',
-                        feature: {
-                            mark: { show: true },
-                            dataView: { show: true, readOnly: false },
-                            magicType: { show: true, type: ['line', 'bar', 'stack'] },
-                            restore: { show: true },
-                            saveAsImage: { show: true }
-                        }
+                    xAxis: {
+                        data: ['一月', '一月', '一月', '一月', '一月', '一月', '一月', '一月', '一月', '一月', '一月','一月', '一月']
                     },
-                    xAxis: [
-                        {
-                            type: 'category',
-                            axisTick: { show: false },
-                            data: ['1号', '1号', '1号', '1号', '1号','1号','1号']
-                        }
-                    ],
-                    yAxis: [
-                        {
-                            type: 'value'
-                        }
-                    ],
+                    yAxis: {},
                     series: [
                         {
-                            name: '总订单',
+                            name: '销量',
                             type: 'bar',
-                            barWidth: 18,
-                            label: labelOption,
-                            emphasis: {
-                                focus: 'series'
-                            },
-                            data: [320, 332, 301, 334, 390, 332, 301]
-                        },
-                        {
-                            name: '已支付',
-                            type: 'bar',
-                            barWidth: 18,
-                            label: labelOption,
-                            emphasis: {
-                                focus: 'series'
-                            },
-                            data: [220, 182, 191, 234, 290, 234, 196]
-                        },
-                        {
-                            name: '已取消',
-                            type: 'bar',
-                            barWidth: 18,
-                            label: labelOption,
-                            emphasis: {
-                                focus: 'series'
-                            },
-                            data: [98, 77, 101, 99, 40, 123, 56]
+                            data: [5, 20, 36, 10, 10, 20, 23, 32, 35, 40, 48, 15, 20, 23, 32, 15, 40, 48]
                         }
                     ]
                 };
@@ -328,11 +193,11 @@
                                 show: false
                             },
                             data: [
-                                { value: 1048, name: '圆通' },
-                                { value: 735, name: '圆通快递' },
-                                { value: 580, name: '德邦' },
-                                { value: 484, name: '京东' },
-                                { value: 300, name: '韵达' }
+                                { value: 1048, name: 'Search Engine' },
+                                { value: 735, name: 'Direct' },
+                                { value: 580, name: 'Email' },
+                                { value: 484, name: 'Union Ads' },
+                                { value: 300, name: 'Video Ads' }
                             ]
                         }
                     ]
@@ -487,7 +352,7 @@
             background-position: 100% 0;
         }
     }
-    .panel-1{
+    .panel1{
         height: 300px;
         display: flex;
         flex-direction: column;
@@ -502,16 +367,9 @@
             font-size: 26px;
         }
 
-        .panel-1_top{
+        .panel1-top{
             background-image: linear-gradient(to right, #f78ca0 0%, #f9748f 19%, #fd868c 60%, #fe9a8b 100%);
             flex: 1;
-            display: flex;
-            justify-content: space-around;
-            & i{
-                 font-size: 60px;
-                 color: rgba(255, 255, 255, 0.5);
-                font-weight: 900;
-             }
         }
         .panel1-bottom{
             flex: 1;
@@ -550,6 +408,12 @@
             color: #999;
         }
     }
+    .panel-2_1{  border-left: 6px solid #f8a5b5; border-right: 6px solid #fff; }
+    .panel-2_2{  border-left: 6px solid #50c9ea; border-right: 6px solid #fff;}
+    .panel-2_3{  border-left: 6px solid #c0b8fe; border-right: 6px solid #fff;}
+    .panel-2_4{  border-left: 6px solid #79e122; border-right: 6px solid #fff;}
+    .panel-2_5{  border-left: 6px solid #f79361; border-right: 6px solid #fff;}
+    .panel-2_6{  border-left: 6px solid #f1c321; border-right: 6px solid #fff;}
 
     .echart{
         width: 100%;
@@ -569,42 +433,6 @@
         justify-content: center;
         padding:50px;
     }
-    .font-big{
-        font-size: 30px;
-        font-weight: 900;
-    }
-    .number-card{
-        /*width:298px;*/
-        height:130px;
-        display: flex;
-        overflow: hidden;
-        color: white;
-        border-radius: 20px;
-        .number-card-icon{
-            padding: 10px 20px;
-        }
-    }
-    .panel-2_1{
-        background-image: url("/assets/img/dashboard/u5057.svg");
-        background-repeat: no-repeat;
-    }
-    .panel-2_2{
-        background-image: url("/assets/img/dashboard/u5058.svg");
-        background-repeat: no-repeat;
-    }
-    .panel-2_3{
-        background-image: url("/assets/img/dashboard/u5059.svg");
-        background-repeat: no-repeat;
-    }
-    .panel-2_4{
-        background-image: url("/assets/img/dashboard/u5060.svg");
-        background-repeat: no-repeat;
-    }
-    .panel-2_5{
-        background-image: url("/assets/img/dashboard/u5061.svg");
-        background-repeat: no-repeat;
-    }
-
     .el-row {
         margin-bottom: 20px;
     }

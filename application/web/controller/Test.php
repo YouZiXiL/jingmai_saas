@@ -308,6 +308,32 @@ class Test extends Controller
         return R::ok(json_decode($result));
     }
 
+    /**
+     * 极鹭查询价格
+     * @return Json
+     */
+    public function queryPriceHandle(){
+        $express = new JiLu();
+        $data = [
+            "actualWeight" => "1",
+            "fromCity" => "北京",
+            "fromCounty" => "海淀",
+            "fromDetails" => "万达广场",
+            "fromName" => "张三",
+            "fromPhone" => "13718186468",
+            "fromProvince" => "河南",
+            "toCity" => "北京12233",
+            "toCounty" => "海淀",
+            "toDetails" => "万达广场",
+            "toName" => "张三",
+            "toPhone" => "13718186468",
+            "toProvince" => "山东"
+        ];
+        $result = $express->queryPrice($data);
+        return R::ok($result);
+    }
+
+
 
     /**
      * 云洋物流轨迹
@@ -563,5 +589,16 @@ class Test extends Controller
         $wxBusiness = new WxBusiness();
         $result = $wxBusiness->getAuthorizerInfo('wxa73953a201268b88');
         return R::ok($result);
+    }
+
+    /**
+     * 查询最新一次审核单状态
+     * @return void
+     * @throws DbException
+     * @throws Exception
+     */
+    public function getLatestAuditStatus(){
+        $wxBusiness = new WxBusiness();
+        $result = $wxBusiness->getLatestAuditStatus('wx4d70d06cdbc681db');
     }
 }

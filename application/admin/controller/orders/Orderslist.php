@@ -679,7 +679,8 @@ class Orderslist extends Backend
 //            $row['sender_address']=$row['sender_province'].$row['sender_city'];
 //            $row['receive_address']=$row['receive_province'].$row['receive_city'];
         }
-        $this->view->assign("row", $row->toArray());
+        $this->view->assign("row",
+            $row->toArray());
 
         return $this->view->fetch();
     }
