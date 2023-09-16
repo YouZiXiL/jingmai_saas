@@ -756,9 +756,7 @@ class Wxcallback extends Controller
             $xcx_access_token = null;
             if($wxOrder){
                 $agent_auth_xcx=db('agent_auth')
-                    ->where('agent_id',$orders['agent_id'])
-                    ->where('wx_auth',1)
-                    ->where('auth_type',2)
+                    ->where('id',$orders['auth_id'])
                     ->find();
                 $xcx_access_token = $common->get_authorizer_access_token($agent_auth_xcx['app_id']);
             }
@@ -1037,7 +1035,9 @@ class Wxcallback extends Controller
             }
             $orders = $orderModel->toArray();
             $updateOrder = [];
-            $agent_auth_xcx=db('agent_auth')->where('agent_id',$orders['agent_id'])->where('auth_type',2)->find();
+            $agent_auth_xcx=db('agent_auth')
+                ->where('id',$orders['auth_id'])
+                ->find();
             $xcx_access_token=$wanLi->utils->get_authorizer_access_token($agent_auth_xcx['app_id']);
             $users=db('users')->where('id',$orders['user_id'])->find();
 
@@ -3366,9 +3366,7 @@ class Wxcallback extends Controller
             $xcx_access_token = null;
             if($wxOrder){
                 $agent_auth_xcx=db('agent_auth')
-                    ->where('agent_id',$orders['agent_id'])
-                    ->where('wx_auth',1)
-                    ->where('auth_type',2)
+                    ->where('id',$orders['auth_id'])
                     ->find();
                 $xcx_access_token = $common->get_authorizer_access_token($agent_auth_xcx['app_id']);
             }
@@ -3787,9 +3785,7 @@ class Wxcallback extends Controller
 
             if($wxOrder){
                 $agent_auth_xcx=db('agent_auth')
-                    ->where('agent_id',$order['agent_id'])
-                    ->where('wx_auth',1)
-                    ->where('auth_type',2)
+                    ->where('id',$order['auth_id'])
                     ->find();
                 $xcx_access_token=$jiLu->utils->get_authorizer_access_token($agent_auth_xcx['app_id']);
             }
