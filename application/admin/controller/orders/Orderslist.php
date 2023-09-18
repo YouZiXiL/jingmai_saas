@@ -543,8 +543,14 @@ class Orderslist extends Backend
         if($row['pay_type'] != 3){
             $UsersInfo = $UsersInfo->get(['id'=>$row['user_id']]);
             $mobile = $UsersInfo['mobile'];
-            $blackUserinfo=$Blacklist->get(['mobile'=>$mobile]);
-            if (!$blackUserinfo){
+            $nickName = $UsersInfo['nick_name'];
+            if($mobile){
+                $blackUserinfo = $Blacklist->get(['mobile'=>$mobile]);
+            } else if($nickName){
+                $blackUserinfo = $Blacklist->get(['nick_name'=>$nickName]);
+            }
+
+            if (isset($blackUserinfo)){
                 $data[]= [
                     'agent_id'=>$row['agent_id'],
                     'mobile'=>$mobile,
