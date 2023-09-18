@@ -1009,7 +1009,7 @@ class Yunyang extends Controller
         $users=db('users')->where('id',$this->user->id)->find();
         return json([
             'status'=>200,
-            'data'=>['nick_name'=>$users['mobile'],'avatar'=>$users['avatar']],
+            'data'=>['nick_name'=>$users['mobile']??$users['nick_name'],'avatar'=>$users['avatar']],
             'msg'=>'成功'
         ]);
     }
