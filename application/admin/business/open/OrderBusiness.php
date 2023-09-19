@@ -92,6 +92,7 @@ class OrderBusiness extends Backend
             'users_xuzhong'=>$channel['users_xuzhong']??0,
             'agent_price'=>$channel['agent_price'],
             'final_price'=>$channel['final_price'],
+            'user_price'=>$channel['final_price'],
             'insured_price'=>$channel['freightInsured']??0,//保价费用
             'insured'=>$info['insured'],//保价金额
             'weight'=>$info['weight'],
