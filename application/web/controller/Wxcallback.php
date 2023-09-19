@@ -3712,9 +3712,17 @@ class Wxcallback extends Controller
                 'expressTrack','actualWeight','raw');
             db('jilu_callback')->insert($compact);
             if($expressNo){
-                $orderModel = Order::where('waybill', $expressNo)->find();
+                for ($i = 0; $i < 5; $i++){
+                    $orderModel = Order::where('waybill', $expressNo)->find();
+                    if ($orderModel) continue;
+                }
+
             }else{
-                $orderModel = Order::where('shopbill', $expressId)->find();
+                for ($i = 0; $i < 5; $i++){
+                    $orderModel = Order::where('shopbill', $expressId)->find();
+                    if ($orderModel) continue;
+                }
+
             }
 
 //            if(empty($orderModel)){
