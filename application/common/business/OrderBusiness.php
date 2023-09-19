@@ -143,6 +143,7 @@ class OrderBusiness
             'final_freight'=>$channel['payPrice']??0, //平台支付的费用
             'agent_price'=>$channel['agent_price'], // 代理商支付费用
             'final_price'=>$channel['final_price'], // 用户支付费用
+            'user_price'=>$channel['final_price'], // 用户支付费用
             'insured_price'=>$channel['freightInsured']??0,//保价费用
             'comments'=>'无',
             'pay_status'=>0,
