@@ -183,6 +183,10 @@ class OrderBusiness
         $order = Order::create($data);
         if (!$order){
             throw new Exception('插入数据失败');
+        }else{
+            recordLog('user-create-order',
+                '用户下单：'.json_encode($order->toArray(), JSON_UNESCAPED_UNICODE)
+            );
         }
     }
 }

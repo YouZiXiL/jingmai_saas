@@ -1338,7 +1338,7 @@ class Wxcallback extends Controller
                 case 'YY':
                     $yy = new \app\common\business\YunYang();
                     $yyResult = $yy->createOrderHandle($orders, $record);
-                    if (empty($yyResult) ||  $yyResult['code']!=1){
+                    if (isset($yyResult['code']) &&  $yyResult['code']!=1){
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付成功下单失败  执行退款操作
                         $errMsg = $yyResult['message']??'下单失败';
@@ -1349,7 +1349,7 @@ class Wxcallback extends Controller
                             'order_status'=>'下单失败',
                             'out_refund_no'=>$out_refund_no,
                         ];
-                        if (isset($yyResult['code']) && $yyResult['code'] == 0) $errMsg = '下单失败';
+                        if ( $yyResult['code'] == 0) $errMsg = '下单失败';
                         $data = [
                             'type'=>3,
                             'order_id'=>$orders['id'],

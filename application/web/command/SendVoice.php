@@ -39,6 +39,10 @@ class SendVoice extends Command
                     'Authorization-Type:apikey',
                     'Content-Type:application/x-www-form-urlencoded'
                 ]);
+                recordLog('send-voice',
+                    '订单ID：'. $v['out_trade_no']. PHP_EOL.
+                    '返回参数：'.$res
+                );
                 $res=json_decode($res,true);
                 if ($res['code']==200000){
                     db('admin')->where('id',$v['agent_id'])->setDec('agent_voice');
@@ -78,6 +82,10 @@ class SendVoice extends Command
                     'Authorization-Type:apikey',
                     'Content-Type:application/x-www-form-urlencoded'
                 ]);
+                recordLog('send-voice',
+                    '订单ID：'. $v['out_trade_no']. PHP_EOL.
+                    '返回参数：'.$res
+                );
                 $res=json_decode($res,true);
                 if ($res['code']==200000){
                     db('admin')->where('id',$v['agent_id'])->setDec('agent_voice');
