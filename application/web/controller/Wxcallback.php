@@ -400,6 +400,8 @@ class Wxcallback extends Controller
     function way_type(){
         $pamar=$this->request->param();
         try {
+            $raw = json_encode($pamar, JSON_UNESCAPED_UNICODE);
+            recordLog('channel-callback',  '云洋-' . PHP_EOL . $raw  );
             if (empty($pamar)){
                 throw new Exception('传来的数据为空');
             }
@@ -425,7 +427,7 @@ class Wxcallback extends Controller
                 'bill_type'=>$pamar['billType'],
                 'comments'=>$pamar['comments'],
                 'total_price'=>$pamar['totalPrice']??'',
-                'raw' => json_encode($pamar, JSON_UNESCAPED_UNICODE),
+                'raw' => $raw,
                 'create_time'=>time(),
             ];
             db('yy_callback')->insert($receive);
