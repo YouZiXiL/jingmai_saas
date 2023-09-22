@@ -1134,9 +1134,9 @@ class Yunyang extends Controller
         if (empty($file)||empty($pamar['id'])||empty($pamar['salf_weight'])||empty($pamar['salf_volume'])||empty($pamar['salf_content'])||!is_string($pamar['salf_content'])){
                 throw new Exception('参数错误');
         }
-        //判断图片字节 最大5M
-        if ($file->getSize()>5242880){
-                throw new Exception('图片不能超过5M');
+        //判断图片字节 最大1M
+        if ($file->getSize()>1048000){
+                throw new Exception('图片不能超过1M');
             }
         $orders=db('orders')->where('id',$pamar['id'])->where('user_id',$this->user->id)->find();
         if (!$orders){
@@ -1206,6 +1206,7 @@ class Yunyang extends Controller
 
             return json(['status'=>200,'data'=>'','msg'=>'提交成功']);
         }catch (Exception $e){
+          recordLog('after-sale', '[' .   $e->getLine() .']'.$e->getMessage() .  PHP_EOL.$e->getTraceAsString());
             return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
         }
 
