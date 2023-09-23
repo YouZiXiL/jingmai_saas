@@ -45,12 +45,10 @@ class Test extends Controller
      * @throws Exception
      */
     public function test(){
-        dd((int)"ssfefefefew");
-        $qbd = new QBiDaBusiness();
-        $balance = $qbd->queryBalance();
         $setup= new SetupBusiness();
-        $balanceValue = $setup->getBalanceValue('QBD');
-        return R::ok(['推送配置'=>$balanceValue, '余额'=>$balance]);
+        // 设置的提醒金额
+        $balanceValue = $setup->getBalanceValue('YY');
+        return R::ok($balanceValue);
 
     }
 

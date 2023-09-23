@@ -565,8 +565,8 @@ class Wxcallback extends Controller
                 KD100Sms::run()->overload($orders);
             }
             //更改耗材状态
-            if ($pamar['freightHaocai']!=0 &&empty($orders['consume_time'])){
-                $up_data['haocai_freight']=$pamar['freightHaocai'];
+            if (( !empty($pamar['freightHaocai']) || !empty($pamar['freightInsured']))&&empty($orders['consume_time'] )){
+                $up_data['haocai_freight']= $pamar['freightHaocai'] + $pamar['freightInsured'];
                 $data = [
                     'type'=>2,
                     'freightHaocai' =>$pamar['freightHaocai'],
