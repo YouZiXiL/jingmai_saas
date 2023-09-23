@@ -44,7 +44,7 @@ class KD100Sms
         $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
         $link = request()->host() . "/cz/{$agentCode}/{$orderCode}";
-        $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
+        $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link], JSON_UNESCAPED_UNICODE);
         $resJson = $this->send($content, $out_trade_no, $order,7762);
         $this->pushLog($resJson, $order, 1);
         db('agent_sms')->insert([
