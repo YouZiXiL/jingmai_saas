@@ -97,8 +97,8 @@ class JiLu
         $parma = $this->setParma('OUTCOME_ORDER', $content);
         $res = $this->utils->httpRequest($this->baseUlr, $parma, 'POST');
         $result = json_decode($res, true);
-        if($result['code'] != 1) return $result['msg'];
-        return $result['data']['balance'];
+        if( isset($result['code']) && $result['code'] != 1) return $result['msg'];
+        return $result['data']['balance']??0;
     }
 
     /**

@@ -1288,6 +1288,7 @@ class Wxcallback extends Controller
      * 微信下单支付回调
      */
     function wx_order_pay(){
+        recordLog('wx-callback', '参数：' . json_encode(input()));
         $inWechatpaySignature = $this->request->header('Wechatpay-Signature');
         $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');
         $inWechatpaySerial = $this->request->header('Wechatpay-Serial');
@@ -1546,12 +1547,12 @@ class Wxcallback extends Controller
                     $jiLu = new JiLu();
                     $resultJson = $jiLu->createOrderHandle($orders, $record);
                     $result = json_decode($resultJson, true);
+                    recordLog('jilu-create-order',
+                        '订单：'.$orders['out_trade_no']. PHP_EOL .
+                        '返回结果：'.$resultJson . PHP_EOL .
+                        '请求参数：' . $record
+                    );
                     if ($result['code']!=1){ // 下单失败
-                        recordLog('channel-create-order-err',
-                            '订单：'.$orders['out_trade_no']. PHP_EOL .
-                            '极鹭下单失败：'.$resultJson . PHP_EOL .
-                            '请求参数：' . $record
-                        );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         $errMsg = $result['data']['message']??$result['msg'];
                         if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
