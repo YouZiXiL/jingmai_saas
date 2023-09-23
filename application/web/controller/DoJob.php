@@ -108,7 +108,7 @@ class DoJob
             elseif ($data['type']==2){
                 $orders=db('orders')->where('id',$data['order_id'])->find();
                 try {
-                    if (empty($orders['consume_time'])){
+                    if (empty($orders['consume_time']) || isset($data['isInsured'])){
                         db('orders')->where('id',$orders['id'])->setInc('agent_price',$data['freightHaocai']);//代理商结算金额+耗材金额
                         //代理商减少余额  耗材
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'运单号：'.$orders['waybill'].' 耗材扣除金额：'.$data['freightHaocai'].'元');
@@ -148,10 +148,11 @@ class DoJob
                             $aliBusiness->sendMaterialTemplate($data, $orders);
                         }
 
-                        db('orders')->where('id',$orders['id'])->update([
-                            'consume_time'=>time(),
+                        $upData = [
                             'consume_status'=>1
-                        ]);
+                        ];
+                        if (isset($data['isInsured'])) $upData['consume_time'] = time();
+                        db('orders')->where('id',$orders['id'])->update($upData);
                     }else{
                         //耗材变动
                         if ($orders['haocai_freight']!=$data['freightHaocai']){

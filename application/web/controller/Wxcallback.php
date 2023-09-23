@@ -564,9 +564,32 @@ class Wxcallback extends Controller
                 // 发送超重短信
                 KD100Sms::run()->overload($orders);
             }
+
+            // 保价费用
+            if (!empty($pamar['freightInsured']) && empty($orders['insured']) && empty($orders['insured_price'])){
+                // 耗材费用
+                $up_data['haocai_freight']= $orders['haocai_freight']??0+ $pamar['freightInsured'] ;
+                // 保价费用
+                $up_data['insured_price']= $pamar['freightInsured'] ;
+                $data = [
+                    'type'=>2,
+                    'isInsured' => true,
+                    'freightHaocai' =>$pamar['freightInsured'],
+                    'order_id' => $orders['id'],
+                    'xcx_access_token'=>$xcx_access_token,
+                    'open_id'=>$users?$users['open_id']:"",
+                    'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
+                ];
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $data,'way_type');
+
+                // 发送耗材短信
+                KD100Sms::run()->material($orders);
+            }
+
             //更改耗材状态
-            if (( !empty($pamar['freightHaocai']) || !empty($pamar['freightInsured']))&&empty($orders['consume_time'] )){
-                $up_data['haocai_freight']= $pamar['freightHaocai'] + $pamar['freightInsured'];
+            if ( !empty($pamar['freightHaocai']) && empty($orders['consume_time'] )){
+                $up_data['haocai_freight']= $up_data['haocai_freight']??0 + $pamar['freightHaocai'] ;
                 $data = [
                     'type'=>2,
                     'freightHaocai' =>$pamar['freightHaocai'],
