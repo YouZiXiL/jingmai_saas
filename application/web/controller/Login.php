@@ -239,7 +239,7 @@ class Login extends Controller
                 }
                 $s=$user->save($user_info);
                 $user_id=$user->id;
-                $phone = $user_info['mobile'];
+                $phone = $user_info['mobile']??'';
 
             }
             else {

@@ -1229,7 +1229,7 @@ class Wxcallback extends Controller
             }
             exit('success');
         }catch (\Exception $e){
-            file_put_contents('wx_overload_pay.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+            recordLog('overload-pay-callback', '（'. $e->getLine() .'）' . $e->getMessage()) . PHP_EOL . $e->getTraceAsString() ;
             exit('success');
         }
     }
@@ -1305,7 +1305,7 @@ class Wxcallback extends Controller
             }
             exit('success');
         }catch (\Exception $e){
-            file_put_contents('wx_haocai_pay.txt',$e->getMessage().PHP_EOL,FILE_APPEND);
+            recordLog('haocai-pay-callback', '（'. $e->getLine() .'）' . $e->getMessage()) . PHP_EOL . $e->getTraceAsString() ;
             exit('success');
         }
     }
