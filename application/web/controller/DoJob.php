@@ -149,11 +149,13 @@ class DoJob
                         }
 
                         $upData = [
-                            'consume_status'=>1
+                            'consume_status'=>1,
+                            'consume_time'=>time(),
                         ];
-                        if (isset($data['isInsured'])) $upData['consume_time'] = time();
+                        if (isset($data['isInsured'])) $upData['consume_time'] = null;
                         db('orders')->where('id',$orders['id'])->update($upData);
-                    }else{
+                    }
+                    else{
                         //耗材变动
                         if ($orders['haocai_freight']!=$data['freightHaocai']){
                             db('orders')->where('id',$orders['id'])->setDec('agent_price',$orders['haocai_freight']);//代理商结算金额-耗材金额

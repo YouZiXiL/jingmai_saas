@@ -526,11 +526,14 @@ class Wxcallback extends Controller
             }
             // 超重
             if ($orders['weight'] < $finalWeight&&empty($orders['final_weight_time'])){
+
                 $up_data['overload_status']=1;
                 //超出重量
                 $overloadWeight = ceil($finalWeight - $orders['weight']);
+
                 $agentMore = $orders['agent_xuzhong'];
                 $userMore = $orders['users_xuzhong'];
+
                 // 计算续重单价
                 if(empty((float)$agentMore)){
                     //超出金额
