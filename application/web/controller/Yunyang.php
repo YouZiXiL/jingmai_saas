@@ -718,6 +718,7 @@ class Yunyang extends Controller
     {
         $id = input('id');
         $cancelReason = input('reason');
+        return R::ok('取消成功');
         try {
             if (empty($id)){
                 return json(['status'=>400,'data'=>'','msg'=>'参数错误']);

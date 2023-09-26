@@ -150,9 +150,9 @@ class DoJob
 
                         $upData = [
                             'consume_status'=>1,
-                            'consume_time'=>time(),
                         ];
-                        if (isset($data['isInsured'])) $upData['consume_time'] = null;
+
+                        if (!isset($data['isInsured'])) $upData['consume_time'] = time();
                         db('orders')->where('id',$orders['id'])->update($upData);
                     }
                     else{
