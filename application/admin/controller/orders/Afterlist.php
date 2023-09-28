@@ -312,21 +312,18 @@ class Afterlist extends Backend
 
                 if ($orders['overload_status']==0){
                     throw new Exception('此订单没有超重');
+
                 }
 
                 if (empty($params['cal_weight'])||$params['cal_weight']<$orders['weight']){
                     throw new Exception('更改重量填写错误');
                 }
-                if ($orders['waybill'] == 'YT2506749266796'){
-                    dd($params['cal_weight']==$orders['weight']);
-                }
-                if($params['cal_weight']==$orders['weight']){ // 审核重量等于下单重量，证明订单没有超重，退回客户之前补的超重费
-                    if($orders['overload_status']==2){
+                if($params['cal_weight']== $orders['weight'] ){ // 经合适没有超重。
+                    if($orders['overload_status']==2){ // 用户已付超重，退回客户之前补的超重费
                         $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
                         $up_data['out_overload_refund_no']=$out_overload_refund_no;
-                        if($row['final_weight'] >  $params['cal_weight']){ // 计费重量大于更改重量
+                        if($row['final_weight'] >  $params['cal_weight']){ // 计费重量大于审核重量
                             // 退超重费
-                            $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
                             $wx_pay=$common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
                             $wx_pay
                                 ->chain('v3/refund/domestic/refunds')
@@ -341,18 +338,17 @@ class Afterlist extends Backend
                                     ],
                                 ]]);
                             $up_data['out_overload_refund_no']=$out_overload_refund_no;
-                            // 代理商加款
-                            $up_data['agent_price']= bcsub($up_data['agent_price'],$orders['agent_overload_price'],2) ;
-                            $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_overload_price'],1,'运单号：'.$orders['waybill'].' 核重退回金额：'.$orders['agent_overload_price'].'元');
-                            $remark='核重退回金额：'.$orders['agent_overload_price'].'元';
                         }
-                        $up_data['overload_status']=0;
-                        $up_data['overload_price']=0;//用户新超重金额
-                        $up_data['agent_overload_price']=0;//代理商新超重金额
-                        $up_data['final_weight']=$params['cal_weight'];
-                        $orders->allowField(true)->save($up_data);
                     }
-                }else{
+                    // 代理商加款
+                    $up_data['agent_price']= bcsub($orders['agent_price'],$orders['agent_overload_price'],2) ;
+                    $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_overload_price'],1,'运单号：'.$orders['waybill'].' 核重退回金额：'.$orders['agent_overload_price'].'元');
+                    $remark='核重退回金额：'.$orders['agent_overload_price'].'元';
+                    $up_data['overload_status']=0;
+                    $up_data['overload_price']=0;//用户新超重金额
+                    $up_data['agent_overload_price']=0;//代理商新超重金额
+                }
+                else if($params['cal_weight'] > $orders['weight']){ // 超重，但超重金额不对
                     $overload_weight=$params['cal_weight']-$orders['weight'];//审核重量-下单重量
                     $users_overload_amt=bcmul(ceil($overload_weight),$orders['users_xuzhong'],2);//用户补缴金额
                     $agent_overload_amt=bcmul(ceil($overload_weight),$orders['agent_xuzhong'],2);//代理补缴金额
@@ -361,7 +357,7 @@ class Afterlist extends Backend
                     }
 
                     if($orders['agent_overload_price']<=$agent_overload_amt){
-                        // 比之前重，扣除超重费
+                        //  比之前重，扣除超重费
                         $agent_overload_amt=bcsub($agent_overload_amt,$orders['agent_overload_price'],2);
                         $users_overload_amt=bcsub($users_overload_amt,$orders['overload_price'],2);
                         if($orders->pay_type == 3){
@@ -392,17 +388,15 @@ class Afterlist extends Backend
                         $up_data['out_overload_refund_no']=$out_overload_refund_no;
                         // 代理商加款
                         $dec_agent_overload_price=bcsub($orders['agent_overload_price'],$agent_overload_amt,2);
-                        $up_data['agent_price']= bcsub($up_data['agent_price'],$dec_agent_overload_price,2) ;
+                        $up_data['agent_price']= bcsub($orders['agent_price'],$dec_agent_overload_price,2) ;
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$dec_agent_overload_price,1,'运单号：'.$orders['waybill'].' 核重退回金额：'.$dec_agent_overload_price.'元');
                         $remark='核重退回金额：'.$dec_agent_overload_price.'元';
                     }
+                    $up_data['overload_price']=$users_overload_amt;//用户新超重金额
+                    $up_data['agent_overload_price']=$agent_overload_amt;//代理商新超重金额
                 }
-
-                $up_data['overload_price']=$users_overload_amt;//用户新超重金额
-                $up_data['agent_overload_price']=$agent_overload_amt;//代理商新超重金额
                 $up_data['final_weight']=$params['cal_weight'];
                 $orders->allowField(true)->save($up_data);
-
             }
             $Admin= Admin::get($row['agent_id']);
             //发送公众号模板消息
