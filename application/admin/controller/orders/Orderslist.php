@@ -543,16 +543,16 @@ class Orderslist extends Backend
         if($row['pay_type'] != 3){
             $UsersInfo = $UsersInfo->get(['id'=>$row['user_id']]);
             $mobile = $UsersInfo['mobile'];
-            $nickName = $UsersInfo['nick_name'];
             if($mobile){
                 $blackUserinfo = $Blacklist->get(['mobile'=>$mobile]);
-            } else if($nickName){
-                $blackUserinfo = $Blacklist->get(['nick_name'=>$nickName]);
+            } else {
+                $blackUserinfo = $Blacklist->get(['user_id'=>$row['user_id']]);
             }
 
             if (isset($blackUserinfo)){
                 $data[]= [
                     'agent_id'=>$row['agent_id'],
+                    'user_id'=>$row['user_id'],
                     'mobile'=>$mobile,
                     'name'=>$row['sender'],
                     'remark'=>$remark,
@@ -563,11 +563,6 @@ class Orderslist extends Backend
 
         $Blacklist->saveAll($data);
         $this->success('成功');
-
-
-
-
-
     }
 
     /**
@@ -614,7 +609,7 @@ class Orderslist extends Backend
             ]);
             $this->success('发送超重语音成功');
         }else{
-            $this->error('发送失败');
+            $this->error($res['message']);
         }
     }
 
