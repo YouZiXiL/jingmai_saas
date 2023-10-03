@@ -74,17 +74,23 @@ class KD100Sms
         $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
         $resJson = $this->send($content, $out_trade_no, $order,7769);
         $this->pushLog($resJson, $order, 2);
-//
-//        db('agent_sms')->insert([
-//            'agent_id'=>$order['agent_id'],
-//            'type'=>1,
-//            'status'=>0,
-//            'phone'=>$order['sender_mobile'],
-//            'waybill'=>$order['waybill'],
-//            'out_trade_no'=>$out_trade_no,
-//            'content'=>$content,
-//            'create_time'=>time()
-//        ]);
+    }
+
+    /**
+     * 发送保价短信
+     * @param array $order
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException|Exception
+     */
+    public function insured(array $order){
+        $out_trade_no=$this->utils->get_uniqid();
+        $agentCode = $this->utils->generateShortCode($order['agent_id']);
+        $orderCode = $this->utils->generateShortCode($order['id']);
+        $link = request()->host() . "/bj/{$agentCode}/{$orderCode}";
+        $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
+        $resJson = $this->send($content, $out_trade_no, $order,7769);
+        $this->pushLog($resJson, $order, 2);
     }
 
     /**

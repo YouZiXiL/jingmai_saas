@@ -45,11 +45,11 @@ class Test extends Controller
      * @throws Exception
      */
     public function test(){
-        $setup= new SetupBusiness();
         // 设置的提醒金额
-        $balanceValue = $setup->getBalanceValue('YY');
-        return R::ok($balanceValue);
-
+        $orders=db('orders')
+            ->field('id,insured_status,overload_status,consume_status')
+            ->where('waybill','S60749415015')->find();
+        return R::ok($orders);
     }
 
     // 获取分享链接

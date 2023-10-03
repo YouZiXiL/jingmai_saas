@@ -618,6 +618,47 @@ class Common
 
 
     /**
+     * 小程序保价链接
+     * @return Redirect
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @throws Exception
+     */
+    public function miniInsuredLink(){
+        $agentId = $this->decodeShortCode(input('agentCode'));
+        $orderId = $this->decodeShortCode(input('orderCode'));
+        $agent = Admin::find($agentId);
+        if(!$agent) exit('代理商不存在');
+        $appId=db('agent_auth')
+            ->where('agent_id',$agentId)
+            ->where('auth_type', 2)
+            ->value('app_id' );
+        if (!$appId) exit('代理商没配置APPID');
+        $accessToken = $this->get_authorizer_access_token($appId);
+        $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
+        $resJson = $this->httpRequest($url,[
+            "path" => "/pages/informationDetail/insured/insured",
+            "query" =>  "id={$orderId}",
+        ],'post');
+        $res = json_decode($resJson, true);
+        if (@$res['errcode'] == 0)  return redirect($res['url_link']);
+        Log::error("生成保价链接失败：orderId = {$orderId}，详情：{$resJson}");
+        exit("保价-进入小程序失败：orderId = {$orderId}");
+    }
+
+    private function buildMiniLink() {
+        $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $base = 62;
+        $result = '';
+        do {
+            $result .= $chars[mt_rand(0, $base)];
+        } while ($id /= $base);
+        return $result;
+    }
+
+
+    /**
      * 生成短链接码
      * @param $id
      * @return string

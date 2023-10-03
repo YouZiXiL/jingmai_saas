@@ -570,7 +570,10 @@ class Yunyang extends Controller
         $order=db('orders')
             ->where("channel_tag","<>","同城")
             ->where('pay_status','<>',0)
-            ->field('id,waybill,sender_province,receive_province,tag_type,sender,receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,consume_status,aftercoupon,couponpapermoney')
+            ->field('id,waybill,sender_province,receive_province,tag_type,sender,
+            receiver,order_status,haocai_freight,final_price,item_pic,overload_status,pay_status,
+            insured_status,insured_cost,
+            consume_status,aftercoupon,couponpapermoney')
             ->order('id','desc')
             ->where('user_id',$this->user->id)
             ->page($param['page'],10);
@@ -598,8 +601,11 @@ class Yunyang extends Controller
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
         $order=db('orders')->field(
-            'id,waybill,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,yy_fail_reason,
-            receive_address,comments,item_pic,overload_status,weight,final_weight,haocai_freight,overload_price,insured,insured_price,final_price,pay_status,consume_status,aftercoupon,couponpapermoney,create_time'
+            'id,waybill,order_status,sender,sender_mobile,sender_address,receiver,receiver_mobile,
+            yy_fail_reason,receive_address,comments,item_pic,overload_status,weight,final_weight,haocai_freight,
+            overload_price,insured,insured_price,final_price,pay_status,insured_cost,insured_status
+            consume_status,aftercoupon,couponpapermoney,
+            create_time'
         )
             ->where('id',$param['id'])
             ->where('user_id',$this->user->id)
@@ -1015,8 +1021,99 @@ class Yunyang extends Controller
     }
 
     /**
-     * 耗材详情
+     * 保价详情
      */
+    function insured_detail(): Json
+    {
+        $id=$this->request->param('id');
+        if (empty($id)||!is_numeric($id)){
+            return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
+        }
+        $order=db('orders')
+            ->field('id,waybill,item_name,insured_cost')
+            ->where('insured_status',1)
+            ->where('id',$id)
+            ->where('user_id',$this->user->id)
+            ->find();
+        if (!$order) return R::error('没有耗材信息');
+        $data=[
+            'status'=>200,
+            'data'=>$order,
+            'msg'=>'成功'
+        ];
+        return json($data);
+    }
+
+    function insured_pay(): Json
+    {
+        $id=$this->request->param('id');
+        if (empty($id)||!is_numeric($id)){
+            return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
+        }
+        $order=db('orders')->where('id',$id)->where('user_id',$this->user->id)->find();
+        if ($order['insured_status']==2){
+            return json(['status'=>400,'data'=>'','msg'=>'保价已处理']);
+        }
+
+        $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
+
+        try {
+            if($order['pay_type'] == 1){
+                $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+                $insured_out_no='BJ'.$this->common->get_uniqid();
+                $resp = $wx_pay
+                    ->chain('v3/pay/transactions/jsapi')
+                    ->post(['json' => [
+                        'mchid'        => $agent_info['wx_mchid'],
+                        'out_trade_no' => $insured_out_no,
+                        'appid'        => $this->user->app_id,
+                        'description'  => '保价补缴-'.$insured_out_no,
+                        'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_insured_pay',
+                        'amount'       => [
+                            'total'    => (int)bcmul($order['insured_cost'],100),
+                            'currency' => 'CNY'
+                        ],
+                        'payer'        => [
+                            'openid'   =>$this->user->open_id
+                        ]
+                    ]]);
+                $merchantPrivateKeyFilePath = file_get_contents('uploads/apiclient_key/'.$agent_info['wx_mchid'].'.pem');
+                $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+
+                $prepay_id=json_decode($resp->getBody(),true);
+                if (!array_key_exists('prepay_id',$prepay_id)){
+                    throw new Exception('拉取支付错误');
+                }
+                $params = [
+                    'appId'     => $this->user->app_id,
+                    'timeStamp' => (string)Formatter::timestamp(),
+                    'nonceStr'  => Formatter::nonce(),
+                    'package'   =>'prepay_id='. $prepay_id['prepay_id'],
+                ];
+                $params += ['paySign' => Rsa::sign(
+                    Formatter::joinedByLineFeed(...array_values($params)),
+                    $merchantPrivateKeyInstance
+                ), 'signType' => 'RSA'];
+                db('orders')->where('id',$id)->update([
+                    'insured_mchid'=>$agent_info['wx_mchid'],
+                    'insured_mchcertificateserial'=>$agent_info['wx_mchcertificateserial'],
+                    'insured_out_no'=>$insured_out_no
+                ]);
+                return json(['status'=>200,'data'=>$params,'msg'=>'成功']);
+            }
+            elseif ($order['pay_type'] == 2){
+                $aliBusiness = new AliBusiness();
+                $tradeNo = $aliBusiness->material($order, $this->user->open_id);
+                return R::ok($tradeNo);
+            }
+            return R::error('未知渠道');
+
+        } catch (\Exception $e) {
+            // 进行错误处理
+            return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
+        }
+    }
+
     function haocai_detail(): Json
     {
         $id=$this->request->param('id');

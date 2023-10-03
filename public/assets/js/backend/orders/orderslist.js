@@ -128,7 +128,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                         </div>`;
                                 }
 
-
                                 return `<div class="py-2" style="display: flex; flex-direction: column; align-items: start">
                                         ${waybill}
                                         <div class="p-1 d-flex a-center "> 
@@ -189,10 +188,28 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                         return true;
                                     });
                                 },
+                                'click .btn-insured_status': function (e, value, row) {
+                                    Layer.confirm('确定已经处保价问题了？', {
+                                        title: "处理保价",
+                                        icon: 0,
+                                    }, function(index){
+                                        Fast.api.ajax({
+                                            url: 'orders/orderslist/insured_change?ids='+row.id,
+                                        }, function () { //success
+                                            table.bootstrapTable('refresh');
+                                            Layer.close(index);
+                                            return true;
+                                        }, function () { //error
+                                            Layer.close(index);
+                                            return true;
+                                        });
+                                    }, function(){
+                                        return true;
+                                    });
+                                },
                             },
                             formatter: function (value, row, index){
-                                console.log('row', row)
-                                console.log('index', index)
+
                                 let color = 'text-muted';
                                 let orderColor = 'text-blue';
                                 let payStatus = '-';
@@ -203,6 +220,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
 
                                 let consumeStatus = '-';
                                 let consumeColor = color;
+
+                                let insuredStatus = '-';
+                                let insuredColor = color;
 
                                 if(row.pay_status === '1'){
                                     payStatus = '已支付';
@@ -234,6 +254,16 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     consumeStatus = '已处理';
                                     consumeColor = 'text-success';
                                 }
+
+
+                                if (row.insured_status === 1) {
+                                    insuredStatus = '待处理';
+                                    insuredColor = 'btn-insured_status btn btn-xs btn-danger-light';
+                                } else if (row.insured_status === 2) {
+                                    insuredStatus = '已处理';
+                                    insuredColor = 'text-success';
+                                }
+                                console.log('insured_status', row.insured_status);
                                 return ` <div class="py-2" style="display: flex; flex-direction: column; align-items: start">
                                     <div class="p-1 d-flex a-center">  
                                        <span class="text-muted">运单状态：</span><span class="${orderColor}">${value}</span>
@@ -249,6 +279,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     <div class="p-1 d-flex a-center">  
                                        <span class="text-muted">耗材状态：</span>
                                        <span class="${consumeColor}">${consumeStatus}</span>
+                                    </div>
+                                    <div class="p-1 d-flex a-center">  
+                                       <span class="text-muted">保价状态：</span>
+                                       <span class="${insuredColor}">${insuredStatus}</span>
                                     </div>
                                 </div>                               
                                 `;
@@ -591,11 +625,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
 
 $(document).on('click', '.btn-comments', function (event) {
     return;
-    console.log('////////////////////////');
     event.stopPropagation();
 
     let id = $('.btn-comments').data('id');
-    console.log('id', id)
     Fast.api.ajax({
         url: `orders/orderslist/comments/ids/${id}`
     }, function (data,ret) { //success

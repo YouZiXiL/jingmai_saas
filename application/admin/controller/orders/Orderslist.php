@@ -102,6 +102,7 @@ class Orderslist extends Backend
             ->where($where)
             ->field('id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,
             out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,channel_merchant,
+            insured_status,insured_cost,
             pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,cancel_reason,
             overload_price,pay_type,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
             ->where('pay_status','<>',0)
@@ -708,6 +709,20 @@ class Orderslist extends Backend
             $this->error(__('No Results were found'));
         }
         $row->save(['consume_status'=>2]);
+
+        $this->success('成功');
+    }
+
+    /**
+     * 保价处理
+     */
+    function insured_change($ids = null){
+        $row = $this->model->get(['id'=>$ids]);
+
+        if (!$row) {
+            $this->error(__('No Results were found'));
+        }
+        $row->save(['insured_status'=>2]);
 
         $this->success('成功');
     }

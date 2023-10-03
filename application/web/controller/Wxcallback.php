@@ -569,30 +569,22 @@ class Wxcallback extends Controller
             }
 
             // 保价费用
-            if (!empty($pamar['freightInsured']) && empty($orders['insured']) && empty($orders['insured_price'])){
-                // 耗材费用
-                $up_data['haocai_freight']= $orders['haocai_freight']??0+ $pamar['freightInsured'] ;
+            if (!empty($pamar['freightInsured']) && empty($orders['insured_time']) && $pamar['freightInsured']>$orders['insured_price']){
+                $insuredPrice =  round($pamar['freightInsured'] - $orders['insured_price'],2) ;
                 // 保价费用
-                $up_data['insured_price']= $pamar['freightInsured'] ;
-                $data = [
-                    'type'=>2,
-                    'isInsured' => true,
-                    'freightHaocai' =>$pamar['freightInsured'],
-                    'order_id' => $orders['id'],
-                    'xcx_access_token'=>$xcx_access_token,
-                    'open_id'=>$users?$users['open_id']:"",
-                    'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
-                ];
-                // 将该任务推送到消息队列，等待对应的消费者去执行
-                Queue::push(DoJob::class, $data,'way_type');
-
+                $up_data['insured_cost']= $insuredPrice ;
+                $up_data['agent_price']= $orders['agent_price'] +  $insuredPrice;
+                $up_data['insured_time'] = time();
+                $DbCommon= new Dbcommom();
+                // 给代理商扣款
+                $DbCommon->set_agent_amount($orders['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$orders['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
                 // 发送耗材短信
                 KD100Sms::run()->material($orders);
             }
 
             //更改耗材状态
             if ( !empty($pamar['freightHaocai']) && empty($orders['consume_time'] )){
-                $up_data['haocai_freight']= $up_data['haocai_freight']??0 + $pamar['freightHaocai'] ;
+                $up_data['haocai_freight']=  $pamar['freightHaocai'];
                 $data = [
                     'type'=>2,
                     'freightHaocai' =>$pamar['freightHaocai'],
@@ -1220,8 +1212,10 @@ class Wxcallback extends Controller
                 'overload_status' =>2,
             ];
             db('orders')->where('out_overload_no',$inBodyResourceArray['out_trade_no'])->update($update);//补缴超重成功
-            if(!empty($orders["haocai_freight"]) && $orders["consume_status"]==2){
+            // 判断是否为欠费订单
+            if( $orders["consume_status"] != 1 && $orders["insured_status"] != 1 ) {
                 $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                // 已被判定为欠费异常单 则不再处理
                 if($rebatelist->state!=4){
                     $rebatelist->state=1;
                     $rebatelist->save();
@@ -1242,10 +1236,7 @@ class Wxcallback extends Controller
         $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');// 请根据实际情况获取
         $inWechatpaySerial = $this->request->header('Wechatpay-Serial');// 请根据实际情况获取
         $inWechatpayNonce = $this->request->header('Wechatpay-Nonce');// 请根据实际情况获取
-
-
         $inBody = file_get_contents('php://input');
-
         $agent_info=db('admin')->where('wx_serial_no',$inWechatpaySerial)->find();
         // 根据通知的平台证书序列号，查询本地平台证书文件，
         $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$agent_info['wx_mchid'].'.pem');
@@ -1295,7 +1286,7 @@ class Wxcallback extends Controller
             db('orders')->where('out_haocai_no',$inBodyResourceArray['out_trade_no'])->update($update);//补缴超重成功
             $orders=db('orders')->where('out_haocai_no',$inBodyResourceArray['out_trade_no'])->find();
             //耗材和超重 费用均需要结清
-            if(!empty($orders["overload_price"]) && $orders["overload_status"]==2){
+            if( $orders["overload_status"] != 1 && $orders["insured_status"] != 1 ) {
                 $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
                 // 已被判定为欠费异常单 则不再处理
                 if($rebatelist->state!=4){
@@ -1306,6 +1297,88 @@ class Wxcallback extends Controller
             exit('success');
         }catch (\Exception $e){
             recordLog('haocai-pay-callback', '（'. $e->getLine() .'）' . $e->getMessage()) . PHP_EOL . $e->getTraceAsString() ;
+            exit('success');
+        }
+    }
+
+
+    /**
+     * 保价支付回调
+     */
+    function wx_insured_pay(){
+        $inWechatpaySignature = $this->request->header('Wechatpay-Signature');// 请根据实际情况获取
+        $inWechatpayTimestamp = $this->request->header('Wechatpay-Timestamp');// 请根据实际情况获取
+        $inWechatpaySerial = $this->request->header('Wechatpay-Serial');// 请根据实际情况获取
+        $inWechatpayNonce = $this->request->header('Wechatpay-Nonce');// 请根据实际情况获取
+        $inBody = file_get_contents('php://input');
+        $agent_info=db('admin')->where('wx_serial_no',$inWechatpaySerial)->find();
+        // 根据通知的平台证书序列号，查询本地平台证书文件，
+        $platformCertificateFilePath =file_get_contents('uploads/platform_key/'.$agent_info['wx_mchid'].'.pem');
+        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+
+        // 检查通知时间偏移量，允许5分钟之内的偏移
+        $timeOffsetStatus = 300 >= abs(Formatter::timestamp() - (int)$inWechatpayTimestamp);
+        $verifiedStatus = Rsa::verify(
+        // 构造验签名串
+            Formatter::joinedByLineFeed($inWechatpayTimestamp, $inWechatpayNonce, $inBody),
+            $inWechatpaySignature,
+            $platformPublicKeyInstance
+        );
+        try {
+            if (!$timeOffsetStatus && !$verifiedStatus) {
+                throw new Exception('签名构造错误或超时');
+            }
+            // 转换通知的JSON文本消息为PHP Array数组
+            $inBodyArray =json_decode($inBody, true);
+            // 使用PHP7的数据解构语法，从Array中解构并赋值变量
+            ['resource' => [
+                'ciphertext'      => $ciphertext,
+                'nonce'           => $nonce,
+                'associated_data' => $aad
+            ]] = $inBodyArray;
+            // 加密文本消息解密
+            $inBodyResource = AesGcm::decrypt($ciphertext, $agent_info['wx_mchprivatekey'], $nonce, $aad);
+            // 把解密后的文本转换为PHP Array数组
+            $inBodyResourceArray = json_decode($inBodyResource, true);
+            if ($inBodyResourceArray['trade_state']!='SUCCESS'||$inBodyResourceArray['trade_state_desc']!='支付成功'){
+                throw new Exception('未支付');
+            }
+
+            $orders=db('orders')
+                ->field('id,insured_status,overload_status,consume_status')
+                ->where('insured_out_no',$inBodyResourceArray['out_trade_no'])
+                ->find();
+
+            if(!$orders){
+                throw new Exception('找不到指定订单');
+            }
+
+            //如果订单未支付  调用云洋下单接口
+            if ($orders['insured_status']!=1){
+                throw new Exception('重复回调');
+            }
+
+            $update=[
+                'insured_wx_trade_no'=>$inBodyResourceArray['transaction_id'],
+                'insured_status' => 2,
+            ];
+            db('orders')
+                ->where('insured_out_no',$inBodyResourceArray['out_trade_no'])
+                ->update($update);//补缴成功
+
+
+            // 返利准备
+            if( $orders["overload_status"] != 1 && $orders["consume_status"] != 1 ) {
+                $rebatelist=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+                // 已被判定为欠费异常单 则不再处理
+                if($rebatelist->state!=4){
+                    $rebatelist->state=1;
+                    $rebatelist->save();
+                }
+            }
+            exit('success');
+        }catch (\Exception $e){
+            recordLog('insured-pay-callback', '（'. $e->getLine() .'）' . $e->getMessage()) . PHP_EOL . $e->getTraceAsString() ;
             exit('success');
         }
     }
@@ -3970,9 +4043,7 @@ class Wxcallback extends Controller
 
             }
 
-            if ($order['id'] == 112003){
-                dd($update);
-            }
+
             if (!empty($update)){
                 $orderModel->isUpdate(true)->save($update);
             }
