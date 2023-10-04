@@ -39,13 +39,13 @@
     <div class="form-group" style="display: none" id="c-agent_shouzhong">
         <label for="agent_shouzhong" class="control-label col-xs-12 col-sm-2">首重价格￥</label>
         <div class="col-xs-12 col-sm-8">
-            <input type="number" class="form-control" id="agent_shouzhong" name="row[agent_shouzhong]" autocomplete="off" value="0.1"  />
+            <input type="number" class="form-control" id="agent_shouzhong" name="row[agent_shouzhong]" autocomplete="off" value=""  />
         </div>
     </div>
     <div class="form-group" style="display: none" id="c-agent_xuzhong">
         <label for="agent_xuzhong" class="control-label col-xs-12 col-sm-2">续重价格￥</label>
         <div class="col-xs-12 col-sm-8">
-            <input type="number" class="form-control" id="agent_xuzhong" name="row[agent_xuzhong]" autocomplete="off" value="0.1"  />
+            <input type="number" class="form-control" id="agent_xuzhong" name="row[agent_xuzhong]" autocomplete="off" value=""  />
         </div>
     </div>
     {volist name="$profit" id="vo" key="key" }
@@ -57,48 +57,92 @@
     <div class="form-group">
         <label for="c-one_weight" class="control-label col-xs-12 col-sm-2">{$vo:mch_name}{$vo:express}首重价格:</label>
         <div class="col-xs-12 col-sm-8">
-            <input id="c-one_weight" class="form-control" step="0.01" name="profit[{$vo:id}][one_weight]" type="number" value="0.1">
+            <input id="c-one_weight" class="form-control" step="0.01" name="profit[{$vo:id}][one_weight]" type="number" value="">
         </div>
 <!--        <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip">-鲸喜圆通</p>-->
     </div>
     <div class="form-group">
         <label for="c-more_weight"  class="control-label col-xs-12 col-sm-2">{$vo:mch_name}{$vo:express}续重价格:</label>
         <div class="col-xs-12 col-sm-8">
-            <input id="c-more_weight" class="form-control" step="0.01" name="profit[{$vo:id}][more_weight]" type="number" value="0.1">
+            <input id="c-more_weight" class="form-control" step="0.01" name="profit[{$vo:id}][more_weight]" type="number" value="">
         </div>
     </div>
     {else if condition ="($vo.type == 2)"}
     <div class="form-group">
         <label for="c-ratio" class="control-label col-xs-12 col-sm-2">{$vo:mch_name}{$vo:express}上浮比例:</label>
         <div class="col-xs-12 col-sm-8">
-            <input id="c-ratio" class="form-control" step="0.01" name="profit[{$vo:id}][ratio]" type="number" value="3">
+            <input id="c-ratio" class="form-control" step="0.01" name="profit[{$vo:id}][ratio]" type="number" value="">
         </div>
     </div>
     {/if}
     {/volist}
-
-    <div class="form-group" style="display: none" id="c-sf_agent_ratio">
-        <label for="sf_agent_ratio" class="control-label col-xs-12 col-sm-2">顺风/EMS增加比例%</label>
+    <div class="form-group" style="display: none" id="c-agent_db_ratio">
+        <label for="agent_db_ratio" class="control-label col-xs-12 col-sm-2">德邦增加比例%</label>
         <div class="col-xs-12 col-sm-8">
-            <input type="number" class="form-control" id="sf_agent_ratio" name="row[sf_agent_ratio]" autocomplete="off" value="3"  />
+            <input type="number" class="form-control" id="agent_db_ratio" name="row[agent_db_ratio]" autocomplete="off" value=""  />
+        </div>
+    </div>
+    <div class="form-group" style="display: none" id="c-agent_sf_ratio">
+        <label for="agent_sf_ratio" class="control-label col-xs-12 col-sm-2">顺丰增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" id="agent_sf_ratio" name="row[agent_sf_ratio]" autocomplete="off" value=""  />
+        </div>
+    </div>
+    <div class="form-group" style="display: none" id="c-agent_jd_ratio">
+        <label for="agent_jd_ratio" class="control-label col-xs-12 col-sm-2">京东增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" id="agent_jd_ratio" name="row[agent_jd_ratio]" autocomplete="off" value=""  />
         </div>
     </div>
 
-    <div class="form-group" style="display: none" id="c-db_agent_ratio">
-        <label for="db_agent_ratio" class="control-label col-xs-12 col-sm-2">德邦/京东增加比例%</label>
+    <div class="form-group" style="display: none" id="c-agent_elec">
+        <label for="agent_elec" class="control-label col-xs-12 col-sm-2">电费增加比例%</label>
         <div class="col-xs-12 col-sm-8">
-            <input type="number" class="form-control" id="db_agent_ratio" name="row[db_agent_ratio]" autocomplete="off" value="3"  />
+            <input type="number" class="form-control" id="agent_elec" name="row[agent_elec]" autocomplete="off" value=""  />
         </div>
     </div>
 
+    <div class="form-group" style="display: none" id="c-agent_credit">
+        <label for="agent_credit" class="control-label col-xs-12 col-sm-2">话费增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" id="agent_credit" name="row[agent_credit]" autocomplete="off" value=""  />
+        </div>
+    </div>
+
+    <div class="form-group" style="display: none" id="c-agent_gas">
+        <label for="agent_gas" class="control-label col-xs-12 col-sm-2">燃气增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" id="agent_gas" name="row[agent_gas]" autocomplete="off" value=""  />
+        </div>
+    </div>
+
+    <div class="form-group" style="display: none" id="c-agent_water">
+        <label for="agent_water" class="control-label col-xs-12 col-sm-2">水费增加比例%</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" id="agent_water" name="row[agent_water]" autocomplete="off" value=""  />
+        </div>
+    </div>
 
     <div class="form-group" style="display: none" id="c-agent_tc">
         <label for="agent_tc" class="control-label col-xs-12 col-sm-2">同城增加比例%</label>
         <div class="col-xs-12 col-sm-8">
-            <input type="number" class="form-control" id="agent_tc" name="row[agent_tc]" autocomplete="off" value="3"  />
+            <input type="number" class="form-control" id="agent_tc" name="row[agent_tc]" autocomplete="off" value=""  />
         </div>
     </div>
 
+    <div class="form-group" style="display: none" id="c-sf_agent_ratio">
+        <label for="sf_agent_ratio" class="control-label col-xs-12 col-sm-2">顺风增加比例%(顺丰特惠)</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" id="sf_agent_ratio" name="row[sf_agent_ratio]" autocomplete="off" value=""  />
+        </div>
+    </div>
+
+    <div class="form-group" style="display: none" id="c-db_agent_ratio">
+        <label for="db_agent_ratio" class="control-label col-xs-12 col-sm-2">德邦增加比例%(寄重货)</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" id="db_agent_ratio" name="row[db_agent_ratio]" autocomplete="off" value=""  />
+        </div>
+    </div>
 
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>

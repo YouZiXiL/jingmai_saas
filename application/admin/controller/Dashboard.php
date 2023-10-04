@@ -3,6 +3,7 @@
 namespace app\admin\controller;
 
 use app\common\controller\Backend;
+use think\Db;
 
 
 /**
@@ -28,110 +29,149 @@ class Dashboard extends Backend
 
         [$one, $two, $three, $four, $five,$six,$seven]=$date;
 
-        if (isset($param['start_time'])&&isset($param['end_time'])){
-            if (in_array(2,$this->auth->getGroupIds())) {
 
-                $yuantong=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'圆通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $yuantong_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'圆通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $yunda=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'韵达','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $yunda_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'韵达','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $jitu=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'极兔','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $jitu_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'极兔','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $shentong=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'申通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $shentong_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'申通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $zhongtong=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'中通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $zhongtong_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'中通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $shunfeng=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'顺丰','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $shunfeng_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'顺丰','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $debang=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>[['eq','德邦'],['eq','德邦重货'],'or']])->where(['create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $debang_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>[['eq','德邦'],['eq','德邦重货'],'or']])->where(['create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $jingdong=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'京东','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $jingdong_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'京东','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-            } else {
-                $yuantong=db('orders')->where(['tag_type'=>'圆通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $yuantong_success=db('orders')->where(['tag_type'=>'圆通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $yunda=db('orders')->where(['tag_type'=>'韵达','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $yunda_success=db('orders')->where(['tag_type'=>'韵达','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $jitu=db('orders')->where(['tag_type'=>'极兔','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $jitu_success=db('orders')->where(['tag_type'=>'极兔','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $shentong=db('orders')->where(['tag_type'=>'申通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $shentong_success=db('orders')->where(['tag_type'=>'申通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $zhongtong=db('orders')->where(['tag_type'=>'中通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $zhongtong_success=db('orders')->where(['tag_type'=>'中通','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $shunfeng=db('orders')->where(['tag_type'=>'顺丰','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $shunfeng_success=db('orders')->where(['tag_type'=>'顺丰','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $debang=db('orders')->where(['tag_type'=>[['eq','德邦'],['eq','德邦重货'],'or']])->where(['create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $debang_success=db('orders')->where(['tag_type'=>[['eq','德邦'],['eq','德邦重货'],'or']])->where(['create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-                $jingdong=db('orders')->where(['tag_type'=>'京东','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status','<>',0)->count();
-                $jingdong_success=db('orders')->where(['tag_type'=>'京东','create_time'=>['between',[$param['start_time'],$param['end_time']]]])->where('pay_status',1)->count();
-            }
 
-        }else{
-
-            if (in_array(2,$this->auth->getGroupIds())) {
-                $yuantong=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'圆通'])->where('pay_status','<>',0)->count();
-                $yuantong_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'圆通'])->where('pay_status',1)->count();
-                $yunda=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'韵达'])->where('pay_status','<>',0)->count();
-                $yunda_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'韵达'])->where('pay_status',1)->count();
-                $jitu=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'极兔'])->where('pay_status','<>',0)->count();
-                $jitu_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'极兔'])->where('pay_status',1)->count();
-                $shentong=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'申通'])->where('pay_status','<>',0)->count();
-                $shentong_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'申通'])->where('pay_status',1)->count();
-                $zhongtong=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'中通'])->where('pay_status','<>',0)->count();
-                $zhongtong_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'中通'])->where('pay_status',1)->count();
-                $shunfeng=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'顺丰'])->where('pay_status','<>',0)->count();
-                $shunfeng_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'顺丰'])->where('pay_status',1)->count();
-                $debang=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>[['eq','德邦'],['eq','德邦重货'],'or']])->where('pay_status','<>',0)->count();
-                $debang_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>[['eq','德邦'],['eq','德邦重货'],'or']])->where('pay_status',1)->count();
-                $jingdong=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'京东'])->where('pay_status','<>',0)->count();
-                $jingdong_success=db('orders')->where('agent_id',$this->auth->id)->where(['tag_type'=>'京东'])->where('pay_status',1)->count();
-
-            } else {
-                $yuantong=db('orders')->where(['tag_type'=>'圆通'])->where('pay_status','<>',0)->count();
-                $yuantong_success=db('orders')->where(['tag_type'=>'圆通'])->where('pay_status',1)->count();
-                $yunda=db('orders')->where(['tag_type'=>'韵达'])->where('pay_status','<>',0)->count();
-                $yunda_success=db('orders')->where(['tag_type'=>'韵达'])->where('pay_status',1)->count();
-                $jitu=db('orders')->where(['tag_type'=>'极兔'])->where('pay_status','<>',0)->count();
-                $jitu_success=db('orders')->where(['tag_type'=>'极兔'])->where('pay_status',1)->count();
-                $shentong=db('orders')->where(['tag_type'=>'申通'])->where('pay_status','<>',0)->count();
-                $shentong_success=db('orders')->where(['tag_type'=>'申通'])->where('pay_status',1)->count();
-                $zhongtong=db('orders')->where(['tag_type'=>'中通'])->where('pay_status','<>',0)->count();
-                $zhongtong_success=db('orders')->where(['tag_type'=>'中通'])->where('pay_status',1)->count();
-                $shunfeng=db('orders')->where(['tag_type'=>'顺丰'])->where('pay_status','<>',0)->count();
-                $shunfeng_success=db('orders')->where(['tag_type'=>'顺丰'])->where('pay_status',1)->count();
-                $debang=db('orders')->where(['tag_type'=>[['eq','德邦'],['eq','德邦重货'],'or']])->where('pay_status','<>',0)->count();
-                $debang_success=db('orders')->where(['tag_type'=>[['eq','德邦'],['eq','德邦重货'],'or']])->where('pay_status',1)->count();
-                $jingdong=db('orders')->where(['tag_type'=>'京东'])->where('pay_status','<>',0)->count();
-                $jingdong_success=db('orders')->where(['tag_type'=>'京东'])->where('pay_status',1)->count();
-            }
-        }
-
+        // 代理商
         if (in_array(2,$this->auth->getGroupIds())) {
+            $agentId = $this->auth->id;
+
+            // 总订单sql
+            $totalSql = "count(if(pay_status != '0', 1, null)) as total";
+            // 有效订单sql
+            $validSql = "count(if(pay_status = '1', 1, null)) as valid";
+            // 取消订单sql
+            $cancelSql = "count(if(pay_status = '2', 1, null)) as cancel";
+
+            // 本月每个快递订单统计
+            $arr['month_group_count']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','month')
+                ->field("tag_type as name,{$totalSql}, {$validSql}")
+                ->group('tag_type')
+                ->order("total desc")
+                ->limit(5)
+                ->select();
+
+            // 今日快递占比
+            $arr['today_group_count']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','today')
+                ->where('pay_status','1')
+                ->field("tag_type as name, count(*) as value")
+                ->order("value desc")
+                ->group('tag_type')
+                ->limit(6)
+                ->select();
 
             //今日有效订单
-            $arr['today_add_order']=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->count();
+            $arr['today_add_order']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','today')
+                ->where('pay_status',1)
+                ->count();
+
+            //昨日有效订单
+            $yesterday_add_order=  Db::query("select count(*) as total from fa_orders
+                         where from_unixtime(create_time) > current_date - interval 1 day
+                         and agent_id = {$agentId}
+                         and from_unixtime(create_time) < current_date 
+                         and pay_status = '1'");
+            $arr['yesterday_add_order'] =  $yesterday_add_order[0]['total'];
+
+            //今日取消订单
+            $arr['today_cancel_order']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','today')
+                ->where('pay_status',2)
+                ->count();
+
+            //昨日取消订单
+            $yesterday_cancel_order=  Db::query("select count(*) as total from fa_orders
+                 where from_unixtime(create_time) > current_date - interval 1 day
+                 and agent_id = {$agentId}
+                 and from_unixtime(create_time) < current_date
+                 and pay_status = '2'");
+            $arr['yesterday_cancel_order'] =   $yesterday_cancel_order[0]['total'];
+
             //今日结算额
-            $arr['today_agent_price']=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->sum('agent_price');
+            $arr['today_agent_price']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','today')
+                ->where('pay_status',1)
+                ->sum('agent_price');
+
+            //昨日结算额
+            $arr['yesterday_agent_price']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','-1 today')
+                ->where('pay_status',1)
+                ->sum('agent_price');
+
             //今日营业额
-            $arr['today_final_price']=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->sum('final_price');
+            $arr['today_final_price']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','today')
+                ->where('pay_status',1)
+                ->sum('final_price');
+
+            //昨日营业额
+            $yesterday_final_price=  Db::query("select sum(final_price) as total from fa_orders
+                 where from_unixtime(create_time) > current_date - interval 1 day
+                 and agent_id = {$agentId}
+                 and from_unixtime(create_time) < current_date
+                 and pay_status = '1'");
+            $arr['yesterday_final_price'] =  $yesterday_final_price[0]['total'];
+
+
+
+
             $today_overload_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
             $today_haocai_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
             $today_tralight_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->where('tralight_status',2)->sum('tralight_price');
             $today_agent_tralight_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->where('tralight_status',2)->sum('agent_tralight_price');
-            $amount=$arr['today_agent_price']-$today_agent_tralight_amount;
+
+            $yesterday_overload_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
+            $yesterday_haocai_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
+            $yesterday_tralight_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('tralight_status',2)->sum('tralight_price');
+            $yesterday_agent_tralight_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('tralight_status',2)->sum('agent_tralight_price');
+
+
+            $todayAmount=$arr['today_agent_price']-$today_agent_tralight_amount;
+            $yesterdayAmount=$arr['yesterday_agent_price']-$yesterday_agent_tralight_amount;
+
             //今日利润
-            $arr['today_profits']= bcsub($arr['today_final_price'] + $today_overload_amount + $today_haocai_amount - $today_tralight_amount,$amount,2);
+            $arr['today_profits']= bcsub(
+                $arr['today_final_price'] + $today_overload_amount + $today_haocai_amount - $today_tralight_amount,
+                $todayAmount,2
+            );
+
+            // 昨日利润
+            $arr['yesterday_profits']= bcsub(
+                $arr['yesterday_final_price'] + $yesterday_overload_amount + $yesterday_haocai_amount - $yesterday_tralight_amount,
+                $yesterdayAmount,2
+            );
+
             //今日新增会员
             $arr['today_users']=db('users')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->count();
-            //今日推送
-            $arr['todao_overload']=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('overload_status',1)->count();
-            //本月预估利润
-            $month_agent_price=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->where('pay_status',1)->sum('agent_price');
-            $month_final_price=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->where('pay_status',1)->sum('final_price');
-            $month_overload=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
-            $month_consume=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
+            //昨日新增用户
+            $arr['yesterday_users']=db('users')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->count();
 
-            $arr['month_profits']= bcsub($month_final_price,$month_agent_price-$month_overload-$month_consume);//本月利润
+            // 获取每月订单数据
+            $arr['month_order_group_count']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','year')
+                ->field("date_format(from_unixtime(create_time), '%Y-%m') as month, {$validSql}, {$cancelSql}, {$totalSql}")
+                ->group("date_format(from_unixtime(create_time), '%Y-%m')")
+                ->select();
+
+            // 获取最近一周每天的订单数据
+            $arr['days_order_group_count']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','-7 day')
+                ->field("date_format(from_unixtime(create_time), '%Y-%m-%d') as today, {$validSql}, {$cancelSql},  {$totalSql}")
+                ->group("date_format(from_unixtime(create_time), '%Y-%m-%d')")
+                ->select();
+
 
             //本月总订单数
             $month_order=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->where('pay_status','<>',0)->count();
@@ -141,20 +181,7 @@ class Dashboard extends Backend
             $month_order_cancel=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->where('pay_status',2)->count();//退款订单
             $arr['month_refund']= round(($month_order?$month_order_cancel/$month_order:0)*100,2);//取消订单率
 
-            //本月超重订单率
-            $overload_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->where('overload_status','<>',0)->count();//超重订单
-            $arr['month_overload']= round(($month_order?$overload_num/$month_order:0)*100,2);//超重订单率
-            //本月未处理超重订单率
-            $overload_wait=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('overload_status',1)->count();
-            $arr['month_overload_wait']= round(($month_order?$overload_wait/$month_order:0)*100,2);//超重未处理订单率
-            //总预估利润
-            $total_agent_price=db('orders')->where('agent_id',$this->auth->id)->where('pay_status',1)->sum('agent_price');
-            $total_final_price=db('orders')->where('agent_id',$this->auth->id)->where('pay_status',1)->sum('final_price');
 
-            $total_overload=db('orders')->where('agent_id',$this->auth->id)->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
-            $total_consume=db('orders')->where('agent_id',$this->auth->id)->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
-
-            $arr['total_profits']=  bcsub($total_final_price,$total_agent_price-$total_overload-$total_consume);
             //总订单数
             $total_order=db('orders')->where('agent_id',$this->auth->id)->where('pay_status','<>',0)->count();
             //总有效订单数
@@ -168,14 +195,7 @@ class Dashboard extends Backend
             //总未处理超重订单率
             $overload_wait=db('orders')->where('agent_id',$this->auth->id)->where('overload_status',1)->count();
             $arr['total_overload_wait']= round(($total_order?$overload_wait/$total_order:0)*100,2);//超重未处理订单率
-            //本月交易额
-            $arr['month_final_price']=$month_final_price;
-            //本月结算额
-            $arr['month_agent_price']=$month_agent_price;
-            //总交易额
-            $arr['total_final_price']=$total_final_price;
-            //总结算额
-            $arr['total_agent_price']=bcsub($total_agent_price,$total_overload+$total_consume);;
+
             //本月新增会员
             $arr['month_add_users']=db('users')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->count();
             //总会员数
@@ -190,43 +210,139 @@ class Dashboard extends Backend
             $five_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$five,$five.' 23:59:59'])->where('pay_status','<>',0)->count();
             $six_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$six,$six.' 23:59:59'])->where('pay_status','<>',0)->count();
             $seven_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$seven,$seven.' 23:59:59'])->where('pay_status','<>',0)->count();
-        } else {
+        }
+        else { // 其他
+            // 总订单sql
+            $totalSql = "count(if(pay_status != '0', 1, null)) as total";
+            // 有效订单sql
+            $validSql = "count(if(pay_status = '1', 1, null)) as valid";
+            // 取消订单sql
+            $cancelSql = "count(if(pay_status = '2', 1, null)) as cancel";
+
+
+            // 本月每个快递订单统计
+            $arr['month_group_count']=db('orders')
+                ->whereTime('create_time','month')
+                ->field("tag_type as name,{$totalSql}, {$validSql}")
+                ->group('tag_type')
+                ->order("total desc")
+                ->limit(5)
+                ->select();
+
+
+            // 今日快递占比
+            $arr['today_group_count']=db('orders')
+                ->whereTime('create_time','today')
+                ->where('pay_status','1')
+                ->field("tag_type as name, count(*) as value")
+                ->order("value desc")
+                ->group('tag_type')
+                ->limit(6)
+                ->select();
+
             //今日有效订单
-            $arr['today_add_order']=db('orders')->whereTime('create_time','today')->where('pay_status',1)->count();
+            $arr['today_add_order']=db('orders')
+                ->whereTime('create_time','today')
+                ->where('pay_status','1')
+                ->count();
+
+            //昨日有效订单
+            $yesterday_add_order=  Db::query("select count(*) as total from fa_orders 
+                         where from_unixtime(create_time) > current_date - interval 1 day 
+                         and from_unixtime(create_time) < current_date and 
+                         pay_status = '1'");
+            $arr['yesterday_add_order'] = $yesterday_add_order[0]['total'];
+
+            //今日取消订单
+            $arr['today_cancel_order']=db('orders')
+                ->whereTime('create_time','today')
+                ->where('pay_status',2)
+                ->count();
+
+            //昨日取消订单
+            $yesterday_cancel_order=  Db::query("select count(*) as total from fa_orders 
+                 where from_unixtime(create_time) > current_date - interval 1 day 
+                 and from_unixtime(create_time) < current_date and 
+                 pay_status = '2'");
+            $arr['yesterday_cancel_order'] = $yesterday_cancel_order[0]['total'];
+
             //今日结算额
-            $arr['today_agent_price']=db('orders')->whereTime('create_time','today')->where('pay_status',1)->sum('agent_price');
+            $arr['today_agent_price']=db('orders')
+                ->whereTime('create_time','today')
+                ->where('pay_status',1)
+                ->sum('agent_price');
+
+            //昨日结算额
+            $yesterday_agent_price=  Db::query("select sum(agent_price) as total from fa_orders 
+                 where from_unixtime(create_time) > current_date - interval 1 day 
+                 and from_unixtime(create_time) < current_date 
+                 and pay_status = '1'");
+            $arr['yesterday_agent_price'] = $yesterday_agent_price[0]['total'];
+
+
             //今日营业额
-            $arr['today_final_price']=db('orders')->whereTime('create_time','today')->where('pay_status',1)->sum('final_price');
+            $arr['today_final_price']=db('orders')
+                ->whereTime('create_time','today')
+                ->where('pay_status',1)
+                ->sum('final_price');
+
+            //昨日营业额
+            $yesterday_final_price=  Db::query("select sum(final_price) as total from fa_orders 
+                 where from_unixtime(create_time) > current_date - interval 1 day 
+                 and from_unixtime(create_time) < current_date 
+                 and pay_status = '1'");
+            $arr['yesterday_final_price'] = $yesterday_final_price[0]['total'];
+
+
             $today_overload_amount=db('orders')->whereTime('create_time','today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
             $today_haocai_amount=db('orders')->whereTime('create_time','today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
             $today_tralight_amount=db('orders')->whereTime('create_time','today')->where('pay_status',1)->where('tralight_status',2)->sum('tralight_price');
             $today_agent_tralight_amount=db('orders')->whereTime('create_time','today')->where('pay_status',1)->where('tralight_status',2)->sum('agent_tralight_price');
-            $amount=$arr['today_agent_price']-$today_agent_tralight_amount;
+
+            $yesterday_overload_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
+            $yesterday_haocai_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
+            $yesterday_tralight_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('tralight_status',2)->sum('tralight_price');
+            $yesterday_agent_tralight_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('tralight_status',2)->sum('agent_tralight_price');
+
+
+            $todayAmount = $arr['today_agent_price']-$today_agent_tralight_amount;
+            $yesterdayAmount = $arr['today_agent_price'];
+
             //今日利润
-            $arr['today_profits']= bcsub($arr['today_final_price'] + $today_overload_amount + $today_haocai_amount - $today_tralight_amount,$amount,2);
-            //今日新增会员
+            $arr['today_profits']= bcsub(
+                $arr['today_final_price'] + $today_overload_amount + $today_haocai_amount - $today_tralight_amount,
+                $todayAmount,2
+            );
+
+            //昨日利润
+            $arr['yesterday_profits']= bcsub(
+                $arr['yesterday_final_price'] + $yesterday_overload_amount + $yesterday_haocai_amount ,
+                0,2
+            );
+
+            //今日新增用户
             $arr['today_users']=db('users')->whereTime('create_time','today')->count();
-            //今日推送
-            $arr['todao_overload']=db('orders')->whereTime('create_time','today')->where('overload_status',1)->count();
-            //本月预估利润
-            $month_agent_price=db('orders')->whereTime('create_time','month')->where('pay_status',1)->sum('agent_price');
-            $month_final_price=db('orders')->whereTime('create_time','month')->where('pay_status',1)->sum('final_price');
-            $month_overload=db('orders')->whereTime('create_time','month')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
-            $month_consume=db('orders')->whereTime('create_time','month')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
-            $arr['month_profits']= bcsub($month_final_price,$month_agent_price-$month_overload-$month_consume);//本月利润
-            //本月总订单数
-            $month_order=db('orders')->whereTime('create_time','month')->where('pay_status','<>',0)->count();
-            //本月有效订单数
-            $arr['month_order']=db('orders')->whereTime('create_time','month')->where('pay_status',1)->count();
-            //本月取消订单率
-            $all_orders_count=db('orders')->whereTime('create_time','month')->where('pay_status',2)->count();//退款订单
-            $arr['month_refund']= round(($month_order?$all_orders_count/$month_order:0)*100,2);//取消订单率
-            //本月超重订单率
-            $overload_num=db('orders')->whereTime('create_time','month')->where('overload_status','<>',0)->count();//超重订单
-            $arr['month_overload']= round(($month_order?$overload_num/$month_order:0)*100,2);//超重订单率
+            // 昨日新增用户
+            $arr['yesterday_users']=db('users')->whereTime('create_time','-1 today')->count();
+
+
+            // 获取每月订单数据
+
+            $arr['month_order_group_count']=db('orders')
+                ->whereTime('create_time','year')
+                ->field("date_format(from_unixtime(create_time), '%Y-%m') as month, {$validSql}, {$cancelSql}, {$totalSql}")
+                ->group("date_format(from_unixtime(create_time), '%Y-%m')")
+                ->select();
+
+            // 获取最近一周每天的订单数据
+            $arr['days_order_group_count']=db('orders')
+                ->whereTime('create_time','-7 day')
+                ->field("date_format(from_unixtime(create_time), '%Y-%m-%d') as today, {$validSql}, {$cancelSql},  {$totalSql}")
+                ->group("date_format(from_unixtime(create_time), '%Y-%m-%d')")
+                ->select();
+
             //本月未处理超重订单率
             $overload_wait=db('orders')->whereTime('create_time','today')->where('overload_status',1)->count();
-            $arr['month_overload_wait']= round(($month_order?$overload_wait/$month_order:0)*100,2);//超重未处理订单率
             //总预估利润
             $total_agent_price=db('orders')->where('pay_status',1)->sum('agent_price');
             $total_final_price=db('orders')->where('pay_status',1)->sum('final_price');
@@ -246,18 +362,7 @@ class Dashboard extends Backend
             //总未处理超重订单率
             $overload_wait=db('orders')->where('overload_status',1)->count();
             $arr['total_overload_wait']= round(($total_order?$overload_wait/$total_order:0)*100,2);//超重未处理订单率
-            //本月交易额
-            $arr['month_final_price']=$month_final_price;
-            //本月结算额
-            $arr['month_agent_price']=$month_agent_price;
-            //总交易额
-            $arr['total_final_price']=$total_final_price;
-            //总结算额
-            $arr['total_agent_price']=bcsub($total_agent_price,$total_overload+$total_consume);;
-            //本月新增会员
-            $arr['month_add_users']=db('users')->whereTime('create_time','month')->count();
-            //总会员数
-            $arr['total_add_users']=db('users')->count();
+
             //余额
             $arr['amount']=db('admin')->sum('amount');
 
@@ -286,23 +391,8 @@ class Dashboard extends Backend
         $arr['five_num']=$five_num;
         $arr['six_num']=$six_num;
         $arr['seven_num']=$seven_num;
-        $arr['yt']=$yuantong?$yuantong_success/$yuantong:0;
-        $arr['yd']=$yunda?$yunda_success/$yunda:0;
-        $arr['jt']=$jitu?$jitu_success/$jitu:0;
-        $arr['st']=$shentong?$shentong_success/$shentong:0;
-        $arr['zt']=$zhongtong?$zhongtong_success/$zhongtong:0;
-        $arr['sf']=$shunfeng?$shunfeng_success/$shunfeng:0;
-        $arr['db']=$debang?$debang_success/$debang:0;
-        $arr['jd']=$jingdong?$jingdong_success/$jingdong:0;
-        $arr['yt_success']=$yuantong_success;
-        $arr['yd_success']=$yunda_success;
-        $arr['jt_success']=$jitu_success;
-        $arr['st_success']=$shentong_success;
-        $arr['zt_success']=$zhongtong_success;
-        $arr['sf_success']=$shunfeng_success;
-        $arr['db_success']=$debang_success;
-        $arr['jd_success']=$jingdong_success;
-        $this->view->assign("row",$arr);
+
+        $this->view->assign("row",json_encode($arr));
         return $this->view->fetch();
     }
 

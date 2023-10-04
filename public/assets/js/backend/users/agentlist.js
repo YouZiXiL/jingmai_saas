@@ -34,7 +34,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'sf_agent_ratio', title: '顺丰/EMS比例', operate:false},
                         {field: 'users_shouzhong', title: __('Users_shouzhong'), operate:false},
                         {field: 'users_xuzhong', title: __('Users_xuzhong'), operate:false},
-                        {field: 'users_shouzhong_ratio', title: __('Users_shouzhong_ratio'), operate:false},
                         {field: 'wx_mchid', title: __('Wx_mchid'), operate:false},
                         {field: 'profit', title: __('平台利润'), operate: false, formatter: function (value, row, index) {
                                 return '<span ">'+value+'元</span>'
