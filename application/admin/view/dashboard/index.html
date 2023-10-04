@@ -121,7 +121,7 @@
                                 </div>
 
                                 <div class="express-item" v-for="(item, index) in todayGroupCount">
-                                    <div class="express-item_1"></div>
+                                    <div class="express-item_1" :style="{background: color[index]}"></div>
                                     <div class="mr-auto">{{item.name}}</div>
                                     <div>{{ item.value }}</div>
                                 </div>
@@ -207,7 +207,7 @@
                 payChannel: 1, // 支付渠道, 1:微信, 2:支付宝
                 payAmount: 100, // 充值金额
                 qrCode: '', // 付款二维码
-                color: ['#feaad0', '#fafeaa', '#aafed8', '#eca8e7', '#ff6f00', '#ff4f00', '#ff2f00', '#ff0000', '#e60000'],
+                color: ['#1b9efb','#f58585', '#ffe891', '#aafed8', '#eca8e7', '#ff6f00', '#ff4f00', '#ff2f00', '#ff0000', '#e60000', '#ff8394', '#f6d8c1'],
 
                 todayValidOrder: 0, // 今日有效订单
                 todayFinalPrice: 0, // 今日营业额（用户支付金额）
@@ -507,6 +507,7 @@
             setEchartPie(){
                 const pieChart = echarts.init(document.getElementById('dashboard-echart-pie'));
                 const option = {
+                    color: this.color,
                     tooltip: {
                         trigger: 'item'
                     },
