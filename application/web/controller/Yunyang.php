@@ -666,6 +666,8 @@ class Yunyang extends Controller
                 $cpCode='ZTO'; break;
             case '申通':
                 $cpCode='STO'; break;
+            case '顺心捷达':
+                $cpCode='CP471906'; break;
             default:
                 return R::error("快递类型错误");
         }
