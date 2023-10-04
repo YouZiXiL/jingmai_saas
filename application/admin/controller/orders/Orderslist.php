@@ -92,19 +92,28 @@ class Orderslist extends Backend
             return $this->selectpage();
         }
         [$where, $sort, $order, $offset, $limit] = $this->buildparams();
-
+        $overloadSql = "count(if(overload_status = '1' and pay_status='1', 1, null)) as overload_count";
+        $consumeSql = "count(if(consume_status = '1' and pay_status='1', 1, null)) as consume_count";
+        $insuredSql = "count(if(insured_status = 1 and pay_status='1', 1, null)) as insured_count";
         if (in_array(2,$this->auth->getGroupIds())) {
+            $count = db('orders')->field($overloadSql . "," . $consumeSql . "," . $insuredSql)
+                ->whereTime('create_time','month')
+                ->where("agent_id", $this->auth->id)
+                ->select();
             $list = $this->model->where("orderslist.agent_id", $this->auth->id);
         } else {
+            $count = db('orders')->field($overloadSql . "," . $consumeSql . "," . $insuredSql)
+                ->whereTime('create_time','month')
+                ->select();
             $list = $this->model;
         }
+
         $list = $list
             ->where($where)
-            ->field('id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,
-            out_trade_no,sender,sender_mobile,receiver,receiver_mobile,weight,item_name,create_time,channel_merchant,
-            insured_status,insured_cost,
-            pay_status,overload_status,consume_status,tralight_status,agent_price,final_price,order_status,cancel_reason,
-            overload_price,pay_type,haocai_freight,final_weight,users_xuzhong,tralight_price,agent_tralight_price')
+            ->field("id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,out_trade_no,sender,sender_mobile,
+            receiver,receiver_mobile,weight,item_name,create_time,channel_merchant,insured_status,insured_cost,pay_status,overload_status,
+            consume_status,tralight_status,agent_price,final_price,order_status,cancel_reason,overload_price,pay_type,haocai_freight,
+            final_weight,users_xuzhong,tralight_price,agent_tralight_price")
             ->where('pay_status','<>',0)
             ->where('channel_tag','<>','同城')
             ->with([
@@ -120,6 +129,7 @@ class Orderslist extends Backend
                 ])
             ->order($sort, $order)
             ->paginate($limit);
+
 
         foreach ($list as $k=>&$v){
             $v['show'] = $showAuth;
@@ -160,7 +170,7 @@ class Orderslist extends Backend
                 $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight-$tralight_price-$couponpapermoney,$amount,2);
             }
         }
-        $result = ['total' => $list->total(),'rows' => $list->items()];
+        $result = ['total' => $list->total(),'rows' => $list->items(), 'extend' => $count[0]];
         return json($result);
     }
 

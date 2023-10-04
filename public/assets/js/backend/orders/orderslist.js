@@ -42,6 +42,17 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                     layer.close(tip_index);
                 });
             });
+
+            //当表格数据加载完成时
+            table.on('load-success.bs.table', function (e, data) {
+                //这里可以获取从服务端获取的JSON数据
+                if(Config.show){
+                    $("#overload_count").text(data.extend.overload_count);
+                    $("#consume_count").text(data.extend.consume_count);
+                    $("#insured_count").text(data.extend.insured_count);
+                }
+
+            });
             $.fn.bootstrapTable.locales[Table.defaults.locale]['formatSearch'] = function(){return "运单号,订单号,发件人寄件人";};
             // 初始化表格
             table.bootstrapTable({
@@ -585,6 +596,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
 
             // 为表格绑定事件
             Table.api.bindevent(table);
+
+
         },
         add: function () {
             Controller.api.bindevent();
@@ -619,8 +632,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
         },
     };
 
+
     return Controller;
 });
+
+
 
 
 $(document).on('click', '.btn-comments', function (event) {
