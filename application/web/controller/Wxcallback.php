@@ -575,6 +575,7 @@ class Wxcallback extends Controller
                 $up_data['insured_cost']= $insuredPrice ;
                 $up_data['agent_price']= $orders['agent_price'] +  $insuredPrice;
                 $up_data['insured_time'] = time();
+                $up_data['insured_status'] = 1;
                 $DbCommon= new Dbcommom();
                 // 给代理商扣款
                 $DbCommon->set_agent_amount($orders['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$orders['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
