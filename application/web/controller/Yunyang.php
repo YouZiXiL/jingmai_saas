@@ -305,7 +305,7 @@ class Yunyang extends Controller
                 ->where('user_id',$this->user->id)
                 ->where('agent_id',$this->user->agent_id)
                 ->where('pay_status',1)
-                ->where('overload_status|consume_status',1)->find();
+                ->where('overload_status|consume_status|insured_status',1)->find();
             if($bujiao){
                 return json(['status'=>400,'data'=>'','msg'=>'请先补缴欠费运单']);
             }
