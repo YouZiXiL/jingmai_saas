@@ -76,7 +76,10 @@ class Orderslist extends Model
         return ['0' => __('Consume_status 0'), '1' => __('Consume_status 1'), '2' => __('Consume_status 2')];
     }
 
-
+    public function getInsuredStatusList()
+    {
+        return ['0' => __('Insured_status 0'), '1' => __('Insured_status 1'), '2' => __('Insured_status 2')];
+    }
 
     public function getCreateTimeTextAttr($value, $data)
     {
@@ -105,6 +108,13 @@ class Orderslist extends Model
     {
         $value = $value ? $value : (isset($data['consume_status']) ? $data['consume_status'] : '');
         $list = $this->getConsumeStatusList();
+        return isset($list[$value]) ? $list[$value] : '';
+    }
+
+    public function getInsuredStatusTextAttr($value, $data)
+    {
+        $value = $value ? $value : (isset($data['insured_status']) ? $data['insured_status'] : '');
+        $list = $this->getInsuredStatusList();
         return isset($list[$value]) ? $list[$value] : '';
     }
 
