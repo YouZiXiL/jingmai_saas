@@ -323,6 +323,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                             let overloadClass = '';
                             let haocaiHidden = 'hidden';
                             let haocaiClass = '';
+                            let insuredHidden = 'hidden';
+                            let insuredClass = '';
                             if(row.overload_status === '1' ){
                                 overloadHidden = '';
                                 overloadClass = 'text-danger';
@@ -336,6 +338,15 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                             }else if(row.consume_status === '2'){
                                 haocaiHidden = '';
                             }
+
+                            if(row.insured_status === 1 ){
+                                insuredHidden = '';
+                                insuredClass = 'text-danger';
+                            }else if(row.insured_status === 2){
+                                insuredHidden = '';
+                            }
+
+
                             return `
                                 <div class="py-2 d-flex flex-column a-start">
                                     <div class="p-1">  
@@ -355,6 +366,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                     </div>
                                     <div class="p-1 ${haocaiHidden}">  
                                        <span class="text-muted">耗材金额：</span><span class="${haocaiClass}">${row.haocai_freight} 元</span>
+                                    </div>
+                                    <div class="p-1 ${insuredHidden}">  
+                                       <span class="text-muted">保价金额：</span><span class="${insuredClass}">${row.insured_cost} 元</span>
                                     </div>
                                      <div class="p-1">  
                                        <span class="text-muted">续重单价：</span><span>${row.users_xuzhong} 元</span>
