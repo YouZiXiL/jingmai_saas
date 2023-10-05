@@ -433,6 +433,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                         {field: 'pay_status', title: __('Pay_status'), searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1'),"2":__('Pay_status 2'),"3":__('Pay_status 3'),"4":__('Pay_status 4'),"5":__('Pay_status 5'),"6":__('Pay_status 6'),"7":__('Pay_status 7')}, visible: false},
                         {field: 'overload_status', title: __('Overload_status'), searchList: {"0":__('Overload_status 0'),"1":__('Overload_status 1'),"2":__('Overload_status 2')},visible: false},
                         {field: 'consume_status', title: __('Consume_status'), searchList: {"0":__('Consume_status 0'),"1":__('Consume_status 1'),"2":__('Consume_status 2')},visible: false},
+                        {field: 'insured_status', title: __('保价状态'), searchList: {"0":__('Insured_status 0'),"1":__('Insured_status 1'),"2":__('Insured_status 2')},visible: false},
 
                         {field: 'tag_type', title: __('Tag_type'), operate: 'LIKE', visible: false},
                         {field: 'order_status', title: __('Order_status'), operate: 'LIKE', visible: false},
