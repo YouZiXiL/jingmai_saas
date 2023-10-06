@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="sms-index" v-cloak class="panel panel-intro" style="padding: 50px">
+    <div class="mb-4">
+        <el-form :model="formData" :rules="rules" ref="refForm" label-width="100px">
+            <el-form-item label="手机号码" prop="phones">
+                <el-input type="textarea" v-model="formData.phones"></el-input>
+            </el-form-item>
+            <el-form-item label="短信类型">
+                <el-select v-model="formData.type" placeholder="请选择活动区域">
+                    <el-option label="默认类型" value="1"></el-option>
+                    <el-option label="其他类型" value="2"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="submitForm">发送信息</el-button>
+            </el-form-item>
+        </el-form>
+        <div class="mt-1" v-if="errList" v-for="err in errList">
+            <el-alert :title="`手机号：${err.phone}，错误信息： ${err.msg}`" type="error" :closable="false"> </el-alert>
+        </div>
+
+    </div>
+</div>
+
+<script type="module">
+    new Vue({
+        el: '#sms-index',
+        data() {
+            return {
+                errList : '',
+                formData: {
+                    phones: '',
+                    type: '1'
+                },
+                rules:{
+                    phones: [
+                        { required: true, message: '请填写手机号', trigger: 'blur' }
+                    ]
+                }
+            }
+        },
+        methods: {
+            submitForm() {
+                this.$refs['refForm'].validate((valid) => {
+                    if (valid) {
+                        this.errList = ''
+                        Fast.api.ajax(
+                            {
+                                url: 'market/sms/send',
+                                method: 'POST',
+                                data: this.formData,
+                            },
+                            (data)=>{
+                            },
+                            (data)=>{
+                                this.errList = data
+                            }
+                        )
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
+            },
+        }
+    })
+</script>
+</body>
+</html>

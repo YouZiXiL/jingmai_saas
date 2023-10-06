@@ -37,7 +37,7 @@ class KD100Sms
      * @param array $order
      * @throws DataNotFoundException
      * @throws DbException
-     * @throws ModelNotFoundException
+     * @throws ModelNotFoundException|Exception
      */
     public function overload(array $order){
         $out_trade_no=$this->utils->get_uniqid();
@@ -134,6 +134,24 @@ class KD100Sms
                 ->update(['agent_sms' => $agentSms]);
         }
         return $res;
+    }
+
+    public function adminSend($phone){
+        $content=json_encode(['发收人姓名'=>'wang','运单号'=>'11111', '补缴链接'=>'22222'], JSON_UNESCAPED_UNICODE);
+        $sendData = [
+            'sign'=>strtoupper(md5($this->key.$this->userid)),
+            'userid'=>$this->userid,
+            'seller'=>'鲸喜',
+            'phone'=>$phone,
+            'tid'=> 7769,
+            'content'=>$content,
+            'outorder'=> 'DX'. getId(),
+        ];
+        $res=$this->utils->httpRequest('https://apisms.kuaidi100.com/sms/send.do',$sendData,'POST',['Content-Type: application/x-www-form-urlencoded']);
+        recordLog('sms-admin',
+            '发送参数：' . json_encode($sendData, JSON_UNESCAPED_UNICODE) . PHP_EOL.
+            '返回参数：' . $res);
+        return json_decode($res, true);
     }
 
     /**
