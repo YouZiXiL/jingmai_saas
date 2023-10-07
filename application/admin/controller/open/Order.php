@@ -108,7 +108,6 @@ class Order extends Backend
     public function kdQuery($paramData){
         $agent_info=db('admin')->where('id',$this->auth->id)->find();
         $channelTag = '智能';
-
         $orderBusiness = new OrderBusiness();
         $yyQuery = $orderBusiness->yyQueryPrice($paramData, $channelTag);
         // $fhdQuery = $orderBusiness->fhdQueryPrice($paramData, 'RCP');

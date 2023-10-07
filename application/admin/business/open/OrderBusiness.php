@@ -147,6 +147,7 @@ class OrderBusiness extends Backend
      * @throws DbException
      */
     public function yyPriceHandle(string $content, array $agent_info, array $param, $channelTag){
+        if (empty($content)) return [];
         $data= json_decode($content, true);
         if ($data['code']!=1){
             recordLog('channel-price-err','云洋-' . $content);

@@ -225,7 +225,7 @@ class Yunyang extends Controller
                 // $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
                 $jiLu = new JiLu();
                 $jiluPackage = $jiLu->queryPriceHandle($agent_info, $param,$jijian_address['province'], $shoujian_address['province']);
-                $result = $yyPackage;
+                $result = $yyPackage??[];
                 if(!empty($jiluPackage))  $result[] = $jiluPackage;
                 if(!empty($fhdDb)) $result[] = $fhdDb;
                 usort($result, function ($a, $b){
