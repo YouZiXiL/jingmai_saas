@@ -147,8 +147,8 @@ class Users extends Controller
         $subusers=db("users")->where("invitercode|fainvitercode","=",$user_info->myinvitecode)->count();
         $cashout=db("cashserviceinfo")->where("user_id",$this->user->id)->where("state","<>",3)->sum("cashout");
         $user_detail["users"]=$subusers;
-        $user_detail["cashout"]=$cashout;
-        $user_detail["allmoney"]=floatval($user_detail["money"])+floatval($cashout);
+        $user_detail["cashout"]=$cashout; // 可提现
+        $user_detail["allmoney"]= floatval($user_detail["money"])+floatval($cashout); // 累计分佣
         $user_detail["realname"]=$user_info->realname??"";
         $user_detail["alinum"]=$user_info->alipayid??"";
 
