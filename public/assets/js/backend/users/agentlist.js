@@ -64,11 +64,31 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         Layer.open({
                                             icon:0,
                                             title:['账户加款'],
-                                            content:'<h4 class="text-danger">请谨慎操作</h4><h5 class="text-danger">后台将会记录操作数据，请悉知！</h5><label style="float:left">加款金额：</label><input id="amount" autocomplete="off" step="0.01" type="number">',
+                                            content:`<h4 class="text-danger">请谨慎操作</h4>
+<h5 class="text-danger">后台将会记录操作数据，请悉知！</h5>
+<div class="form-group row">
+    <label for="wx_title" class="control-label col-4 ">金额:</label>
+    <div class="col-12  ">
+        <input id="amount"  class="form-control" autocomplete="off" step="0.01" type="number"  />
+    </div>
+</div>
+<div class="form-group row">
+    <label for="wx_title" class="control-label col-4">备注:</label>
+    <div class="col-12  ">
+        <textarea id="remark"  class="form-control"  type="text"  />
+    </div>
+</div>
+
+`,
                                             btn:['确认','取消'],
                                             yes:function (index){
                                                 Fast.api.ajax({
-                                                    url: 'users/agentlist/rechange?ids='+row.id+'&amount='+$('#amount').val(),
+                                                    method:'post',
+                                                    url: 'users/agentlist/rechange?ids='+row.id,
+                                                    data: {
+                                                        amount:$('#amount').val(),
+                                                        remark:$('#remark').val()
+                                                    },
                                                 }, function (data) { //success
                                                     Layer.close(index);
                                                     table.bootstrapTable('refresh');

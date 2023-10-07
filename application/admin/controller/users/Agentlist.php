@@ -184,11 +184,14 @@ class Agentlist extends Backend
                 'out_trade_no'=>$common->get_uniqid(),
                 'amount'=>$param['amount'],
                 'pay_amount'=>$param['amount'],
+                'remark'=>$param['remark'],
                 'pay_status'=>1,
                 'pay_type'=>3,
                 'create_time'=>time()
             ]);
-            $Dbcommmon->set_agent_amount($row['id'],'setInc',$param['amount'],5,'后台加款：'.$param['amount'].'元，到账：'.$param['amount'].'元，操作人'.$this->auth->username);
+            $remark = trim(input('remark')) ?input('remark'):'后台加款：'.$param['amount'].'元，到账：'.$param['amount'].'元，操作人'.$this->auth->username;
+
+            $Dbcommmon->set_agent_amount($row['id'],'setInc',$param['amount'],5,$remark);
         }catch (\Exception $e){
             $this->error($e->getMessage());
         }
