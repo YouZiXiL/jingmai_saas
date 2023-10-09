@@ -353,11 +353,11 @@ class Common
      * 检验数据的真实性，并且获取解密后的明文.
      * @param $encryptedData string 加密的用户数据
      * @param $iv string 与用户数据一同返回的初始向量
-     * @param $data string 解密后的原文
-     *
-     * @return int 成功0，失败返回对应的错误码
+     * @param $sessionKey
+     * @param $app_id
+     * @return false|mixed
      */
-    public function getUserInfo( $encryptedData, $iv,$sessionKey,$app_id)
+    public function getUserInfo(string $encryptedData, string $iv, $sessionKey, $app_id)
     {
         if (strlen($sessionKey) != 24) {
             return false;
