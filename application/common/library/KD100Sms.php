@@ -50,16 +50,6 @@ class KD100Sms
         $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link], JSON_UNESCAPED_UNICODE);
         $resJson = $this->send($content, $out_trade_no, $order,self::$overloadId);
         $this->pushLog($resJson, $order, 1);
-        db('agent_sms')->insert([
-            'agent_id'=>$order['agent_id'],
-            'type'=>0,
-            'status'=>0,
-            'phone'=>$order['sender_mobile'],
-            'waybill'=>$order['waybill'],
-            'out_trade_no'=>$out_trade_no,
-            'content'=>$content,
-            'create_time'=>time()
-        ]);
     }
 
     /**
@@ -93,7 +83,7 @@ class KD100Sms
         $link = request()->host() . "/bj/{$agentCode}/{$orderCode}";
         $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
         $resJson = $this->send($content, $out_trade_no, $order,self::$insuredId);
-        $this->pushLog($resJson, $order, 2);
+        $this->pushLog($resJson, $order, 3);
     }
 
     /**
