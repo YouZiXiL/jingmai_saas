@@ -14,6 +14,9 @@ use app\web\controller\Common;
 
 class KD100Sms
 {
+    public static string $overloadId = '7762'; // 超重模版ID
+    public static string $materialId = '7769'; // 耗材模版ID
+    public static string $insuredId = '8345'; // 耗材模版ID
     private $domain = '';
     private $userid = '';
     private $key = '';
@@ -45,7 +48,7 @@ class KD100Sms
         $orderCode = $this->utils->generateShortCode($order['id']);
         $link = request()->host() . "/cz/{$agentCode}/{$orderCode}";
         $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link], JSON_UNESCAPED_UNICODE);
-        $resJson = $this->send($content, $out_trade_no, $order,7762);
+        $resJson = $this->send($content, $out_trade_no, $order,self::$overloadId);
         $this->pushLog($resJson, $order, 1);
         db('agent_sms')->insert([
             'agent_id'=>$order['agent_id'],
@@ -72,7 +75,7 @@ class KD100Sms
         $orderCode = $this->utils->generateShortCode($order['id']);
         $link = request()->host() . "/hc/{$agentCode}/{$orderCode}";
         $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
-        $resJson = $this->send($content, $out_trade_no, $order,7769);
+        $resJson = $this->send($content, $out_trade_no, $order,self::$materialId);
         $this->pushLog($resJson, $order, 2);
     }
 
@@ -89,7 +92,7 @@ class KD100Sms
         $orderCode = $this->utils->generateShortCode($order['id']);
         $link = request()->host() . "/bj/{$agentCode}/{$orderCode}";
         $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
-        $resJson = $this->send($content, $out_trade_no, $order,7769);
+        $resJson = $this->send($content, $out_trade_no, $order,self::$insuredId);
         $this->pushLog($resJson, $order, 2);
     }
 
