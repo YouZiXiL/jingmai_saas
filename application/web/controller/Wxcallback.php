@@ -579,8 +579,8 @@ class Wxcallback extends Controller
                 $DbCommon= new Dbcommom();
                 // 给代理商扣款
                 $DbCommon->set_agent_amount($orders['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$orders['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
-                // 发送耗材短信
-                KD100Sms::run()->material($orders);
+                // 发送保价短信
+                KD100Sms::run()->insured($orders);
             }
 
             //更改耗材状态
