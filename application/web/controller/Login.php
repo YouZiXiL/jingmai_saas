@@ -107,6 +107,7 @@ class Login extends Controller
                 $user_info['agent_id']=$agent_id;
                 $user_info['token']=$_3rd_session;
                 $user_info['auth_ids'] = $auth_ids;
+                $user_info['nick_name'] = $mobile['phoneNumber']??'';
                 //如果携带邀请码登录
                 if(!empty($param["invitcode"])){
                     Log::info(['微信登录' => $param]);
@@ -215,15 +216,33 @@ class Login extends Controller
 
             $auth_ids = implode(',', $auth_ids);
             $time=time();
-            $nickName = $this->shuffleName();
-            if(empty($user_info)){
+            if(empty($user_info)){ // 用户注册
+                // 是否用手机号注册：0=不使用，1=使用
+                $authPhone = db('agent_config')->where('agent_id',$agentAuth['agent_id'])
+                    ->field('id,auth_phone')
+                    ->value('auth_phone');
+                if(empty($authPhone)){   // 直接注册
+                    $nickName = $this->shuffleName();
+                    $user_info['nick_name'] = $nickName;
+                    $user_info['mobile'] = '';
+                }else{// 使用手机注册
+                    if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
+                        $mobile=$this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
+                        if (!$mobile){
+                            return json(['status'=>400,'data'=>'','msg'=>'信息解密失败']);
+                        }
+                        $user_info['mobile']= $mobile['phoneNumber'];
+                        $user_info['nick_name'] = $mobile['phoneNumber'];
+                    }else{
+                        return R::error('未授权');
+                    }
+                }
                 $user_info['open_id']=$json_obj['openid'];
                 $user_info['create_time']=$time;
                 $user_info['login_time']=$time;
                 $user_info['agent_id']=$agent_id;
                 $user_info['token']=$_3rd_session;
                 $user_info['auth_ids'] = $auth_ids;
-                $user_info['nick_name'] = $nickName;
                 //如果携带邀请码登录
                 if(!empty($param["invitcode"])){
                     $invitcode = substr($param["invitcode"],-7 );
@@ -237,28 +256,25 @@ class Login extends Controller
                         $user_info["rootid"]=$pauser["rootid"];
                     }
                 }
-                $s=$user->save($user_info);
-                $user_id=$user->id;
-                $phone = $user_info['mobile']??'';
-
+                $user_info = Users::create($user_info);
+                $user_id=$user_info['id'];
+                $isSave = true; // 创建成功
             }
-            else {
+            else { // 用户登录
                 $data=[
                     'login_time' => $time,
                     'agent_id'   => $agent_id,
                     'token'      => $_3rd_session,
                     'auth_ids'    => $auth_ids
                 ];
-
-                $s=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
+                $isSave=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
                 $user_id = $user_info['id'];
-                $phone =  '';
             }
-            if ($s){
+            if ($isSave){
                 $data=['status'=>200,'data'=>$_3rd_session,'msg'=>'登录成功'];
                 $session=[
                     'id' =>$user_id,
-                    'mobile' => $phone,
+                    'mobile' => $user_info['mobile'],
                     'agent_id'=>$agent_id,
                     'app_id' =>$param['app_id'],
                     'open_id'=>$json_obj["openid"],
@@ -268,7 +284,6 @@ class Login extends Controller
             }else{
                 $data=['status'=>400,'data'=>'','msg'=>'登录失败'];
             }
-            //存储用户信息
             return json($data);
         }catch (\Exception $exception){
             recordLog('wx-shouquan-err', "登录失败：" . PHP_EOL .

@@ -58,11 +58,6 @@ class Users extends Controller
     }
     //用户详情 根据最终需要 再添加字段信息
     public function userinfo(){
-        $data=[
-            'status'=>200,
-            'data'=>"",
-            'msg'=>'Success'
-        ];
         //1、获得用户
         $user_info= \app\web\model\Users::get($this->user->id);
         $agent_info=Admin::get($this->user->agent_id);
@@ -108,9 +103,7 @@ class Users extends Controller
         $coupon->isUpdate()->saveAll($updatedata);
 
         $user_detail["couponnum"]=count($couponlist)-count($updatedata);//$user_info->getcouponlist()->where("state",1)->count();
-        $user_detail[''] =
-        $data["data"]=$user_detail;
-        return \json($data);
+        return R::ok($user_detail);
     }
 
     //用户返佣详情

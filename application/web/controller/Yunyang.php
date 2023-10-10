@@ -19,6 +19,8 @@ use app\web\model\Couponlist;
 use fast\Date;
 use stdClass;
 use think\Controller;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
 use think\exception\DbException;
 use think\exception\PDOException;
@@ -998,6 +1000,9 @@ class Yunyang extends Controller
      * 获取|修改  头像和昵称
      * @return Json
      * @throws DbException
+     * @throws Exception
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
      */
     function user_info(): Json
     {
@@ -1015,9 +1020,10 @@ class Yunyang extends Controller
 
         }
         $users=db('users')->where('id',$this->user->id)->find();
+
         return json([
             'status'=>200,
-            'data'=>['nick_name'=>$users['mobile']??$users['nick_name'],'avatar'=>$users['avatar']],
+            'data'=>['nick_name'=> $users['mobile']?:$users['nick_name'],'avatar'=>$users['avatar']],
             'msg'=>'成功'
         ]);
     }
