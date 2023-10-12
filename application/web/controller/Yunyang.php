@@ -200,7 +200,6 @@ class Yunyang extends Controller
             if (empty($param['insured'])){
                 $param['insured']=0;
             }
-
             $jijian_address=db('users_address')->where('id',$param['jijian_id'])->find();
             $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
             if (empty($jijian_address)||empty($shoujian_address)){
@@ -325,7 +324,7 @@ class Yunyang extends Controller
             }
 
             $jijian_address=db('users_address')->where('id',$check_channel_intellect['jijian_id'])->find();
-            $userMobile = $this->user->mobile ?? db('users')->where(['id' => $this->user->id])->value('mobile');
+            $userMobile = $this->user->mobile ?? '';
             //黑名单
             $blacklist=db('agent_blacklist')
                 ->where(function ($query){
@@ -582,7 +581,7 @@ class Yunyang extends Controller
         if (!empty($param['search_field'])){
             $res=$order->where('receiver_mobile|sender_mobile|waybill|receiver',$param['search_field'])->select();
         }elseif(!empty($param['no_pay'])){
-            $res=$order->where('overload_status|consume_status',1)->select();
+            $res=$order->where('overload_status|consume_status|insured_status',1)->select();
         }else{
             $res=$order->select();
         }

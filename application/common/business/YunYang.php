@@ -118,6 +118,7 @@ class YunYang{
             recordLog('channel-price-err','云洋-数据不存在' . $content. PHP_EOL);
             return [];
         }
+        recordLog('channel-price-yy',$content);
         $data= json_decode($content, true);
         if ($data['code']!=1){
             recordLog('channel-price-err','云洋-查价失败:' . PHP_EOL . $content);

@@ -46,10 +46,15 @@ class Test extends Controller
      */
     public function test(){
         // 设置的提醒金额
-        $orders=db('orders')
-            ->field('id,insured_status,overload_status,consume_status')
-            ->where('waybill','S60749415015')->find();
-        return R::ok($orders);
+        $blacklist=db('agent_blacklist')
+            ->where(function ($query){
+                $query->where('agent_id', 17);
+            })->where(function ($query)  {
+                $query->where('mobile','13126135537')
+                    ->whereOr('mobile', null);
+            })
+            ->find();
+        return R::ok($blacklist);
     }
 
     // 获取分享链接
