@@ -2,7 +2,9 @@
 
 namespace app\admin\controller;
 
+use app\admin\business\Admin;
 use app\common\controller\Backend;
+use app\common\library\R;
 use think\Db;
 
 
@@ -20,19 +22,11 @@ class Dashboard extends Backend
      */
     public function index()
     {
-        $param=$this->request->param();//start_time  | end_time
-        $time = time();
-        $date = [];
-        for ($i=0; $i<=6; $i++){
-            $date[$i] = date('Y-m-d' ,strtotime(  $i-6 ." days", $time));
-        }
-
-        [$one, $two, $three, $four, $five,$six,$seven]=$date;
-
-
-
+        $param = $this->request->param();//start_time  | end_time
+        $groupIds =  $this->auth->getGroupIds();
         // 代理商
-        if (in_array(2,$this->auth->getGroupIds())) {
+        if (in_array(2,$groupIds)) {
+            $arr['auth'] = false;
             $agentId = $this->auth->id;
 
             // 总订单sql
@@ -181,37 +175,12 @@ class Dashboard extends Backend
             $month_order_cancel=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->where('pay_status',2)->count();//退款订单
             $arr['month_refund']= round(($month_order?$month_order_cancel/$month_order:0)*100,2);//取消订单率
 
-
-            //总订单数
-            $total_order=db('orders')->where('agent_id',$this->auth->id)->where('pay_status','<>',0)->count();
-            //总有效订单数
-            $arr['total_order']=db('orders')->where('agent_id',$this->auth->id)->where('pay_status',1)->count();
-            //总取消订单率
-            $all_orders_cancel=db('orders')->where('agent_id',$this->auth->id)->where('pay_status',2)->count();//退款订单
-            $arr['total_refund']= round(($total_order?$all_orders_cancel/$total_order:0)*100,2);//取消订单率
-            //总超重订单率
-            $overload_num=db('orders')->where('agent_id',$this->auth->id)->where('overload_status','<>',0)->count();//超重订单
-            $arr['total_overload']= round(($total_order?$overload_num/$total_order:0)*100,2);//超重订单率
-            //总未处理超重订单率
-            $overload_wait=db('orders')->where('agent_id',$this->auth->id)->where('overload_status',1)->count();
-            $arr['total_overload_wait']= round(($total_order?$overload_wait/$total_order:0)*100,2);//超重未处理订单率
-
-            //本月新增会员
-            $arr['month_add_users']=db('users')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->count();
-            //总会员数
-            $arr['total_add_users']=db('users')->where('agent_id',$this->auth->id)->count();
             //余额
             $arr['amount']=db('admin')->where('id',$this->auth->id)->sum('amount');
 
-            $one_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$one,$one.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $two_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$two,$two.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $three_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$three,$three.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $four_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$four,$four.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $five_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$five,$five.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $six_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$six,$six.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $seven_num=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','between',[$seven,$seven.' 23:59:59'])->where('pay_status','<>',0)->count();
         }
-        else { // 其他
+        else if(in_array(1,$groupIds) || in_array(3,$groupIds) || in_array(8,$groupIds)) { // 管理员，客服
+            $arr['auth'] = true;
             // 总订单sql
             $totalSql = "count(if(pay_status != '0', 1, null)) as total";
             // 有效订单sql
@@ -301,12 +270,8 @@ class Dashboard extends Backend
 
             $yesterday_overload_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
             $yesterday_haocai_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
-            $yesterday_tralight_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('tralight_status',2)->sum('tralight_price');
-            $yesterday_agent_tralight_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('tralight_status',2)->sum('agent_tralight_price');
-
 
             $todayAmount = $arr['today_agent_price']-$today_agent_tralight_amount;
-            $yesterdayAmount = $arr['today_agent_price'];
 
             //今日利润
             $arr['today_profits']= bcsub(
@@ -341,59 +306,29 @@ class Dashboard extends Backend
                 ->group("date_format(from_unixtime(create_time), '%Y-%m-%d')")
                 ->select();
 
-            //本月未处理超重订单率
-            $overload_wait=db('orders')->whereTime('create_time','today')->where('overload_status',1)->count();
-            //总预估利润
-            $total_agent_price=db('orders')->where('pay_status',1)->sum('agent_price');
-            $total_final_price=db('orders')->where('pay_status',1)->sum('final_price');
-            $total_overload=db('orders')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
-            $total_consume=db('orders')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
-            $arr['total_profits']=  bcsub($total_final_price,$total_agent_price-$total_overload-$total_consume);
-            //总订单数
-            $total_order=db('orders')->where('pay_status','<>',0)->count();
-            //总有效订单数
-            $arr['total_order']=db('orders')->where('pay_status',1)->count();
-            //总取消订单率
-            $all_orders_count=db('orders')->where('pay_status',2)->count();//退款订单
-            $arr['total_refund']= round(($total_order?$all_orders_count/$total_order:0)*100,2);//取消订单率
-            //总超重订单率
-            $overload_num=db('orders')->where('overload_status','<>',0)->count();//超重订单
-            $arr['total_overload']= round(($total_order?$overload_num/$total_order:0)*100,2);//超重订单率
-            //总未处理超重订单率
-            $overload_wait=db('orders')->where('overload_status',1)->count();
-            $arr['total_overload_wait']= round(($total_order?$overload_wait/$total_order:0)*100,2);//超重未处理订单率
-
             //余额
             $arr['amount']=db('admin')->sum('amount');
 
-            $one_num=db('orders')->whereTime('create_time','between',[$one,$one.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $two_num=db('orders')->whereTime('create_time','between',[$two,$two.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $three_num=db('orders')->whereTime('create_time','between',[$three,$three.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $four_num=db('orders')->whereTime('create_time','between',[$four,$four.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $five_num=db('orders')->whereTime('create_time','between',[$five,$five.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $six_num=db('orders')->whereTime('create_time','between',[$six,$six.' 23:59:59'])->where('pay_status','<>',0)->count();
-            $seven_num=db('orders')->whereTime('create_time','between',[$seven,$seven.' 23:59:59'])->where('pay_status','<>',0)->count();
-
+            // 获取当月代理商有效订单数量
+            $admin = new Admin();
+            $agentTop = $admin->rankCurMonth();
+            $name =  array_column($agentTop, 'nickname');;
+            $total =  array_column($agentTop, 'total');
+            $arr['agent_top'] = compact('name', 'total');
         }
 
 
-        $arr['days_one']=$one;
-        $arr['days_two']=$two;
-        $arr['days_three']=$three;
-        $arr['days_four']=$four;
-        $arr['days_five']=$five;
-        $arr['days_six']=$six;
-        $arr['days_seven']=$seven;
-        $arr['one_num']=$one_num;
-        $arr['two_num']=$two_num;
-        $arr['three_num']=$three_num;
-        $arr['four_num']=$four_num;
-        $arr['five_num']=$five_num;
-        $arr['six_num']=$six_num;
-        $arr['seven_num']=$seven_num;
-
         $this->view->assign("row",json_encode($arr));
         return $this->view->fetch();
+    }
+
+    // 代理商订单排行
+    public function rank($startDate, $endDate){
+        $admin = new Admin();
+        $result = $admin->rank($startDate, $endDate);
+        $name =  array_column($result, 'nickname');;
+        $total =  array_column($result, 'total');
+        $this->success('', '', compact('name', 'total'));
     }
 
 

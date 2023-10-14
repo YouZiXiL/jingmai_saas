@@ -134,15 +134,41 @@
             <el-row :gutter="20">
                 <el-col :xs="24" :sm="8">
                     <div class="panel-4">
-                        <div class="dashboard-title">快递成功率</div>
+                        <div class="dashboard-title mb-2">快递成功率</div>
                         <div class="mt-2" v-for="(item, index) in monthGroupCount">
                             {{item.name}}
-                            <el-progress :text-inside="true" :stroke-width="20" :percentage="getSuccessRate(item)" :color="color[index]"></el-progress>
+                            <el-progress :text-inside="true" :stroke-width="26" :percentage="getSuccessRate(item)" :color="color[index]"></el-progress>
                         </div>
                     </div>
                 </el-col>
                 <el-col :xs="24" :sm="16" class="panel-4" >
                     <div id="dashboard-echart-line" class="echart"></div>
+                </el-col>
+            </el-row>
+
+            <el-row class="mt-1">
+                <el-col :xs="24" :sm="24">
+                    <div class="panel-5">
+                        <div class="d-flex j-sb">
+                            <div class="dashboard-title">代理商排名</div>
+                            <div class="block">
+                                <el-date-picker
+                                        @change="onChangeDate"
+                                        v-model="dateRange"
+                                        type="daterange"
+                                        align="right"
+                                        range-separator="-"
+                                        :start-placeholder="firstDay"
+                                        :end-placeholder="today"
+                                        value-format="timestamp"
+                                        :picker-options="pickerOptions">
+                                </el-date-picker>
+                            </div>
+                        </div>
+
+                        <div id="echart-agent-top" style="height: 450px" class="echart"></div>
+
+                    </div>
                 </el-col>
             </el-row>
         </div>
@@ -189,10 +215,13 @@
     </div>
 </body>
 <script type="module">
+    let agentTopCharts = ''
     new Vue({
         el: '#dashboard',
+        mixins:[],
         data: function() {
             return {
+                auth:false,// 代理商为false，管理员，客服为true
                 channelVisible: false, // 模态框
                 orderInfoVisible: false, // 模态框
                 addressVisible: false, // 模态框
@@ -207,7 +236,7 @@
                 payChannel: 1, // 支付渠道, 1:微信, 2:支付宝
                 payAmount: 100, // 充值金额
                 qrCode: '', // 付款二维码
-                color: ['#1b9efb','#f58585', '#ffe891', '#aafed8', '#eca8e7', '#ff6f00', '#ff4f00', '#ff2f00', '#ff0000', '#e60000', '#ff8394', '#f6d8c1'],
+                color: ['#1b9efb','#f58585', '#ffe891', '#aafed8', '#eca8e7', '#ff6f00', '#ffce80', '#ff999e', '#adbbff', '#e0ffbd', '#ff8394', '#f6d8c1'],
 
                 todayValidOrder: 0, // 今日有效订单
                 todayFinalPrice: 0, // 今日营业额（用户支付金额）
@@ -243,19 +272,58 @@
                 monthCancelOrder: [], // 每月取消订单量
                 monthTotalOrder: [], // 每月总订单量
 
+                // 代理商排名
+                agentTop: [], // 代理商排名
+
+                // 日期选择器
+                pickerOptions: {
+                    disabledDate(time) {
+                        return time.getTime() > Date.now();
+                    },
+                    shortcuts: [{
+                        text: '最近一周',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近一个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近三个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }]
+                },
+                dateRange:'', // 选择的日期范围
+                today: '2020', // 今天
+                firstDay: '', // 本月第一天
+
             };
         },
-
         mounted(){
             this.init()
             this.setEchartBar()
             this.setEchartPie()
             this.setEchartLine()
+            this.setEchartAgentTop()
 
         },
         methods:{
             init(){
                 const data =  JSON.parse(`{$row}`)
+                this.auth = data.auth
                 this.todayValidOrder = data.today_add_order
                 this.todayFinalPrice = data.today_final_price
                 this.todayAgentPrice = data.today_agent_price
@@ -269,20 +337,27 @@
                 this.yesterdayAgentPrice = data.yesterday_agent_price
                 this.yesterdayProfits = data.yesterday_profits
 
-                console.log('todayValidOrder',this.todayValidOrder)
-                console.log('yesterdayValidOrder',this.yesterdayValidOrder)
                 this.yesterdayUsers = data.yesterday_users
                 this.yesterdayCancelOrder = data.yesterday_cancel_order
 
 
                 this.todayGroupCount = data.today_group_count
                 this.todayGroupCountDefault = data.today_group_count
-                console.log('昨日利润',  this.yesterdayProfits)
-
                 this.monthGroupCount = data.month_group_count
 
                 this.getMonthOrderGroupCount(data.month_order_group_count)
                 this.getDaysOrderGroupCount(data.days_order_group_count)
+
+                // 代理商排名
+                this.agentTop = data.agent_top
+
+                const currentDate = new Date();
+                const year = currentDate.getFullYear();
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const day = String(currentDate.getDate()).padStart(2, '0');
+                this.today = `${year}-${month}-${day}`;
+                this.firstDay = `${year}-${month}-01`;
+
             },
 
             // 获取当日订单数量或占比
@@ -368,22 +443,6 @@
             setEchartBar(){
                 // 基于准备好的dom，初始化echarts实例
                 const barChart = echarts.init(document.getElementById('dashboard-echart-bar'));
-                const posList = [
-                    'left',
-                    'right',
-                    'top',
-                    'bottom',
-                    'inside',
-                    'insideTop',
-                    'insideLeft',
-                    'insideRight',
-                    'insideBottom',
-                    'insideTopLeft',
-                    'insideTopRight',
-                    'insideBottomLeft',
-                    'insideBottomRight'
-                ];
-
                 barChart.config = {
                     rotate: 90,
                     align: 'left',
@@ -501,6 +560,7 @@
 
                 // 使用刚指定的配置项和数据显示图表。
                 barChart.setOption(option);
+                window.addEventListener('resize', barChart.resize);
             },
 
             // 设置饼状图表
@@ -511,10 +571,6 @@
                     tooltip: {
                         trigger: 'item'
                     },
-                    // legend: {
-                    //     top: '3%',
-                    //     left: 'center'
-                    // },
                     series: [
                         {
                             name: '今日订单',
@@ -545,6 +601,7 @@
                     ]
                 }
                 pieChart.setOption(option)
+                window.addEventListener('resize', pieChart.resize);
             },
 
             // 折线图
@@ -567,14 +624,9 @@
                     legend: {
                         data: ['有效订单', '取消订单','总订单']
                     },
-                    toolbox: {
-                        feature: {
-                            saveAsImage: {}
-                        }
-                    },
                     grid: {
                         left: '3%',
-                        right: '4%',
+                        right: '3%',
                         bottom: '3%',
                         containLabel: true
                     },
@@ -679,14 +731,94 @@
                     ]
                 }
                 pieChart.setOption(option)
+                window.addEventListener('resize', pieChart.resize);
             },
 
+            // 代理商排名
+            setEchartAgentTop() {
+                agentTopCharts = echarts.init(document.getElementById('echart-agent-top'));
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    legend: {},
+                    grid: {
+                        left: 0,
+                        right: '3%',
+                        bottom: 0,
+                        top: 0,
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'value',
+                        // max: 'dataMax',
+                    },
+                    yAxis: {
+                        type: 'category',
+                        data: this.agentTop['name'],
+                        inverse: true,
+                    },
+                    series: [
+                        {
+                            type: 'bar',
+                            data: this.agentTop['total'],
+                            label: {
+                                show: true,
+                                position: 'right',
+                            },
+                            itemStyle: {
+                                color:  (param) => {
+                                    return this.color[param.dataIndex] || '#5470c6';
+                                }
+                            },
+                        }
+                    ]
+                };
+                agentTopCharts.setOption(option)
+                window.addEventListener('resize', agentTopCharts.resize);
+            },
             // 百分百计算
             divideToPercentage(dividend, divisor) {
                 let result = (dividend / divisor) * 100;
                 return Math.floor(result) + "%";
-            }
-        }
+            },
+
+            // 代理商排行选择日期
+            onChangeDate(event){
+                Fast.api.ajax({
+                    url: 'dashboard/rank',
+                    method: 'post',
+                    data:{
+                        startDate:Math.floor(event[0] / 1000),
+                        endDate: Math.floor(event[1] / 1000),
+                    },
+                },  (data) => { //success
+
+                    this.agentTop = data;
+                    agentTopCharts.setOption({
+                        xAxis: {
+                            type: 'value',
+                            // max: 'dataMax',
+                        },
+                        yAxis: {
+                            type: 'category',
+                            data: this.agentTop['name'],
+                            inverse: true,
+                        },
+                        series: [{
+                            data: this.agentTop['total'], // 更新对应时间的值数据
+                        }],
+                    });
+                    return false
+                }, (data,ret) => { //error
+                    return true;
+                });
+            },
+        },
+
     })
 </script>
 <style lang="scss">
@@ -834,7 +966,13 @@
         }
     }
     .panel-4{
-        height: 400px;
+        height: 440px;
+        border-radius: 10px;
+        background: white;
+        padding:20px;
+    }
+    .panel-5{
+        height: 520px;
         border-radius: 10px;
         background: white;
         padding:20px;
