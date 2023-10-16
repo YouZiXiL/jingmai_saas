@@ -8,7 +8,7 @@
     <div id="dashboard" v-cloak class="p-3">
         <div>
             <el-row :gutter="10">
-                <el-col :xs="24" :sm="16" >
+                <el-col :span="16" >
                     <div class="welcome">
                         <div class="bg"></div>
                         <div class="welcome-content">
@@ -19,7 +19,7 @@
 
                     </div>
                 </el-col>
-                <el-col :xs="24" :sm="8" >
+                <el-col :span="8" >
                     <div class="panel-1">
                         <div class="panel-1_top">
                             <div class="d-flex flex-column">
@@ -41,7 +41,7 @@
                 </el-col>
             </el-row>
             <el-row :gutter="10" class="mt-1">
-                <el-col :xs="12" :sm="4">
+                <el-col :span="4">
                     <div class="panel-2_1 number-card">
                         <i class="number-card-icon el-icon-document a-self-start font-xl" style="padding: 15px 10px"></i>
                         <div class="d-flex flex-column j-center">
@@ -51,7 +51,7 @@
                         </div>
                     </div>
                 </el-col>
-                <el-col :xs="12" :sm="4">
+                <el-col :span="4">
                     <div class="panel-2_2 number-card">
                         <i class="number-card-icon a-self-start font-xl iconfont icon-profit"> </i>
                         <div class="d-flex flex-column j-center">
@@ -61,7 +61,7 @@
                         </div>
                     </div>
                 </el-col>
-                <el-col :xs="12" :sm="4">
+                <el-col :span="4">
                     <div class="panel-2_3 number-card">
                         <i class="number-card-icon a-self-start font-xl iconfont icon-profit"></i>
                         <div class="d-flex flex-column j-center">
@@ -71,7 +71,7 @@
                         </div>
                     </div>
                 </el-col>
-                <el-col :xs="12" :sm="4">
+                <el-col :span="4">
                     <div class="panel-2_4 number-card">
                         <i class="number-card-icon a-self-start font-xl iconfont icon-profit"></i>
                         <div class="d-flex flex-column j-center">
@@ -81,7 +81,7 @@
                         </div>
                     </div>
                 </el-col>
-                <el-col :xs="12" :sm="4">
+                <el-col :span="4">
                     <div class="panel-2_5 number-card">
                         <i class="number-card-icon a-self-start font-xl el-icon-user" style="margin: 5px 2px"></i>
                         <div class="d-flex flex-column j-center">
@@ -91,7 +91,7 @@
                         </div>
                     </div>
                 </el-col>
-                <el-col :xs="12" :sm="4">
+                <el-col :span="4">
                     <div class="panel-2_2 number-card">
                         <i class="number-card-icon el-icon-document a-self-start font-xl" style="padding: 15px 10px"></i>
                         <div class="d-flex flex-column j-center">
@@ -103,15 +103,15 @@
                 </el-col>
             </el-row>
             <el-row :gutter="10" class="panel-3">
-                <el-col :xs="24" :sm="15">
+                <el-col :span="15">
                     <div id="dashboard-echart-bar" class="echart"></div>
                 </el-col>
-                <el-col :xs="24" :sm="9">
+                <el-col :span="9">
                     <el-row class="bg-white" style="border-radius: 10px">
-                        <el-col :xs="24" :sm="15">
+                        <el-col :span="15">
                             <div id="dashboard-echart-pie" class="echart" style="width: 95%"></div>
                         </el-col>
-                        <el-col :xs="24" :sm="9">
+                        <el-col :span="9">
                             <div class="express">
                                 <div class="express-panel">
                                     <el-button-group class="ml-auto">
@@ -132,7 +132,7 @@
                 </el-col>
             </el-row>
             <el-row :gutter="20">
-                <el-col :xs="24" :sm="8">
+                <el-col :span="8">
                     <div class="panel-4">
                         <div class="dashboard-title mb-2">快递成功率</div>
                         <div class="mt-2" v-for="(item, index) in monthGroupCount">
@@ -141,13 +141,13 @@
                         </div>
                     </div>
                 </el-col>
-                <el-col :xs="24" :sm="16" class="panel-4" >
+                <el-col :span="16" class="panel-4" >
                     <div id="dashboard-echart-line" class="echart"></div>
                 </el-col>
             </el-row>
 
             <el-row class="mt-1">
-                <el-col :xs="24" :sm="24">
+                <el-col :span="24">
                     <div class="panel-5">
                         <div class="d-flex j-sb">
                             <div class="dashboard-title">代理商排名</div>
@@ -182,7 +182,7 @@
                         type="error">
                 </el-alert>
                 <el-row>
-                    <el-col :xs="24" :sm="12">
+                    <el-col :span="12">
                         <div class="py-4 mt-3">
                             <div class="font-weight">充值渠道：</div>
                             <el-radio-group class="p-2" v-model="payChannel">
@@ -195,7 +195,7 @@
                             <el-input-number v-model="payAmount" controls-position="right" :min="100" :max="10000"></el-input-number>
                         </div>
                     </el-col>
-                    <el-col v-if="qrCode" :xs="24" :sm="12">
+                    <el-col v-if="qrCode" :span="12">
                         <div  class="h-100 d-flex a-center j-center my-2">
                             <el-image :src="qrCode" fit="fill"></el-image>
                         </div>
