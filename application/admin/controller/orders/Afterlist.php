@@ -261,6 +261,34 @@ class Afterlist extends Backend
                     }
                     $up_data['haocai_freight']=0;
                 }
+                // 保价费
+                if ($orders['insured_status']==2&&$orders['insured_wx_trade_no']){
+                    if($orders['pay_type'] == 1) {
+                        $insured_refund_no = 'RE_BJ_' .$common->get_uniqid();//耗材退款订单号
+                        $wx_pay = $common->wx_pay($orders['insured_mchid'], $orders['insured_mchcertificateserial']);
+                        $wx_pay
+                            ->chain('v3/refund/domestic/refunds')
+                            ->post(['json' => [
+                                'transaction_id' => $orders['insured_wx_trade_no'],
+                                'out_refund_no' => $insured_refund_no,
+                                'reason' => '耗材退款',
+                                'amount' => [
+                                    'refund' => (int)bcmul($orders['insured_cost'], 100),
+                                    'total' => (int)bcmul($orders['insured_cost'], 100),
+                                    'currency' => 'CNY'
+                                ],
+                            ]]);
+                        $up_data['insured_refund_no'] = $insured_refund_no;
+                    }elseif ($orders['pay_type'] == 2){
+                        $refund = Alipay::start()->base()
+                            ->refund($orders['out_trade_no'],$orders['insured_cost'],$agentAuth['auth_token']);
+                        if($refund){
+                            $out_refund_no='RE_BJ_' . $common->get_uniqid();//下单退款订单号
+                            $up_data['out_refund_no'] = $out_refund_no;
+                        }
+                    }
+                    $up_data['insured_cost']=0;
+                }
 
                 //代理商增加余额  退款
                 //代理结算金额 代理运费+保价金+耗材+超重
@@ -276,6 +304,7 @@ class Afterlist extends Backend
                 $up_data['pay_status']= $payStatus??2;
                 $up_data['overload_status']=0;
                 $up_data['consume_status']=0;
+                $up_data['insured_status']=0;
                 $up_data['order_status']= $orderStatus??'已作废';
                 $up_data['cancel_time']=time();
 

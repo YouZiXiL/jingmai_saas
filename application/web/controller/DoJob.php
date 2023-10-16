@@ -334,7 +334,7 @@ class DoJob
                                 $up_data['out_haocai_refund_no']=$out_haocai_refund_no;
                             }
                             //保价退款
-                            if($row['insured_status']==2&&$row['insured_out_no']){
+                            if($row['insured_status']==2&&$row['insured_wx_trade_no']){
                                 // 从本地文件中加载「商户API私钥」，「商户API私钥」会用来生成请求的签名
                                 $merchantPrivateKeyFilePath = file_get_contents(root_path().'./public/uploads/apiclient_key/'.$row['insured_mchid'].'.pem');
                                 $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
@@ -373,6 +373,7 @@ class DoJob
                         $up_data['pay_status']=2;
                         $up_data['overload_status']=0;
                         $up_data['consume_status']=0;
+                        $up_data['insured_status']=0;
                         $up_data['cancel_time']= time();
                         $up_data['order_status']='已取消';
                         //代理商增加余额  退款
