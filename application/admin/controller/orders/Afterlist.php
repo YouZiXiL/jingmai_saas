@@ -459,7 +459,7 @@ class Afterlist extends Backend
     }
 
     /**
-     * 退款超轻费
+     * 退款
      * @param $ids
      * @return void
      * @throws DbException
