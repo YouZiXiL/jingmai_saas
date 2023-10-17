@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\admin\model\User;
+use app\common\business\KDNBusiness;
 use app\common\business\QBiDaBusiness;
 use app\common\business\SetupBusiness;
 use app\web\model\Users;
@@ -603,5 +604,19 @@ class Test extends Controller
     public function getLatestAuditStatus(){
         $wxBusiness = new WxBusiness();
         $result = $wxBusiness->getLatestAuditStatus('wx4d70d06cdbc681db');
+    }
+
+    // 快递鸟超区检测
+    public function kdnCheck(){
+        $KDNBusiness = new KDNBusiness();
+        $result = $KDNBusiness->check('');
+        return R::ok(json_decode($result) );
+    }
+
+    // 快递鸟预估运费接口
+    public function kdnQueryPrice(){
+        $KDNBusiness = new KDNBusiness();
+        $result = $KDNBusiness->queryPrice('');
+        return R::ok(json_decode($result) );
     }
 }

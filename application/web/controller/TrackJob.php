@@ -49,7 +49,7 @@ class TrackJob
                     Log::error("track-队列执行异常："."YY获取物流轨迹失败:" . $res);
                     return false;
                 }
-                $comments = $result['result'][0];
+                $comments = $result['result'][0]??null;
                 if(empty($comments)) return false;
                 $up_data = [
                     'comments' => $comments

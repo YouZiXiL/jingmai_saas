@@ -227,9 +227,6 @@ class DoJob
                     $refoundAmount = $totalAmount;
                     if(isset($data['refund']) && $data['refund']>0) $refoundAmount = $data['refund'];
 
-                    Log::log("订单金额-". $totalAmount );
-                    Log::log("退款金额-". $refoundAmount );
-
                     if($totalAmount == 0 || $refoundAmount ==0 ) return true;
                     if ($row['pay_status']!=2){
                         if($row['pay_type'] == 1 ){

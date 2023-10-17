@@ -600,6 +600,7 @@ class Wxcallback extends Controller
                 // 发送耗材短信
                 KD100Sms::run()->material($orders);
             }
+
             if($pamar['type']=='已取消'&&$orders['pay_status']!=2){
                 // 取消订单，给用户退款
                 if($wxOrder){ // 微信
