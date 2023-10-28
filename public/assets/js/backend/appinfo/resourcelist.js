@@ -154,8 +154,13 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     if (row.user_id===0){
                                         return '<span style="color:#ff0000;">定时任务</span>';
                                     }
-                                    if(value==null){
-                                        return '<span style="color:#00b2ff;">后台使用</span>';
+                                    if(!value){
+                                        if(row.usersinfo.nick_name){
+                                            return '<span style="color:#00b2ff;">' + row.usersinfo.nick_name + '</span>';
+                                        }else{
+                                            return '<span style="color:#000000;">' + row.user_id + '</span>';
+                                        }
+
                                     }else{
                                         return '<span style="color:#000000;">'+value+'</span>';
                                     }

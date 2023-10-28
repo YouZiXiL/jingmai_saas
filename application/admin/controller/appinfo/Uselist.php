@@ -62,7 +62,7 @@ class Uselist extends Backend
         $list = $list
             ->where($where)
             ->with(['usersinfo'=>function($query){
-                $query->WithField('mobile');
+                $query->WithField('mobile,nick_name');
             }])
             ->order($sort, $order)
             ->paginate($limit);
