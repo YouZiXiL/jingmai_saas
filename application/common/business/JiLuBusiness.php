@@ -10,7 +10,7 @@ use think\db\exception\ModelNotFoundException;
 use think\exception\DbException;
 use think\Model;
 
-class JiLu
+class JiLuBusiness
 {
     public static string $code = '08_2'; //  快递渠道代号
     public static string $tag = '圆通快递'; // 前端显示的名字
@@ -149,7 +149,7 @@ class JiLu
     public function queryPriceHandle(array $agent_info, array $param, string $sendProvince, string $receiveProvince){
         if($param['insured']) return []; // 不支持保价费
         $qudao_close = explode('|', $agent_info['qudao_close']);
-        if (in_array(self::$tag,$qudao_close)){
+        if (in_array(JiLuBusiness::$tag,$qudao_close)){
             return [];
         }
 
@@ -179,8 +179,8 @@ class JiLu
         $content['users_shouzhong']=sprintf("%.2f",$userOne);//用户首重
         $content['users_xuzhong']=sprintf("%.2f",$userMore);//用户续重
 
-        $content['tagType'] = self::$tag;
-        $content['channelId'] =  self::$code;
+        $content['tagType'] = JiLuBusiness::$tag;
+        $content['channelId'] =  JiLuBusiness::$code;
         $content['channel'] = '圆通';
         $content['freight'] =  number_format($freight, 2);
         $content['agent_price'] = number_format($agentPrice, 2);
@@ -225,16 +225,16 @@ class JiLu
         }
         $weight = $param['weight']; // 下单重量
         $qudao_close = explode('|', $agent_info['qudao_close']);
-        if (in_array(self::$tag,$qudao_close)){
+        if (in_array(JiLuBusiness::$tag,$qudao_close)){
             return [];
         }
         foreach ($result['data'] as $index => $item) {
-            if($item['expressChannel'] != self::$code) continue;
+            if($item['expressChannel'] != JiLuBusiness::$code) continue;
             // 圆通
             $agent_price = $item['payPrice'] + $profit['one_weight'] + $profit['more_weight'] * ($weight-1);
             $user_price = $agent_price + $profit['user_one_weight'] + $profit['user_more_weight'] * ($weight-1);
 
-            $item['tagType'] = self::$tag;
+            $item['tagType'] = JiLuBusiness::$tag;
             $item['channelId'] = $item['expressChannel'];
             $item['agent_price'] = number_format($agent_price, 2);
             $item['final_price']=  number_format($user_price, 2);

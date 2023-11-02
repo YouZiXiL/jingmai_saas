@@ -4,7 +4,8 @@ namespace app\web\controller;
 
 use app\common\business\AliBusiness;
 use app\common\business\FengHuoDi;
-use app\common\business\JiLu;
+use app\common\business\JiLuBusiness;
+use app\common\business\KDNBusiness;
 use app\common\business\OrderBusiness;
 use app\common\config\Channel;
 use app\common\config\ProfitConfig;
@@ -113,8 +114,6 @@ class Yunyang extends Controller
             ];
             return json($data);
         }
-
-
     }
 
     /**
@@ -126,7 +125,6 @@ class Yunyang extends Controller
         db('users_address')->where('user_id',$this->user->id)->update(['default_status'=>0]);
         db('users_address')->where('id',$param['id'])->update(['default_status'=>1]);
         return json(['status'=>200, 'data'=>'', 'msg'=>'成功']);
-
     }
 
     /**
@@ -213,22 +211,29 @@ class Yunyang extends Controller
             }
             $agent_info=db('admin')->where('id',$this->user->agent_id)->find();
 
-
-
-            $fengHuoDi = new FengHuoDi();
+//            $fengHuoDi = new FengHuoDi();
             $yunYang = new \app\common\business\YunYang();
+            $KDNBusiness = new KDNBusiness();
             // 组装查询参数
             if ($param['channel_tag']=='智能'){
                 // $fhdParams = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'RCP');
                 $yyParams = $yunYang->queryPriceParams($jijian_address,$shoujian_address, $param);
-                $response =  $this->common->multiRequest($yyParams);
-                $yyPackage = $yunYang->advanceHandle($response[0], $agent_info, $param);
+//                $kdnParams = $KDNBusiness->queryPriceParams($jijian_address,$shoujian_address, $param);
+                $queryList = [
+                    'yy' => $yyParams,
+                ];
+                //  函数过滤空数组
+                $queryList = filter_array($queryList);
+                $response =  $this->common->multiRequest(...array_values($queryList));
+                $keys = array_keys($queryList);
+                $list = array_combine($keys, $response);
+                $yyPackage = isset($list['yy'])?$yunYang->advanceHandle($list['yy'], $agent_info, $param):[];
+//                $dknPackage = isset($list['kdn'])?$KDNBusiness->advanceHandle($list['kdn'], $agent_info, $param):[];
                 // $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
-                $jiLu = new JiLu();
-                $jiluPackage = $jiLu->queryPriceHandle($agent_info, $param,$jijian_address['province'], $shoujian_address['province']);
-                $result = $yyPackage??[];
-                if(!empty($jiluPackage))  $result[] = $jiluPackage;
-                if(!empty($fhdDb)) $result[] = $fhdDb;
+                $jiLu = new JiLuBusiness();
+                $jiLuPackage = $jiLu->queryPriceHandle($agent_info, $param,$jijian_address['province'], $shoujian_address['province']);
+                $kdnPackage = [];//$KDNBusiness->queryPriceHandle($agent_info, $param,$jijian_address, $shoujian_address);
+                $result = array_merge_recursive($yyPackage, filter_array([$kdnPackage, $jiLuPackage])) ;
                 usort($result, function ($a, $b){
                     if (empty($a['final_price']) || empty($b['final_price'])) {
                         if (empty($a['final_price'])) {
@@ -726,7 +731,7 @@ class Yunyang extends Controller
     function order_cancel(): Json
     {
         $id = input('id');
-        $cancelReason = input('reason');
+        $cancelReason = input('reason'); // 取消原因
         try {
             if (empty($id)){
                 return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
@@ -757,12 +762,13 @@ class Yunyang extends Controller
                 if ( empty($res['data']['result']) ){
                     return json(['status'=>400,'data'=>'','msg'=>'取消失败请联系客服']);
                 }
-            }else if($row['channel_merchant'] == Channel::$jilu){
+            }
+            else if($row['channel_merchant'] == Channel::$jilu){
                 $content = [
                     'expressChannel' => $row['channel_id'],
                     'expressNo' => $row['waybill'],
                 ];
-                $jiLu = new JiLu();
+                $jiLu = new JiLuBusiness();
                 $resultJson = $jiLu->cancelOrder($content);
                 $result = json_decode($resultJson, true);
                 if ($result['code']!=1){
@@ -777,7 +783,29 @@ class Yunyang extends Controller
                     $orderBusiness = new OrderBusiness();
                     $orderBusiness->orderCancel($orderModel);
                 }
-            }else if($row['channel_merchant'] == Channel::$fhd){
+            }
+            else if($row['channel_merchant'] == Channel::$kdn){
+                $KDNBusiness = new KDNBusiness();
+                if($row['order_status'] == '已派单' ||
+                    $row['order_status'] == '已接单' ||
+                    $row['order_status'] == '待取件' ||
+                    $row['order_status'] == '待揽收'
+                ){
+                    $resultJson= $KDNBusiness->cancel($row['out_trade_no'], $cancelReason);
+                    $res=json_decode($resultJson,true);
+                    if(isset($res['Success']) && $res['Success']){
+                        // 取消成功  执行退款操作
+                        $orderBusiness = new OrderBusiness();
+                        $orderBusiness->orderCancel($orderModel, $cancelReason);
+                    }else{
+                        return R::error($res['Reason']);
+                    }
+                }else{
+                    return R::error("{$row['order_status']}状态下不能取消");
+                }
+
+            }
+            else if($row['channel_merchant'] == Channel::$fhd){
                 $content=[
                     'expressCode'=> $row['db_type'],
                     'orderId'=>$row['out_trade_no'],
@@ -793,7 +821,8 @@ class Yunyang extends Controller
                 if($res['rcode'] != 0){
                     return R::error('取消失败请联系客服');
                 }
-            }else if ($row['channel_merchant']== Channel::$qbd){
+            }
+            else if ($row['channel_merchant']== Channel::$qbd){
                 $content=[
                     "genre"=>1,
                     'orderNo'=>$row['shopbill']
@@ -807,7 +836,8 @@ class Yunyang extends Controller
                 if ($res['code']!=0){
                     return R::error($res['msg']);
                 }
-            }else if($row['channel_tag']=='智能'){
+            }
+            else if($row['channel_tag']=='智能'){
                 $content=[
                     'shopbill'=>$row['shopbill']
                 ];

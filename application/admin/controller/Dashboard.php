@@ -108,6 +108,7 @@ class Dashboard extends Backend
                 ->where('pay_status',1)
                 ->sum('final_price');
 
+
             //昨日营业额
             $yesterday_final_price=  Db::query("select sum(final_price) as total from fa_orders
                  where from_unixtime(create_time) > current_date - interval 1 day
@@ -119,10 +120,6 @@ class Dashboard extends Backend
 
 
 
-            $today_overload_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
-            $today_haocai_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
-            $today_tralight_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->where('tralight_status',2)->sum('tralight_price');
-            $today_agent_tralight_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->where('pay_status',1)->where('tralight_status',2)->sum('agent_tralight_price');
 
             $yesterday_overload_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
             $yesterday_haocai_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
@@ -130,20 +127,21 @@ class Dashboard extends Backend
             $yesterday_agent_tralight_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('tralight_status',2)->sum('agent_tralight_price');
 
 
-            $todayAmount=$arr['today_agent_price']-$today_agent_tralight_amount;
-            $yesterdayAmount=$arr['yesterday_agent_price']-$yesterday_agent_tralight_amount;
 
-            //今日利润
-            $arr['today_profits']= bcsub(
-                $arr['today_final_price'] + $today_overload_amount + $today_haocai_amount - $today_tralight_amount,
-                $todayAmount,2
-            );
+
+
+            $yesterdayAmount = $arr['yesterday_agent_price']-$yesterday_agent_tralight_amount;
 
             // 昨日利润
             $arr['yesterday_profits']= bcsub(
                 $arr['yesterday_final_price'] + $yesterday_overload_amount + $yesterday_haocai_amount - $yesterday_tralight_amount,
                 $yesterdayAmount,2
             );
+
+            //今日利润
+            $arr['today_profits'] =  $this->todayProfits('today', $agentId);
+            $arr['month_profits'] =  $this->todayProfits('month', $agentId);
+            $arr['year_profits'] =  $this->todayProfits('year', $agentId);
 
             //今日新增会员
             $arr['today_users']=db('users')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->count();
@@ -271,13 +269,12 @@ class Dashboard extends Backend
             $yesterday_overload_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
             $yesterday_haocai_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
 
-            $todayAmount = $arr['today_agent_price']-$today_agent_tralight_amount;
+            $todayAmount = $arr['today_agent_price'] - $today_agent_tralight_amount;
 
             //今日利润
-            $arr['today_profits']= bcsub(
-                $arr['today_final_price'] + $today_overload_amount + $today_haocai_amount - $today_tralight_amount,
-                $todayAmount,2
-            );
+            $arr['today_profits'] =  $this->todayProfits();
+            $arr['month_profits'] =  $this->todayProfits('month');
+            $arr['year_profits'] =  $this->todayProfits('year');
 
             //昨日利润
             $arr['yesterday_profits']= bcsub(
@@ -331,6 +328,49 @@ class Dashboard extends Backend
         $this->success('', '', compact('name', 'total'));
     }
 
+    /**
+     * 今日利润
+     * @return string
+     */
+    public function todayProfits($date = 'today', $agentId = null){
+        $where = [ 'pay_status' => '1' ];
+        if ($agentId) $where['agent_id'] = $agentId;
+        //结算额
+        $todayAgentPrice=db('orders')
+            ->whereTime('create_time',$date)
+            ->where($where)
+            ->sum('agent_price');
+
+        //运费
+        $todayFinalPrice = db('orders')
+            ->whereTime('create_time',$date)
+            ->where($where)
+            ->sum('final_price');
+        // 超重金额
+        $todayOverload =db('orders')
+            ->whereTime('create_time',$date)
+            ->where($where)
+            ->where('overload_status',2)
+            ->sum('overload_price');
+        // 耗材金额
+        $todayHaocai=db('orders')
+            ->whereTime('create_time',$date)
+            ->where($where)
+            ->where('consume_status',2)
+            ->sum('haocai_freight');
+        // 保价金额
+        $todayInsured=db('orders')
+            ->whereTime('create_time',$date)
+            ->where($where)
+            ->where('insured_status',2)
+            ->sum('insured_cost');
+
+        // 营收
+        $income = $todayFinalPrice + $todayOverload + $todayHaocai + $todayInsured;
+
+        //利润
+        return number_format($income - $todayAgentPrice,2 );
+    }
 
 
 }

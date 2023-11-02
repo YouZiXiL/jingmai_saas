@@ -3,7 +3,7 @@
 namespace app\admin\controller\open;
 
 use app\common\business\FengHuoDi;
-use app\common\business\JiLu;
+use app\common\business\JiLuBusiness;
 use app\common\business\QBiDaBusiness;
 use app\common\business\YunYang;
 use app\common\controller\Backend;
@@ -40,7 +40,7 @@ class Common extends Backend
     }
 
     public function jlBalance(){
-        $jiLu = new JiLu();
+        $jiLu = new JiLuBusiness();
         return $jiLu->queryBalance();
     }
 

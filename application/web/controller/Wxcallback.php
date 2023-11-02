@@ -5,7 +5,8 @@ namespace app\web\controller;
 use app\admin\model\market\Couponlists;
 use app\common\business\AfterSale;
 use app\common\business\FengHuoDi;
-use app\common\business\JiLu;
+use app\common\business\JiLuBusiness;
+use app\common\business\KDNBusiness;
 use app\common\business\OrderBusiness;
 use app\common\business\ProfitBusiness;
 use app\common\business\QBiDaBusiness;
@@ -286,9 +287,9 @@ class Wxcallback extends Controller
                 $data['pay_template']=$overload['priTmplId']; // 小程序超重补交模板
                 $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
             }else{ // 公众号
-                $wxBusiness = new WxBusiness();
-                // 设置所属行业
-                $wxBusiness->mpSetIndustry($authorization_info['authorizer_access_token']);
+//                $wxBusiness = new WxBusiness();
+//                // 设置所属行业
+//                $wxBusiness->mpSetIndustry($authorization_info['authorizer_access_token']);
 
                 // 获取已添加模版列表
                 $resJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token='.$authorization_info['authorizer_access_token']);
@@ -497,6 +498,7 @@ class Wxcallback extends Controller
             //超轻处理
             if ($orders['weight'] > ceil($finalWeight)  && $finalWeight!=0 && empty($orders['final_weight_time'])){
                 $lightWeight = floor($orders['weight']-$finalWeight); //超轻重量
+
                 if($orders['freight'] < $pamar['freight']){
                     $content = [
                         'title' => '运费异常',
@@ -517,7 +519,7 @@ class Wxcallback extends Controller
                         $agentMore = $up_data['agent_xuzhong'];
                         $userMore = $up_data['users_xuzhong'];
                     }
-                    $up_data['agent_tralight_price']=  bcmul($lightWeight,  $agentMore,2);;
+                    $up_data['agent_tralight_price']=  bcmul($lightWeight,  $agentMore,2);
                     $up_data['tralight_price']=  bcmul($lightWeight,  $userMore,2);;
                 }
 
@@ -699,6 +701,228 @@ class Wxcallback extends Controller
         }
     }
 
+
+    /**
+    * 快递鸟回调
+     */
+    function kdn_callback(){
+        $params = $this->request->post();
+        $paramJson = json_encode($params, JSON_UNESCAPED_UNICODE );
+        recordLog('channel-callback', '快递鸟-' . PHP_EOL . $paramJson);
+        $requestData = json_decode($params['RequestData'], true) ;
+        $resData = $requestData['Data'][0];
+        $KDNBusiness = new KDNBusiness();
+        $EBusinessID = $requestData['EBusinessID'];
+        try {
+
+            $out_trade_no = $resData['OrderCode']; // 订单号
+            $shopbill = $resData['KDNOrderCode']; // 快递鸟单号
+            $waybill = $resData['LogisticCode']??''; // 快递鸟单号
+
+            $kdnData = [
+                'State' => $resData['State'],
+                'KDNOrderCode' => $shopbill,
+                'OrderCode' => $out_trade_no,
+                'LogisticCode' => $waybill,
+                'Weight' => $resData['Weight']??0,
+                'Cost' => $resData['Cost']??0, // 运费
+                'InsureAmount' => $resData['InsureAmount']??0, // 保价费
+                'PackageFee' => $resData['PackageFee']??0, // 包装费
+                'OverFee' => $resData['OverFee']??0, // 超重费
+                'OtherFee' => $resData['OtherFee']??0, // 其他费用
+                'TotalFee' => $resData['TotalFee']??0, // 总费用
+                'FirstWeightAmount' => $resData['FirstWeightAmount']??0, // 首重金额
+                'ContinuousWeightAmount' => $resData['ContinuousWeightAmount']??0, // 续重金额(总和)
+                'raw' => $paramJson,
+                'createTime' => date('Y-m-d H:i:s', time()),
+            ];
+            db('kdn_callback')->insert($kdnData);
+            $order = Order::where('out_trade_no',$out_trade_no)->find();
+            if (!$order){
+                throw new Exception('订单不存在-'. $out_trade_no);
+            }
+            if ($order['pay_status']=='2'){
+                throw new Exception('订单已退款-'. $order['out_trade_no']);
+            }
+            if($order['order_status']=='已签收'){
+                throw new Exception('订单已签收-'. $order['out_trade_no']);
+            }
+
+            $agent_info=db('admin')->where('id',$order['agent_id'])->find();
+            $xcx_access_token = null;
+            $wxOrder = $order['pay_type'] == 1;
+            $aliOrder = $order['pay_type'] == 2;
+            $autoOrder = $order['pay_type'] == 3;
+            $users = $autoOrder?null:db('users')->where('id',$order['user_id'])->find();
+            $common= new Common();
+            if($wxOrder){
+                $agent_auth_xcx=db('agent_auth')
+                    ->where('id',$order['auth_id'])
+                    ->find();
+                $xcx_access_token= $common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+            }
+
+            if($aliOrder){
+                // 支付宝支付
+                $agent_auth_xcx = AgentAuth::where('agent_id',$order['agent_id'])
+                    ->where('app_id',$order['wx_mchid'])
+                    ->find();
+                $xcx_access_token= $agent_auth_xcx['auth_token'];
+            }
+            //99=下单失败、102=网点信息、103=快递员信息、104=已取件、301=已揽件、109=转派;203=已取消;
+            // 206=虚假揽收;207=线下收费;208=修改重量;302=更换运单号;3=已签收;2=运输中;601=费用状态;701=平台订单支付结果;502=子母件'
+            $up_data = [];
+
+            if($waybill && empty($order['waybill']) ){
+                $up_data['waybill'] = $waybill;
+            }
+
+            if($kdnData['State'] == 99 && $order['pay_status']!=2){  // 下单失败
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderFail($order, $resData['Reason']);
+            }else if($kdnData['State'] == 103){ // 快递员信息推送
+                $info = $resData['PickerInfo'][0];
+                $up_data['comments'] = "快递员：{$info['PersonName']}，电话：{$info['PersonTel']}，取件码：{$info['PickupCode']}";
+            }else if($kdnData['State'] == 301){ // 已揽收
+                $up_data['order_status'] = '已揽件';
+                $up_data['final_weight'] = $kdnData['Weight'];
+                $up_data['final_freight'] = $kdnData['TotalFee'];
+            }else if($kdnData['State'] == 203){ // 订单取消
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderCancel($order, $resData['Reason']);
+                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $order['weight'] >= $agent_info['wx_im_weight'] ){
+                    //推送企业微信消息
+                    $common->wxim_bot($agent_info['wx_im_bot'],$order);
+                }
+            }else if($kdnData['State'] == 206){ // 虚假揽收
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderCancel($order, $resData['Reason'], '虚假揽收');
+                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $order['weight'] >= $agent_info['wx_im_weight'] ){
+                    //推送企业微信消息
+                    $common->wxim_bot($agent_info['wx_im_bot'],$order);
+                }
+            }else if($kdnData['State'] == 207){ // 线下收费
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderCancel($order, $resData['Reason'], '线下收费');
+                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $order['weight'] >= $agent_info['wx_im_weight'] ){
+                    //推送企业微信消息
+                    $common->wxim_bot($agent_info['wx_im_bot'],$order);
+                }
+            }
+            else if($kdnData['State'] == 302){ // 更换运单号
+                $up_data['waybill'] =  $waybill;
+            }else if($kdnData['State'] == 2 || $kdnData['State'] == 104){
+                $up_data['order_status'] =  $KDNBusiness->getState($kdnData['State']);;
+            }else if($kdnData['State'] == 3){
+                $up_data['order_status'] = '已签收';
+                // 返佣计算
+                if(
+                    !empty($users['invitercode'])
+                    && $order['pay_status'] == 1
+                    && $order['order_status'] != '已签收'
+                ){
+                    $rebateListController = new RebateListController();
+                    $rebateListController->handle($order, $agent_info, $users);
+                }
+            }
+
+
+            if(empty($order['final_weight_time']) ){  // 超重
+                $overloadWeight = $kdnData['Weight'] - $order['weight']; // 超出重量
+                $overloadPrice = $kdnData['Cost'] - $order['freight']; // 超出金额
+                if($overloadPrice > 0){
+                    $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
+                    $up_data['agent_overload_price'] = number_format( $overloadPrice + $profit['more_weight'] * $overloadWeight,2); //代理商超重金额
+                    $up_data['overload_price'] = number_format((float)$up_data['agent_overload_price'] + $profit['user_more_weight'] * $overloadWeight, 2); //用户超重金额
+                    $data = [
+                        'type'=>1,
+                        'agent_overload_amt' =>$up_data['agent_overload_price'],
+                        'order_id' => $order['id'],
+                        'xcx_access_token'=>$xcx_access_token,
+                        'open_id'=>$users?$users['open_id']:'',
+                        'template_id'=>$agent_auth_xcx['pay_template']??null,
+                        'cal_weight'=>ceil($overloadWeight) .'kg',
+                        'users_overload_amt'=>$up_data['overload_price'] . '元'
+                    ];
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
+
+                    // 发送超重短信
+                    KD100Sms::run()->overload($order);
+                }else if($overloadPrice < 0){ // 超轻
+                    $lightWeight = abs($overloadWeight);
+                    $lightPrice = abs($overloadPrice); // 超轻金额
+                    $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
+                    $up_data['agent_tralight_price'] = number_format( $lightPrice + $profit['more_weight'] * $lightWeight,2); //代理商超重金额
+                    $up_data['tralight_price'] = number_format((float)$up_data['agent_tralight_price'] + $profit['user_more_weight'] * $lightWeight, 2); //用户超重金额
+                }
+
+            }
+
+            if(($kdnData['PackageFee'] != 0 ||  $kdnData['OtherFee'] != 0 ||  $kdnData['OverFee'] != 0) && empty($order['consume_time'])){ // 耗材
+                $up_data['haocai_freight'] =  $kdnData['PackageFee'] + $kdnData['OtherFee'] + $kdnData['OverFee'];
+                $data = [
+                    'type'=>2,
+                    'freightHaocai' =>  $up_data['haocai_freight'],
+                    'order_id' => $order['id'],
+                    'xcx_access_token'=>$xcx_access_token,
+                    'open_id'=>$users?$users['open_id']:"",
+                    'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
+                ];
+                // 将该任务推送到消息队列，等待对应的消费者去执行
+                Queue::push(DoJob::class, $data,'way_type');
+
+                // 发送耗材短信
+                KD100Sms::run()->material($order);
+            }
+            if($kdnData['InsureAmount'] != 0 && empty($order['insured_time'])){ // 保价
+                // 保价费用
+                $up_data['insured_cost']= $kdnData['InsureAmount'] ;
+                $up_data['agent_price']= $order['agent_price'] +  $kdnData['InsureAmount'];
+                $up_data['insured_time'] = time();
+                $up_data['insured_status'] = 1;
+                $DbCommon= new Dbcommom();
+                // 给代理商扣款
+                $DbCommon->set_agent_amount($order['agent_id'],'setDec',$kdnData['InsureAmount'],8,'运单号：'.$order['waybill'].' 保价扣除金额：'. $kdnData['InsureAmount'].'元');
+                // 发送保价短信
+                KD100Sms::run()->insured($order);
+            }
+
+            //发送小程序订阅消息(运单状态)
+            if ($order['order_status']=='派单中' || $order['order_status']=='已派单'){
+                if($wxOrder){
+                    $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$xcx_access_token,
+                        [
+                            'touser'=>$users['open_id'],  //接收者openid
+                            'template_id'=>$agent_auth_xcx['waybill_template'],
+                            'page'=>'pages/informationDetail/orderDetail/orderDetail?id='.$order['id'],  //模板跳转链接
+                            'data'=>[
+                                'character_string13'=>['value'=>$order['waybill']],
+                                'thing9'=>['value'=>$order['sender_province'].$order['sender_city']],
+                                'thing10'=>['value'=>$order['receive_province'].$order['receive_city']],
+                                'phrase3'=>['value'=>'派单中'],
+                                'thing8'  =>['value'=>'点击查看快递信息与物流详情',]
+                            ],
+                            'miniprogram_state'=>'formal',
+                            'lang'=>'zh_CN'
+                        ],'POST'
+                    );
+                }
+            }
+
+            if(!empty($up_data)){
+                db('orders')->where('out_trade_no', $out_trade_no)->update($up_data);
+            }
+            return $KDNBusiness->reSuccess($EBusinessID, 'success');
+        }catch (\Exception $e){
+            recordLog('channel-callback-err',
+                '快递鸟-' .  $e->getLine().'：'.$e->getMessage().PHP_EOL
+                .$e->getTraceAsString().PHP_EOL
+                .'参数：'. $paramJson);
+            return $KDNBusiness->reError($EBusinessID, $e->getMessage());
+        }
+
+    }
 
     /**
      * 风火递回调
@@ -1511,6 +1735,140 @@ class Wxcallback extends Controller
 
                     }
                     break;
+                case 'JILU':
+                    $jiLu = new JiLuBusiness();
+                    $resultJson = $jiLu->createOrderHandle($orders, $record);
+                    $result = json_decode($resultJson, true);
+                    recordLog('jilu-create-order',
+                        '订单：'.$orders['out_trade_no']. PHP_EOL .
+                        '返回结果：'.$resultJson . PHP_EOL .
+                        '请求参数：' . $record
+                    );
+                    if ($result['code']!=1){ // 下单失败
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        $errMsg = $result['data']['message']??$result['msg'];
+                        if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
+                            $errMsg = '不支持的寄件或收件号码';
+                        }elseif (strpos($errMsg, 'HttpMessageConverter')!== false){
+                            $errMsg = '不支持的寄件或收件号码';
+                        }
+                        recordLog('channel-create-order-err',
+                            '订单：'.$orders['out_trade_no']. PHP_EOL .
+                            '极鹭错误信息：'.$errMsg
+                        );
+                        //支付下单失败  执行退款操作
+                        $update=[
+                            'pay_status'=>2,
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'yy_fail_reason'=>$errMsg,
+                            'order_status'=>'下单失败',
+                            'out_refund_no'=>$out_refund_no,
+                            'shopbill'=>$result['data']['expressId']??'',
+                        ];
+                        $data = [
+                            'type'=>3,
+                            'order_id'=>$orders['id'],
+                            'out_refund_no' => $out_refund_no,
+                            'reason'=>$errMsg,
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
+
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                            //推送企业微信消息
+                            $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                        }
+                    }else{ // 下单成功
+                        $rebateList = new RebateListController();
+                        $rebateList->create($orders, $agent_info);
+                        $update=[
+                            'waybill'=>$result['data']['expressNo'],
+                            'shopbill'=>$result['data']['expressId'],
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'pay_status'=>1,
+                        ];
+                        if(!empty($orders["couponid"])){
+                            $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                            if($couponinfo){
+                                $couponinfo->state=2;
+                                $couponinfo->save();
+                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                                if($coupon){
+                                    $coupon->state = 4;
+                                    $coupon->save();
+                                }
+
+                            }
+                        }
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['expressNo'].' 下单支付成功');
+                        $balance = $jiLu->queryBalance(); // 余额
+                        $setup= new SetupBusiness();
+                        // 设置的提醒金额
+                        $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
+                        // 余额变动提醒
+                        if((int)$balance <= (int)$balanceValue){
+                            //推送企业微信消息
+                            $Common->wxrobot_balance([
+                                'name' => '极鹭',
+                                'price' => $balance,
+                            ]);
+                        }
+
+                    }
+                    break;
+                case Channel::$kdn:
+                    $KDNBusiness = new KDNBusiness();
+                    $result = $KDNBusiness->createOrderHandle($orders);
+                    if (empty($result) || !$result['Success']){
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        //支付下单失败  执行退款操作
+                        $update=[
+                            'pay_status'=>2,
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'yy_fail_reason'=>$result['Reason']??'响应超时',
+                            'order_status'=>'下单失败',
+                            'out_refund_no'=>$out_refund_no,
+                            'shopbill'=>$result['Order']['KDNOrderCode']??'',
+                        ];
+                        $data = [
+                            'type'=>3,
+                            'order_id'=>$orders['id'],
+                            'out_refund_no' => $out_refund_no,
+                            'reason'=>$result['Reason']??'相应超时',
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
+
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                            //推送企业微信消息
+                            $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                        }
+                    }
+                    else{ // 下单成功
+                        $update=[
+                            'id' => $orders['id'],
+                            'pay_status'=> 1,
+                            'shopbill'=>$result['Order']['KDNOrderCode'],
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'yy_fail_reason'=> "预取货单时间：{$result['StartDate']} - {$result['EndDate']}",
+                        ];
+                        if(!empty($orders["couponid"])){
+                            $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                            if($couponinfo){
+                                $couponinfo->state=2;
+                                $couponinfo->save();
+                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                                if($coupon){
+                                    $coupon->state = 4;
+                                    $coupon->save();
+                                }
+                            }
+                        }
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$result['Order']['OrderCode'].' 下单支付成功');
+
+                    }
+
+                    break;
                 case 'FHD':
                     $fhd = new FengHuoDi();
                     $resultJson = $fhd->createOrderHandle($orders);
@@ -1644,91 +2002,10 @@ class Wxcallback extends Controller
                         }
                     }
                     break;
-                case 'JILU':
-                    $jiLu = new JiLu();
-                    $resultJson = $jiLu->createOrderHandle($orders, $record);
-                    $result = json_decode($resultJson, true);
-                    recordLog('jilu-create-order',
-                        '订单：'.$orders['out_trade_no']. PHP_EOL .
-                        '返回结果：'.$resultJson . PHP_EOL .
-                        '请求参数：' . $record
-                    );
-                    if ($result['code']!=1){ // 下单失败
-                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
-                        $errMsg = $result['data']['message']??$result['msg'];
-                        if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
-                            $errMsg = '不支持的寄件或收件号码';
-                        }elseif (strpos($errMsg, 'HttpMessageConverter')!== false){
-                            $errMsg = '不支持的寄件或收件号码';
-                        }
-                        recordLog('channel-create-order-err',
-                            '订单：'.$orders['out_trade_no']. PHP_EOL .
-                            '极鹭错误信息：'.$errMsg
-                        );
-                        //支付下单失败  执行退款操作
-                        $update=[
-                            'pay_status'=>2,
-                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                            'yy_fail_reason'=>$errMsg,
-                            'order_status'=>'下单失败',
-                            'out_refund_no'=>$out_refund_no,
-                            'shopbill'=>$result['data']['expressId']??'',
-                        ];
-                        $data = [
-                            'type'=>3,
-                            'order_id'=>$orders['id'],
-                            'out_refund_no' => $out_refund_no,
-                            'reason'=>$errMsg,
-                        ];
-                        // 将该任务推送到消息队列，等待对应的消费者去执行
-                        Queue::push(DoJob::class, $data,'way_type');
-
-                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
-                            //推送企业微信消息
-                            $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
-                        }
-                    }else{ // 下单成功
-                        $rebateList = new RebateListController();
-                        $rebateList->create($orders, $agent_info);
-                        $update=[
-                            'waybill'=>$result['data']['expressNo'],
-                            'shopbill'=>$result['data']['expressId'],
-                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                            'pay_status'=>1,
-                        ];
-                        if(!empty($orders["couponid"])){
-                            $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
-                            if($couponinfo){
-                                $couponinfo->state=2;
-                                $couponinfo->save();
-                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
-                                if($coupon){
-                                    $coupon->state = 4;
-                                    $coupon->save();
-                                }
-
-                            }
-                        }
-                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['expressNo'].' 下单支付成功');
-                        $balance = $jiLu->queryBalance(); // 余额
-                        $setup= new SetupBusiness();
-                        // 设置的提醒金额
-                        $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
-                        // 余额变动提醒
-                        if((int)$balance <= (int)$balanceValue){
-                            //推送企业微信消息
-                            $Common->wxrobot_balance([
-                                'name' => '极鹭',
-                                'price' => $balance,
-                            ]);
-                        }
-
-                    }
-                    break;
             }
-
-            db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($update);
-
+            if (isset($update)){
+                db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($update);
+            }
             exit('success');
         }catch (\Exception $e){
             recordLog('wx-callback-err',
@@ -3880,7 +4157,7 @@ class Wxcallback extends Controller
 
             }
 
-            $jiLu = new JiLu();
+            $jiLu = new JiLuBusiness();
             $wxOrder = $order['pay_type'] == 1;
             $aliOrder = $order['pay_type'] == 2;
             $autoOrder = $order['pay_type'] == 3;
@@ -3940,7 +4217,7 @@ class Wxcallback extends Controller
             else{ // 重量，补差价
                 // 超重和耗材
                 if(!empty($addpriceInfos)){
-                    $jiLu = new JiLu();
+                    $jiLu = new JiLuBusiness();
                     $cost = $jiLu->getCost($order['sender_province'], $order['receive_province']);
                     $reWeight = $cost['more_weight']; // 续重单价
                     $material = 0; // 耗材
@@ -4028,7 +4305,7 @@ class Wxcallback extends Controller
                             ->find();
                     }
 
-                    $jiLu = new JiLu();
+                    $jiLu = new JiLuBusiness();
                     $cost = $jiLu->getCost($order['sender_province'], $order['receive_province']);
                     // 退款重量（超轻重量）
                     $subWeight = $subpriceInfo['subWeight'];

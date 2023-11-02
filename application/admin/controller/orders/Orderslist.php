@@ -5,7 +5,8 @@ namespace app\admin\controller\orders;
 use app\admin\library\Auth;
 use app\admin\model\users\Blacklist;
 use app\admin\model\users\Userslist;
-use app\common\business\JiLu;
+use app\common\business\JiLuBusiness;
+use app\common\business\KDNBusiness;
 use app\common\business\OrderBusiness;
 use app\common\config\Channel;
 use app\common\controller\Backend;
@@ -203,7 +204,7 @@ class Orderslist extends Backend
                 'expressChannel' => $row['channel_id'],
                 'expressNo' => $row['waybill'],
             ];
-            $jiLu = new JiLu();
+            $jiLu = new JiLuBusiness();
             $resultJson = $jiLu->cancelOrder($content);
             $result = json_decode($resultJson, true);
             if ($result['code']!=1){
@@ -214,7 +215,8 @@ class Orderslist extends Backend
                 $orderBusiness = new OrderBusiness();
                 $orderBusiness->orderCancel($orderModel);
             }
-        }else if($row['channel_merchant'] == Channel::$fhd){
+        }
+        else if($row['channel_merchant'] == Channel::$fhd){
             $content=[
                 'expressCode'=> $row['db_type'],
                 'orderId'=>$row['out_trade_no'],
@@ -230,7 +232,8 @@ class Orderslist extends Backend
             if($res['rcode'] != 0){
                 $this->error($resultJson);
             }
-        }else if($row['channel_merchant']== Channel::$yy){
+        }
+        else if($row['channel_merchant']== Channel::$yy){
             $content=[
                 'shopbill'=>$row['shopbill'],
             ];
@@ -248,7 +251,19 @@ class Orderslist extends Backend
             if ($res['code']!=0){
                 $this->error($res['msg']);
             }
-        }else{
+        }else if($row['channel_merchant']==Channel::$kdn){
+            $KDNBusiness = new KDNBusiness();
+            $resultJson = $KDNBusiness->cancel($row['out_trade_no'], '后台取消');
+            $res=json_decode($resultJson,true);
+            if(isset($res['Success']) && $res['Success']){
+                // 取消成功  执行退款操作
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderCancel($orderModel, '后台取消', '已作废');
+            }else{
+                return R::error($resultJson);
+            }
+        }
+        else{
             $this->error('没有相关渠道');
         }
 

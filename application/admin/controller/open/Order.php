@@ -3,12 +3,8 @@
 namespace app\admin\controller\open;
 
 use app\admin\business\open\OrderBusiness;
-use app\common\business\FengHuoDi;
-use app\common\business\JiLu;
-use app\common\business\YunYang;
 use app\common\config\Channel;
 use app\common\controller\Backend;
-use app\common\library\utils\SnowFlake;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\Exception;
@@ -58,17 +54,19 @@ class Order extends Backend
             ->where('mobile',$channel['receiverInfo']['mobile'])->find();
         if ($blacklist)  $this->error('此手机号无法下单');
         recordLog('auto-order', json_encode($channel, JSON_UNESCAPED_UNICODE).PHP_EOL);
-
         $orderInfo = $orderBusiness->createOrder($channel, $agent_info);
         switch ($channel['channel_merchant']){
             case Channel::$yy:
                 $orderBusiness->yyCreateOrder($orderInfo);
                 break;
-            case Channel::$fhd:
-                $orderBusiness->fhdCreateOrder($orderInfo);
-                break;
             case Channel::$jilu:
                 $orderBusiness->jlCreateOrder($orderInfo);
+                break;
+            case Channel::$kdn:
+                $orderBusiness->kdnCreateOrder($orderInfo);
+                break;
+            case Channel::$fhd:
+                $orderBusiness->fhdCreateOrder($orderInfo);
                 break;
             case Channel::$qbd:
                 $orderBusiness->qbdCreateOrder($orderInfo);
@@ -93,8 +91,6 @@ class Order extends Backend
         }else{
             $this->wlQuery($paramData);
         }
-
-
     }
 
     /**
@@ -112,19 +108,25 @@ class Order extends Backend
         $yyQuery = $orderBusiness->yyQueryPrice($paramData, $channelTag);
         // $fhdQuery = $orderBusiness->fhdQueryPrice($paramData, 'RCP');
         $qbdQuery = $orderBusiness->qbdQueryPrice($paramData);
-
-        $response =  $orderBusiness->multiPrice([$yyQuery, $qbdQuery]);
-        list($yy, $qbd) = $response;
-
-        $yyRes = $orderBusiness->yyPriceHandle($yy, $agent_info, $paramData, $channelTag);
+//        $kdnQuery = $orderBusiness->kdnQueryPrice($paramData);
+        $queryList = [
+            'yy' => $yyQuery,
+            'qbd' => $qbdQuery,
+//            'kdn' => $kdnQuery,
+        ];
+        // 并保留值不为空的项
+        $queryList = filter_array($queryList);
+        $response =  $orderBusiness->multiPrice(array_values($queryList));
+        $keys = array_keys($queryList);
+        $list = array_combine($keys, $response);
+        $yyRes = isset($list['yy'])?$orderBusiness->yyPriceHandle($list['yy'], $agent_info, $paramData, $channelTag):[];
         // $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData, $channelTag);
-        $qbdRes = $orderBusiness->qbdPriceHandle($qbd, $agent_info, $paramData);
-
+        $qbdRes = isset($list['qbd'])?$orderBusiness->qbdPriceHandle($list['qbd'], $agent_info, $paramData):[];
+//        $kdnRes = isset($list['kdn'])?$orderBusiness->kdnPriceHandle($list['kdn'], $agent_info, $paramData):[];
         $jlRes = $orderBusiness->jlPriceHandle($agent_info, $paramData);
+        $kdnRes = [];// $orderBusiness->kdnPriceHandle($agent_info, $paramData);
+        $priceList = array_merge_recursive($yyRes, $qbdRes, filter_array([$kdnRes, $jlRes]) ) ;
 
-        $priceList = array_merge_recursive($yyRes, $qbdRes) ;
-        !empty($jlRes) && $priceList[] = $jlRes;
-        // !empty($fhdRes) && $priceList[] = $fhdRes;
         if (empty($priceList)){
             throw new Exception('没有指定快递渠道请联系客服');
         }

@@ -420,12 +420,13 @@ class Authlist extends Backend
 
         $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/submit_audit?access_token='.$xcx_access_token,[
             'item_list'=>$getCategory['category_list'],
+            'order_path' => '/pages/search/search',
         ],'POST');
 
         $res=json_decode($resJson,true);
 
         if ($res['errcode']!=0){
-            Log::error('提交审核失败：'. $resJson);
+            recordLog('wx-shouquan-err', $resJson);
             switch ($res['errcode']){
                 case 85023: $this->error('小程序填写的类目数不在 1-5 以内');
                 case 85085: $this->error('小程序提审数量已达本月上限');

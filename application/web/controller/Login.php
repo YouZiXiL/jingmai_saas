@@ -216,7 +216,7 @@ class Login extends Controller
 
             $auth_ids = implode(',', $auth_ids);
             $time=time();
-            if(empty($user_info)){ // 用户注册
+            if(empty($user_info)){ // 没有这个用户，注册用户
                 // 是否用手机号注册：0=不使用，1=使用
                 $authPhone = db('agent_config')->where('agent_id',$agentAuth['agent_id'])
                     ->field('id,auth_phone')
@@ -245,15 +245,17 @@ class Login extends Controller
                 $user_info['auth_ids'] = $auth_ids;
                 //如果携带邀请码登录
                 if(!empty($param["invitcode"])){
-                    $invitcode = substr($param["invitcode"],-7 );
-                    $pauser=$user->get(["myinvitecode"=>$invitcode]);
-                    if(!empty($pauser)){
-                        $user_info["invitercode"]=$invitcode;
-                        $user_info["fainvitercode"]=$pauser["invitercode"];
-                    }
-                    //超级B 身份核验
-                    if(!empty($pauser->rootid)){
-                        $user_info["rootid"]=$pauser["rootid"];
+                    $invitcode = explode('%', $param["invitcode"])[1]??'';
+                    if(!empty($invitcode)){
+                        $pauser=$user->get(["myinvitecode"=>$invitcode]);
+                        if(!empty($pauser)){
+                            $user_info["invitercode"]=$invitcode;
+                            $user_info["fainvitercode"]=$pauser["invitercode"];
+                        }
+                        //超级B 身份核验
+                        if(!empty($pauser->rootid)){
+                            $user_info["rootid"]=$pauser["rootid"];
+                        }
                     }
                 }
                 $user_info = Users::create($user_info);

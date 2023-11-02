@@ -17,11 +17,12 @@ class OrderBusiness
     /**
      * 取消订单，退款操作
      * @param Model $orderModel
+     * @param string $status 订单状态
+     * @param string $reason 取消原因
      * @return void
      * @throws Exception
-     * @throws \Exception
      */
-    public function orderCancel(Model $orderModel)
+    public function orderCancel(Model $orderModel, string $reason = '',string $status = '已取消')
     {
         $order = $orderModel->toArray();
         $wxOrder = $order['pay_type'] == 1; // 微信支付
@@ -32,6 +33,8 @@ class OrderBusiness
             $data = [
                 'type' => 4,
                 'order_id' => $order['id'],
+                'order_status' => $status,
+                'yy_fail_reason'=> $reason,
             ];
 
             // 将该任务推送到消息队列，等待对应的消费者去执行
@@ -40,12 +43,15 @@ class OrderBusiness
             $out_refund_no = $utils->get_uniqid();//下单退款订单号
             $update = [
                 'pay_status' => 2,
-                'order_status' => '已取消',
+                'order_status' => $status,
                 'out_refund_no' => $out_refund_no,
+                'yy_fail_reason'=> $reason,
+                'overload_status'=> 0,
+                'consume_status'=> 0,
+                'insured_status'=> 0,
             ];
             $orderModel->isUpdate()->save($update);
-            $DbCommon = new Dbcommom();
-            $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, '运单号：' . $order['waybill'] . ' 已取消并退款');
+            $this->setAgentAmount($order, $status);
         } else if ($aliOrder) { // 支付宝
             $agentAuth = AgentAuth::where('id', $order['auth_id'])->value('auth_token');
             // 执行退款操作
@@ -58,8 +64,9 @@ class OrderBusiness
             $update = [
                 'id'=> $order['id'],
                 'pay_status' => 2,
-                'order_status' => '已取消',
+                'order_status' => $status,
                 'out_refund_no' => $out_refund_no,
+                'yy_fail_reason'=> $reason,
             ];
             if (!$refund) {
                 $update['pay_status'] = 4;
@@ -67,8 +74,7 @@ class OrderBusiness
             $orderModel->isUpdate()->save($update);
             if($order['pay_status'] == 1){
                 // 只有支付成功的订单，取消操作时才给商家退款
-                $DbCommon = new Dbcommom();
-                $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, '运单号：' . $order['waybill'] . ' 已取消并退款');
+                $this->setAgentAmount($order, $status);
             }
 
         }
@@ -86,8 +92,28 @@ class OrderBusiness
         $wxOrder = $order['pay_type'] == 1; // 微信支付
         $aliOrder = $order['pay_type'] == 2; // 支付宝支付
         $autoOrder = $order['pay_type'] == 3; // 智能下单
+        $utils = new Common();
+        if ($wxOrder) {
+            $data = [
+                'type' => 4,
+                'order_id' => $order['id'],
+                'order_status' => '下单失败',
+                'yy_fail_reason'=> $errMsg,
+            ];
 
-        if($aliOrder){
+            // 将该任务推送到消息队列，等待对应的消费者去执行
+            Queue::push(DoJob::class, $data, 'way_type');
+        } else if ($autoOrder) { // 智能下单
+            $out_refund_no = $utils->get_uniqid();//下单退款订单号
+            $update = [
+                'pay_status' => 2,
+                'order_status' => '下单失败',
+                'out_refund_no' => $out_refund_no,
+                'yy_fail_reason'=> $errMsg,
+            ];
+            $orderModel->isUpdate()->save($update);
+            $this->setAgentAmount($order, '下单失败');
+        } else if ($aliOrder){
             $agentAuth = AgentAuth::where('id', $order['auth_id'])->value('auth_token');
             // 执行退款操作
             $refund = Alipay::start()->base()->refund(
@@ -105,6 +131,10 @@ class OrderBusiness
             ];
             if (!$refund) {
                 $update['pay_status'] = 3;
+            }
+            if($order['pay_status'] == 1){
+                // 只有支付成功的订单，取消操作时才给商家退款
+                $this->setAgentAmount($order,  '下单失败');
             }
             $orderModel->isUpdate()->save($update);
         }
@@ -172,7 +202,7 @@ class OrderBusiness
             'receive_location'=>$receiver['location'],
             'receive_address'=>$receiver['province'].$receiver['city'].$receiver['county'].$receiver['location'],
             'weight'=>$channel['weight'],
-            'package_count'=>$channel['package_count'],
+            'package_count'=>$channel['package_count']??1,
             'insured'=>$channel['insured']??0,
             'vloum_long'=>$channel['vloumLong']??0,
             'vloum_width'=>$channel['vloumWidth']??0,
@@ -188,5 +218,22 @@ class OrderBusiness
                 '用户下单：'.json_encode($order->toArray(), JSON_UNESCAPED_UNICODE)
             );
         }
+    }
+
+    /**
+     * 设置代理商余额
+     * @param array $order
+     * @param $status
+     * @return void
+     */
+    public function setAgentAmount(array $order, $status): void
+    {
+        $DbCommon = new Dbcommom();
+        if ($order['waybill']) {
+            $remark = '运单号：' . $order['waybill'] . $status . '并退款';
+        } else {
+            $remark = '订单号：' . $order['out_trade_no'] . $status . '并退款';
+        }
+        $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, $remark);
     }
 }

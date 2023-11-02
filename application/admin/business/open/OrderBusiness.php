@@ -4,7 +4,8 @@ namespace app\admin\business\open;
 
 use app\admin\controller\basicset\Saleratio;
 use app\common\business\FengHuoDi;
-use app\common\business\JiLu;
+use app\common\business\JiLuBusiness;
+use app\common\business\KDNBusiness;
 use app\common\business\ProfitBusiness;
 use app\common\business\QBiDaBusiness;
 use app\common\business\YunYang;
@@ -149,8 +150,8 @@ class OrderBusiness extends Backend
     public function yyPriceHandle(string $content, array $agent_info, array $param, $channelTag){
         if (empty($content)) return [];
         $data= json_decode($content, true);
+        recordLog('yy-channel-price', $content);
         if ($data['code']!=1){
-            recordLog('channel-price-err','云洋-' . $content);
             $errMsg = $data['message']??$content;
             if ($errMsg == '渠道不可用，Disable！状态码：Disable') $errMsg = '用黑名单';
             $this->error($errMsg);
@@ -163,7 +164,6 @@ class OrderBusiness extends Backend
 
         // 被关闭的渠道
         $qudao_close=explode('|', $agent_info['qudao_close']);
-        // $qudao_close[] = '德邦'; // 云洋禁用德邦
 
         // 返回参数
         $list = [];
@@ -177,7 +177,7 @@ class OrderBusiness extends Backend
             }
             switch ($item['tagType']){
                 case '申通':
-                case '圆通':
+//                case '圆通':
                 case '极兔':
                 case '中通':
                 case '韵达':
@@ -316,6 +316,186 @@ class OrderBusiness extends Backend
         $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
         $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
         return compact('admin', 'agent');
+    }
+
+    /**
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
+     */
+    public function kdnPriceHandle(array $agent_info, array $param)
+    {
+
+        if($param['info']['insured']) return []; // 不支持保价费
+
+        $qudao_close = explode('|', $agent_info['qudao_close']);
+        if (in_array(KDNBusiness::$tag,$qudao_close)){
+            return [];
+        }
+
+        $kdnBusiness = new KDNBusiness();
+        $cost = $kdnBusiness->getPriceByLocal($param['sender']['province'], $param['receiver']['province']);
+        if(!$cost) return [];
+        $profit = $kdnBusiness->getProfitToAgent($agent_info['id']);
+        $weight = $param['info']['weight'];
+
+        $reWeight = $weight -1; // 续重重量
+        $adminOne = $cost['one_price']; // 平台首重单价
+        $adminMore = $cost['more_price']; // 平台续重单价
+        $freight = $adminOne + $adminMore * $reWeight; // 平台预估运费
+
+        $agentOne = $adminOne + $profit['one_weight']; //代理商首单价
+        $agentMore = $adminMore  + $profit['more_weight']; //代理商续单价
+        $agentPrice = $agentOne + $agentMore * $reWeight;
+
+
+        $content['admin_shouzhong']=sprintf("%.2f",$adminOne);//平台首重
+        $content['admin_xuzhong']=sprintf("%.2f",$adminMore);//平台续重
+        $content['agent_shouzhong']=sprintf("%.2f",$agentOne);//代理商首重
+        $content['agent_xuzhong']=sprintf("%.2f",$agentMore);//代理商续重
+
+
+        $content['tagType'] = KDNBusiness::$tag;
+        $content['channelId'] = 'YTO';
+        $content['channel'] = 'YTO';
+        $content['freight'] =  number_format($freight, 2);
+        $content['agent_price'] = number_format($agentPrice, 2);
+        $content['final_price']=  $content['agent_price'];
+        $content['senderInfo']=$param['sender'];//寄件人信息
+        $content['receiverInfo']=$param['receiver'];//收件人信息
+        $content['info'] = $param['info']; // 其他信息：如物品重量保价费等
+        $content['channel_tag'] = '智能'; // 渠道类型
+        $content['channel_merchant'] = Channel::$kdn; // 渠道商
+
+        $requireId = SnowFlake::createId();
+        cache( $requireId, json_encode($content), $this->ttl);
+        $list['freight']=$content['agent_price'];
+        $list['tagType']=$content['tagType'];
+        $list['channelId']=$content['channelId'];
+        $list['channel']=$content['channel'];
+        $list['onePrice']= $content['agent_shouzhong'];
+        $list['morePrice']= $content['agent_xuzhong'];
+        $list['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+        $list['requireId']=(string)$requireId;
+
+        return $list;
+    }
+
+    /**
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
+     */
+    public function kdnPriceHandleBackup($kdn, $agent_info, $param)
+    {
+
+        $kdnData = json_decode($kdn, true);
+        if (empty($kdnData) || !$kdnData['Success'])  return [];
+        $list = [];
+        foreach ($kdnData['Data'] as $key => &$item) {
+            if ($item['shipperCode'] == 'YTO'){
+                $adminOne= $item['firstWeightAmount'];//平台首重单价
+                $adminMoreTotal = $item['continuousWeightAmount'];//平台续重价格（总价）
+                $moreWeight = $item['weight']-1;//续重重量
+                // $adminMore = $moreWeight?number_format(ceil((float) $adminMoreTotal / $moreWeight),2):$adminMoreTotal;//平台续重单价
+                $KDNBusiness = new KDNBusiness();
+                $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
+
+                $agentOne= number_format($adminOne + $profit['one_weight'],2);//代理商首重
+                $agentMoreTotal = $adminMoreTotal +  (float) $adminMoreTotal * $profit['more_weight'];//代理商续重单价
+                // $agentMore= number_format( $adminMoreTotal +  (float) $adminMore,2);//代理商续重单价
+                $agentPrice = number_format( (float)$agentOne +  $agentMoreTotal,2);// 代理商结算
+
+                $content['admin_shouzhong']=$adminOne;//平台首重
+                $content['admin_xuzhong']= 0;//平台首重
+                $content['agent_shouzhong']=$agentOne;//代理商首重
+                $content['agent_xuzhong']=0;//代理商首重
+                $content['users_shouzhong']=$agentOne;//代理商首重
+                $content['users_xuzhong']= 0;//代理商首重
+                $content['tagType'] = '圆通①';
+                $content['channelId'] = $kdnData['UniquerRequestNumber'];
+                $content['channel'] = $item['shipperCode'];
+                $content['freight'] =  number_format($item['totalFee'], 2);
+                $content['agent_price'] = $agentPrice;
+                $content['final_price']=  $agentPrice;
+                $content['senderInfo']=$param['sender'];//寄件人信息
+                $content['receiverInfo']=$param['receiver'];//收件人信息
+                $content['info'] = $param['info']; // 其他信息：如物品重量保价费等
+                $content['channel_tag'] = '智能'; // 渠道类型
+                $content['channel_merchant'] = Channel::$kdn; // 渠道商
+
+                $requireId = SnowFlake::createId();
+                cache( $requireId, json_encode($content), $this->ttl);
+                $list[$key]['freight']=$content['agent_price'];
+                $list[$key]['tagType']=$content['tagType'];
+                $list[$key]['channelId']=$content['channelId'];
+                $list[$key]['channel']=$content['channel'];
+                $list[$key]['onePrice']= $content['agent_shouzhong'];
+                $list[$key]['morePrice']= $content['agent_xuzhong'];
+                $list[$key]['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+                $list[$key]['requireId']=(string)$requireId;
+            }
+        }
+        return $list;
+    }
+
+    public function kdnCreateOrder(Order $orderInfo)
+    {
+        $param = [
+            "ShipperType"=> 5,
+            "ShipperCode"=> $orderInfo['channel'],
+            "OrderCode"=> $orderInfo['out_trade_no'],
+            "ExpType"=> 1,
+            "PayType"=> 3,
+            "Receiver"=> [
+                "ProvinceName"=> $orderInfo['receive_province'],
+                "CityName"=> $orderInfo['receive_city'],
+                "ExpAreaName"=> $orderInfo['receive_county'],
+                "Address"=> $orderInfo['receive_location'],
+                "Name"=> $orderInfo['receiver'],
+                "Mobile"=> $orderInfo['receiver_mobile']
+            ],
+            "Sender"=> [
+                "ProvinceName"=> $orderInfo['sender_province'],
+                "CityName"=> $orderInfo['sender_city'],
+                "ExpAreaName"=> $orderInfo['sender_county'],
+                "Address"=> $orderInfo['sender_location'],
+                "Name"=> $orderInfo['sender'],
+                "Mobile"=> $orderInfo['sender_mobile']
+            ],
+            "Weight"=> $orderInfo['weight'],
+            "Quantity"=> 1,
+            "Remark"=> $orderInfo['bill_remark'],
+            "Commodity"=> [[
+                "GoodsName"=> $orderInfo['item_name'],
+                "GoodsQuantity"=> 1,
+                "GoodsPrice"=> 10000,
+            ]],
+        ];
+        $KDNBusiness = new KDNBusiness();
+        $resultJson = $KDNBusiness->create($param);
+        $result = json_decode($resultJson,true);
+        if (empty($result) || !$result['Success']){ // 下单失败
+            //支付下单失败
+            $updateOrder=[
+                'id' => $orderInfo['id'],
+                'pay_status'=> 2,
+                'yy_fail_reason'=>$result['Reason'],
+                'order_status'=>'下单失败',
+            ];
+            $orderInfo->isUpdate()->save($updateOrder);
+            $this->error($resultJson);
+        }else{ // 下单成功
+            $db= new Dbcommom();
+            $db->set_agent_amount($orderInfo['agent_id'],'setDec',$orderInfo['agent_price'],0,'订单号：'. $result['Order']['OrderCode'].' 下单支付成功');
+            $updateOrder=[
+                'id' => $orderInfo['id'],
+                'pay_status'=> 1,
+                'shopbill'=>$result['Order']['KDNOrderCode'],
+            ];
+            $orderInfo->isUpdate()->save($updateOrder);
+            $this->success('下单成功',null, $orderInfo);
+        }
     }
 
     /**
@@ -476,7 +656,7 @@ class OrderBusiness extends Backend
     public function jlPriceHandle(array $agent_info, array $param){
         if($param['info']['insured']) return []; // 不支持保价费
 
-        $jiLu = new JiLu();
+        $jiLu = new JiLuBusiness();
         $cost = $jiLu->getCost($param['sender']['province'], $param['receiver']['province']);
         if(!$cost) return [];
         $profit = $jiLu->getProfitToAgent($agent_info['id']);
@@ -501,8 +681,8 @@ class OrderBusiness extends Backend
         $content['agent_xuzhong']=sprintf("%.2f",$agentMore);//代理商续重
 
 
-        $content['tagType'] = '圆通快递';
-        $content['channelId'] = '5_2';
+        $content['tagType'] = JiLuBusiness::$tag;
+        $content['channelId'] = JiLuBusiness::$code;
         $content['channel'] = '';
         $content['freight'] =  number_format($freight, 2);
         $content['agent_price'] = number_format($agentPrice, 2);
@@ -549,7 +729,7 @@ class OrderBusiness extends Backend
         $weight = $param['info']['weight'];
 
         foreach ($result['data'] as $index => $item) {
-            if($item['expressChannel'] != '5_2') continue;
+            if($item['expressChannel'] != JiLuBusiness::$code) continue;
 
             $agent_price = $item['payPrice'] + $profit['one_weight'] + $profit['more_weight'] * ($weight-1);
             $user_price = $agent_price + $profit['user_one_weight'] + $profit['user_more_weight'] * ($weight-1);
@@ -589,7 +769,7 @@ class OrderBusiness extends Backend
      */
     public function jlCreateOrder(Model $orderInfo){
         $orders = $orderInfo->toArray();
-        $jiLu = new JiLu();
+        $jiLu = new JiLuBusiness();
         $resultJson = $jiLu->createOrderHandle($orders, $record);
         recordLog('jilu-create-order',
             '订单：'.$orders['out_trade_no']. PHP_EOL .
@@ -981,9 +1161,39 @@ class OrderBusiness extends Backend
     {
         $yyQuery = $this->yyFormatPrice($paramData, $channelTag);
         $yunYang = new YunYang();
-        return [
+        $requestData =  [
             'url' => $yunYang->baseUlr,
             'data' => $yunYang->setParma('CHECK_CHANNEL_INTELLECT',$yyQuery),
+        ];
+        recordLog('yy-price',json_encode($requestData['data'],JSON_UNESCAPED_UNICODE));
+        return $requestData;
+    }
+
+    public function kdnQueryPrice($param){
+        if($param['info']['insured']){
+            return false;
+        }
+        $paramData = [
+            'Weight' => $param['info']['weight'],
+            'Receiver' => [
+                'ProvinceName' => $param['receiver']['province'],
+                'CityName' => $param['receiver']['city'],
+                'ExpAreaName' => $param['receiver']['county'],
+                'Address' => $param['receiver']['location'],
+            ],
+            'Sender' => [
+                'ProvinceName' => $param['sender']['province'],
+                'CityName' => $param['sender']['province'],
+                'ExpAreaName' => $param['sender']['province'],
+                'Address' => $param['sender']['province'],
+            ],
+        ];
+        $kdn = new KDNBusiness();
+        return [
+            'url' => $kdn->url,
+            'data' => $kdn->setParams($paramData,1815),
+            'type' => true,
+            'header' => ['Content-Type = application/x-www-form-urlencoded; charset=utf-8']
         ];
     }
 

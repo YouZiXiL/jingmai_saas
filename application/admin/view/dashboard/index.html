@@ -35,7 +35,10 @@
                                 充值
                             </div>
                             <div class="p-1"></div>
-                            <div class="right">等级</div>
+                            <div class="right d-flex flex-column">
+                                <div class="">本月利润：{{monthProfits}}</div>
+                                <div class="">本年利润：{{yearProfits}}</div>
+                            </div>
                         </div>
                     </div>
                 </el-col>
@@ -146,7 +149,7 @@
                 </el-col>
             </el-row>
 
-            <el-row class="mt-1">
+            <el-row v-if="auth" class="mt-1">
                 <el-col :span="24">
                     <div class="panel-5">
                         <div class="d-flex j-sb">
@@ -165,9 +168,7 @@
                                 </el-date-picker>
                             </div>
                         </div>
-
                         <div id="echart-agent-top" style="height: 450px" class="echart"></div>
-
                     </div>
                 </el-col>
             </el-row>
@@ -221,7 +222,7 @@
         mixins:[],
         data: function() {
             return {
-                auth:false,// 代理商为false，管理员，客服为true
+                auth:true,// 代理商为false，管理员，客服为true
                 channelVisible: false, // 模态框
                 orderInfoVisible: false, // 模态框
                 addressVisible: false, // 模态框
@@ -242,6 +243,8 @@
                 todayFinalPrice: 0, // 今日营业额（用户支付金额）
                 todayAgentPrice: 0, // 今日结算额（代理商支付金额）
                 todayProfits: 0, // 今日结算额（代理商利润）
+                monthProfits: 0, // 本月结算额（代理商利润）
+                yearProfits: 0, // 本年结算额（代理商利润）
                 todayUsers: 0, // 今日新增用户
                 todayCancelOrder: 0, // 今日取消订单
                 amount: 0, // 余额
@@ -323,11 +326,14 @@
         methods:{
             init(){
                 const data =  JSON.parse(`{$row}`)
+                console.log(data)
                 this.auth = data.auth
                 this.todayValidOrder = data.today_add_order
                 this.todayFinalPrice = data.today_final_price
                 this.todayAgentPrice = data.today_agent_price
                 this.todayProfits = data.today_profits
+                this.monthProfits = data.month_profits
+                this.yearProfits = data.year_profits
                 this.todayUsers = data.today_users
                 this.todayCancelOrder = data.today_cancel_order
                 this.amount = data.amount
@@ -375,8 +381,6 @@
                         }
                     }
                 })
-                console.log('新的订单量', this.todayGroupCount)
-
             },
 
             // 获取今天每月订单数据

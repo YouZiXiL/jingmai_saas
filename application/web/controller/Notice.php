@@ -4,7 +4,7 @@ namespace app\web\controller;
 
 use app\common\business\AliBusiness;
 use app\common\business\FengHuoDi;
-use app\common\business\JiLu;
+use app\common\business\JiLuBusiness;
 use app\common\business\OrderBusiness;
 use app\common\business\WanLi;
 use app\common\library\alipay\Alipay;
@@ -139,7 +139,7 @@ class Notice extends Controller
                     }
                     break;
                 case 'JILU':
-                    $jiLu = new JiLu();
+                    $jiLu = new JiLuBusiness();
                     $resultJson = $jiLu->createOrderHandle($orders, $record);
                     $result = json_decode($resultJson, true);
                     recordLog('jilu-create-order',

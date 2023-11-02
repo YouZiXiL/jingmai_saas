@@ -102,6 +102,18 @@ class YunYang{
         return json_decode($res, true);
     }
 
+    /**
+     * 订单详情
+     * @param array $content
+     * @return mixed
+     */
+    public function orderInfo(array $content){
+        $data = $this->setParma('QUERY_BILL_INFO', $content);
+        $res = $this->utils->httpRequest($this->baseUlr, $data ,'POST');
+        dd(json_decode($res, true));
+        return json_decode($res, true);
+    }
+
 
 
 
@@ -141,7 +153,7 @@ class YunYang{
             }
             switch ($v['tagType']){
                 case '申通':
-                case '圆通':
+//                case '圆通':
                 case '极兔':
                 case '中通':
                 case '韵达':

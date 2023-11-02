@@ -11,6 +11,7 @@ use think\Exception;
 use think\exception\DbException;
 use think\Log;
 use app\web\controller\Common;
+use think\Model;
 
 class KD100Sms
 {
@@ -37,12 +38,12 @@ class KD100Sms
 
     /**
      * 发送超重短信
-     * @param array $order
+     * @param mixed $order
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException|Exception
      */
-    public function overload(array $order){
+    public function overload($order){
         $out_trade_no=$this->utils->get_uniqid();
         $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
@@ -54,12 +55,12 @@ class KD100Sms
 
     /**
      * 发送耗材短信
-     * @param array $order
+     * @param mixed $order
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException|Exception
      */
-    public function material(array $order){
+    public function material($order){
         $out_trade_no=$this->utils->get_uniqid();
         $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
@@ -71,12 +72,12 @@ class KD100Sms
 
     /**
      * 发送保价短信
-     * @param array $order
+     * @param mixed $order
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException|Exception
      */
-    public function insured(array $order){
+    public function insured($order){
         $out_trade_no=$this->utils->get_uniqid();
         $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
@@ -90,7 +91,7 @@ class KD100Sms
      * 发送短信
      * @param string $content 短信内容
      * @param string $out_trade_no 短信单号
-     * @param array $order 订单
+     * @param mixed $order 订单
      * @param int $tid 短信模板
      * @return bool|string
      * @throws DataNotFoundException
@@ -98,7 +99,7 @@ class KD100Sms
      * @throws DbException
      * @throws Exception
      */
-    public function send(string $content, string $out_trade_no, array $order,  int $tid){
+    public function send(string $content, string $out_trade_no, $order, int $tid){
 
         $agent_info=db('admin')->where('id',$order['agent_id'])->find();
         if ($agent_info['agent_sms']<=0){
@@ -149,10 +150,10 @@ class KD100Sms
 
     /**
      * @param $res string 短信发送结果
-     * @param $order array 订单
+     * @param $order mixed 订单
      * @param $type int 发送类型 1：超重，2：耗材
      */
-    public function pushLog(string $res, array $order, int $type){
+    public function pushLog(string $res, $order, int $type){
         $pushData = [
             'user_id' => $order['user_id'],
             'agent_id' => $order['agent_id'],

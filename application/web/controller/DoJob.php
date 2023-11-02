@@ -372,10 +372,15 @@ class DoJob
                         $up_data['consume_status']=0;
                         $up_data['insured_status']=0;
                         $up_data['cancel_time']= time();
-                        $up_data['order_status']='已取消';
-                        //代理商增加余额  退款
+                        $up_data['order_status']= $data['order_status']??'已取消';
+                        $up_data['yy_fail_reason']= $data['yy_fail_reason']??'';
+                        if($row['waybill']){
+                            $remark = '运单号：'.$row['waybill'].$up_data['order_status'].'并退款';
+                        }else {
+                            $remark = '订单号：'.$row['out_trade_no'].$up_data['order_status'].'并退款';
+                        }
                         //代理结算金额 代理运费+保价金+耗材+超重
-                        $Dbcommon->set_agent_amount($row['agent_id'],'setInc',$row['agent_price'],1,'运单号：'.$row['waybill'].' 已取消并退款');
+                        $Dbcommon->set_agent_amount($row['agent_id'],'setInc',$row['agent_price'],1,$remark);
 
                         db('orders')->where('id',$data['order_id'])->update($up_data);
                         if(!empty($row["couponid"])){

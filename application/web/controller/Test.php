@@ -8,7 +8,7 @@ use app\common\business\QBiDaBusiness;
 use app\common\business\SetupBusiness;
 use app\web\model\Users;
 use app\common\business\AliBusiness;
-use app\common\business\JiLu;
+use app\common\business\JiLuBusiness;
 use app\common\business\RebateListController;
 use app\common\business\WanLi;
 use app\common\business\WxBusiness;
@@ -276,7 +276,7 @@ class Test extends Controller
 
 
     public function jl_create_order(){
-        $jiLu = new JiLu();
+        $jiLu = new JiLuBusiness();
         $jiLu->createOrderHandle(input());
     }
 
@@ -307,7 +307,7 @@ class Test extends Controller
      * @return Json
      */
     public function getOrderInfoByJl($expressId){
-        $jiLu = new JiLu();
+        $jiLu = new JiLuBusiness();
         $result = $jiLu->getOrderInfo($expressId);
         return R::ok(json_decode($result));
     }
@@ -317,7 +317,7 @@ class Test extends Controller
      * @return Json
      */
     public function queryPriceHandle(){
-        $express = new JiLu();
+        $express = new JiLuBusiness();
         $data = [
             "actualWeight" => "1",
             "fromCity" => "北京",
@@ -356,9 +356,30 @@ class Test extends Controller
         if(empty($order->comments) || $order->comments == '无') {
             $order->save(['comments' => $comments]);
         };
+        return R::ok($comments);
+    }
 
+    /**
+     * 云洋物流轨迹
+     * @param $waybill
+     * @return Json
+     * @throws DbException
+     */
+    public function yyOrderInfo($waybill){
+        $yunYang = new \app\common\business\YunYang();
 
+        $res = $yunYang->orderInfo([
+            'waybill' => $waybill
+        ]);
 
+        $result = json_decode($res, true);
+        $comments = $result['result'][0];
+
+        $order = Order::get(['waybill' => $waybill]);
+        if(empty($comments)) return R::error('false');
+        if(empty($order->comments) || $order->comments == '无') {
+            $order->save(['comments' => $comments]);
+        };
         return R::ok($comments);
     }
 
@@ -368,8 +389,6 @@ class Test extends Controller
     public function aliTemplate(){
 
         $aliBusiness = new AliBusiness();
-
-
         $data['pay_template'] = $aliBusiness->applyFreightTemplate();
         $data['material_template'] = $aliBusiness->applyFreightTemplate();
 
@@ -616,7 +635,14 @@ class Test extends Controller
     // 快递鸟预估运费接口
     public function kdnQueryPrice(){
         $KDNBusiness = new KDNBusiness();
-        $result = $KDNBusiness->queryPrice('');
+        $result = $KDNBusiness->queryPriceTest('');
+        return R::ok(json_decode($result) );
+    }
+
+    // 快递鸟取消订单
+    public function kdnCancel(){
+        $KDNBusiness = new KDNBusiness();
+        $result = $KDNBusiness->cancel('AUTO1697699298791301272');
         return R::ok(json_decode($result) );
     }
 }

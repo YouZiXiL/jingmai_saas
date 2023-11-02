@@ -558,6 +558,15 @@ if (!function_exists('getId')){
     }
 }
 
+if(!function_exists('filter_array')){
+    // 过滤空数组
+    function filter_array($array){
+        return array_filter($array, function($value) {
+            return !empty($value);
+        });
+    }
+}
+
 if(!function_exists('loseProvince')){
     /**
      * 去掉省份的'省'字

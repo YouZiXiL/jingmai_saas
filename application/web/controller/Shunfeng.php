@@ -85,7 +85,6 @@ class Shunfeng extends Controller
             list($yyRes, $qbdRes) = $response;
             recordLog('shunfeng-test', json_encode($param, JSON_UNESCAPED_UNICODE));
             recordLog('shunfeng-test', '云洋：' . $yyRes);
-            recordLog('shunfeng-test', 'qbd：' . $qbdRes);
 
             $yy =  $yunYang->advanceHandleBySF($yyRes, $agent_info, $param);
             recordLog('shunfeng-test', json_encode($yy, JSON_UNESCAPED_UNICODE));

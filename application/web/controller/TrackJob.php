@@ -38,15 +38,18 @@ class TrackJob
     {
         try {
             $orders = Order::get(['id', $orderId]);
-            Log::info('执行trackOrder：'. json_encode($orders->toArray(), JSON_UNESCAPED_UNICODE));
+            if(isset($result['code'] ) && $result['code'] != 1){
+                recordLog('express-track：', "yy：" . json_encode($orders->toArray(), JSON_UNESCAPED_UNICODE));
+                return false;
+            }
             if ($orders['channel_merchant'] == Channel::$yy) {
                 if(empty($orders['waybill'])) return false;
                 if(!empty($orders['comments']) && $orders['comments'] != '无') return true;
                 $yunYang = new \app\common\business\YunYang();
                 $res = $yunYang->queryTrance($orders['waybill']);
                 $result = json_decode($res, true);
-                if($result['code'] != 1){
-                    Log::error("track-队列执行异常："."YY获取物流轨迹失败:" . $res);
+                if(isset($result['code'] ) && $result['code'] != 1){
+                    recordLog('express-track：', "yy-err:" . $res);
                     return false;
                 }
                 $comments = $result['result'][0]??null;
@@ -59,7 +62,7 @@ class TrackJob
             }
             return true;
         }catch (Exception $e){
-            Log::error("track-队列执行异常：". $e->getMessage() . PHP_EOL
+            recordLog('express-track',"track-队列执行异常：". $e->getMessage() . PHP_EOL
                 . $e->getTraceAsString() . PHP_EOL
             );
             return false;

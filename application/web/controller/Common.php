@@ -182,6 +182,7 @@ class Common
     function multiRequest(array ...$requests){
         $curlGroup = [];
         foreach ($requests as $item) {
+            if (empty($item)) return false;
             $curl = curl_init();
             curl_setopt($curl, CURLOPT_URL, $item['url']);
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
@@ -196,7 +197,7 @@ class Common
             $header = $item['header']??['Content-Type: application/json; charset=utf-8'];
             curl_setopt($curl, CURLOPT_POSTFIELDS,$data );
             curl_setopt($curl, CURLOPT_HTTPHEADER,$header);
-            recordLog('shunfeng-test', '请求参数-' . $data);
+            recordLog('channel-price', '请求参数-' . $data);
             $curlGroup[] = $curl;
         }
 
@@ -212,7 +213,9 @@ class Common
 
         $result = [];
         foreach ($curlGroup as $curl){
-            $result[] = curl_multi_getcontent($curl);
+            $res = curl_multi_getcontent($curl);
+            recordLog('channel-price',  $res);
+            $result[] = $res;
             curl_multi_remove_handle($mh, $curl);
         }
         curl_multi_close($mh);
