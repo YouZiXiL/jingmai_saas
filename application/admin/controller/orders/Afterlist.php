@@ -336,7 +336,7 @@ class Afterlist extends Backend
             //超重核重处理
             if ($row['salf_type']==1&&$params['cope_status']==1){
                 $orders=$orders->get(['id'=>$row['order_id']]);
-
+                $finalWeight = ceil($row['final_weight']); // 计费重量
                 if ($orders['overload_status']==0){
                     throw new Exception('此订单没有超重');
                 }
@@ -349,7 +349,7 @@ class Afterlist extends Backend
                     if($orders['overload_status']==2){ // 用户已付超重，退回客户之前补的超重费
                         $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
                         $up_data['out_overload_refund_no']=$out_overload_refund_no;
-                        if(ceil($row['final_weight'])  >  $params['cal_weight']){ // 计费重量大于审核重量
+                        if($finalWeight  >  $params['cal_weight']){ // 计费重量大于审核重量
                             // 退超重费
                             $wx_pay=$common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
                             $wx_pay
@@ -379,7 +379,8 @@ class Afterlist extends Backend
                 else if($params['cal_weight'] > $orders['weight']){ // 超重，但超重金额不对
                     $out_overload_refund_no = $common->get_uniqid();//超重退款订单号
                     $newOverloadWeight = $params['cal_weight'] - $orders['weight']; // 新的超重重量
-                    if( ceil($row['final_weight']) > $params['cal_weight']){ // 计费重量大于真实重量，给用户退差价
+
+                    if( $finalWeight > $params['cal_weight']){ // 计费重量大于真实重量，给用户退差价
                         $diffWeight = $row['final_weight'] - $params['cal_weight']; // 多扣的重量
                         $usersDiffAmt=bcmul($diffWeight,$orders['users_xuzhong'],2);//用户差价金额
                         $agentDiffAmt=bcmul($diffWeight,$orders['agent_xuzhong'],2);//代理差价金额
@@ -407,16 +408,24 @@ class Afterlist extends Backend
                         $up_data['overload_price']= bcmul($newOverloadWeight, $orders['users_xuzhong'],2);//用户新超重金额
                         $up_data['agent_overload_price']= bcmul($newOverloadWeight, $orders['agent_xuzhong'],2); //代理商新超重金额
                     }
-                    else if( ceil($row['final_weight']) < $params['cal_weight']){   //  比之前重
-                        $diffWeight = ceil($params['cal_weight']) - $row['final_weight'];
-                        $usersDiffAmt=bcmul($diffWeight,$orders['users_xuzhong'],2);//用户差价金额
-                        $agentDiffAmt=bcmul($diffWeight,$orders['agent_xuzhong'],2);//代理差价金额
+                    else if( $finalWeight < $params['cal_weight']){   //  比之前重
+                        if($orders['overload_status'] == 1){ // 超重未处理
+                            $userWeight = $newOverloadWeight;
+                        }else if($orders['overload_status'] == 2){ // 超重已处理（支付过超重费）
+                            $userWeight = ceil($params['cal_weight']) - $finalWeight;
+                        }else{
+                            $this->error('订单没有超重');
+                        }
+                        $agentWeight = ceil($params['cal_weight']) - $finalWeight; // 代理之前已扣过超重费，所以这里只算新增的超重重量
+
+                        $usersDiffAmt=bcmul($userWeight,$orders['users_xuzhong'],2);//用户差价金额
+                        $agentDiffAmt=bcmul($agentWeight,$orders['agent_xuzhong'],2);//代理差价金额
                         if($orders['pay_type'] == 3) $usersDiffAmt = $agentDiffAmt;
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$agentDiffAmt,4,'运单号：'.$orders['waybill'].' 超重扣除金额：'.$agentDiffAmt.'元');
                         $up_data['agent_price']= number_format($orders['agent_price'] + (float) $agentDiffAmt,2) ;
                         $remark='核重扣款金额：'.$agentDiffAmt.'元';
-                        $up_data['overload_price']= bcmul($params['cal_weight'],$orders['users_xuzhong'],2);//用户新超重金额
-                        $up_data['agent_overload_price']= bcmul($params['cal_weight'],$orders['agent_xuzhong'],2);//用户新超重金额
+                        $up_data['overload_price']= $usersDiffAmt;//用户新超重金额
+                        $up_data['agent_overload_price']= $agentDiffAmt;//用户新超重金额
                     }
 
                 }
