@@ -46,7 +46,7 @@ class TrackJob
                 if(empty($orders['waybill'])) return false;
                 if(!empty($orders['comments']) && $orders['comments'] != '无') return true;
                 $yunYang = new \app\common\business\YunYang();
-                $res = $yunYang->queryTrance($orders['waybill']);
+                $res = $yunYang->queryTrance($orders['waybill'], $orders['shopbill']);
                 $result = json_decode($res, true);
                 if(isset($result['code'] ) && $result['code'] != 1){
                     recordLog('express-track：', "yy-err:" . $res);
