@@ -67,36 +67,31 @@ class Yunyang extends Controller
 //            if (!preg_match("/^1[3-9]\d{9}$/", $param['mobile'])){
 //                throw new Exception('手机号错误');
 //            }
-
-
+            $getData = [
+                'name'=>$param['name'],
+                'mobile'=>$param['mobile'],
+                'province'=>$param['province'],
+                'city'=>$param['city'],
+                'county'=>$param['county'],
+                'location'=>str_replace(PHP_EOL, '', $param['location']),
+            ];
 
             if (!empty($param['id'])){
-                db('users_address')->where('id',$param['id'])->update([
-                    'name'=>$param['name'],
-                    'mobile'=>$param['mobile'],
-                    'province'=>$param['province'],
-                    'city'=>$param['city'],
-                    'county'=>$param['county'],
-                    'update_time' => date('Y-m-d H:i:s'),
-                    'location'=>str_replace(PHP_EOL, '', $param['location']),
-                ]);
+                $getData['update_time'] = date('Y-m-d H:i:s');
+                db('users_address')->where('id',$param['id'])->update($getData);
                 $data=[
                     'status'=>200,
                     'data'=>'',
                     'msg'=>'编辑成功'
                 ];
             }else{
-                $id=db('users_address')->insertGetId([
-                    'user_id'=>$this->user->id,
-                    'name'=>$param['name'],
-                    'mobile'=>$param['mobile'],
-                    'province'=>$param['province'],
-                    'city'=>$param['city'],
-                    'county'=>$param['county'],
-                    'location'=>str_replace(PHP_EOL, '', $param['location']),
-                    'default_status'=>0,
-                    'create_time'=>time()
-                ]);
+                if (isset($param['mode'])){
+                    $getData['mode'] = $param['mode'];
+                }
+                $getData['create_time'] = time();
+                $getData['default_status'] = 0;
+                $getData['user_id'] = $this->user->id;
+                $id=db('users_address')->insertGetId($getData);
                 $data=[
                     'status'=>200,
                     'data'=>['id'=>$id],
@@ -156,9 +151,11 @@ class Yunyang extends Controller
         if (empty($param['page'])){
             $param['page']=1;
         }
+        $where = ['user_id' => $this->user->id];
+        if (isset($param['mode'])) $where['mode'] = $param['mode'];
         $db=db('users_address')
             ->where('type',"<>",2)
-            ->where('user_id',$this->user->id)
+            ->where($where)
             ->page($param['page'],10)
             ->order('update_time','desc');
         if (!empty($param['search_field'])){
