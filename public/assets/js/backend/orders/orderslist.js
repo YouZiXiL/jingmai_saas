@@ -453,7 +453,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                         {field: 'order_status', title: __('Order_status'), operate: 'LIKE', visible: false},
                         {field: 'pay_type', title: __('Pay_type'),  searchList: {"1":__('Pay_type 1'),"2":__('Pay_type 2'),"3":__('Pay_type 3')},visible: false},
                         {field: 'create_time', title: __('Create_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime, visible: false},
-
+                        {field: 'auth.name', title: __('归属账号'), operate: 'LIKE', visible: false},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate,
                             buttons: [
                                 {

@@ -794,8 +794,6 @@ class Users extends Controller
         //1、获得用户
         $user_info= \app\web\model\Users::get($this->user->id);
 
-        $agentId = Admin::where(['id' => $this->user->agent_id ])->value('id');
-
         if($type==1){
             $scorelist=$user_info->getcouponlist()->where("state",$type)->order("id","desc")->select();//->page($page,6)->select();
         } else{
@@ -1415,12 +1413,10 @@ class Users extends Controller
 
 
         }
-        $posters=[
-            [
-                "url"=>$agent->agent_poster
-            ]
+    $posters=[
+        [
+            "url"=>$agent->agent_poster?? \request()->domain()."/assets/img/poster/1.jpg",]
         ];
-
         return json(['status'=>200,'data'=>$posters,'msg'=>"Success"]);
     }
     private function getinvitecode($length=3){

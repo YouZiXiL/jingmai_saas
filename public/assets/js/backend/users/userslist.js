@@ -27,7 +27,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {checkbox: true},
                         //{field: 'id', title: __('Id')},
                         //{field: 'agent_id', title: __('Agent_id')},
-                        //{field: 'nick_name', title: __('Nick_name'), operate: 'LIKE'},
+                        {field: 'nick_name', title: __('Nick_name'), operate: 'LIKE'},
                         {field: 'mobile', title: __('Mobile'), operate: 'LIKE'},
                         //{field: 'open_id', title: __('Open_id'), operate: 'LIKE'},
                         //{field: 'avatar', title: __('Avatar'), operate: false, events: Table.api.events.image, formatter: Table.api.formatter.image},

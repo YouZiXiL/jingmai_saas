@@ -401,14 +401,15 @@ class KDNBusiness
 
         if($param['insured']) return []; // 不支持保价费
 
-        // 查询前先查看是否有运力
-        $check = $this->checkCapacity($sender,$receiver);
-        if (!$check) return [];
-
         $qudao_close = explode('|', $agent_info['qudao_close']);
         if (in_array(KDNBusiness::$tag,$qudao_close)){
             return [];
         }
+
+        // 查询前先查看是否有运力
+        $check = $this->checkCapacity($sender,$receiver);
+        if (!$check) return [];
+
         $cost = $this->getPriceByLocal($sender['province'], $receiver['province']);
         if(empty($cost)) return [];
         $profit = $this->getProfitToAgent($agent_info['id']);

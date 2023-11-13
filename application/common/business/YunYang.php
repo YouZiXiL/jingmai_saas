@@ -74,8 +74,8 @@ class YunYang{
         return $res['result']["keyong"];
     }
 
-    public function queryTrance($waybill){
-        $data = $this->setParma('QUERY_TRANCE', ['waybill'=>$waybill]);
+    public function queryTrance($waybill, $shopbill){
+        $data = $this->setParma('QUERY_TRANCE', ['waybill'=>$waybill, 'shopbill' => $shopbill]);
         return $this->utils->httpRequest($this->baseUlr, $data ,'POST');
     }
 
@@ -144,7 +144,8 @@ class YunYang{
         $profit = array_combine($express, $profit);
 
         $qudao_close=explode('|', $agent_info['qudao_close']);
-        $qudao_close[] = '顺丰'; // 云洋禁用顺丰
+//        $qudao_close[] = '顺丰'; // 云洋禁用顺丰
+        $qudao_close[] = '圆通'; // 云洋禁用顺丰
         $dbCount = 0; // 德邦出现次数
         foreach ($data['result'] as $k=>&$v){
             if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
@@ -153,7 +154,7 @@ class YunYang{
             }
             switch ($v['tagType']){
                 case '申通':
-//                case '圆通':
+                case '圆通':
                 case '极兔':
                 case '中通':
                 case '韵达':
@@ -542,6 +543,7 @@ class YunYang{
         }
         $agentPrice =  sprintf("%.2f",$agentFreight + $channelItem['freightInsured']);//代理商结算
         $userPrice =  sprintf("%.2f",$userFreight + $channelItem['freightInsured']);//代理商结算
+
         $admin = [ 'onePrice' => 0, 'morePrice' => 0 ];
         $agent = [ 'onePrice' => 0, 'morePrice' => 0, 'price' => $agentPrice];
         $user = [ 'onePrice' => 0, 'morePrice' => 0, 'price' => $userPrice];
@@ -560,7 +562,6 @@ class YunYang{
      * @throws ModelNotFoundException
      */
     public function overweightHandle(&$up_data, $adminMore, $orders, $agent_info){
-
         switch ($orders['tag_type']){
             case 'EMS':
             case '顺丰':

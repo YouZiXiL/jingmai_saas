@@ -124,7 +124,7 @@ class Order extends Backend
         $qbdRes = isset($list['qbd'])?$orderBusiness->qbdPriceHandle($list['qbd'], $agent_info, $paramData):[];
 //        $kdnRes = isset($list['kdn'])?$orderBusiness->kdnPriceHandle($list['kdn'], $agent_info, $paramData):[];
         $jlRes = $orderBusiness->jlPriceHandle($agent_info, $paramData);
-        $kdnRes = [];// $orderBusiness->kdnPriceHandle($agent_info, $paramData);
+        $kdnRes =  $orderBusiness->kdnPriceHandle($agent_info, $paramData);
         $priceList = array_merge_recursive($yyRes, $qbdRes, filter_array([$kdnRes, $jlRes]) ) ;
 
         if (empty($priceList)){

@@ -22,6 +22,7 @@ use app\web\model\Admin;
 use app\web\model\AgentAuth;
 use app\web\model\Rebatelist;
 use DOMDocument;
+use think\Cache;
 use think\Controller;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -42,20 +43,15 @@ class Test extends Controller
     }
 
     /**
-     * @throws DbException
-     * @throws Exception
+     *
+     * 测试
      */
     public function test(){
         // 设置的提醒金额
-        $blacklist=db('agent_blacklist')
-            ->where(function ($query){
-                $query->where('agent_id', 17);
-            })->where(function ($query)  {
-                $query->where('mobile','13126135537')
-                    ->whereOr('mobile', null);
-            })
-            ->find();
-        return R::ok($blacklist);
+//        Cache::set(1,'1',300);
+        Cache::rm(1);
+        $cache = Cache::get(1);
+        return R::ok($cache);
     }
 
     // 获取分享链接
@@ -347,7 +343,7 @@ class Test extends Controller
      */
     public function yyTrance($waybill){
         $yunYang = new \app\common\business\YunYang();
-        $res = $yunYang->queryTrance($waybill);
+        $res = $yunYang->queryTrance($waybill, '');
         $result = json_decode($res, true);
         $comments = $result['result'][0];
 

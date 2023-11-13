@@ -156,6 +156,7 @@ class OrderBusiness extends Backend
             if ($errMsg == '渠道不可用，Disable！状态码：Disable') $errMsg = '用黑名单';
             $this->error($errMsg);
         }
+
         $profitBusiness = new ProfitBusiness();
         $profit = $profitBusiness->getProfit($this->auth->id, ['mch_code' => Channel::$yy]);
         // 为了便于查找，转换下数组格式
@@ -164,6 +165,8 @@ class OrderBusiness extends Backend
 
         // 被关闭的渠道
         $qudao_close=explode('|', $agent_info['qudao_close']);
+//        $qudao_close[] = '顺丰'; // 云洋禁用顺丰
+        $qudao_close[] = '圆通'; // 云洋禁用顺丰
 
         // 返回参数
         $list = [];
@@ -177,7 +180,7 @@ class OrderBusiness extends Backend
             }
             switch ($item['tagType']){
                 case '申通':
-//                case '圆通':
+                case '圆通':
                 case '极兔':
                 case '中通':
                 case '韵达':
@@ -334,6 +337,11 @@ class OrderBusiness extends Backend
         }
 
         $kdnBusiness = new KDNBusiness();
+
+        // 查询前先查看是否有运力
+        $check = $kdnBusiness->checkCapacity($param['sender'], $param['receiver']);
+        if (!$check) return [];
+
         $cost = $kdnBusiness->getPriceByLocal($param['sender']['province'], $param['receiver']['province']);
         if(!$cost) return [];
         $profit = $kdnBusiness->getProfitToAgent($agent_info['id']);
@@ -469,7 +477,7 @@ class OrderBusiness extends Backend
             "Commodity"=> [[
                 "GoodsName"=> $orderInfo['item_name'],
                 "GoodsQuantity"=> 1,
-                "GoodsPrice"=> 10000,
+                "GoodsPrice"=> '',
             ]],
         ];
         $KDNBusiness = new KDNBusiness();

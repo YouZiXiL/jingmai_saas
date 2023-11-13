@@ -27,6 +27,7 @@ use app\web\model\AgentAuth;
 use app\web\model\AgentCouponmanager;
 use app\web\model\Couponlist;
 use app\web\model\Rebatelist;
+use think\Cache;
 use think\Controller;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -1659,6 +1660,8 @@ class Wxcallback extends Controller
             if ($orders['pay_status']!=0){
                 throw new Exception('重复回调');
             }
+            if(Cache::get($orders['id'])) return
+            Cache::set($orders['id'],'1',300);
             //如果订单未支付调用云洋下单接口
             $Common=new Common();
             $Dbcommmon= new Dbcommom();
@@ -1752,10 +1755,6 @@ class Wxcallback extends Controller
                         }elseif (strpos($errMsg, 'HttpMessageConverter')!== false){
                             $errMsg = '不支持的寄件或收件号码';
                         }
-                        recordLog('channel-create-order-err',
-                            '订单：'.$orders['out_trade_no']. PHP_EOL .
-                            '极鹭错误信息：'.$errMsg
-                        );
                         //支付下单失败  执行退款操作
                         $update=[
                             'pay_status'=>2,
@@ -2006,6 +2005,7 @@ class Wxcallback extends Controller
             if (isset($update)){
                 db('orders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($update);
             }
+            Cache::rm($orders['id']);
             exit('success');
         }catch (\Exception $e){
             recordLog('wx-callback-err',
@@ -3812,7 +3812,7 @@ class Wxcallback extends Controller
                 "updatetime"=>time()
             ];
             $up_data=[];
-            if($params["waybillNo"] && empty($orders['waybill'])){
+            if($params["waybillNo"]){
                 $up_data["waybill"]=$params["waybillNo"];
             }
             if(@$params["pushType"]==1){ // 快递状态变更

@@ -17,12 +17,15 @@
     {if $vo.agent_id }
         <input name="profit[{$vo.id}][id]" value="{$vo.id}" class="hidden" />
     {else /}
-
         <input name="profit[{$vo.id}][agent_id]" value="{$row.id}" class="hidden" />
         <input name="profit[{$vo.id}][one_weight]" value="{$vo.one_weight}" class="hidden" />
         <input name="profit[{$vo.id}][more_weight]" value="{$vo.more_weight}" class="hidden" />
         <input name="profit[{$vo.id}][ratio]" value="{$vo.ratio}" class="hidden" />
+        <input name="profit[{$vo.id}][user_one_weight]" value="{$vo.user_one_weight}" class="hidden"  />
+        <input name="profit[{$vo.id}][user_more_weight]" value="{$vo.user_more_weight}" class="hidden"  />
+        <input name="profit[{$vo.id}][user_ratio]" value="{$vo.user_ratio}" class="hidden"  />
     {/if}
+    <input name="profit[{$vo.id}][code]" value="{$vo.code}" class="hidden" />
     <input name="profit[{$vo.id}][mch_name]" value="{$vo.mch_name}" class="hidden" />
     <input name="profit[{$vo.id}][mch_code]" value="{$vo.mch_code}" class="hidden"  />
     <input name="profit[{$vo.id}][express]" value="{$vo.express}" class="hidden"  />

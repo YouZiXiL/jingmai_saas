@@ -199,9 +199,9 @@ class Yunyang extends Controller
             $shoujian_address=db('users_address')->where('id',$param['shoujian_id'])->find();
             if (empty($jijian_address)||empty($shoujian_address)){
                 recordLog("channel-price-err",
-                    '寄件id- '.$param['jijian_id'] .PHP_EOL.
+                    '寄件id- '.$param['jijian_id']??0 .PHP_EOL.
                     '寄件地址- '. json_encode($jijian_address, JSON_UNESCAPED_UNICODE)  .PHP_EOL.
-                    '收件id- '. $param['shoujian_id'] .PHP_EOL.
+                    '收件id- '. $param['shoujian_id']??0 .PHP_EOL.
                     '收件地址- '. json_encode($shoujian_address, JSON_UNESCAPED_UNICODE)
                 );
                 throw new Exception('收件或寄件信息错误');
@@ -229,7 +229,7 @@ class Yunyang extends Controller
                 // $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
                 $jiLu = new JiLuBusiness();
                 $jiLuPackage = $jiLu->queryPriceHandle($agent_info, $param,$jijian_address['province'], $shoujian_address['province']);
-                $kdnPackage = [];//$KDNBusiness->queryPriceHandle($agent_info, $param,$jijian_address, $shoujian_address);
+                $kdnPackage = $KDNBusiness->queryPriceHandle($agent_info, $param,$jijian_address, $shoujian_address);
                 $result = array_merge_recursive($yyPackage, filter_array([$kdnPackage, $jiLuPackage])) ;
                 usort($result, function ($a, $b){
                     if (empty($a['final_price']) || empty($b['final_price'])) {

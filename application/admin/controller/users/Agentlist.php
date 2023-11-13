@@ -13,6 +13,8 @@ use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Exception;
 use think\Db;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\exception\DbException;
 use think\exception\PDOException;
 use think\exception\ValidateException;
@@ -81,17 +83,32 @@ class Agentlist extends Backend
             ->order($sort, $order)
             ->join('auth_group_access','auth_group_access.uid=id')
             ->where('auth_group_access.group_id',2)
-            ->field(['password', 'salt', 'token'], true)
+            ->field('id,username,agent_shouzhong,agent_xuzhong,db_agent_ratio,sf_agent_ratio,users_shouzhong,users_xuzhong,
+            wx_mchid,yy_trance,agent_sms,amount')
             ->paginate($limit);
-        foreach ($list as $k=>$v){
-            $final_freight=$orders->where('pay_status',1)->where('agent_id',$v['id'])->sum('final_freight');
-            $agent_price=$orders->where('pay_status',1)->where('agent_id',$v['id'])->sum('agent_price');
-            $v['profit']=bcsub($agent_price,$final_freight,2);
-        }
+             foreach ($list as $k=>$v){
+                $final_freight = db('orders')
+                    ->query(
+                    "select sum(if(freight = 0, agent_price-0.1, freight)) as price  
+                         from fa_orders where pay_status = '1' and agent_id={$v['id']}"
+                    );
+                $agent_price=$orders->where('pay_status','1')->where('agent_id',$v['id'])->sum('agent_price');
+                $v['profit']=bcsub($agent_price,$final_freight[0]['price'],2);
+            //            $v['profit'] = 0;
+            }
+
         $result = ['total' => $list->total(), 'rows' => $list->items()];
         return json($result);
     }
 
+    /**
+     * @param $ids
+     * @return string|void
+     * @throws DbException
+     * @throws \think\Exception
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     */
     public function edit($ids = null)
     {
         $row = $this->model->get($ids);
@@ -101,7 +118,6 @@ class Agentlist extends Backend
 
         $profitBusiness = new ProfitBusiness();
         $row['profit'] = $profitBusiness->getProfit($ids);
-
         $adminIds = $this->getDataLimitAdminIds();
         if (is_array($adminIds) && !in_array($row[$this->dataLimitField], $adminIds)) {
             $this->error(__('You have no permission'));
@@ -141,7 +157,12 @@ class Agentlist extends Backend
     }
 
     /**
-     * 详情
+     * @param $ids
+     * @return string
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @throws \think\Exception
      */
     public function detail($ids)
     {
@@ -154,7 +175,22 @@ class Agentlist extends Backend
             $this->success("Ajax请求成功", null, ['id' => $ids]);
         }
 
-        $this->view->assign("row", $row->hidden(['zizhu','zhonghuo','coupon','logintime','ordtips','balance_notice','resource_notice','over_notice','fd_notice','agent_expire_time','sms_send','voice_send'])->toArray());
+        $row = $row->hidden(['zizhu','zhonghuo','coupon','privacy_rule','agent_rebate',
+            'logintime','ordtips','balance_notice','resource_notice','package_rule',
+            'over_notice','fd_notice','agent_expire_time','sms_send','voice_send'
+        ])->toArray();
+
+        $profitBusiness = new ProfitBusiness();
+        $profit = $profitBusiness->getProfit($ids);
+        foreach ($profit as $item) {
+            if($item['type'] == 1){
+                $row[$item['mch_name'] . $item['express'] . '首重'] = $item['one_weight'];
+                $row[$item['mch_name'] . $item['express'] . '续重'] = $item['more_weight'];
+            }else if($item['type'] == 2){
+                $row[$item['mch_name'] . $item['express'] . '增加比例'] = $item['ratio'];
+            }
+        }
+        $this->view->assign("row", $row);
 
         return $this->view->fetch();
     }

@@ -9,6 +9,7 @@ use think\exception\DbException;
 class ProfitBusiness
 {
 
+
     /**
      * 获取代理商利润。有的代理商没设置利润，没设置利润的部分按默认利润走。
      * @throws DataNotFoundException
@@ -28,10 +29,10 @@ class ProfitBusiness
             ->select();
         if(!$profitDb) return $profitDefaultDb;
 
-        $keys = array_column((array)$profitDefaultDb, 'express');
+        $keys = array_column((array)$profitDefaultDb, 'code');
         $profitDefault = array_combine($keys, (array)$profitDefaultDb);
 
-        $keys2 = array_column((array)$profitDb, 'express');
+        $keys2 = array_column((array)$profitDb, 'code');
         $profit = array_combine($keys2, (array)$profitDb);
 
         return array_values(array_merge($profitDefault, $profit)) ;

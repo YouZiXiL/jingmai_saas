@@ -5,7 +5,11 @@ namespace app\admin\controller;
 use app\admin\business\Admin;
 use app\common\controller\Backend;
 use app\common\library\R;
+use app\web\model\AgentAuth;
 use think\Db;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
+use think\exception\DbException;
 
 
 /**
@@ -29,6 +33,27 @@ class Dashboard extends Backend
             $arr['auth'] = false;
             $agentId = $this->auth->id;
 
+            try {
+                $agentAuth = db('agent_auth')
+                    ->where('agent_id', $agentId)
+                    ->where('auth_type', '2')
+                    ->select();
+            } catch (DataNotFoundException|ModelNotFoundException|DbException $e) {
+                $agentAuth = [];
+            }
+
+
+            if(count($agentAuth)>1){
+                $app = [];
+                foreach ($agentAuth as $k=>$v){
+                    $app[$k] = [
+                        'monthProfits' => $this->todayProfits('month',['auth_id' => $v['id']]),
+                        'yearProfits' => $this->todayProfits('year',['auth_id' => $v['id']]),
+                        'name' => $v['name'],
+                    ] ;
+                }
+            }
+            $arr['app'] = $app??'';
             // 总订单sql
             $totalSql = "count(if(pay_status != '0', 1, null)) as total";
             // 有效订单sql
@@ -127,9 +152,6 @@ class Dashboard extends Backend
             $yesterday_agent_tralight_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('tralight_status',2)->sum('agent_tralight_price');
 
 
-
-
-
             $yesterdayAmount = $arr['yesterday_agent_price']-$yesterday_agent_tralight_amount;
 
             // 昨日利润
@@ -139,9 +161,9 @@ class Dashboard extends Backend
             );
 
             //今日利润
-            $arr['today_profits'] =  $this->todayProfits('today', $agentId);
-            $arr['month_profits'] =  $this->todayProfits('month', $agentId);
-            $arr['year_profits'] =  $this->todayProfits('year', $agentId);
+            $arr['today_profits'] =  $this->todayProfits('today', ['agent_id' => $agentId]);
+            $arr['month_profits'] =  $this->todayProfits('month', ['agent_id' => $agentId]);
+            $arr['year_profits'] =  $this->todayProfits('year', ['agent_id' => $agentId]);
 
             //今日新增会员
             $arr['today_users']=db('users')->where('agent_id',$this->auth->id)->whereTime('create_time','today')->count();
@@ -261,15 +283,10 @@ class Dashboard extends Backend
             $arr['yesterday_final_price'] = $yesterday_final_price[0]['total'];
 
 
-            $today_overload_amount=db('orders')->whereTime('create_time','today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
-            $today_haocai_amount=db('orders')->whereTime('create_time','today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
-            $today_tralight_amount=db('orders')->whereTime('create_time','today')->where('pay_status',1)->where('tralight_status',2)->sum('tralight_price');
-            $today_agent_tralight_amount=db('orders')->whereTime('create_time','today')->where('pay_status',1)->where('tralight_status',2)->sum('agent_tralight_price');
 
             $yesterday_overload_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
             $yesterday_haocai_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
 
-            $todayAmount = $arr['today_agent_price'] - $today_agent_tralight_amount;
 
             //今日利润
             $arr['today_profits'] =  $this->todayProfits();
@@ -329,12 +346,16 @@ class Dashboard extends Backend
     }
 
     /**
-     * 今日利润
+     * 利润
      * @return string
      */
-    public function todayProfits($date = 'today', $agentId = null){
-        $where = [ 'pay_status' => '1' ];
-        if ($agentId) $where['agent_id'] = $agentId;
+    public function todayProfits($date = 'today', $where = null){
+
+        if($where){
+            $where['pay_status'] = '1';
+        }else{
+            $where = [ 'pay_status' => '1' ];
+        }
         //结算额
         $todayAgentPrice=db('orders')
             ->whereTime('create_time',$date)

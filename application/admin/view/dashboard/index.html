@@ -172,6 +172,19 @@
                     </div>
                 </el-col>
             </el-row>
+
+            <el-row v-if="authApp" :gutter="20" class="mt-2 px-2">
+                <el-col class="bg-white" style="border-radius: 10px">
+                    <div class="dashboard-title py-2">我的小程序</div>
+                    <div class="bg-blue p-3 mb-2 mr-3" style="border-radius: 10px; width:20%; display: inline-block"  v-for="(item, index) in authApp">
+                        <div class="d-flex flex-column">
+                            <div>{{item.name}} </div>
+                            <div class="">本月利润：{{item.monthProfits}}</div>
+                            <div class="">本年利润：{{yearProfits}}</div>
+                        </div>
+                    </div>
+                </el-col>
+            </el-row>
         </div>
 
         <el-dialog
@@ -313,6 +326,8 @@
                 today: '2020', // 今天
                 firstDay: '', // 本月第一天
 
+                authApp:'' // 我的小程序
+
             };
         },
         mounted(){
@@ -364,6 +379,8 @@
                 this.today = `${year}-${month}-${day}`;
                 this.firstDay = `${year}-${month}-01`;
 
+                // 小程序
+                this.authApp =  data.app
             },
 
             // 获取当日订单数量或占比
