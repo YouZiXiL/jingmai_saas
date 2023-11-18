@@ -29,8 +29,25 @@ class Orderslist extends Model
 
     // 追加属性
     protected $append = [
-
     ];
+
+    // 平台利润
+    public function getPlatformProfitAttr($value,$data)
+    {
+        $freight = $data['final_freight']??$data['freight'];
+        $profit =  (float) $data['agent_price'] - (float) $freight;
+        return number_format($profit,2);
+    }
+
+    // 代理商利润
+    public function getAgentProfitAttr($value,$data){
+        $overload_price = $data['overload_status'] == '2' ? $data['overload_price'] : 0;
+        $consume_status = $data['consume_status'] == '2' ? $data['haocai_freight'] : 0;
+        $light_price = $data['tralight_status'] == '2' ? $data['tralight_price'] : 0;
+        $insured_price = $data['insured_status'] == 2 ? $data['insured_cost'] : 0;
+        $profit =  (float) $data['final_price'] + (float) $overload_price + (float) $consume_status + (float)  $insured_price - (float) $light_price - (float) $data['agent_price'];
+        return number_format($profit,2);
+    }
 
     public function getSalfTypeList()
     {

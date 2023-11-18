@@ -603,3 +603,19 @@ if(!function_exists('formatProvince')){
         return $str;
     }
 }
+
+/**
+ * 判断是否为手机号
+ */
+if(!function_exists('isPhoneNumber')){
+    function isPhoneNumber($phoneNumber) {
+        // 手机号码的正则表达式
+        $mobilePattern = '/^1[0-9]{10}$/';
+
+        if (preg_match($mobilePattern, $phoneNumber)) {
+            return true;
+        } else{
+            return false;
+        }
+    }
+}

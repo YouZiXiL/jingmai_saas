@@ -74,11 +74,13 @@ class Saleratio extends Backend
               'KDN_YTO' => '圆通①',
               'JILU_YTO' => '圆通快递',
             ];
+
             $this->view->assign('agent_id', $this->auth->id);
             $this->view->assign('profit', $profit);
             $this->view->assign('express', $express);
             $this->view->assign('link', $link);
             $this->view->assign('row', $row);
+
             return $this->view->fetch();
         }
         $params = $this->request->post('row/a');

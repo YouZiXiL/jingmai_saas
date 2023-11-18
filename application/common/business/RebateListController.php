@@ -26,7 +26,7 @@ class RebateListController
             $users=db('users')->where('id',$orders['user_id'])->find();
             if(empty($users['invitercode'])) return false;
             if($orders['pay_type'] != 1) return false;
-            $price = $orders["final_price"]-$orders["insured_price"];//保价费用不参与返佣和分润
+            $price = $orders["final_price"]-$orders["agent_price"];//利润
 
             $immRebate =(float) number_format($price*($agent_info["imm_rate"]??0)/100,2);
             $midRebate = 0;
@@ -76,7 +76,9 @@ class RebateListController
             if(empty($users['invitercode'])) throw new Exception('用户没有邀请人');
             if($orders['pay_type'] != 1) throw new Exception('非微信小程序');
             if($rebate['state'] != 0) throw new Exception('返佣状态为：'.$rebate['state']);
-            $price = abs($rebate['final_price'] + $orders['overload_price'] - $orders['tralight_price']) ;
+            $overloadProfit = $orders['overload_price'] - $orders['agent_overload_price']; // 补超重利润
+            $lightProfit = $orders['agent_tralight_price'] - $orders['tralight_price']; // 退超轻利润
+            $price = abs($rebate['final_price'] + $overloadProfit - $lightProfit) ;
             $immRebate =(float) number_format($price*($agent_info["imm_rate"]??0)/100,2);
             $midRebate = 0;
             if(!empty($users['fainvitercode']))  $midRebate =(float) number_format($price*($agent_info["midd_rate"]??0)/100,2);
@@ -112,6 +114,33 @@ class RebateListController
     }
 
 
+    /**
+     * 更改返佣状态
+     */
+    public function upState($orders, $users, $state){
+        try {
+            // 返佣
+            $rebate=Rebatelist::get(["out_trade_no"=>$orders['out_trade_no']]);
+            if (!$rebate) throw new Exception('没有返佣订单');
+            if(empty($users['invitercode'])) throw new Exception('用户没有邀请人');
+            if($orders['pay_type'] != 1) throw new Exception('非微信小程序');
+            $update=[
+                "state"=> $state,
+                "out_trade_no"=>$orders["out_trade_no"],
+                "updatetime"=>time()
+            ];
+            $rebate->isUpdate()->save($update);
+            return true;
+        }catch (Exception $exception){
+            recordLog('rebate-err',
+                '订单：' . $orders['out_trade_no'] . PHP_EOL .
+                $exception->getMessage() . PHP_EOL .
+                $exception->getTraceAsString()
+            );
+            return false;
+        }
+
+    }
 
     function test($rebateModal,$up_data,$superB ,$root_tralight_amt, $root_default_tralight_amt, $root_overload_amt, $root_default_overload_amt)
     {

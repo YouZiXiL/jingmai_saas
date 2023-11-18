@@ -350,28 +350,39 @@ class KDNBusiness
      */
     public function createOrderHandle($order)
     {
+        $Receiver = [
+                "ProvinceName"=> $order['receive_province'],
+                "CityName"=> $order['receive_city'],
+                "ExpAreaName"=> $order['receive_county'],
+                "Address"=> $order['receive_location'],
+                "Name"=> $order['receiver'],
+        ];
+        if(isPhoneNumber($order['receiver_mobile'])){
+            $Receiver['Mobile'] = $order['receiver_mobile'];
+        }else{
+            $Receiver['Tel'] = $order['receiver_mobile'];
+        }
+        $Sender = [
+            "ProvinceName"=> $order['sender_province'],
+            "CityName"=> $order['sender_city'],
+            "ExpAreaName"=> $order['sender_county'],
+            "Address"=> $order['sender_location'],
+            "Name"=> $order['sender'],
+        ];
+        if(isPhoneNumber($order['sender_mobile'])){
+            $Sender['Mobile'] = $order['sender_mobile'];
+        }else{
+            $Sender['Tel'] = $order['sender_mobile'];
+        }
+
         $param = [
             "ShipperType"=> 5,
             "ShipperCode"=> $order['channel'],
             "OrderCode"=> $order['out_trade_no'],
             "ExpType"=> 1,
             "PayType"=> 3,
-            "Receiver"=> [
-                "ProvinceName"=> $order['receive_province'],
-                "CityName"=> $order['receive_city'],
-                "ExpAreaName"=> $order['receive_county'],
-                "Address"=> $order['receive_location'],
-                "Name"=> $order['receiver'],
-                "Mobile"=> $order['receiver_mobile']
-            ],
-            "Sender"=> [
-                "ProvinceName"=> $order['sender_province'],
-                "CityName"=> $order['sender_city'],
-                "ExpAreaName"=> $order['sender_county'],
-                "Address"=> $order['sender_location'],
-                "Name"=> $order['sender'],
-                "Mobile"=> $order['sender_mobile']
-            ],
+            "Receiver"=> $Receiver,
+            "Sender"=> $Sender,
             "Weight"=> $order['weight'],
             "Quantity"=> 1,
             "Remark"=> $order['bill_remark'],

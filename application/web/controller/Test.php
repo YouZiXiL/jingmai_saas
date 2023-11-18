@@ -47,10 +47,19 @@ class Test extends Controller
      * 测试
      */
     public function test(){
+        $orders=db('orders')->where('out_trade_no','XD1688367230383602470')->find();
+        $orderId = 'test:' . $orders['id'];
+//        $cache = Cache::get($orderId);
+
+//        Cache::store('redis')->rm($orderId);
+//        if($cache) return R::ok('缓存存在');
         // 设置的提醒金额
-//        Cache::set(1,'1',300);
-        Cache::rm(1);
-        $cache = Cache::get(1);
+        Cache::store('redis')->set($orderId,'value', 300);
+
+
+        $cache = Cache::store('redis')->get($orderId);
+
+        recordLog('wx-pay-callback', '测试：'.$orders['id'].'缓存：'  .$cache);
         return R::ok($cache);
     }
 

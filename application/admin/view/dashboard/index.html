@@ -173,6 +173,52 @@
                 </el-col>
             </el-row>
 
+            <el-row v-if="auth" class="mt-1">
+                <el-col :span="24">
+                    <div class="panel-6">
+                        <div class="d-flex j-sb">
+                            <div class="dashboard-title">利润</div>
+                            <div class="block">
+                                <el-date-picker
+                                        @change="getProfitList"
+                                        v-model="dateRange"
+                                        type="daterange"
+                                        align="right"
+                                        range-separator="-"
+                                        :start-placeholder="firstDay"
+                                        :end-placeholder="today"
+                                        value-format="timestamp"
+                                        :picker-options="pickerOptions">
+                                </el-date-picker>
+                            </div>
+                        </div>
+                        <div id="echart-profit-list" style="height: 320px" class="echart"></div>
+                    </div>
+                </el-col>
+            </el-row>
+
+            <el-row v-if="auth" class="mt-1">
+                <el-col :span="24">
+                    <div class="panel-7">
+                        <div class="d-flex j-sb">
+                            <div class="dashboard-title">代理商订单</div>
+                            <div class="block">
+                                <el-select v-model="agentOrderValue" placeholder="请选择"  @change="onAgentOrderChange">
+                                    <el-option
+                                        v-for="item in agentOrderOptions"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value"
+                                    >
+                                    </el-option>
+                                </el-select>
+                            </div>
+                        </div>
+                        <div id="echart-agent-order" style="height: 420px" class="echart"></div>
+                    </div>
+                </el-col>
+            </el-row>
+
             <el-row v-if="authApp" :gutter="20" class="mt-2 px-2">
                 <el-col class="bg-white" style="border-radius: 10px">
                     <div class="dashboard-title py-2">我的小程序</div>
@@ -230,6 +276,8 @@
 </body>
 <script type="module">
     let agentTopCharts = ''
+    let profitListCharts = ''
+    let agentOrderCharts = ''
     new Vue({
         el: '#dashboard',
         mixins:[],
@@ -276,7 +324,7 @@
                 todayGroupCount: 0, // 各个快递下单量
                 todayGroupCountDefault: 0, // 各个快递下单量
 
-                // 柱状图数据
+                // 柱状图数据 (有效订单，总订单，取消订单)
                 daysGroup: [], // 最近几天
                 daysValidOrder: [], // 最近几天有效订单量
                 daysCancelOrder: [], // 最近几天取消订单量
@@ -290,6 +338,10 @@
 
                 // 代理商排名
                 agentTop: [], // 代理商排名
+                // 利润列表
+                profitList: [], // 利润列表
+                // 最近三天订单
+                agentOrder: [], // 最近三天订单
 
                 // 日期选择器
                 pickerOptions: {
@@ -326,6 +378,15 @@
                 today: '2020', // 今天
                 firstDay: '', // 本月第一天
 
+                agentOrderOptions: [{
+                    value: 'day',
+                    label: '最近三日'
+                }, {
+                    value: 'month',
+                    label: '最近三月'
+                }],
+                agentOrderValue: 'day', // 最近几日
+
                 authApp:'' // 我的小程序
 
             };
@@ -336,6 +397,8 @@
             this.setEchartPie()
             this.setEchartLine()
             this.setEchartAgentTop()
+            this.setEchartProfitList()
+            this.setEchartAgentOrder()
 
         },
         methods:{
@@ -371,6 +434,10 @@
 
                 // 代理商排名
                 this.agentTop = data.agent_top
+                // 利润列表
+                this.profitList = data.profit_list
+                // 代理商订单（近三天）
+                this.agentOrder = data.agent_order
 
                 const currentDate = new Date();
                 const year = currentDate.getFullYear();
@@ -427,10 +494,12 @@
 
             // 有效订单增长率
             growthRate(data1, data2){
-                let rate = this.divideToPercentage(data1, data2)
+                let dataNum1 = parseFloat(data1)
+                let dataNum2 = parseFloat(data2)
+                let rate = this.divideToPercentage(dataNum1, dataNum2)
                 let text = '降低';
                 let sign = '↓'
-                if(data1 > data2) {
+                if(dataNum1 > dataNum2) {
                     text = '增加'
                     sign = '↑'
                 }
@@ -460,7 +529,7 @@
                 });
             },
 
-            // 设置柱状图标
+            // 设置柱状图标 代理商的总订单，有效订单和取消订单
             setEchartBar(){
                 // 基于准备好的dom，初始化echarts实例
                 const barChart = echarts.init(document.getElementById('dashboard-echart-bar'));
@@ -801,10 +870,175 @@
                 agentTopCharts.setOption(option)
                 window.addEventListener('resize', agentTopCharts.resize);
             },
+
+            // 代理商利润
+            setEchartProfitList() {
+                profitListCharts = echarts.init(document.getElementById('echart-profit-list'));
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    legend: {},
+                    grid: {
+                        left: 0,
+                        right: '3%',
+                        bottom: 0,
+                        top: 0,
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'value',
+                        // max: 'dataMax',
+                    },
+                    yAxis: {
+                        type: 'category',
+                        data: this.profitList['name'],
+                        inverse: true,
+                    },
+                    series: [
+                        {
+                            type: 'bar',
+                            data: this.profitList['total'],
+                            label: {
+                                show: true,
+                                position: 'right',
+                            },
+                            itemStyle: {
+                                color:  (param) => {
+                                    return this.color[param.dataIndex] || '#5470c6';
+                                }
+                            },
+                        }
+                    ]
+                };
+                profitListCharts.setOption(option)
+                window.addEventListener('resize', profitListCharts.resize);
+            },
+
+            // 代理商订单(最近三日)
+            setEchartAgentOrder(){
+                // 基于准备好的dom，初始化echarts实例
+                agentOrderCharts = echarts.init(document.getElementById('echart-agent-order'));
+                agentOrderCharts.config = {
+                    rotate: 200,
+                    align: 'left',
+                    verticalAlign: 'middle',
+                    position: 'insideBottom',
+                    distance: 18,
+
+                    onChange: function () {
+                        const labelOption = {
+                            rotate: agentOrderCharts.config.rotate,
+                            align: agentOrderCharts.config.align,
+                            verticalAlign: agentOrderCharts.config.verticalAlign,
+                            position: agentOrderCharts.config.position,
+                            distance: agentOrderCharts.config.distance
+                        };
+                        agentOrderCharts.setOption({
+                            series: [
+                                {
+                                    label: labelOption
+                                },
+                                {
+                                    label: labelOption
+                                },
+                                {
+                                    label: labelOption
+                                },
+                                {
+                                    label: labelOption
+                                }
+                            ]
+                        });
+                    }
+                };
+                const labelOption = {
+                    show: false,
+                    position: agentOrderCharts.config.position,
+                    distance: agentOrderCharts.config.distance,
+                    align: agentOrderCharts.config.align,
+                    verticalAlign: agentOrderCharts.config.verticalAlign,
+                    rotate: agentOrderCharts.config.rotate,
+                    formatter: '{c}  {name|{a}}',
+                    fontSize: 16,
+                    rich: {
+                        name: {}
+                    }
+                };
+                const option = {
+                    color:['#1b9efb', '#ff8394', 'rgb(218,183,245)'],
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        },
+                    },
+                    legend: {
+                        data: ['前天', '昨天', '今天'],
+                    },
+                    grid: {
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        containLabel: true
+                    },
+                    barWidth: 26,
+                    xAxis: [
+                        {
+                            type: 'category',
+                            axisTick: { show: false },
+                            data: this.agentOrder.name
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value'
+                        }
+                    ],
+                    series: [
+                        {
+                            name: '前天',
+                            type: 'bar',
+
+                            label: labelOption,
+                            emphasis: {
+                                focus: 'series'
+                            },
+                            data: this.agentOrder.day_2
+                        },
+                        {
+                            name: '昨天',
+                            type: 'bar',
+                            label: labelOption,
+                            emphasis: {
+                                focus: 'series'
+                            },
+                            data: this.agentOrder.day_1
+                        },
+                        {
+                            name: '今天',
+                            type: 'bar',
+                            label: labelOption,
+                            emphasis: {
+                                focus: 'series'
+                            },
+                            data: this.agentOrder.today
+                        }
+                    ]
+                };
+
+                // 使用刚指定的配置项和数据显示图表。
+                agentOrderCharts.setOption(option);
+                window.addEventListener('resize', agentOrderCharts.resize);
+            },
+
             // 百分百计算
             divideToPercentage(dividend, divisor) {
-                let result = (dividend / divisor) * 100;
-                return Math.floor(result) + "%";
+                let result = (dividend - divisor)/divisor * 100;
+                return Math.abs(Math.floor(result))  + "%";
             },
 
             // 代理商排行选择日期
@@ -838,6 +1072,81 @@
                     return true;
                 });
             },
+
+            // 获取利润列表
+            getProfitList(event){
+                Fast.api.ajax({
+                    url: 'dashboard/profit',
+                    method: 'post',
+                    data:{
+                        startDate:Math.floor(event[0] / 1000),
+                        endDate: Math.floor(event[1] / 1000),
+                    },
+                },  (data) => { //success
+                    this.profitList = data;
+                    profitListCharts.setOption({
+                        xAxis: {
+                            type: 'value',
+                            // max: 'dataMax',
+                        },
+                        yAxis: {
+                            type: 'category',
+                            data: this.profitList['name'],
+                            inverse: true,
+                        },
+                        series: [{
+                            data: this.profitList['total'], // 更新对应时间的值数据
+                        }],
+                    });
+                    return false
+                }, (data,ret) => { //error
+                    return true;
+                });
+            },
+
+            // 代理商订单，选择（最近三日或最近三月）
+            onAgentOrderChange(event){
+                Fast.api.ajax({
+                    url: 'dashboard/recentOrder',
+                    method: 'post',
+                    data:{
+                        date:event,
+                    },
+                },  (data) => { //success
+                    this.agentOrder = data;
+                    console.log('切换', data.date_list)
+                    agentOrderCharts.setOption({
+                        legend: {
+                            data: data.date_list,
+                        },
+                        xAxis: {
+                            type: 'category',
+                            axisTick: { show: false },
+                            data: this.agentOrder.name
+                        },
+                        yAxis: {
+                            type: 'value',
+                        },
+                        series: [
+                            {
+                                name: data.date_list[0],
+                                data: this.agentOrder.day_2
+                            },
+                            {
+                                name: data.date_list[1],
+                                data: this.agentOrder.day_1
+                            },
+                            {
+                                name: data.date_list[2],
+                                data: this.agentOrder.today
+                            }
+                        ],
+                    });
+                    return false
+                }, (data,ret) => { //error
+                    return true;
+                });
+            }
         },
 
     })
@@ -994,6 +1303,18 @@
     }
     .panel-5{
         height: 520px;
+        border-radius: 10px;
+        background: white;
+        padding:20px;
+    }
+    .panel-6{
+        height: 420px;
+        border-radius: 10px;
+        background: white;
+        padding:20px;
+    }
+    .panel-7{
+        height: 500px;
         border-radius: 10px;
         background: white;
         padding:20px;

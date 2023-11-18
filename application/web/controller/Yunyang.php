@@ -648,6 +648,7 @@ class Yunyang extends Controller
         switch ($orders['tag_type']){
             case '圆通':
             case '圆通快递':
+            case '圆通①':
                 $cpCode='YTO'; break;
             case '顺丰':
                 $cpCode='SF';
@@ -783,7 +784,8 @@ class Yunyang extends Controller
             }
             else if($row['channel_merchant'] == Channel::$kdn){
                 $KDNBusiness = new KDNBusiness();
-                if($row['order_status'] == '已派单' ||
+                if(
+                    $row['order_status'] == '已派单' ||
                     $row['order_status'] == '已接单' ||
                     $row['order_status'] == '待取件' ||
                     $row['order_status'] == '待揽收'

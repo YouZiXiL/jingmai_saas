@@ -330,12 +330,10 @@ class OrderBusiness extends Backend
     {
 
         if($param['info']['insured']) return []; // 不支持保价费
-
         $qudao_close = explode('|', $agent_info['qudao_close']);
         if (in_array(KDNBusiness::$tag,$qudao_close)){
             return [];
         }
-
         $kdnBusiness = new KDNBusiness();
 
         // 查询前先查看是否有运力
@@ -449,28 +447,39 @@ class OrderBusiness extends Backend
 
     public function kdnCreateOrder(Order $orderInfo)
     {
+        $Receiver = [
+            "ProvinceName"=> $orderInfo['receive_province'],
+            "CityName"=> $orderInfo['receive_city'],
+            "ExpAreaName"=> $orderInfo['receive_county'],
+            "Address"=> $orderInfo['receive_location'],
+            "Name"=> $orderInfo['receiver'],
+        ];
+        $Sender = [
+            "ProvinceName"=> $orderInfo['sender_province'],
+            "CityName"=> $orderInfo['sender_city'],
+            "ExpAreaName"=> $orderInfo['sender_county'],
+            "Address"=> $orderInfo['sender_location'],
+            "Name"=> $orderInfo['sender'],
+        ];
+        if(isPhoneNumber($orderInfo['receiver_mobile'])){
+            $Receiver['Mobile'] = $orderInfo['receiver_mobile'];
+        }else{
+            $Receiver['Tel'] = $orderInfo['receiver_mobile'];
+        }
+        if(isPhoneNumber($orderInfo['sender_mobile'])){
+            $Sender['Mobile'] = $orderInfo['sender_mobile'];
+        }else{
+            $Sender['Tel'] = $orderInfo['sender_mobile'];
+        }
+
         $param = [
             "ShipperType"=> 5,
             "ShipperCode"=> $orderInfo['channel'],
             "OrderCode"=> $orderInfo['out_trade_no'],
             "ExpType"=> 1,
             "PayType"=> 3,
-            "Receiver"=> [
-                "ProvinceName"=> $orderInfo['receive_province'],
-                "CityName"=> $orderInfo['receive_city'],
-                "ExpAreaName"=> $orderInfo['receive_county'],
-                "Address"=> $orderInfo['receive_location'],
-                "Name"=> $orderInfo['receiver'],
-                "Mobile"=> $orderInfo['receiver_mobile']
-            ],
-            "Sender"=> [
-                "ProvinceName"=> $orderInfo['sender_province'],
-                "CityName"=> $orderInfo['sender_city'],
-                "ExpAreaName"=> $orderInfo['sender_county'],
-                "Address"=> $orderInfo['sender_location'],
-                "Name"=> $orderInfo['sender'],
-                "Mobile"=> $orderInfo['sender_mobile']
-            ],
+            "Receiver"=> $Receiver,
+            "Sender"=> $Sender,
             "Weight"=> $orderInfo['weight'],
             "Quantity"=> 1,
             "Remark"=> $orderInfo['bill_remark'],

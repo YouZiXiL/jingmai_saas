@@ -3,13 +3,16 @@
 namespace app\admin\controller;
 
 use app\admin\business\Admin;
+use app\admin\model\orders\Orderslist;
 use app\common\controller\Backend;
 use app\common\library\R;
 use app\web\model\AgentAuth;
 use think\Db;
+use think\db\exception\BindParamException;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\exception\DbException;
+use think\exception\PDOException;
 
 
 /**
@@ -141,9 +144,6 @@ class Dashboard extends Backend
                  and from_unixtime(create_time) < current_date
                  and pay_status = '1'");
             $arr['yesterday_final_price'] =  $yesterday_final_price[0]['total'];
-
-
-
 
 
             $yesterday_overload_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
@@ -283,21 +283,26 @@ class Dashboard extends Backend
             $arr['yesterday_final_price'] = $yesterday_final_price[0]['total'];
 
 
+            //今日利润(自营小程序)
+            $selfAppToday = $this->agentProfits('today',"agent_id in (15,17,18)");
+            $selfAppYesterday = $this->agentProfits('yesterday',"agent_id in (15,17,18)");
+            $selfAppMonth = $this->agentProfits('month',"agent_id in (15,17,18)");
+            $selfAppYear = $this->todayProfits('year',["agent_id" => ["in","15,17,18"]]);
+            // 平台进入利润
+            $platformToday = $this->platformProfits();
+            $platformYesterday = $this->platformProfits('yesterday');
+            $platformMonth = $this->platformProfits('month');
+            $platformYear = $this->platformProfits('year');
 
-            $yesterday_overload_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
-            $yesterday_haocai_amount=db('orders')->whereTime('create_time','-1 today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
+            $arr['today_profits'] =  number_format( $selfAppToday + $platformToday, 2);
+            $arr['month_profits'] =  number_format($selfAppMonth + $platformMonth,2);
+            $arr['year_profits'] =  number_format((float)$selfAppYear + $platformYear,2);
 
-
-            //今日利润
-            $arr['today_profits'] =  $this->todayProfits();
-            $arr['month_profits'] =  $this->todayProfits('month');
-            $arr['year_profits'] =  $this->todayProfits('year');
+            // 当月利润列表
+            $arr['profit_list'] = $this->profitList('month');
 
             //昨日利润
-            $arr['yesterday_profits']= bcsub(
-                $arr['yesterday_final_price'] + $yesterday_overload_amount + $yesterday_haocai_amount ,
-                0,2
-            );
+            $arr['yesterday_profits'] =  number_format($selfAppYesterday + $platformYesterday,2);
 
             //今日新增用户
             $arr['today_users']=db('users')->whereTime('create_time','today')->count();
@@ -329,6 +334,14 @@ class Dashboard extends Backend
             $name =  array_column($agentTop, 'nickname');;
             $total =  array_column($agentTop, 'total');
             $arr['agent_top'] = compact('name', 'total');
+
+            $agentOrder = $admin->recentOrderDay();
+            $name =  array_column($agentOrder, 'nickname');
+            $today =  array_column($agentOrder, 'today');
+            $day_1 =  array_column($agentOrder, 'day_1');
+            $day_2 =  array_column($agentOrder, 'day_2');
+            $arr['agent_order'] = compact('name', 'today','day_1', 'day_2');
+
         }
 
 
@@ -393,5 +406,338 @@ class Dashboard extends Backend
         return number_format($income - $todayAgentPrice,2 );
     }
 
+    /**
+     * 代理商利润
+     */
+    public function agentProfits($date = 'today', $where = 1){
+        $time = $this->getWhereTime($date);
+        $sql = "select sum(
+                        final_price
+                        + if(overload_status = '2',overload_price,0 )
+                        + if(consume_status = '2',haocai_freight,0 )
+                        + if(insured_status = 2,insured_cost,0 )
+                        - if(tralight_status = '2',tralight_price,0 )
+                        - agent_price
+                    ) as total
+            from fa_orders where pay_status = '1' and  {$time} and  {$where}";
+        try {
+            $result = db()->query($sql);
+        } catch (BindParamException|PDOException $e) {
+            return 0;
+        }
+        return $result[0]['total']??0;
+    }
+
+    /**
+     * 平台收益
+     * @param string $date
+     * @return int|mixed
+     */
+    public function platformProfits(string $date = 'today'){
+        $time = $this->getWhereTime($date);
+        return $this->platformProfitsDefault($time);
+    }
+
+
+    /**
+     * 排除自营程序的平台收益
+     * @param string $date
+     * @return int|mixed
+     */
+    public function platformProfitsOther(string $date = 'today'){
+        $time = $this->getWhereTime($date);
+        $sql = "$time and agent_id not in (15,17,18)";
+        return $this->platformProfitsDefault($sql);
+    }
+
+    /**
+     * 平台收益
+     * @param $startDate
+     * @param $endDate
+     * @return int|mixed
+     */
+    public function platformProfits2($startDate,$endDate){
+        $date = "fa_orders.create_time >= {$startDate} and fa_orders.create_time <= {$endDate}";
+        return $this->platformProfitsDefault($date);
+    }
+
+    /**
+     * 排除自营程序的平台收益
+     * @param $startDate
+     * @param $endDate
+     * @return int|mixed
+     */
+    public function platformProfitsOther2($startDate,$endDate){
+        $date = "fa_orders.create_time >= {$startDate} and fa_orders.create_time <= {$endDate}
+            and agent_id not in (15,17,18)";
+        return $this->platformProfitsDefault($date);
+    }
+
+    /**
+     * 平台收益
+     * @return int|mixed
+     */
+    public function platformProfitsDefault($date){
+        $sql = "select sum(agent_price - if(final_freight,final_freight,freight )) as total
+            from fa_orders where pay_status = '1' and  {$date}";
+        try {
+            $result = db()->query($sql);
+        } catch (BindParamException|PDOException $e) {
+            return 0;
+        }
+        return $result[0]['total']??0;
+    }
+
+    /**
+     * 自营小程序的利润
+     * @param $date
+     * @param array $agentIds
+     * @return array|mixed
+     */
+    public function selfAppProfits($date, array $agentIds=[15,17,18]){
+        $time = $this->getWhereTime($date);
+        return $this->selfAppProfitsDefault($time, $agentIds);
+    }
+
+    /**
+     * 自营小程序的利润
+     * @param $startDate
+     * @param $endDate
+     * @param array $agentIds
+     * @return array|mixed
+     */
+    public function selfAppProfits2($startDate,$endDate, array $agentIds=[15,17,18]){
+        $date = "fa_orders.create_time >= {$startDate} and fa_orders.create_time < {$endDate}";
+        return $this->selfAppProfitsDefault($date, $agentIds);
+    }
+
+    /**
+     * 自营小程序的利润
+     * @param $date
+     * @param array $agentIds
+     * @return array|mixed
+     */
+    public function selfAppProfitsDefault($date, array $agentIds=[15,17,18]){
+        $agent_ids = "agent_id in (" . implode(", ", $agentIds) . ")";
+        $sql = "select agent_id, sum(
+                        final_price
+                        + if(overload_status = '2',overload_price,0 )
+                        + if(consume_status = '2',haocai_freight,0 )
+                        + if(insured_status = 2,insured_cost,0 )
+                        - if(tralight_status = '2',tralight_price,0 )
+                        - agent_price
+                    ) as total
+            from fa_orders
+                where pay_status = '1' 
+                  and pay_type != '3'
+                  and  {$date} and  {$agent_ids}
+                group by agent_id";
+        try {
+            return db()->query($sql);
+        } catch (BindParamException|PDOException $e) {
+            return [];
+        }
+    }
+
+    /**
+     * 自营小程序的利润之和
+     * @param $date
+     * @param array $agentIds
+     * @return int
+     */
+    public function selfAppProfitSum($date, array $agentIds=[15,17,18]){
+        $result = $this->selfAppProfits($date, $agentIds);
+        return array_sum(array_column($result, 'total')) ;
+    }
+
+    /**
+     * 平台利润和自营小程序利润和其他小程序和的利润
+     * @return array
+     */
+    public function profitList($date){
+        $appList = $this->selfAppProfits($date);
+        $platform =  $this->platformProfits($date);
+        $platformOther =  $this->platformProfitsOther($date);
+        $other = $this->otherAppProfitSum($date);
+        array_unshift($appList, [
+            'agent_id' => -1,
+            'total' => $platformOther
+        ]);
+        array_unshift($appList, [
+            'agent_id' => 0,
+            'total' => $platform
+        ]);
+        $appList[] = [
+            'agent_id' => -99,
+            'total' => $other
+        ];
+
+        $total = array_column($appList, 'total');
+
+        $name = array_map(function ($agentId) {
+            switch ($agentId) {
+                case 0:
+                    return '平台';
+                case -1:
+                    return '平台(排除自营)';
+                case 15:
+                    return '柠檬惠递';
+                case 17:
+                    return '八戒惠递';
+                case 18:
+                    return '柠檬快递';
+                default:
+                    return '代理商';
+            }
+        }, array_column($appList, 'agent_id'));
+        return compact('total', 'name');
+    }
+
+
+    /**
+     * 其他小程序的利润之和
+     * @param $date
+     * @param array $agentIds
+     * @return int|mixed
+     */
+    public function otherAppProfitSum($date, array $agentIds=[15,17,18]){
+        $time = $this->getWhereTime($date);
+        return $this->otherAppProfitSumDefault($time, $agentIds);
+    }
+
+    /**
+     * 其他小程序的利润之和
+     * @param $startDate
+     * @param $endDate
+     * @param array $agentIds
+     * @return int|mixed
+     */
+    public function otherAppProfitSum2($startDate,$endDate, array $agentIds=[15,17,18]){
+        $date = "fa_orders.create_time >= {$startDate} and fa_orders.create_time <= {$endDate}";
+        return $this->otherAppProfitSumDefault($date, $agentIds);
+    }
+
+    /**
+     * 其他小程序的利润之和
+     * @param $date
+     * @param array $agentIds
+     * @return int|mixed
+     */
+    public function otherAppProfitSumDefault($date, array $agentIds=[15,17,18]){
+        $agent_ids = "agent_id not in (" . implode(", ", $agentIds) . ")";
+        $sql = "select sum(
+                final_price
+                + if(overload_status = '2',overload_price,0 )
+                + if(consume_status = '2',haocai_freight,0 )
+                + if(insured_status = 2,insured_cost,0 )
+                - if(tralight_status = '2',tralight_price,0 )
+                - agent_price
+            ) as total
+            from fa_orders
+                where pay_status = '1' 
+                  and pay_type != '3'
+                  and  {$date} and  {$agent_ids}";
+        try {
+            return db()->query($sql)[0]['total'];
+        } catch (BindParamException|PDOException $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * @param $date
+     * @return string
+     */
+    public function getWhereTime($date): string
+    {
+        $today = "DATE(FROM_UNIXTIME(create_time)) = CURDATE()";
+        $week = "WEEK(FROM_UNIXTIME(create_time)) = WEEK(CURDATE())";
+        $month = "MONTH(FROM_UNIXTIME(create_time)) = MONTH(CURDATE())";
+        $year = "YEAR(FROM_UNIXTIME(create_time)) = YEAR(CURDATE())";
+
+        $yesterday = "DATE(FROM_UNIXTIME(create_time)) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
+
+        switch ($date) {
+            case 'today':
+                $time = $today;
+                break;
+            case 'week':
+                $time = "{$year} and {$week}";
+                break;
+            case 'month':
+                $time = "{$year} and {$month}";;
+                break;
+            case 'year':
+                $time = $year;
+                break;
+            case 'yesterday':
+                $time = $yesterday;
+                break;
+            default:
+                $time = $today;
+        }
+        return $time;
+    }
+
+    // 利润列表
+    public function profit($startDate, $endDate){
+        if($startDate == $endDate){
+            $endDate =  strtotime('+1 day', $endDate);
+        }
+        $appList = $this->selfAppProfits2($startDate, $endDate);
+        $platform =  $this->platformProfits2($startDate, $endDate);
+        $platformOther =  $this->platformProfitsOther2($startDate, $endDate);
+        $other = $this->otherAppProfitSum2($startDate, $endDate);
+        array_unshift($appList, [
+            'agent_id' => -1,
+            'total' => $platformOther
+        ]);
+        array_unshift($appList, [
+            'agent_id' => 0,
+            'total' => $platform
+        ]);
+        $appList[] = [
+            'agent_id' => -99,
+            'total' => $other
+        ];
+
+        $total = array_column($appList, 'total');
+
+        $name = array_map(function ($agentId) {
+            switch ($agentId) {
+                case 0:
+                    return '平台';
+                case -1:
+                    return '平台(排除自营)';
+                case 15:
+                    return '柠檬惠递';
+                case 17:
+                    return '八戒惠递';
+                case 18:
+                    return '柠檬快递';
+                default:
+                    return '代理商';
+            }
+        }, array_column($appList, 'agent_id'));
+        $this->success('', '', compact('name', 'total'));
+    }
+
+    // 代理商最近三天或三月的订单
+    public function recentOrder($date){
+        $admin = new Admin();
+        if($date == 'day'){
+            $result = $admin->recentOrderDay();
+            $date_list = ['前天', '昨天', '今天'];
+        }else{
+            $result = $admin->recentOrderMonth();
+            $date_list = $admin->getRecentThreeMonths();
+        }
+
+        $name =  array_column($result, 'nickname');
+        $today =  array_column($result, 'today');
+        $day_1 =  array_column($result, 'day_1');
+        $day_2 =  array_column($result, 'day_2');
+        $this->success('', '', compact('name', 'today','day_1', 'day_2','date_list'));
+    }
 
 }
