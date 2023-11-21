@@ -104,12 +104,22 @@
                         {:token()}
                         <div class="input-group">
                             <div class="input-group-addon"><span class="glyphicon glyphicon-user" aria-hidden="true"></span></div>
-                            <input type="text" class="form-control" id="pd-form-username" placeholder="{:__('Username')}" name="username" autocomplete="off" value="" data-rule="{:__('Username')}:required;username"/>
+                            <input type="text" class="form-control" id="pd-form-username" placeholder="{:__('Username')}" name="username" autocomplete="off" value="" />
+                        </div>
+
+                        <div class="input-group">
+                            <div class="input-group-addon"><span class="glyphicon glyphicon-phone" aria-hidden="true"></span></div>
+                            <input type="text" class="form-control" id="pd-form-mobile" placeholder="{:__('Mobile')}" name="mobile" autocomplete="off" value=""  />
                         </div>
 
                         <div class="input-group">
                             <div class="input-group-addon"><span class="glyphicon glyphicon-lock" aria-hidden="true"></span></div>
-                            <input type="password" class="form-control" id="pd-form-password" placeholder="{:__('Password')}" name="password" autocomplete="off" value="" data-rule="{:__('Password')}:required;password"/>
+                            <input type="password" class="form-control" id="pd-form-password" placeholder="{:__('Password')}" name="password" autocomplete="off" value=""  />
+                        </div>
+
+                        <div class="input-group">
+                            <div class="input-group-addon"><span class="glyphicon glyphicon-lock" aria-hidden="true"></span></div>
+                            <input type="password" class="form-control" id="pd-form-password-confirm" placeholder="{:__('passwordConfirm')}" name="passwordConfirm" autocomplete="off" value=""  />
                         </div>
                         <!--@CaptchaBegin-->
 
@@ -121,7 +131,7 @@
                         {if $Think.config.fastadmin.login_captcha}
                         <div class="input-group">
                             <div class="input-group-addon"><span class="glyphicon glyphicon-option-horizontal" aria-hidden="true"></span></div>
-                            <input type="text" name="captcha" class="form-control" placeholder="{:__('Captcha')}" data-rule="{:__('Captcha')}:required;length({$Think.config.captcha.length})" autocomplete="off"/>
+                            <input type="text" name="captcha" class="form-control" placeholder="{:__('Captcha')}" autocomplete="off"/>
                             <span class="input-group-addon" style="padding:0;border:none;cursor:pointer;">
                                     <img src="{:rtrim('__PUBLIC__', '/')}/index.php?s=/captcha" width="100" height="30" onclick="this.src = '{:rtrim('__PUBLIC__', '/')}/index.php?s=/captcha&r=' + Math.random();"/>
                             </span>
@@ -136,10 +146,10 @@
                         </div>
 
                         <div class="form-group">
-                            <button type="submit" class="btn btn-success btn-lg btn-block" style="background:#708eea;">{:__('Sign in')}</button>
+                            <button type="submit" class="btn btn-success btn-lg btn-block" style="background:#708eea;">{:__('Sign up')}</button>
                         </div>
                         <div style="text-align: right">
-                            <a href="register.html">新用户注册</a>
+                            <a href="login.html">{:__('Sign in')}</a>
                         </div>
                         <!--@AdminLoginFormEnd-->
                     </form>

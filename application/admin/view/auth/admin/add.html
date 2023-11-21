@@ -49,6 +49,7 @@
         </div>
     </div>
     {volist name="$profit" id="vo" key="key" }
+    <input name="profit[{$vo.id}][code]" value="{$vo.code}" class="hidden" />
     <input name="profit[{$vo:id}][mch_name]" value="{$vo.mch_name}" class="hidden" />
     <input name="profit[{$vo:id}][mch_code]" value="{$vo.mch_code}" class="hidden"  />
     <input name="profit[{$vo:id}][express]" value="{$vo.express}" class="hidden"  />

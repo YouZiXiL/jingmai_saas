@@ -6,6 +6,7 @@ return [
     'Nickname'                                              => '昵称',
     'Mobile'                                                => '手机号',
     'Password'                                              => '密码',
+    'PasswordConfirm'                                       => '确认密码',
     'Sign up'                                               => '注 册',
     'Sign in'                                               => '登 录',
     'Sign out'                                              => '退 出',

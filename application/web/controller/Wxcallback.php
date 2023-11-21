@@ -885,6 +885,7 @@ class Wxcallback extends Controller
                     $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
                     $up_data['agent_tralight_price'] = number_format( $lightPrice + $profit['more_weight'] * $lightWeight,2); //代理商超重金额
                     $up_data['tralight_price'] = number_format((float)$up_data['agent_tralight_price'] + $profit['user_more_weight'] * $lightWeight, 2); //用户超重金额
+                    $up_data['tralight_status'] = '1';
                 }
 
             }
