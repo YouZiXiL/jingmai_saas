@@ -96,21 +96,24 @@ class QBiDaBusiness
      * @return array
      * @throws Exception
      */
-    public function advanceHandle($content, $agent_info, $param){
-        $content = json_decode($content, true);
+    public function advanceHandle($contentJson, $agent_info, $param){
+        $content = json_decode($contentJson, true);
         if (!empty($content['code'])){
             recordLog('channel-price-err', 'QBD: ' . json_encode($content, JSON_UNESCAPED_UNICODE));
             throw new Exception('收件或寄件信息错误,请仔细填写');
         }
 
-        recordLog('channel-price', 'QBD: ' . json_encode($content, JSON_UNESCAPED_UNICODE));
+        recordLog('channel-price-qbd',
+            '[request]' . json_encode($param, JSON_UNESCAPED_UNICODE). PHP_EOL .
+            '[response]' . $contentJson. PHP_EOL
+        );
         $qudao_close = explode('|', $agent_info['qudao_close']);
         $arr=[];
         $time=time();
         foreach ($content['data'] as $k=>&$v){
-            if(empty($v["limitWeight"])){
 
-            } else{
+            if($param['weight'] < $v["limitWeight"]){
+
                 $v['oldName'] = $v['channelName'];
                 if(strpos($v['channelName'], '新户')){
                     $v['isNew'] = (bool)strpos($v['channelName'], '新户');
@@ -125,8 +128,8 @@ class QBiDaBusiness
                     $v["agent_price"]=number_format($v["channelFee"]  + $v["guarantFee"],2);
                     $v["users_price"]=$v["agent_price"];
                 }else{
-                    $v["agent_price"]=number_format($v["originalFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$v["guarantFee"],2);
-                    $v["users_price"]=number_format($v["originalFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
+                    $v["agent_price"]=number_format($v["channelFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$v["guarantFee"],2);
+                    $v["users_price"]=number_format($v["channelFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
                 }
                 $v["final_price"]=bcadd( $v["users_price"], $v["guarantFee"],2);
                 $v['tagType'] = $channelTag;

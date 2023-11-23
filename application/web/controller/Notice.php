@@ -2,15 +2,20 @@
 
 namespace app\web\controller;
 
+use app\admin\model\market\Couponlists;
 use app\common\business\AliBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLuBusiness;
+use app\common\business\KDNBusiness;
 use app\common\business\OrderBusiness;
+use app\common\business\RebateListController;
 use app\common\business\WanLi;
+use app\common\config\Channel;
 use app\common\library\alipay\Alipay;
 use app\common\model\Order;
 use app\web\library\ali\AliConfig;
 use app\web\model\AgentAuth;
+use app\web\model\Couponlist;
 use think\Controller;
 use think\Db;
 use think\db\exception\DataNotFoundException;
@@ -81,64 +86,30 @@ class Notice extends Controller
                         );
                     }
                     break;
-                case 'FHD':
-                    $fhd = new FengHuoDi();
-                    $resultJson = $fhd->createOrderHandle($orders);
-                    $result = json_decode($resultJson, true);
-                    if ($result['rcode']!=0){ // 下单失败
-                        recordLog('channel-create-order-err',
-                            '风火递：'.$resultJson . PHP_EOL
-                            .'订单id：'.$orders['out_trade_no']
-                        );
+                case Channel::$kdn:
+                    $KDNBusiness = new KDNBusiness();
+                    $result = $KDNBusiness->createOrderHandle($orders);
+                    if (empty($result) || !$result['Success']){
                         $orderBusiness = new OrderBusiness();
-                        $orderBusiness->orderFail($orderModel, $result['errorMsg']);
-
-                    }else{ // 下单成功
-
+                        $orderBusiness->orderFail($orderModel, $result['Reason']??'响应超时');
+                    }
+                    else{ // 下单成功
                         $update=[
                             'id'=> $orders['id'],
-                            'waybill'=>$result['data']['waybillCode'],
-                            'shopbill'=>null,
-                            'order_status'=>'已付款',
-                            'pay_status'=>1,
+                            'shopbill'=> $result['Order']['KDNOrderCode'],
+                            'pay_status'=> 1,
+                            'order_status'=> '已付款',
                         ];
                         $DbCommon->set_agent_amount(
                             $orders['agent_id'],
                             'setDec',$orders['agent_price'],
                             0,
-                            '运单号：'.$result['data']['waybillCode'].' 下单支付成功'
+                            '运单号：'.$result['data']['expressNo'].' 下单支付成功'
                         );
                     }
+
                     break;
-                case 'wanli':
-                    $res = (new WanLi())->createOrder($orders);
-                    $result = json_decode($res,true);
-                    if($result['code'] != 200){
-                        recordLog('channel-create-order-err',
-                            '万利：'.$res . PHP_EOL
-                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
-                        );
-
-                        $orderBusiness = new OrderBusiness();
-                        $orderBusiness->orderFail($orderModel, $result['message']);
-
-                    }else{
-                        //支付成功下单成功
-                        $update=[
-                            'id'=> $orders['id'],
-                            'shopbill'=>$result['data']['orderNo'], // 万利订单号
-                            'pay_status'=>1,
-                            'order_status'=>'已付款',
-                        ];
-
-                        $DbCommon->set_agent_amount(
-                            $orders['agent_id'],
-                            'setDec',$orders['agent_price'],
-                            0, ' 下单支付成功'
-                        );
-                    }
-                    break;
-                case 'JILU':
+                 case 'JILU':
                     $jiLu = new JiLuBusiness();
                     $resultJson = $jiLu->createOrderHandle($orders, $record);
                     $result = json_decode($resultJson, true);
@@ -175,6 +146,65 @@ class Notice extends Controller
                         );
                     }
                     break;
+                case 'FHD':
+                    $fhd = new FengHuoDi();
+                    $resultJson = $fhd->createOrderHandle($orders);
+                    $result = json_decode($resultJson, true);
+                    if ($result['rcode']!=0){ // 下单失败
+                        recordLog('channel-create-order-err',
+                            '风火递：'.$resultJson . PHP_EOL
+                            .'订单id：'.$orders['out_trade_no']
+                        );
+                        $orderBusiness = new OrderBusiness();
+                        $orderBusiness->orderFail($orderModel, $result['errorMsg']);
+
+                    }else{ // 下单成功
+
+                        $update=[
+                            'id'=> $orders['id'],
+                            'waybill'=>$result['data']['waybillCode'],
+                            'shopbill'=>null,
+                            'order_status'=>'已付款',
+                            'pay_status'=>1,
+                        ];
+                        $DbCommon->set_agent_amount(
+                            $orders['agent_id'],
+                            'setDec',$orders['agent_price'],
+                            0,
+                            '运单号：'.$result['data']['waybillCode'].' 下单支付成功'
+                        );
+                    }
+                    break;
+
+                case 'wanli':
+                    $res = (new WanLi())->createOrder($orders);
+                    $result = json_decode($res,true);
+                    if($result['code'] != 200){
+                        recordLog('channel-create-order-err',
+                            '万利：'.$res . PHP_EOL
+                            .'订单id'.$orders['out_trade_no'] . PHP_EOL . PHP_EOL
+                        );
+
+                        $orderBusiness = new OrderBusiness();
+                        $orderBusiness->orderFail($orderModel, $result['message']);
+
+                    }else{
+                        //支付成功下单成功
+                        $update=[
+                            'id'=> $orders['id'],
+                            'shopbill'=>$result['data']['orderNo'], // 万利订单号
+                            'pay_status'=>1,
+                            'order_status'=>'已付款',
+                        ];
+
+                        $DbCommon->set_agent_amount(
+                            $orders['agent_id'],
+                            'setDec',$orders['agent_price'],
+                            0, ' 下单支付成功'
+                        );
+                    }
+                    break;
+
             }
             if(isset($update)){
                 $orderModel->isUpdate(true)->save($update);

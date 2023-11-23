@@ -447,10 +447,6 @@ class Wxcallback extends Controller
                 throw new Exception('订单已签收：'. $orders['out_trade_no']);
             }
 
-            if($orders['waybill']=='775630112379193'){
-                return json(['code'=>1, 'message'=>'推送成功']);
-                throw new Exception('订单已签收：'. $orders['waybill']);
-            }
 
             $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
             $xcx_access_token = null;
@@ -854,7 +850,7 @@ class Wxcallback extends Controller
                 $orderBusiness->orderFail($order, $resData['Reason']);
             }
 
-                if(empty($order['final_weight_time']) ){  // 超重
+            if(empty($order['final_weight_time']) ){  // 超重
                 $overloadWeight =ceil( $kdnData['Weight'] - $order['weight']); // 超出重量
                 $overloadPrice = $kdnData['Cost'] - $order['freight']; // 超出金额
                 if($overloadPrice > 0){

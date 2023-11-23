@@ -127,10 +127,13 @@ class YunYang{
      */
     public function advanceHandle(string $content, array $agent_info, array $param){
         if (empty($content)){
-            recordLog('channel-price-err','云洋-数据不存在' . $content. PHP_EOL);
+            recordLog('channel-price-err', '云洋-数据不存在' . $content. PHP_EOL );
             return [];
         }
-        recordLog('channel-price-yy',$content);
+        recordLog('channel-price-yy',
+            '[request]' . json_encode($param, JSON_UNESCAPED_UNICODE). PHP_EOL .
+            '[response]' . $content. PHP_EOL
+        );
         $data= json_decode($content, true);
         if ($data['code']!=1){
             recordLog('channel-price-err','云洋-查价失败:' . PHP_EOL . $content);
@@ -270,6 +273,10 @@ class YunYang{
             recordLog('channel-price-err','云洋-查价失败:' . PHP_EOL . $content);
             throw new Exception($data['message']);
         }
+        recordLog('channel-price-yy',
+            '[request]' . json_encode($param,JSON_UNESCAPED_UNICODE). PHP_EOL .
+            '[response]' . $content. PHP_EOL
+        );
         $list = [];
         foreach ($data['result'] as $key => $item){
             if ($item['tagType'] == '顺丰' || $item['tagType'] == 'EMS'){

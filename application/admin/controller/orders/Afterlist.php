@@ -346,7 +346,7 @@ class Afterlist extends Backend
                 }
 
                 if($params['cal_weight'] == $orders['weight'] ){ // 经核实没有超重。
-                    if($orders['overload_status']==2){ // 用户已付超重，退回客户之前补的超重费
+                    if($orders['overload_status']==2 && $orders['pay_type'] == 1){ // 用户已付超重，退回客户之前补的超重费
                         $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
                         $up_data['out_overload_refund_no']=$out_overload_refund_no;
                         if($finalWeight  >  $params['cal_weight']){ // 计费重量大于审核重量
@@ -385,7 +385,6 @@ class Afterlist extends Backend
                         $usersDiffAmt=bcmul($diffWeight,$orders['users_xuzhong'],2);//用户差价金额
                         $agentDiffAmt=bcmul($diffWeight,$orders['agent_xuzhong'],2);//代理差价金额
                         if($orders['overload_status']==2 &&  $orders['pay_type'] == 1){
-
                             $wx_pay= $common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
                             $wx_pay
                                 ->chain('v3/refund/domestic/refunds')
