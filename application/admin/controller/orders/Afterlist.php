@@ -378,10 +378,10 @@ class Afterlist extends Backend
 
                 else if($params['cal_weight'] > $orders['weight']){ // 超重，但超重金额不对
                     $out_overload_refund_no = $common->get_uniqid();//超重退款订单号
-                    $newOverloadWeight = $params['cal_weight'] - $orders['weight']; // 新的超重重量
+                    $newOverloadWeight = ceil( $params['cal_weight'] - $orders['weight']); // 新的超重重量
 
                     if( $finalWeight > $params['cal_weight']){ // 计费重量大于真实重量，给用户退差价
-                        $diffWeight = $row['final_weight'] - $params['cal_weight']; // 多扣的重量
+                        $diffWeight = ceil($row['final_weight'] - $params['cal_weight']); // 多扣的重量
                         $usersDiffAmt=bcmul($diffWeight,$orders['users_xuzhong'],2);//用户差价金额
                         $agentDiffAmt=bcmul($diffWeight,$orders['agent_xuzhong'],2);//代理差价金额
                         if($orders['overload_status']==2 &&  $orders['pay_type'] == 1){

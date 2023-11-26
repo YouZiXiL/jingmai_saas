@@ -50,6 +50,12 @@ class DoJob
             }
             $common=new Common();
             $Dbcommon=new Dbcommom();
+            /**
+             * type 1 超重退款
+             * type 2 耗材退款
+             * type 3 下单失败
+             * type 4 取消订单
+             */
             if ($data['type']==1){
                 $orders=db('orders')->where('id',$data['order_id'])->find();
                 try {

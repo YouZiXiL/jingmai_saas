@@ -443,10 +443,28 @@ class Wxcallback extends Controller
             if ($orders['pay_status']=='2'){
                 throw new Exception('订单已退款：'. $orders['out_trade_no']);
             }
+            $up_data = [];
             if($orders['order_status']=='已签收'){
-                throw new Exception('订单已签收：'. $orders['out_trade_no']);
+                $finalWeight = $pamar['calWeight'];
+                if($pamar['calWeight'] < $pamar['parseWeight']){
+                    $finalWeight = $pamar['parseWeight'];
+                }
+                if($orders['final_weight'] == 0){
+                    $up_data['final_weight'] = $finalWeight;
+                }else{
+                    if(number_format($finalWeight, 2) != number_format($orders['final_weight'],2)){
+                        $common = new Common();
+                        $content = [
+                            'title' => '计费重量变化',
+                            'user' =>  'JX', //$order['channel_merchant'],
+                            'waybill' =>  $orders['waybill'],
+                            'body' => "计费重量：" . $finalWeight
+                        ];
+                        $common->wxrobot_channel_exception($content);
+                    }
+                    throw new Exception('订单已签收：'. $orders['out_trade_no']);
+                }
             }
-
 
             $agent_info=db('admin')->where('id',$orders['agent_id'])->find();
             $xcx_access_token = null;
@@ -475,9 +493,8 @@ class Wxcallback extends Controller
                 $xcx_access_token= $agent_auth_xcx['auth_token'];
             }
 
-            $up_data=[
-                'final_freight'=>$receive['total_freight'],
-            ];
+            $up_data['final_freight'] = $receive['total_freight'];
+            $up_data['admin_price'] = $receive['total_freight'];
 
             if(!empty($pamar['waybill'])){
                 $up_data['waybill'] = $pamar['waybill'];
@@ -495,7 +512,19 @@ class Wxcallback extends Controller
             if($pamar['calWeight']<$pamar['parseWeight']){
                 $finalWeight = $pamar['parseWeight'];
             }
-            $up_data['final_weight'] = $finalWeight;
+
+            if($orders['final_weight'] == 0){
+                $up_data['final_weight'] = $finalWeight;
+            }elseif(number_format($finalWeight, 2) != number_format($orders['final_weight'],2)){
+                $common = new Common();
+                $content = [
+                    'title' => '计费重量变化',
+                    'user' =>  'JX', //$order['channel_merchant'],
+                    'waybill' =>  $orders['waybill'],
+                    'body' => "计费重量：" . $finalWeight
+                ];
+                $common->wxrobot_channel_exception($content);
+            }
 
             //超轻处理
             if ($orders['weight'] > ceil($finalWeight)  && $finalWeight!=0 && empty($orders['final_weight_time'])){
@@ -799,9 +828,37 @@ class Wxcallback extends Controller
                 $up_data['comments'] = "快递员：{$info['PersonName']}，电话：{$info['PersonTel']}，取件码：{$info['PickupCode']}";
             }else if($kdnData['State'] == 301){ // 已揽收
                 $up_data['order_status'] = '已揽件';
-                $up_data['final_weight'] = $kdnData['Weight'];
+
                 $up_data['final_freight'] = $kdnData['TotalFee'];
-            }else if($kdnData['State'] == 203){ // 订单取消
+                $up_data['admin_price'] = $kdnData['TotalFee'];
+                if($order['final_weight'] == 0){
+                    $up_data['final_weight'] = $kdnData['Weight'];
+                }elseif(number_format($kdnData['Weight'], 2) != number_format($order['final_weight'],2)){
+                    $common = new Common();
+                    $content = [
+                        'title' => '计费重量变化',
+                        'user' =>  'JX', //$order['channel_merchant'],
+                        'waybill' =>  $order['waybill'],
+                        'body' => "计费重量：" . $kdnData['Weight']
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }
+            }
+            else if($kdnData['State'] == 208){
+                $up_data['final_freight'] = $kdnData['TotalFee'];
+                $up_data['admin_price'] = $kdnData['TotalFee'];
+                if(number_format($kdnData['Weight'], 2) != number_format($order['final_weight'],2)){
+                    $common = new Common();
+                    $content = [
+                        'title' => '计费重量变化',
+                        'user' =>  'JX', //$order['channel_merchant'],
+                        'waybill' =>  $order['waybill'],
+                        'body' => "计费重量：" . $kdnData['Weight']
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }
+            }
+            else if($kdnData['State'] == 203){ // 订单取消
                 $orderBusiness = new OrderBusiness();
                 $orderBusiness->orderCancel($order, $resData['Reason']);
                 if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $order['weight'] >= $agent_info['wx_im_weight'] ){
@@ -875,7 +932,8 @@ class Wxcallback extends Controller
 
                     $rebateListController = new RebateListController();
                     $rebateListController->upState($order, $users, 2);
-                }else if($overloadPrice < 0){ // 超轻
+                }
+                else if($overloadPrice < 0){ // 超轻
                     $lightWeight = abs($overloadWeight);
                     $lightPrice = abs($overloadPrice); // 超轻金额
                     $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
@@ -1074,7 +1132,7 @@ class Wxcallback extends Controller
                 // 风火递扣我们的费用
                 $up_data['final_freight']=$result['orderEvent']['transportPrice']/100 * ProfitConfig::$fhd
                     +($result['orderEvent']['totalPrice']/100-$result['orderEvent']['transportPrice']/100);
-
+                $up_data['admin_price'] = $up_data['final_freight'];
                 $weight=floor($orders['weight']-$result['orderEvent']['calculateWeight']/1000);
 
                 //超轻处理
@@ -1371,7 +1429,7 @@ class Wxcallback extends Controller
                 if(isset($body['thirdPartyOrderNo'])) $updateOrder['waybill'] = $body['thirdPartyOrderNo']; // 运单号
                 if(isset($body['cancelMessage'])) $updateOrder['yy_fail_reason'] = $body['cancelMessage']; // 取消原因
                 if(isset($body['courierName'] )||isset($body['courierMobile']))    $updateOrder['comments'] = "快递员姓名：{$body['courierName']}，电话：{$body['courierMobile']}";
-                if(isset($body['discountLastMoney'])) $updateOrder['final_freight'] = ceil($body['discountLastMoney']) /100; // 商户成本
+                if(isset($body['discountLastMoney']))$updateOrder['admin_price'] =  $updateOrder['final_freight'] = ceil($body['discountLastMoney']) /100; // 商户成本
                 if(isset($body['weight'])) $updateOrder['final_weight'] = $body['weight']; // kg
                 if(isset($body['finishCode'])) $updateOrder['code'] = $body['finishCode']; // 收货码
                 if(isset($body['sendStatus'])) $updateOrder['order_status'] = $wanLi->getOrderStatus($body['sendStatus']) ;
@@ -2766,6 +2824,7 @@ class Wxcallback extends Controller
 
                 $up_data=[
                     'final_freight'=>$pamar['totalFreight'],
+                    'admin_price'=>$pamar['totalFreight'],
                     'comments'=>str_replace("null","",$pamar['comments'])
                 ];
                 if(!empty($pamar['type'])){
@@ -3885,6 +3944,7 @@ class Wxcallback extends Controller
             }
             elseif (@$params["pushType"]==2){
                 $up_data['final_freight']=$params["data"]['totalFee'];
+                $up_data['admin_price']=$params["data"]['totalFee'];
                 $up_data['final_weight']=$params["data"]['weightFee'];
                 $up_data['haocai_freight'] = 0;
                 $haocai = 0;
@@ -4160,6 +4220,7 @@ class Wxcallback extends Controller
                 if ($order['final_freight'] == 0){
                     $finalFreight = $order['freight'];
                     $update['final_freight'] = $finalFreight;
+                    $update['admin_price'] = $finalFreight;
                 }
 
                 // 超重和耗材
@@ -4193,6 +4254,7 @@ class Wxcallback extends Controller
                                 ->find();
                         }
                         $update['final_freight'] = $finalFreight + $newPrice;
+                        $update['admin_price'] = $finalFreight + $newPrice;
                         // 代理商超重金额
                         $reWeightAgent = $reWeight + $profit['more_weight'];
                         $update['agent_overload_price'] = $reWeightAgent * $addWeight;
@@ -4261,6 +4323,7 @@ class Wxcallback extends Controller
                             ->find();
                     }
                     $update['final_freight'] =  $finalFreight - $subpriceInfo['subMemberMoney'];
+                    $update['admin_price'] =  $finalFreight - $subpriceInfo['subMemberMoney'];
                     $jiLu = new JiLuBusiness();
                     $cost = $jiLu->getCost($order['sender_province'], $order['receive_province']);
                     // 退款重量（超轻重量）

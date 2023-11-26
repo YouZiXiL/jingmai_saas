@@ -137,7 +137,7 @@ class YunYang{
         $data= json_decode($content, true);
         if ($data['code']!=1){
             recordLog('channel-price-err','云洋-查价失败:' . PHP_EOL . $content);
-            throw new Exception($data['message']);
+            return [];
         }
 
         $profitBusiness = new ProfitBusiness();
@@ -271,7 +271,7 @@ class YunYang{
         $data= json_decode($content, true);
         if ($data['code']!=1){
             recordLog('channel-price-err','云洋-查价失败:' . PHP_EOL . $content);
-            throw new Exception($data['message']);
+            return [];
         }
         recordLog('channel-price-yy',
             '[request]' . json_encode($param,JSON_UNESCAPED_UNICODE). PHP_EOL .
