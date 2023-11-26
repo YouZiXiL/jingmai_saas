@@ -311,7 +311,6 @@ class Dashboard extends Backend
 
 
             // 获取每月订单数据
-
             $arr['month_order_group_count']=db('orders')
                 ->whereTime('create_time','year')
                 ->field("date_format(from_unixtime(create_time), '%Y-%m') as month, {$validSql}, {$cancelSql}, {$totalSql}")
@@ -558,7 +557,7 @@ class Dashboard extends Backend
         $appList = $this->selfAppProfits($date);
         $platform =  $this->platformProfits($date);
         $platformOther =  $this->platformProfitsOther($date);
-        $other = $this->otherAppProfitSum($date);
+//        $other = $this->otherAppProfitSum($date);
         array_unshift($appList, [
             'agent_id' => -1,
             'total' => $platformOther
@@ -567,11 +566,10 @@ class Dashboard extends Backend
             'agent_id' => 0,
             'total' => $platform
         ]);
-        $appList[] = [
-            'agent_id' => -99,
-            'total' => $other
-        ];
-
+//        $appList[] = [
+//            'agent_id' => -99,
+//            'total' => $other
+//        ];
         $total = array_column($appList, 'total');
 
         $name = array_map(function ($agentId) {
@@ -687,7 +685,7 @@ class Dashboard extends Backend
         $appList = $this->selfAppProfits2($startDate, $endDate);
         $platform =  $this->platformProfits2($startDate, $endDate);
         $platformOther =  $this->platformProfitsOther2($startDate, $endDate);
-        $other = $this->otherAppProfitSum2($startDate, $endDate);
+//        $other = $this->otherAppProfitSum2($startDate, $endDate);
         array_unshift($appList, [
             'agent_id' => -1,
             'total' => $platformOther
@@ -696,10 +694,10 @@ class Dashboard extends Backend
             'agent_id' => 0,
             'total' => $platform
         ]);
-        $appList[] = [
-            'agent_id' => -99,
-            'total' => $other
-        ];
+//        $appList[] = [
+//            'agent_id' => -99,
+//            'total' => $other
+//        ];
 
         $total = array_column($appList, 'total');
 
