@@ -3,10 +3,7 @@
 namespace app\admin\controller;
 
 use app\admin\business\Admin;
-use app\admin\model\orders\Orderslist;
 use app\common\controller\Backend;
-use app\common\library\R;
-use app\web\model\AgentAuth;
 use think\Db;
 use think\db\exception\BindParamException;
 use think\db\exception\DataNotFoundException;
@@ -179,13 +176,16 @@ class Dashboard extends Backend
                 ->select();
 
             // 获取最近一周每天的订单数据
-            $arr['days_order_group_count']=db('orders')
+            $days_order_group_count=db('orders')
                 ->where('agent_id',$this->auth->id)
-                ->whereTime('create_time','-7 day')
+                ->whereTime('create_time','-8 day')
                 ->field("date_format(from_unixtime(create_time), '%Y-%m-%d') as today, {$validSql}, {$cancelSql},  {$totalSql}")
                 ->group("date_format(from_unixtime(create_time), '%Y-%m-%d')")
                 ->select();
 
+            $array = (array)$days_order_group_count;
+            array_shift($array);
+            $arr['days_order_group_count'] = $array;
 
             //本月总订单数
             $month_order=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','month')->where('pay_status','<>',0)->count();
@@ -317,12 +317,18 @@ class Dashboard extends Backend
                 ->group("date_format(from_unixtime(create_time), '%Y-%m')")
                 ->select();
 
+
             // 获取最近一周每天的订单数据
-            $arr['days_order_group_count']=db('orders')
-                ->whereTime('create_time','-7 day')
+            $days_order_group_count =db('orders')
+                ->whereTime('create_time','-8 day')
                 ->field("date_format(from_unixtime(create_time), '%Y-%m-%d') as today, {$validSql}, {$cancelSql},  {$totalSql}")
                 ->group("date_format(from_unixtime(create_time), '%Y-%m-%d')")
                 ->select();
+
+            $array = (array)$days_order_group_count;
+            array_shift($array);
+            $arr['days_order_group_count'] = $array;
+
 
             //余额
             $arr['amount']=db('admin')->sum('amount');
