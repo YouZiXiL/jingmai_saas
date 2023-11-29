@@ -188,7 +188,6 @@ class Login extends Controller
             }
             //  存储登录态
             $_3rd_session=$this->common->get_uniqid();
-
             $user = new Users;
             if (!empty($param["agent_id"])){
                 $agentAuth=db('agent_auth')
@@ -245,7 +244,11 @@ class Login extends Controller
                 $user_info['auth_ids'] = $auth_ids;
                 //如果携带邀请码登录
                 if(!empty($param["invitcode"])){
-                    $invitcode = explode('%', $param["invitcode"])[1]??'';
+                    $invitcode = explode('%3D', $param["invitcode"])[1]??'';
+                    recordLog('invite-code',
+                        '参数邀请码-' . $param["invitcode"] . PHP_EOL
+                        .'邀请码-' . $invitcode
+                    );
                     if(!empty($invitcode)){
                         $pauser=$user->get(["myinvitecode"=>$invitcode]);
                         if(!empty($pauser)){

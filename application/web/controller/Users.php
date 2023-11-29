@@ -576,12 +576,17 @@ class Users extends Controller
                 "url"=>urldecode($currentuser->posterpath)//小程序码链接
             ];
             $data["data"]=$invitedata;
-            if(!empty($currentuser->posterpath))
-            //返回值：邀请码 以及带参小程序码
-            return \json($data);
+            if(!empty($currentuser->posterpath)){
+                //返回值：邀请码 以及带参小程序码
+                return \json($data);
+            }
+
         }
         else{
-            $currentuser->myinvitecode=$this->getinvitecode().substr($currentuser->mobile,-4);
+            $inviteRecord = $currentuser->mobile;
+            if($inviteRecord) $inviteRecord = $currentuser->nick_name;
+            if($inviteRecord) $inviteRecord = $currentuser->open_id;
+            $currentuser->myinvitecode=$this->getinvitecode().substr($inviteRecord,-4);
             $currentuser->save();
         }
 
@@ -654,7 +659,7 @@ class Users extends Controller
 
         $content=[
             "page"=>"pages/homepage/homepage",
-            "scene"=>"myinvitecode=".$currentuser->myinvitecode,
+            "scene"=> "myinvitecode=".$currentuser->myinvitecode,
             "check_path"=>true,
             "env_version"=>$params["env_version"]
         ];
@@ -1415,7 +1420,7 @@ class Users extends Controller
         }
     $posters=[
         [
-            "url"=>$agent->agent_poster?? \request()->domain()."/assets/img/poster/1.jpg",]
+            "url"=> $agent->agent_poster? $agent->agent_poster: \request()->domain()."/assets/img/poster/1.jpg",]
         ];
         return json(['status'=>200,'data'=>$posters,'msg'=>"Success"]);
     }

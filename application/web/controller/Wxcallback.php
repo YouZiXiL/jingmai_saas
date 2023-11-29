@@ -788,6 +788,19 @@ class Wxcallback extends Controller
                 throw new Exception('订单已退款-'. $order['out_trade_no']);
             }
             if($order['order_status']=='已签收'){
+                if($kdnData['State'] == 208){
+                    if(number_format($kdnData['Weight'], 2) != number_format($order['final_weight'],2)){
+                        $common = new Common();
+                        $content = [
+                            'title' => '计费重量变化',
+                            'user' =>  'JX', //$order['channel_merchant'],
+                            'waybill' =>  $order['waybill'],
+                            'body' => "计费重量：" . $kdnData['Weight']
+                        ];
+                        $common->wxrobot_channel_exception($content);
+                    }
+                    return $KDNBusiness->reSuccess($EBusinessID, 'success');
+                }
                 throw new Exception('订单已签收-'. $order['out_trade_no']);
             }
 
