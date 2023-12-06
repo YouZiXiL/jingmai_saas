@@ -2,6 +2,7 @@
 
 namespace app\admin\controller\open;
 
+use app\common\business\BBDBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLuBusiness;
 use app\common\business\QBiDaBusiness;
@@ -26,6 +27,7 @@ class Common extends Backend
         $data['fhdAmt']  = $this->fhdBalance();
         $data['qbdAmt']  = $this->qbdBalance();
         $data['wanliAmt'] = $this->wlBalance();
+        $data['bbdAmt'] = $this->bbdBalance();
         $this->view->assign('data',$data);
         return $this->view->fetch();
     }
@@ -59,5 +61,9 @@ class Common extends Backend
         return $wanli->getWalletBalance();
     }
 
+    public function bbdBalance(){
+        $bbd = new BBDBusiness();
+        return $bbd->queryBalance();
+    }
 
 }

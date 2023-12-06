@@ -47,10 +47,15 @@ class KD100Sms
         $out_trade_no=$this->utils->get_uniqid();
         $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
-        $link = request()->host() . "/cz/{$agentCode}/{$orderCode}";
-        $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link], JSON_UNESCAPED_UNICODE);
-        $resJson = $this->send($content, $out_trade_no, $order,self::$overloadId);
-        $this->pushLog($resJson, $order, 1);
+        // 是否开启自动发送短信
+        $autoSms = db('admin')->where('id',$order['agent_id'])->value('sms_send');
+        if($autoSms){
+            $link = request()->host() . "/cz/{$agentCode}/{$orderCode}";
+            $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link], JSON_UNESCAPED_UNICODE);
+            $resJson = $this->send($content, $out_trade_no, $order,self::$overloadId);
+            $this->pushLog($resJson, $order, 1);
+        }
+
     }
 
     /**
@@ -64,10 +69,14 @@ class KD100Sms
         $out_trade_no=$this->utils->get_uniqid();
         $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
-        $link = request()->host() . "/hc/{$agentCode}/{$orderCode}";
-        $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
-        $resJson = $this->send($content, $out_trade_no, $order,self::$materialId);
-        $this->pushLog($resJson, $order, 2);
+        // 是否开启自动发送短信
+        $autoSms = db('admin')->where('id',$order['agent_id'])->value('sms_send');
+        if($autoSms){
+            $link = request()->host() . "/hc/{$agentCode}/{$orderCode}";
+            $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
+            $resJson = $this->send($content, $out_trade_no, $order,self::$materialId);
+            $this->pushLog($resJson, $order, 2);
+        }
     }
 
     /**
@@ -81,10 +90,15 @@ class KD100Sms
         $out_trade_no=$this->utils->get_uniqid();
         $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
-        $link = request()->host() . "/bj/{$agentCode}/{$orderCode}";
-        $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
-        $resJson = $this->send($content, $out_trade_no, $order,self::$insuredId);
-        $this->pushLog($resJson, $order, 3);
+        // 是否开启自动发送短信
+        $autoSms = db('admin')->where('id',$order['agent_id'])->value('sms_send');
+        if($autoSms){
+            $link = request()->host() . "/bj/{$agentCode}/{$orderCode}";
+            $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
+            $resJson = $this->send($content, $out_trade_no, $order,self::$insuredId);
+            $this->pushLog($resJson, $order, 3);
+        }
+
     }
 
     /**
@@ -102,7 +116,7 @@ class KD100Sms
     public function send(string $content, string $out_trade_no, $order, int $tid){
 
         $agent_info=db('admin')->where('id',$order['agent_id'])->find();
-        if ($agent_info['agent_sms']<=0){
+        if ($agent_info['agent_sms']<2){
             return false;
         }
         $sendData = [
@@ -123,9 +137,7 @@ class KD100Sms
         if(isset($result) && @$result['status']==1) {
             // 发送成功代理商短信次数
             $agentSms = $agent_info['agent_sms'] -2;
-            db('admin')
-                ->where('id',$order['agent_id'])
-                ->update(['agent_sms' => $agentSms]);
+            db('admin') ->where('id',$order['agent_id']) ->update(['agent_sms' => $agentSms]);
         }
         return $res;
     }

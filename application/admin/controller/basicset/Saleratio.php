@@ -70,10 +70,7 @@ class Saleratio extends Backend
             $link =  request()->host() . "/u/" . $agentCode;
             $profitBusiness = new ProfitBusiness();
             $profit = $profitBusiness->getProfit($this->auth->id);
-            $express = [
-              'KDN_YTO' => '圆通①',
-              'JILU_YTO' => '圆通快递',
-            ];
+            $express = $profitBusiness->getExpress();
 
             $this->view->assign('agent_id', $this->auth->id);
             $this->view->assign('profit', $profit);

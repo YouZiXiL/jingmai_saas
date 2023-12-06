@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\admin\model\User;
+use app\common\business\BBDBusiness;
 use app\common\business\KDNBusiness;
 use app\common\business\QBiDaBusiness;
 use app\common\business\SetupBusiness;
@@ -648,6 +649,16 @@ class Test extends Controller
     public function kdnCancel(){
         $KDNBusiness = new KDNBusiness();
         $result = $KDNBusiness->cancel('AUTO1697699298791301272');
+        return R::ok(json_decode($result) );
+    }
+
+
+    public function bbdQueryPrice(){
+        $str = null;
+        $arr = json_decode($str, true);
+        dd(empty($arr));
+        $BBDBusiness = new BBDBusiness();
+        $result = $BBDBusiness->queryPriceTest();
         return R::ok(json_decode($result) );
     }
 }

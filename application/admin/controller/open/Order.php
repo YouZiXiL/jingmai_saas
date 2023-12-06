@@ -65,6 +65,9 @@ class Order extends Backend
             case Channel::$kdn:
                 $orderBusiness->kdnCreateOrder($orderInfo);
                 break;
+            case Channel::$bbd:
+                $orderBusiness->bbdCreateOrder($orderInfo);
+                break;
             case Channel::$fhd:
                 $orderBusiness->fhdCreateOrder($orderInfo);
                 break;
@@ -109,10 +112,11 @@ class Order extends Backend
         // $fhdQuery = $orderBusiness->fhdQueryPrice($paramData, 'RCP');
         $qbdQuery = $orderBusiness->qbdQueryPrice($paramData);
 //        $kdnQuery = $orderBusiness->kdnQueryPrice($paramData);
+        $bbdQuery = $orderBusiness->bbdQueryPrice($paramData);
         $queryList = [
             'yy' => $yyQuery,
             'qbd' => $qbdQuery,
-//            'kdn' => $kdnQuery,
+            'bbd' => $bbdQuery,
         ];
         // 并保留值不为空的项
         $queryList = filter_array($queryList);
@@ -123,9 +127,10 @@ class Order extends Backend
         // $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData, $channelTag);
         $qbdRes = isset($list['qbd'])?$orderBusiness->qbdPriceHandle($list['qbd'], $agent_info, $paramData):[];
 //        $kdnRes = isset($list['kdn'])?$orderBusiness->kdnPriceHandle($list['kdn'], $agent_info, $paramData):[];
+        $bbdRes = isset($list['bbd'])?$orderBusiness->bbdPriceHandle($list['bbd'], $agent_info, $paramData):[];
         $jlRes = $orderBusiness->jlPriceHandle($agent_info, $paramData);
         $kdnRes =  $orderBusiness->kdnPriceHandle($agent_info, $paramData);
-        $priceList = array_merge_recursive($yyRes, $qbdRes, filter_array([$kdnRes, $jlRes]) ) ;
+        $priceList = array_merge_recursive($yyRes, $qbdRes, $bbdRes, filter_array([$kdnRes, $jlRes]) ) ;
 
         if (empty($priceList)){
             throw new Exception('没有指定快递渠道请联系客服');

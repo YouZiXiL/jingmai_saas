@@ -4,6 +4,7 @@ namespace app\web\controller;
 
 use app\admin\model\market\Couponlists;
 use app\common\business\AfterSale;
+use app\common\business\BBDBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
@@ -751,7 +752,7 @@ class Wxcallback extends Controller
     function kdn_callback(){
         $params = $this->request->post();
         $paramJson = json_encode($params, JSON_UNESCAPED_UNICODE );
-        recordLog('channel-callback', '快递鸟-' . PHP_EOL . $paramJson);
+        // recordLog('channel-callback', '快递鸟-' . PHP_EOL . $paramJson);
         $requestData = json_decode($params['RequestData'], true) ;
         $resData = $requestData['Data'][0];
         $KDNBusiness = new KDNBusiness();
@@ -781,6 +782,7 @@ class Wxcallback extends Controller
             ];
             db('kdn_callback')->insert($kdnData);
             $order = Order::where('out_trade_no',$out_trade_no)->find();
+
             if (!$order){
                 throw new Exception('订单不存在-'. $out_trade_no);
             }
@@ -817,6 +819,7 @@ class Wxcallback extends Controller
                     ->find();
                 $xcx_access_token= $common->get_authorizer_access_token($agent_auth_xcx['app_id']);
             }
+
 
             if($aliOrder){
                 // 支付宝支付
@@ -920,7 +923,7 @@ class Wxcallback extends Controller
                 $orderBusiness->orderFail($order, $resData['Reason']);
             }
 
-            if(empty($order['final_weight_time']) ){  // 超重
+            if(empty($order['final_weight_time']) && $kdnData['Cost'] != 0 ){  // 超重
                 $overloadWeight =ceil( $kdnData['Weight'] - $order['weight']); // 超出重量
                 $overloadPrice = $kdnData['Cost'] - $order['freight']; // 超出金额
                 if($overloadPrice > 0){
@@ -954,7 +957,6 @@ class Wxcallback extends Controller
                     $up_data['tralight_price'] = number_format((float)$up_data['agent_tralight_price'] + $profit['user_more_weight'] * $lightWeight, 2); //用户超重金额
                     $up_data['tralight_status'] = '1';
                 }
-
             }
 
             if(($kdnData['PackageFee'] != 0 ||  $kdnData['OtherFee'] != 0 ||  $kdnData['OverFee'] != 0) && empty($order['consume_time'])){ // 耗材
@@ -1026,6 +1028,297 @@ class Wxcallback extends Controller
             return $KDNBusiness->reError($EBusinessID, $e->getMessage());
         }
 
+    }
+
+
+    /**
+     * 包包达回调
+     * @return Json
+     */
+    function bbd_callback(){
+        $params = $this->request->post();
+        $paramJson = json_encode($params, JSON_UNESCAPED_UNICODE );
+        try {
+            // 订单状态推送
+            if($params['pushType'] == 'STATUS_PUSH'){
+                $insertData = [
+                    "expressOrderNo"=> $params['expressOrderNo'], // 快递单号
+                    "bbdOrderNo"=> $params['bbdOrderNo'], // 包包达单号
+                    "clientOrderNo"=> $params['clientOrderNo']??'', // 客户单号
+                    "status"=> $params['status'], // 订单状态
+                    "statusDesc"=> $params['statusDesc'], // 订单状态
+                    "realWeight"=> $params['realWeight'], // 揽收重量
+                    "calcFeeWeight"=> $params['calcFeeWeight']??0, // 计费重量
+                    "realVolume"=> $params['realVolume'], // 揽收体积
+                    "empName"=> $params['empName']??'', // 揽件员信息
+                    "prePrice" =>  $params['priceList']['prePrice'], // 预付金额
+                    "orderPrice" =>  $params['priceList']['orderPrice'], // 实收金额
+                    "gapPrice" =>  $params['priceList']['gapPrice']??0, // 多退少补差价(正数代表平台退费给客户，负数代表平台扣减客户费用)
+                    "insuredPrice" =>  $params['priceList']['insuredPrice']??0, //  保价费用
+                    "packagePrice" =>  $params['priceList']['packagePrice']??0, //  包裹费用
+                    "hcPrice" =>  $params['priceList']['hcPrice']??0, //  包裹费用
+                    "backPrice" =>  $params['priceList']['backPrice']??0, //  包裹费用
+                    "otherPrice" =>  $params['priceList']['otherPrice']??0, //  其他费用
+                    "purePrice" =>  $params['priceList']['purePrice']??0, //  纯运费
+                    "packingFee" =>  $params['priceList']['packingFee']??0, //  包装费
+                    "otherFee" =>  $params['priceList']['purePrice']??0, //  其他费用
+                    "raw" => $paramJson,
+                    'createTime' => date('Y-m-d H:i:s', time()),
+                ];
+                db('bbd_callback')->strict(false)->insert($insertData);
+
+                if($insertData['clientOrderNo']){
+                    $order = Order::where('out_trade_no',$insertData['clientOrderNo'])->find();
+                }else{
+                    $order = Order::where('waybill',$insertData['expressOrderNo'])->find();
+                }
+
+
+                if (!$order){
+                    throw new Exception('订单不存在-'. $insertData['clientOrderNo']);
+                }
+                if ($order['pay_status']=='2'){
+                    throw new Exception('订单已退款-'. $insertData['clientOrderNo']);
+                }
+                if($order['order_status']=='已签收'){
+                    if(number_format($insertData['calcFeeWeight'], 2) != number_format($order['final_weight'],2)){
+                        $common = new Common();
+                        $content = [
+                            'title' => '计费重量变化',
+                            'user' =>  'JX', //$order['channel_merchant'],
+                            'waybill' =>  $order['waybill'],
+                            'body' => "计费重量：" .$insertData['calcFeeWeight']
+                        ];
+                        $common->wxrobot_channel_exception($content);
+                    }
+                    throw new Exception('订单已签收-'. $order['out_trade_no']);
+                }
+
+                $agent_info=db('admin')->where('id',$order['agent_id'])->find();
+                $xcx_access_token = null;
+                $wxOrder = $order['pay_type'] == 1;
+                $aliOrder = $order['pay_type'] == 2;
+                $autoOrder = $order['pay_type'] == 3;
+                $users = $autoOrder?null:db('users')->where('id',$order['user_id'])->find();
+                $common= new Common();
+                if($wxOrder){
+                    $agent_auth_xcx=db('agent_auth')
+                        ->where('id',$order['auth_id'])
+                        ->find();
+                    $xcx_access_token= $common->get_authorizer_access_token($agent_auth_xcx['app_id']);
+                }
+
+
+                if($aliOrder){
+                    // 支付宝支付
+                    $agent_auth_xcx = AgentAuth::where('agent_id',$order['agent_id'])
+                        ->where('app_id',$order['wx_mchid'])
+                        ->find();
+                    $xcx_access_token= $agent_auth_xcx['auth_token'];
+                }
+
+                $up_data = [];
+                if($insertData['status'] == 'WAIT_ACCEPT'){ // 待取件
+                    $up_data['comments'] = $insertData['empName'];
+                    $up_data['order_status'] = '待取件';
+                }else if($insertData['status'] == 'PICKED_UP'){
+                    $up_data['order_status'] = '已取件';
+                }else if($insertData['status'] == 'EX_TRANSIT'){
+                    $up_data['order_status'] = '运输中';
+                }else if($insertData['status'] == 'IN_TRANSIT'){
+                    $up_data['final_weight'] = $insertData['calcFeeWeight'];
+                    $up_data['final_freight'] = $insertData['orderPrice'];
+                    if( empty($order['final_weight_time'])){
+                        $calcFeeWeight = ceil($insertData['calcFeeWeight']); // 计费重量
+                        $gapWeight =number_format($calcFeeWeight - $order['weight'],2); // 计费重量与实际重量的差
+                        if($calcFeeWeight > $order['weight']){ // 超重
+                            $up_data['agent_overload_price'] = number_format( $order['agent_xuzhong'] * $gapWeight,2); //代理商超重金额
+                            $up_data['overload_price'] = number_format((float)$order['users_xuzhong'] * $gapWeight, 2); //用户超重金额
+                            $data = [
+                                'type'=>1,
+                                'agent_overload_amt' =>$up_data['agent_overload_price'],
+                                'order_id' => $order['id'],
+                                'xcx_access_token'=>$xcx_access_token,
+                                'open_id'=>$users?$users['open_id']:'',
+                                'template_id'=>$agent_auth_xcx['pay_template']??null,
+                                'cal_weight'=> $calcFeeWeight .'kg',
+                                'users_overload_amt'=>$up_data['overload_price'] . '元'
+                            ];
+                            // 将该任务推送到消息队列，等待对应的消费者去执行
+                            Queue::push(DoJob::class, $data,'way_type');
+
+                            // 发送超重短信
+                            KD100Sms::run()->overload($order);
+
+                            $rebateListController = new RebateListController();
+                            $rebateListController->upState($order, $users, 2);
+                        }
+                        elseif($insertData['calcFeeWeight'] > $order['weight'] && $gapWeight<0){ // 超轻
+                            $up_data['agent_tralight_price'] = number_format( $order['agent_xuzhong'] * $gapWeight,2); //代理商超重金额
+                            $up_data['tralight_price'] = number_format((float)$order['users_xuzhong'] * $gapWeight, 2); //用户超重金额
+                            $up_data['tralight_status'] = '1';
+                        }
+                    }
+
+                    $hcPrice = $insertData['packagePrice']  // 包装
+                        + $insertData['hcPrice'] // 耗材
+                        + $insertData['backPrice'] // 逆向费用
+                        + $insertData['otherPrice']; // 其他费用
+                    if($hcPrice  > 0 && empty($order['consume_time'])) { // 耗材费用
+                        $up_data['haocai_freight'] = $hcPrice;
+                        $data = [
+                            'type'=>2,
+                            'freightHaocai' =>  $up_data['haocai_freight'],
+                            'order_id' => $order['id'],
+                            'xcx_access_token'=>$xcx_access_token,
+                            'open_id'=>$users?$users['open_id']:"",
+                            'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
+
+                        // 发送耗材短信
+                        KD100Sms::run()->material($order);
+
+                        $rebateListController = new RebateListController();
+                        $rebateListController->upState($order, $users, 2);
+                    }
+
+                    if($insertData['insuredPrice'] != 0 && empty($order['insured_time'])){ // 保价
+                        $insuredPrice = (float) number_format($insertData['insuredPrice'], 2);
+                        // 保价费用
+                        $up_data['insured_cost']= $insuredPrice ;
+                        $up_data['agent_price']= $order['agent_price'] +  $insuredPrice;
+                        $up_data['insured_time'] = time();
+                        $up_data['insured_status'] = 1;
+                        $DbCommon= new Dbcommom();
+                        // 给代理商扣款
+                        $DbCommon->set_agent_amount($order['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$order['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
+                        // 发送保价短信
+                        KD100Sms::run()->insured($order);
+
+                        $rebateListController = new RebateListController();
+                        $rebateListController->upState($order, $users, 2);
+                    }
+
+                }else if($insertData['status'] == 'SIGNED_IN'){ // 已签收
+                    $up_data['order_status'] = '已签收';
+                    // 返佣计算
+                    if(
+                        !empty($users['invitercode'])
+                        && $order['pay_status'] == 1
+                        && $order['order_status'] != '已签收'
+                    ){
+                        $rebateListController = new RebateListController();
+                        $rebateListController->handle($order, $agent_info, $users);
+                    }
+                }else if($insertData['status'] == 'CANCELED'){ // 已取消
+                    $orderBusiness = new OrderBusiness();
+                    $orderBusiness->orderCancel($order);
+                    if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $order['weight'] >= $agent_info['wx_im_weight'] ){
+                        //推送企业微信消息
+                        $common->wxim_bot($agent_info['wx_im_bot'],$order);
+                    }
+
+                    $rebateController = new RebateListController();
+                    $rebateController->upState($order, $users,3);
+                }else if($insertData['status'] == 'ABNORMAL'){
+                    $up_data['order_status'] = '异常订单';
+                }else if($insertData['status'] == 'ADJUST_ACCOUNTS_WEIGHT'){
+                    $common = new Common();
+                    $content = [
+                        'title' => '调账重量推送',
+                        'user' =>  'JX', //$order['channel_merchant'],
+                        'waybill' =>  $order['waybill'],
+                        'body' => "bbd调账重量推送"
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }else if($insertData['status'] == 'SECONDARY_WEIGHT'){
+                    $common = new Common();
+                    $content = [
+                        'title' => '二次重量推送',
+                        'user' =>  'JX', //$order['channel_merchant'],
+                        'waybill' =>  $order['waybill'],
+                        'body' => "bbd二次重量推送"
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }else if($insertData['status'] == 'BACKING_COST'){
+                    $common = new Common();
+                    $content = [
+                        'title' => '逆向费用推送',
+                        'user' =>  'JX', //$order['channel_merchant'],
+                        'waybill' =>  $order['waybill'],
+                        'body' => "bbd逆向费用推送"
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }
+
+                if(!empty($up_data)){
+                    db('orders')->where('out_trade_no', $order['out_trade_no'])->update($up_data);
+                }
+
+            }
+            else if($params['pushType'] == 'ADJUST_ACCOUNTS_PUSH'){
+                $insertData = [
+                    "expressOrderNo"=> $params['expressOrderNo'], // 快递单号
+                    "raw" => $paramJson,
+                    'createTime' => date('Y-m-d H:i:s', time()),
+                ];
+                db('bbd_callback')->strict(false)->insert($insertData);
+
+                $common = new Common();
+                $content = [
+                    'title' => '调账重量推送',
+                    'user' =>  'JX', //$order['channel_merchant'],
+                    'waybill' =>  $params['expressOrderNo'],
+                    'body' => "bbd调账重量推送"
+                ];
+                $common->wxrobot_channel_exception($content);
+            }else if($params['pushType'] == 'EXPRESSORDERNO_CHANGE'){
+                $insertData = [
+                    "expressOrderNo"=> $params['newExpressOrderNo'], // 快递单号
+                    "raw" => $paramJson,
+                    'createTime' => date('Y-m-d H:i:s', time()),
+                ];
+                db('bbd_callback')->strict(false)->insert($insertData);
+
+                $common = new Common();
+                $content = [
+                    'title' => '快递单号推送',
+                    'user' =>  'JX', //$order['channel_merchant'],
+                    'waybill' =>  $params['expressOrderNo'],
+                    'body' => "新单号：" . $params['newExpressOrderNo']
+                ];
+                $common->wxrobot_channel_exception($content);
+            }else if($params['pushType'] == 'WORK_ORDER_PUSH'){
+                $insertData = [
+                    "expressOrderNo"=> $params['newExpressOrderNo'], // 快递单号
+                    "raw" => $paramJson,
+                    'createTime' => date('Y-m-d H:i:s', time()),
+                ];
+                db('bbd_callback')->strict(false)->insert($insertData);
+
+                $common = new Common();
+                $content = [
+                    'title' => '工单推送',
+                    'user' =>  'JX', //$order['channel_merchant'],
+                    'waybill' =>  $params['expressOrderNo'],
+                    'body' => "bbd工单ID：" . $params['workOrderId']
+                ];
+                $common->wxrobot_channel_exception($content);
+            }
+
+
+
+
+            return R::ok('接收成功');
+        }catch (\Exception $e){
+            recordLog('channel-callback-err',
+                '包包达-' .  $e->getLine().'：'.$e->getMessage().PHP_EOL
+                .$e->getTraceAsString().PHP_EOL
+                .'参数：'. $paramJson);
+            return R::error($e->getMessage());
+        }
     }
 
     /**
@@ -1821,10 +2114,9 @@ class Wxcallback extends Controller
                             $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                         }
 
-                    }else{
+                    }else if(isset($yyResult['code'])){ // 下单成功
                         $rebateList = new RebateListController();
                         $rebateList->create($orders,$agent_info);
-
                         //支付成功下单成功
                         $result=$yyResult['result'];
                         $update=[
@@ -1863,6 +2155,13 @@ class Wxcallback extends Controller
                             ]);
                         }
 
+                    }else{
+                        $update=[
+                            'pay_status'=> 1,
+                            'yy_fail_reason'=> '响应超时',
+                            'order_status'=>'未知',
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        ];
                     }
                     break;
                 case 'JILU':
@@ -1874,37 +2173,7 @@ class Wxcallback extends Controller
                         '返回结果：'.$resultJson . PHP_EOL .
                         '请求参数：' . $record
                     );
-                    if ($result['code']!=1){ // 下单失败
-                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
-                        $errMsg = $result['data']['message']??$result['msg'];
-                        if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
-                            $errMsg = '不支持的寄件或收件号码';
-                        }elseif (strpos($errMsg, 'HttpMessageConverter')!== false){
-                            $errMsg = '不支持的寄件或收件号码';
-                        }
-                        //支付下单失败  执行退款操作
-                        $update=[
-                            'pay_status'=>2,
-                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                            'yy_fail_reason'=>$errMsg,
-                            'order_status'=>'下单失败',
-                            'out_refund_no'=>$out_refund_no,
-                            'shopbill'=>$result['data']['expressId']??'',
-                        ];
-                        $data = [
-                            'type'=>3,
-                            'order_id'=>$orders['id'],
-                            'out_refund_no' => $out_refund_no,
-                            'reason'=>$errMsg,
-                        ];
-                        // 将该任务推送到消息队列，等待对应的消费者去执行
-                        Queue::push(DoJob::class, $data,'way_type');
-
-                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
-                            //推送企业微信消息
-                            $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
-                        }
-                    }else{ // 下单成功
+                    if(isset($result['code']) && $result['code']==1){ // 下单成功
                         $rebateList = new RebateListController();
                         $rebateList->create($orders, $agent_info);
                         $update=[
@@ -1940,13 +2209,79 @@ class Wxcallback extends Controller
                                 'price' => $balance,
                             ]);
                         }
+                    }
+                    elseif (isset($result['code'])){ // 下单失败
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        $errMsg = $result['data']['message']??$result['msg']??'相应失败';
+                        if($errMsg == 'Could not extract response: no suitable HttpMessageConverter found for response type [class com.jl.wechat.api.model.address.JlOrderAddressBook] and content type [text/plain;charset=UTF-8]'){
+                            $errMsg = '不支持的寄件或收件号码';
+                        }elseif (strpos($errMsg, 'HttpMessageConverter')!== false){
+                            $errMsg = '不支持的寄件或收件号码';
+                        }
+                        //支付下单失败  执行退款操作
+                        $update=[
+                            'pay_status'=>2,
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'yy_fail_reason'=>$errMsg,
+                            'order_status'=>'下单失败',
+                            'out_refund_no'=>$out_refund_no,
+                            'shopbill'=>$result['data']['expressId']??'',
+                        ];
+                        $data = [
+                            'type'=>3,
+                            'order_id'=>$orders['id'],
+                            'out_refund_no' => $out_refund_no,
+                            'reason'=>$errMsg,
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
 
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                            //推送企业微信消息
+                            $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                        }
+                    }
+                    else{ // 其他状态
+                        $update=[
+                            'pay_status'=> 1,
+                            'yy_fail_reason'=> '响应超时',
+                            'order_status'=>'未知',
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        ];
                     }
                     break;
                 case Channel::$kdn:
                     $KDNBusiness = new KDNBusiness();
                     $result = $KDNBusiness->createOrderHandle($orders);
-                    if (empty($result) || !$result['Success']){
+                    recordLog('kdn-create-order', '订单记录：'.$orders['out_trade_no'] );
+                    if(isset($result['Success']) && $result['Success']){
+                        recordLog('kdn-create-order', '下单成功：'.$orders['out_trade_no'] );
+                        $rebateList = new RebateListController();
+                        $rebateList->create($orders, $agent_info);
+                        $update=[
+                            'id' => $orders['id'],
+                            'pay_status'=> 1,
+                            'shopbill'=>$result['Order']['KDNOrderCode'],
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'yy_fail_reason'=> "预取货单时间：{$result['StartDate']} - {$result['EndDate']}",
+                        ];
+
+                        if(!empty($orders["couponid"])){
+                            $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                            if($couponinfo){
+                                $couponinfo->state=2;
+                                $couponinfo->save();
+                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                                if($coupon){
+                                    $coupon->state = 4;
+                                    $coupon->save();
+                                }
+                            }
+                        }
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$result['Order']['OrderCode'].' 下单支付成功');
+                    }
+                    else{
+                        recordLog('kdn-create-order', '下单失败：'.$orders['out_trade_no'] );
                         $out_refund_no=$Common->get_uniqid();//下单退款订单号
                         //支付下单失败  执行退款操作
                         $update=[
@@ -1971,15 +2306,21 @@ class Wxcallback extends Controller
                             $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
                         }
                     }
-                    else{ // 下单成功
+
+
+                    break;
+                case Channel::$bbd:
+                    $BBDBusiness = new BBDBusiness();
+                    $result = $BBDBusiness->createOrderHandle($orders);
+                    if( isset($result['code']) && $result['code'] == '00'){
                         $rebateList = new RebateListController();
                         $rebateList->create($orders, $agent_info);
                         $update=[
                             'id' => $orders['id'],
                             'pay_status'=> 1,
-                            'shopbill'=>$result['Order']['KDNOrderCode'],
+                            'shopbill'=>$result['data']['bbdOrderNo'],
+                            'waybill'=>$result['data']['expressOrderNo'],
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
-                            'yy_fail_reason'=> "预取货单时间：{$result['StartDate']} - {$result['EndDate']}",
                         ];
 
                         if(!empty($orders["couponid"])){
@@ -1994,10 +2335,51 @@ class Wxcallback extends Controller
                                 }
                             }
                         }
-                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$result['Order']['OrderCode'].' 下单支付成功');
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$result['data']['expressOrderNo'].' 下单支付成功');
+                        // 包包达账号余额
+                        $balance = $BBDBusiness->queryBalance();
+                        $setup= new SetupBusiness();
+                        // 设置的提醒金额
+                        $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
+                        // 余额变动提醒
+                        if((int)$balance <= (int)$balanceValue){
+                            //推送企业微信消息
+                            $Common->wxrobot_balance([
+                                'name' => '包包达',
+                                'price' => $balance,
+                            ]);
+                        }
+                    }else if(isset($result['code']) ){ // 下单失败
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        //支付下单失败  执行退款操作
+                        $update=[
+                            'pay_status'=>2,
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'yy_fail_reason'=> $result['msg']??'响应超时',
+                            'order_status'=>'下单失败',
+                            'out_refund_no'=>$out_refund_no,
+                        ];
+                        $data = [
+                            'type'=>3,
+                            'order_id'=>$orders['id'],
+                            'out_refund_no' => $out_refund_no,
+                            'reason'=>$result['msg']??'响应超时',
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
 
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                            //推送企业微信消息
+                            $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                        }
+                    }else{ // 其他状况
+                        $update=[
+                            'pay_status'=> 1,
+                            'yy_fail_reason'=> '响应超时',
+                            'order_status'=>'未知',
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        ];
                     }
-
                     break;
                 case 'FHD':
                     $fhd = new FengHuoDi();

@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\common\business\AliBusiness;
+use app\common\business\BBDBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
@@ -102,6 +103,10 @@ class Yunyang extends Controller
 
             return json($data);
         }catch (Exception $e){
+            recordLog('add_address', '[' .$e->getLine() . ']' .  $e->getMessage() . PHP_EOL .
+                json_encode($param, JSON_UNESCAPED_UNICODE) . PHP_EOL .
+                $e->getTraceAsString()
+            );
             $data=[
                 'status'=>400,
                 'data'=>'',
@@ -211,26 +216,32 @@ class Yunyang extends Controller
 //            $fengHuoDi = new FengHuoDi();
             $yunYang = new \app\common\business\YunYang();
             $KDNBusiness = new KDNBusiness();
+            $BBDBusiness = new BBDBusiness();
             // 组装查询参数
             if ($param['channel_tag']=='智能'){
                 // $fhdParams = $fengHuoDi->setQueryPriceParam($param,  $jijian_address, $shoujian_address, 'RCP');
                 $yyParams = $yunYang->queryPriceParams($jijian_address,$shoujian_address, $param);
 //                $kdnParams = $KDNBusiness->queryPriceParams($jijian_address,$shoujian_address, $param);
+                $bbdParams = $BBDBusiness->queryPriceParams($jijian_address,$shoujian_address, $param);
                 $queryList = [
                     'yy' => $yyParams,
+                    'bbd' => $bbdParams,
                 ];
                 //  函数过滤空数组
                 $queryList = filter_array($queryList);
                 $response =  $this->common->multiRequest(...array_values($queryList));
                 $keys = array_keys($queryList);
                 $list = array_combine($keys, $response);
+
                 $yyPackage = isset($list['yy'])?$yunYang->advanceHandle($list['yy'], $agent_info, $param):[];
 //                $dknPackage = isset($list['kdn'])?$KDNBusiness->advanceHandle($list['kdn'], $agent_info, $param):[];
+                $bbdPackage = isset($list['bbd'])?$BBDBusiness->advanceHandle($list['bbd'], $agent_info, $param):[];
                 // $fhdDb = $fengHuoDi->queryPriceHandle($response[1], $agent_info, $param);
                 $jiLu = new JiLuBusiness();
                 $jiLuPackage = $jiLu->queryPriceHandle($agent_info, $param,$jijian_address['province'], $shoujian_address['province']);
                 $kdnPackage = $KDNBusiness->queryPriceHandle($agent_info, $param,$jijian_address, $shoujian_address);
-                $result = array_merge_recursive($yyPackage, filter_array([$kdnPackage, $jiLuPackage])) ;
+                $result = array_merge_recursive($yyPackage, filter_array([$kdnPackage, $jiLuPackage]), $bbdPackage) ;
+
                 usort($result, function ($a, $b){
                     if (empty($a['final_price']) || empty($b['final_price'])) {
                         if (empty($a['final_price'])) {
@@ -801,6 +812,19 @@ class Yunyang extends Controller
                     }
                 }else{
                     return R::error("{$row['order_status']}状态下不能取消");
+                }
+
+            }
+            else if($row['channel_merchant'] == Channel::$bbd){
+                $BBDBusiness = new BBDBusiness();
+                $resultJson= $BBDBusiness->cancel($row['waybill'], $cancelReason);
+                $res=json_decode($resultJson,true);
+                if(isset($res['code']) && $res['code'] == '00'){
+                    // 取消成功  执行退款操作
+                    $orderBusiness = new OrderBusiness();
+                    $orderBusiness->orderCancel($orderModel, $cancelReason);
+                }else{
+                    return R::error($resultJson);
                 }
 
             }

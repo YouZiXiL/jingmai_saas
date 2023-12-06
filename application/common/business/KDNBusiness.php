@@ -126,7 +126,7 @@ class KDNBusiness
     public function getProfitToAgent($agentId)
     {
         $profitBusiness = new ProfitBusiness();
-        return $profitBusiness->getProfitFind($agentId, ['mch_code' => Channel::$kdn, 'express' => '圆通']);
+        return $profitBusiness->getProfitFind($agentId, ['code' => 'KDN_YTO']);
     }
 
     protected function post($data){

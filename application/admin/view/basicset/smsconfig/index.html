@@ -1,13 +1,12 @@
 <form id="smsconfig-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
     <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">开启定时发送短信:</label>
+        <label class="control-label col-xs-12 col-sm-2">自动发送短信:</label>
         <div class="col-xs-12 col-sm-4">
             <input  id="c-sms_send" name="row[sms_send]" type="hidden" value="{$row.sms_send}">
             <a href="javascript:;" data-toggle="switcher" class="btn-switcher" data-input-id="c-sms_send" data-yes="1" data-no="0" >
                 <i class="fa fa-toggle-on text-success {eq name="$row.sms_send" value="0"}fa-flip-horizontal text-gray{/eq} fa-2x"></i>
             </a>
-            <div class="text-primary" style="">开启后，超重订单和耗材订单将自动发送催缴纳短信</div>
-            <div class="text-success" style="">隔天早上9点推送</div>
+            <div class="text-primary" style="">开启后，超重、耗材、保价订单将自动发送催缴纳短信</div>
         </div>
     </div>
 

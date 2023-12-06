@@ -3,6 +3,7 @@
 namespace app\admin\business\open;
 
 use app\admin\controller\basicset\Saleratio;
+use app\common\business\BBDBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
@@ -166,8 +167,8 @@ class OrderBusiness extends Backend
         // 被关闭的渠道
         $qudao_close=explode('|', $agent_info['qudao_close']);
 //        $qudao_close[] = '顺丰'; // 云洋禁用顺丰
-        $qudao_close[] = '圆通'; // 云洋禁用顺丰
-
+        $qudao_close[] = '圆通';
+        $qudao_close[] = '韵达';
         // 返回参数
         $list = [];
         $dbCount = 0; // 德邦出现次数
@@ -512,6 +513,174 @@ class OrderBusiness extends Backend
             ];
             $orderInfo->isUpdate()->save($updateOrder);
             $this->success('下单成功',null, $orderInfo);
+        }
+    }
+
+    public function bbdQueryPrice($param)
+    {
+
+        if($param['info']['insured']){
+            return false;
+        }
+        $paramData = [
+            "CompanyCode" => "YUND",
+            "ExpressType" =>  "1011",
+            'Sender' => [
+                "Name"=> "崔进度",
+                "Mobile"=> "17688889999",
+                'Province' => $param['sender']['province'],
+                'City' => $param['sender']['city'],
+                'District' => $param['sender']['county'],
+                'Address' => $param['sender']['location'],
+            ],
+            'Receiver' => [
+                "Name"=> "秦拿手",
+                "Mobile"=> "13322221111",
+                'Province' => $param['receiver']['province'],
+                'City' => $param['receiver']['city'],
+                'District' => $param['receiver']['county'],
+                'Address' => $param['receiver']['location'],
+            ],
+            "Package"=> 1,
+            "Weight"=> $param["info"]['weight'],
+            "Goods"=> $param["info"]['itemName'],
+            "remark"=> $param["info"]['billRemark'],
+            "clientOrderNo"=> "123456789",
+        ];
+
+        $volume = (int) $param["info"]['vloumLong'] * (int)$param["info"]['vloumWidth'] * (int)$param["info"]['vloumHeight'];
+        if($volume) $paramData['Volume'] = $volume;
+        $bbd = new BBDBusiness();
+        return [
+            'url' => $bbd->url,
+            'data' => $bbd->setParams(3003, $paramData),
+        ];
+    }
+
+    /**
+     * @throws ModelNotFoundException
+     * @throws DbException
+     * @throws DataNotFoundException
+     */
+    public function bbdPriceHandle($bbd, array $agent_info, array $paramData)
+    {
+        if (empty($bbd))  return [];
+        $bbdData = json_decode($bbd, true);
+        if(empty($bbdData) || $bbdData['code'] == 500) return [];
+
+        $list = [];
+
+        foreach ($bbdData['data'] as $key => &$item) {
+            if ($item['CompanyCode'] == 'YUND'){
+                $detailPrice =  $item['detailPrice'];
+                $adminOne= $detailPrice['firstWeightPrice'];//平台首重单价
+                $adminMore= $detailPrice['addOnePrice'];//平台首重单价
+                $adminMoreTotal = $detailPrice['addWeightPrice'];//平台续重价格（总价）
+                $KDNBusiness = new BBDBusiness();
+                $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
+
+                $agentOne= number_format($adminOne + $profit['one_weight'],2);//代理商首重
+                $agentMoreTotal = $adminMoreTotal +  (float) $adminMoreTotal * $profit['more_weight'];//代理商续重单价
+                $agentPrice = number_format( (float)$agentOne + $agentMoreTotal + (float)$detailPrice['insuredPrice'],2);// 代理商结算
+
+                $userOne = number_format((float)$agentOne + $profit['user_one_weight'],2);//用户首重
+                $userMoreTotal = $agentMoreTotal + $agentMoreTotal * $profit['user_more_weight'];//用户续重单价
+                $userPrice = number_format((float)$userOne + $userMoreTotal + (float)$detailPrice['insuredPrice'],2);// 代理商结算
+
+                $content['admin_shouzhong']= $adminOne;//平台首重
+                $content['admin_xuzhong']= $adminMore;//平台续重
+                $content['agent_shouzhong']= $agentOne;//代理商首重
+                $content['agent_xuzhong']= (float)  number_format($adminMore + $adminMore*$profit['more_weight'], 2);//代理商续重
+                $content['users_shouzhong']= $userOne;//用户首重
+                $content['users_xuzhong']= number_format($content['agent_xuzhong'] + $content['agent_xuzhong'] * $profit['user_more_weight'], 2);//用户商续重
+                $content['tagType'] =  BBDBusiness::$tag;
+                $content['channelId'] = $item['channelId'];
+                $content['channel'] = $item['channelName'];
+                $content['freight'] =  number_format($item['prePrice'], 2); // 运费
+                $content['agent_price'] = $agentPrice;
+                $content['final_price']=  $userPrice;
+                $content["info"]=$paramData['info'];
+                $content['senderInfo']=$paramData['sender'];
+                $content['receiverInfo']=$paramData['receiver'];
+                $content['channel_tag'] = '智能'; // 渠道类型
+                $content['channel_merchant'] = Channel::$bbd; // 渠道商
+
+
+                $requireId = SnowFlake::createId();
+                cache($requireId, json_encode($content), $this->ttl);
+
+                $list[$key]['freight'] = $content['agent_price'];
+                $list[$key]['tagType'] =  $content['tagType'];
+                $list[$key]['onePrice']=  $content['agent_shouzhong'];
+                $list[$key]['morePrice']= $content['agent_xuzhong'];
+                $list[$key]['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yd.png';
+                $list[$key]['requireId']= (string) $requireId;
+            }
+        }
+        return $list;
+    }
+
+    public function bbdCreateOrder(Order $orderInfo)
+    {
+        $Receiver = [
+            "Province"=> $orderInfo['receive_province'],
+            "City"=> $orderInfo['receive_city'],
+            "District"=> $orderInfo['receive_county'],
+            "Name"=> $orderInfo['receive_location'],
+            "Address"=> $orderInfo['receiver'],
+            "Mobile"=> $orderInfo['receiver_mobile'],
+        ];
+        $Sender = [
+            "Province"=> $orderInfo['sender_province'],
+            "City"=> $orderInfo['sender_city'],
+            "District"=> $orderInfo['sender_county'],
+            "Address"=> $orderInfo['sender_location'],
+            "Name"=> $orderInfo['sender'],
+            "Mobile"=> $orderInfo['sender_mobile'],
+        ];
+
+        $param = [
+            "CompanyCode"=> 'YUND',
+            "ExpressType"=> 1011,
+            "Package"=> $orderInfo['package_count'],
+            "clientOrderNo"=> $orderInfo['out_trade_no'],
+            "channelId"=> $orderInfo['channel_id'],
+            "Receiver"=> $Receiver,
+            "Sender"=> $Sender,
+            "Weight"=> $orderInfo['weight'],
+            "remark"=> $orderInfo['bill_remark'],
+            "Goods"=> $orderInfo['item_name']
+        ];
+        $volume = (int) $orderInfo['vloum_long'] * (int)$orderInfo['vloum_long'] * (int)$orderInfo['vloum_long'];
+        if($volume) $param['Volume'] = $volume;
+
+        $BBDBusiness = new BBDBusiness();
+        $resultJson = $BBDBusiness->create($param);
+
+        $result = json_decode($resultJson,true);
+
+        if( isset($result['code']) && $result['code'] == '00'){
+            // 下单成功
+            $db= new Dbcommom();
+            $db->set_agent_amount($orderInfo['agent_id'],'setDec',$orderInfo['agent_price'],0,'运单号：'. $result['data']['expressOrderNo'].' 下单支付成功');
+            $updateOrder=[
+                'id' => $orderInfo['id'],
+                'pay_status'=> 1,
+                'shopbill'=>$result['data']['bbdOrderNo'],
+                'waybill'=>$result['data']['expressOrderNo'],
+            ];
+            $orderInfo->isUpdate()->save($updateOrder);
+            $this->success('下单成功',null, $orderInfo);
+        }else{
+            // 下单失败
+            $updateOrder=[
+                'id' => $orderInfo['id'],
+                'pay_status'=> 2,
+                'yy_fail_reason'=> $result['msg']??'系统错误',
+                'order_status'=>'下单失败',
+            ];
+            $orderInfo->isUpdate()->save($updateOrder);
+            $this->error($resultJson);
         }
     }
 
@@ -1105,7 +1274,7 @@ class OrderBusiness extends Backend
             $item["final_price"]=$item["agent_price"];
             $item["info"]=$paramData['info'];
             $item['senderInfo']=$paramData['sender'];
-            $item['receiverInfo']=$paramData['receiver'];//收件id
+            $item['receiverInfo']=$paramData['receiver'];
             $item['channel'] = $item['channelName'];
             $item['channelName'] = 'JX-顺丰标快';
             $item['tagType'] = $channelTag;

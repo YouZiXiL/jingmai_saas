@@ -45,7 +45,6 @@ class ProfitBusiness
      * @throws DbException
      */
     public function getProfitFind($agentId, $where = []){
-
         $profit = db('profit')->where('agent_id', $agentId)
             ->where($where)
             ->find();
@@ -55,5 +54,19 @@ class ProfitBusiness
                 ->find();
         }
         return $profit;
+    }
+
+    /**
+     * 获取快递渠道
+     * @return array|false
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function getExpress(){
+        $result =  db('profit')->where('agent_id', 0)
+            ->field('code,express')
+            ->select();
+        return array_combine(array_column((array)$result, 'code'), array_column((array)$result, 'express'));
     }
 }

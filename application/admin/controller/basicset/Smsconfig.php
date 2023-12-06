@@ -48,6 +48,7 @@ class Smsconfig extends Backend
      */
     public function index()
     {
+
         $row=$this->model->where('id',$this->auth->id)->field('sms_send,voice_send')->find();
 
         if (!$row) {

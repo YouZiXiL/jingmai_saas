@@ -128,6 +128,7 @@ class Agentlist extends Backend
         }
         $params = $this->request->post('row/a');
         $profitValue = $this->request->post('profit/a'); // 利润设置
+
         if (empty($params) || empty($profitValue)) {
             $this->error(__('Parameter %s can not be empty', ''));
         }

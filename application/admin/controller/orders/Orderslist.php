@@ -5,6 +5,7 @@ namespace app\admin\controller\orders;
 use app\admin\library\Auth;
 use app\admin\model\users\Blacklist;
 use app\admin\model\users\Userslist;
+use app\common\business\BBDBusiness;
 use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
 use app\common\business\OrderBusiness;
@@ -263,6 +264,18 @@ class Orderslist extends Backend
                 return R::error($resultJson);
             }
         }
+        else if($row['channel_merchant']==Channel::$bbd){
+            $BBDBusiness = new BBDBusiness();
+            $resultJson = $BBDBusiness->cancel($row['waybill']);
+            $res=json_decode($resultJson,true);
+            if(isset($res['code']) && $res['code']=='00'){
+                // 取消成功  执行退款操作
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderCancel($orderModel, '后台取消', '已作废');
+            }else{
+                return R::error($resultJson);
+            }
+        }
         else{
             $this->error('没有相关渠道');
         }
@@ -305,9 +318,9 @@ class Orderslist extends Backend
 
         if (false === $this->request->isPost()) {
             $this->view->assign('row', $row);
-
             return $this->view->fetch();
         }
+
         $params = $this->request->post('row/a');
         $common = new Common();
         if (empty($params)) {
@@ -426,6 +439,7 @@ class Orderslist extends Backend
      * @param $ids
      * @return Json
      * @throws DbException
+     * @throws Exception
      */
     function send_sms_overload($ids = null): Json
     {
@@ -434,7 +448,7 @@ class Orderslist extends Backend
             $this->error(__('No Results were found'));
         }
         $agent_sms=db('admin')->where('id',$row['agent_id'])->value('agent_sms');
-        if ($agent_sms<=0){
+        if ($agent_sms<1){
             $this->error('短信次数不足');
         }
         $kuaidi100_userid=config('site.kuaidi100_userid');
@@ -458,10 +472,11 @@ class Orderslist extends Backend
             '返回参数：' . $res);
         $res=json_decode($res,true);
         if ($res['status']==1){
+            db('admin')->where('id',$row['agent_id'])->update(['agent_sms' => $agent_sms-2]);
             db('agent_sms')->insert([
                 'agent_id'=>$row['agent_id'],
                 'type'=>0,
-                'status'=>0,
+                'status'=>1,
                 'phone'=>$row['sender_mobile'],
                 'waybill'=>$row['waybill'],
                 'out_trade_no'=>$out_trade_no,
@@ -469,7 +484,6 @@ class Orderslist extends Backend
                 'create_time'=>time()
             ]);
             $this->success('发送超重短信成功');
-
         }else{
             $this->error($res['msg']);
         }
@@ -480,6 +494,7 @@ class Orderslist extends Backend
      * @param $ids
      * @return Json
      * @throws DbException
+     * @throws Exception
      */
     function send_sms_consume($ids = null): Json
     {
@@ -488,7 +503,7 @@ class Orderslist extends Backend
             $this->error(__('No Results were found'));
         }
         $agent_sms=db('admin')->where('id',$row['agent_id'])->value('agent_sms');
-        if ($agent_sms<=0){
+        if ($agent_sms<=1){
             $this->error('短信次数不足');
         }
         $kuaidi100_userid=config('site.kuaidi100_userid');
@@ -513,12 +528,13 @@ class Orderslist extends Backend
 
         $res=json_decode($res,true);
         if ($res['status']==1){
+            db('admin')->where('id',$row['agent_id'])->update(['agent_sms' => $agent_sms-2]);
             db('agent_sms')->insert([
                 'agent_id'=>$row['agent_id'],
                 'type'=>1,
                 'phone'=>$row['sender_mobile'],
                 'waybill'=>$row['waybill'],
-                'status'=>0,
+                'status'=>1,
                 'out_trade_no'=>$out_trade_no,
                 'content'=>$content,
                 'create_time'=>time()

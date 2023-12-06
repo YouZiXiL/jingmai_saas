@@ -91,6 +91,7 @@ class Afterlist extends Backend
     /**
      * 操作
      * cope_status=1：通过审核，cope_status=2：审核不通过
+     * salf_type=1：超重订单
      * salf_type=2：超轻订单
      * salf_type=3：现结/到付订单
      * @param $ids
@@ -142,17 +143,40 @@ class Afterlist extends Backend
             }
             // 处理超轻
             if ($row['salf_type']==2){
+                if (empty($params['cal_weight'])||$params['cal_weight']>=$orders['weight']){
+                    throw new Exception('更改重量填写错误');
+                }
+                if (empty($params['cope_status'])){
+                    throw new Exception('请选择审核状态');
+                }
+
                 $orders=$orders->get(['id'=>$row['order_id']]);
-                $agent_tralight_amt=$orders['agent_tralight_price'];//代理退款金额
+
                 if ($params['cope_status']==1){ // 审核通过
                     if ($orders['tralight_status'] == 4){
                         throw new Exception('此订超轻已被驳回');
                     }
+                    if ($orders['tralight_status'] == 2){
+                        throw new Exception('此订单已处理过超轻');
+                    }
                     if ($orders['tralight_status']!=3){
                         throw new Exception('此订并未反馈超轻');
                     }
-                    $orders->allowField(true)->save(['tralight_status'=>2]);
+
                     $params['cope_status']=4;
+
+                    if($params['cal_weight'] == $orders['final_weight']){
+                        $agent_tralight_amt = $orders['agent_tralight_price'];//代理退款金额
+                        $orders->allowField(true)->save(['tralight_status'=>2]);
+                    }else{
+                        $gapWeight = $orders['weight'] - $params['cal_weight']; // 重量差
+                        $right_data['agent_tralight_price'] = number_format( $orders['agent_xuzhong'] * $gapWeight,2); //代理商超重金额
+                        $right_data['tralight_price'] = number_format($orders['users_xuzhong'] * $gapWeight, 2); //用户超重金额
+                        $right_data['tralight_status'] = '2';
+                        $right_data['final_weight'] = $params['cal_weight'];
+                        $agent_tralight_amt = $right_data['agent_tralight_price'];//代理退款金额
+                        $orders->allowField(true)->save($right_data);
+                    }
                     if($orders['pay_status'] == 1){
                         // 给代理商退超轻款
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'运单号：'.$orders['waybill'].' 超轻增加金额：'.$agent_tralight_amt.'元');
