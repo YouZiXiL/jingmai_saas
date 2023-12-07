@@ -33,7 +33,6 @@
                     <p class="col-xs-12 col-sm-7 m-0 p-0 text-tip">四通一达，续重上浮价格，即您的利润，建议1元以上。</p>
                 </div>
 
-
                 {volist name="$profit" id="vo" }
 
                 {if $vo.agent_id }
@@ -42,12 +41,13 @@
                     <input name="profit[{$vo.id}][agent_id]" value="{$agent_id}" class="hidden" />
                     <input name="profit[{$vo.id}][one_weight]" value="{$vo.one_weight}" class="hidden" />
                     <input name="profit[{$vo.id}][more_weight]" value="{$vo.more_weight}" class="hidden" />
+                    <input name="profit[{$vo.id}][code]" value="{$vo.code}" class="hidden" />
                     <input name="profit[{$vo.id}][ratio]" value="{$vo.ratio}" class="hidden" />
+                    <input name="profit[{$vo.id}][mch_name]" value="{$vo.mch_name}" class="hidden" />
+                    <input name="profit[{$vo.id}][mch_code]" value="{$vo.mch_code}" class="hidden"  />
+                    <input name="profit[{$vo.id}][express]" value="{$vo.express}" class="hidden"  />
+                    <input name="profit[{$vo.id}][type]" value="{$vo.type}" class="hidden"  />
                 {/if}
-                <input name="profit[{$vo.id}][mch_name]" value="{$vo.mch_name}" class="hidden" />
-                <input name="profit[{$vo.id}][mch_code]" value="{$vo.mch_code}" class="hidden"  />
-                <input name="profit[{$vo.id}][express]" value="{$vo.express}" class="hidden"  />
-                <input name="profit[{$vo.id}][type]" value="{$vo.type}" class="hidden"  />
                 {if condition ="($vo.type == 1)"}
                 <div class="form-group row-center {:$auth->check('basicset/saleratio/users_shouzhong')?'':'hide'}">
                     <label class="control-label col-xs-12 col-sm-2">{$express[$vo.code]}首重价格￥:</label>

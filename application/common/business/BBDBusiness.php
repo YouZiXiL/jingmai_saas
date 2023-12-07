@@ -120,7 +120,7 @@ class BBDBusiness
             ],
             "Package"=> 1,
             "Weight"=> $param['weight'],
-            "Goods"=> $param['type'],
+            "Goods"=> $param['type']??'普货',
             "clientOrderNo"=> "123456789",
         ];
 

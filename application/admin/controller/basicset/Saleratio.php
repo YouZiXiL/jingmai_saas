@@ -102,9 +102,7 @@ class Saleratio extends Backend
                 $row->allowField(true);
             }
             $result = $row->save($params);
-
             $profitModal = new Profit();
-
             $profitModal->saveAll(array_values($profitValue));
             Db::commit();
         } catch (ValidateException|PDOException|\Exception $e) {
