@@ -768,7 +768,7 @@ class Wxcallback extends Controller
                 'KDNOrderCode' => $shopbill,
                 'OrderCode' => $out_trade_no,
                 'LogisticCode' => $waybill,
-                'Weight' => isset($resData['Weight']) ? ceil($resData['Weight']):0,
+                'Weight' => isset($resData['Weight'])? ceil($resData['Weight']):0,
                 'Cost' => $resData['Cost']??0, // 运费
                 'InsureAmount' => $resData['InsureAmount']??0, // 保价费
                 'PackageFee' => $resData['PackageFee']??0, // 包装费
@@ -780,6 +780,7 @@ class Wxcallback extends Controller
                 'raw' => $paramJson,
                 'createTime' => date('Y-m-d H:i:s', time()),
             ];
+
             db('kdn_callback')->insert($kdnData);
             $order = Order::where('out_trade_no',$out_trade_no)->find();
 
