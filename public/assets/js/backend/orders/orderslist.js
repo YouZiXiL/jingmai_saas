@@ -51,6 +51,17 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                     $("#consume_count").text(data.extend.consume_count);
                     $("#insured_count").text(data.extend.insured_count);
                 }
+                //
+                // $(document).on('click', '#overload_count-btn', function (event) {
+                //     const opt = {
+                //         url: `orders/orderslist/index`,
+                //         query: {
+                //             op: encodeURIComponent(JSON.stringify({overload_status:'1'})),
+                //             filter:encodeURIComponent(JSON.stringify({overload_status:'1'})),
+                //         },
+                //     };
+                //     table.bootstrapTable('refresh', opt);
+                // });
 
             });
             $.fn.bootstrapTable.locales[Table.defaults.locale]['formatSearch'] = function(){return "运单号,订单号,发件人寄件人";};
@@ -654,44 +665,20 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
 
 
 
-$(document).on('click', '.btn-comments', function (event) {
-    return;
-    event.stopPropagation();
-
-    let id = $('.btn-comments').data('id');
-    Fast.api.ajax({
-        url: `orders/orderslist/comments/ids/${id}`
-    }, function (data,ret) { //success
-        if (data == null) data = '无'
-        // 弹出层自定义按钮
-        layer.alert(data, {
-            btn: ['复制', '取消'],
-            btn1: function(index, layero) {
-                // 获取要复制的文本
-                const textToCopy = data;
-
-                // 复制文本到剪贴板
-                const $temp = $("<input>");
-                $("body").append($temp);
-                $temp.val(textToCopy).select();
-                document.execCommand("copy");
-                $temp.remove();
-
-                // 关闭弹出层
-                layer.close(index);
-
-                // 弹出复制成功提示
-                layer.msg('已复制到剪贴板', {icon: 1});
-            },
-            btn2: function(index, layero) {
-                // 取消操作
-                layer.close(index);
-            }
-        });
-        //如果需要阻止成功提示，则必须使用return false;
-        return false;
-    }, function (data,ret) { //error
-        Layer.alert(ret.msg);
-        return false;
-    });
-});
+// $(document).on('click', '.overload_count-btn', function (event) {
+//
+//     let id = $('.btn-comments').data('id');
+//     Fast.api.ajax({
+//         url: `orders/orderslist/index`,
+//         type: 'GET',
+//         data: {overload: '2'},
+//     }, function (data,ret) { //success
+//         console.log('data', data)
+//         //如果需要阻止成功提示，则必须使用return false;
+//         return false;
+//     }, function (data,ret) { //error
+//         console.log('data', data)
+//         table.bootstrapTable('refresh', opt);
+//         return true;
+//     });
+// });

@@ -676,6 +676,7 @@ class Yunyang extends Controller
             case '德邦重货':
                 $cpCode='DBL'; break;
             case '韵达':
+            case '韵达①':
                 $cpCode='YUNDA'; break;
             case '中通':
                 $cpCode='ZTO'; break;

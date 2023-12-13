@@ -157,7 +157,7 @@ class JiLuBusiness
         if(empty($cost)) return [];
         $profit = $this->getProfitToAgent($agent_info['id']);
 
-        $weight = $param['weight']; // 下单重量
+        $weight = ceil($param['weight']) ; // 下单重量
         $sequelWeight = $weight-1; // 续重重量
         $oneWeight = $cost['one_weight']; // 平台首重单价
         $reWeight = $cost['more_weight']; // 平台续重单价

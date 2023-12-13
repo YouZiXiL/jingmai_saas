@@ -343,7 +343,7 @@ class YunYang{
         $channel['users_xuzhong']= $user['morePrice'];//用户续重
         $channel['jijian_id']=$param['jijian_id'];//寄件id
         $channel['shoujian_id']=$param['shoujian_id'];//收件id
-        $channel['weight']=$param['weight'];//重量
+        $channel['weight']=  ceil($param['weight']);//重量
         $channel['channel_merchant'] = Channel::$yy;
         $channel['package_count']=$param['package_count'];//包裹数量
         $channel['insured']  = isset($param['insured'])?(int) $param['insured']:0;
@@ -426,7 +426,7 @@ class YunYang{
             'receiveCounty'=>$shoujian_address['county'],
             'receiveLocation'=>$shoujian_address['location'],
             'receiveAddress'=>$shoujian_address['province'].$shoujian_address['city'].$shoujian_address['county'].$shoujian_address['location'],
-            'weight'=>$param['weight'],
+            'weight'=> ceil($param['weight']) ,
             'packageCount'=>$param['package_count'],
             'insured' => isset($param['insured'])?(int) $param['insured']:0,
             'vloumLong' => isset($param['vloum_long'])?(int)$param['vloum_long']:0 ,

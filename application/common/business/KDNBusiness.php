@@ -425,7 +425,7 @@ class KDNBusiness
         if(empty($cost)) return [];
         $profit = $this->getProfitToAgent($agent_info['id']);
 
-        $weight = $param['weight']; // 下单重量
+        $weight =  ceil($param['weight']); // 下单重量
         $reWeight = $weight-1; // 续重重量
         $onePrice = $cost['one_price']; // 平台首重单价
         $rePrice = $cost['more_price']; // 平台续重单价

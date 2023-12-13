@@ -3,6 +3,7 @@
 namespace app\web\controller;
 
 use app\common\library\R;
+use app\common\library\utils\Utils;
 use app\web\model\Admin;
 use app\web\model\Agent_couponlist;
 use app\web\model\Agent_rule;
@@ -583,10 +584,11 @@ class Users extends Controller
 
         }
         else{
-            $inviteRecord = $currentuser->mobile;
-            if($inviteRecord) $inviteRecord = $currentuser->nick_name;
-            if($inviteRecord) $inviteRecord = $currentuser->open_id;
-            $currentuser->myinvitecode=$this->getinvitecode().substr($inviteRecord,-4);
+//            $inviteRecord = $currentuser->mobile;
+//            if(!$inviteRecord) $inviteRecord = $currentuser->nick_name;
+//            if(!$inviteRecord) $inviteRecord = $currentuser->open_id;
+//            $currentuser->myinvitecode=$this->getinvitecode().substr($inviteRecord,-4);
+            $currentuser->myinvitecode = Utils::inviteCode6($currentuser->id);
             $currentuser->save();
         }
 

@@ -119,7 +119,7 @@ class BBDBusiness
                 'Address' => $receiver['location'],
             ],
             "Package"=> 1,
-            "Weight"=> $param['weight'],
+            "Weight"=> ceil($param['weight']),
             "Goods"=> $param['type']??'普货',
             "clientOrderNo"=> "123456789",
         ];
@@ -177,7 +177,7 @@ class BBDBusiness
                 $content['final_price']=  $userPrice;
                 $content['jijian_id']=$param['jijian_id'];//寄件id
                 $content['shoujian_id']=$param['shoujian_id'];//收件id
-                $content['weight']=$param['weight'];//重量;
+                $content['weight']= ceil($param['weight']);//重量;
                 $content['channel_tag'] = '智能'; // 渠道类型
                 $content['channel_merchant'] = Channel::$bbd; // 渠道商
 

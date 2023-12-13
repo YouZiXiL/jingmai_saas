@@ -768,7 +768,7 @@ class Wxcallback extends Controller
                 'KDNOrderCode' => $shopbill,
                 'OrderCode' => $out_trade_no,
                 'LogisticCode' => $waybill,
-                'Weight' => $resData['Weight']??0,
+                'Weight' => isset($resData['Weight']) ? ceil($resData['Weight']):0,
                 'Cost' => $resData['Cost']??0, // 运费
                 'InsureAmount' => $resData['InsureAmount']??0, // 保价费
                 'PackageFee' => $resData['PackageFee']??0, // 包装费
@@ -1130,7 +1130,7 @@ class Wxcallback extends Controller
                     $up_data['final_freight'] = $insertData['orderPrice'];
                     if( empty($order['final_weight_time'])){
                         $calcFeeWeight = ceil($insertData['calcFeeWeight']); // 计费重量
-                        $gapWeight =number_format($calcFeeWeight - $order['weight'],2); // 计费重量与实际重量的差
+                        $gapWeight = abs(number_format($calcFeeWeight - $order['weight'],2)); // 计费重量与实际重量的差
                         if($calcFeeWeight > $order['weight']){ // 超重
                             $up_data['agent_overload_price'] = number_format( $order['agent_xuzhong'] * $gapWeight,2); //代理商超重金额
                             $up_data['overload_price'] = number_format((float)$order['users_xuzhong'] * $gapWeight, 2); //用户超重金额
@@ -1153,9 +1153,10 @@ class Wxcallback extends Controller
                             $rebateListController = new RebateListController();
                             $rebateListController->upState($order, $users, 2);
                         }
-                        elseif($insertData['calcFeeWeight'] > $order['weight'] && $gapWeight<0){ // 超轻
+                        elseif($calcFeeWeight < $order['weight']){ // 超轻
                             $up_data['agent_tralight_price'] = number_format( $order['agent_xuzhong'] * $gapWeight,2); //代理商超重金额
                             $up_data['tralight_price'] = number_format((float)$order['users_xuzhong'] * $gapWeight, 2); //用户超重金额
+                            $up_data['final_weight_time']=time();
                             $up_data['tralight_status'] = '1';
                         }
                     }

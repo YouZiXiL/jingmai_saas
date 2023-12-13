@@ -207,24 +207,23 @@ class Login extends Controller
             $auth_id = $agentAuth['id'];
             $user_info=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
             $auth_ids = [];
-            if (!empty($user_info['auth_ids']))$auth_ids = explode(',', $user_info['auth_ids']);
+            if (!empty($user_info['auth_ids'])) $auth_ids = explode(',', $user_info['auth_ids']);
 
             if(!in_array($auth_id, $auth_ids)){
                 $auth_ids[]=$auth_id;
             }
 
+            // 是否手机授权登录：0=不使用，1=使用
+            $authPhone = db('agent_config')->where('agent_id',$agentAuth['agent_id'])
+                ->field('id,auth_phone')
+                ->value('auth_phone');
+//if ($param['app_id'] == 'wx4e1c5790644d5936'){
+//    dd($agentAuth['agent_id']);
+//}
             $auth_ids = implode(',', $auth_ids);
             $time=time();
             if(empty($user_info)){ // 没有这个用户，注册用户
-                // 是否用手机号注册：0=不使用，1=使用
-                $authPhone = db('agent_config')->where('agent_id',$agentAuth['agent_id'])
-                    ->field('id,auth_phone')
-                    ->value('auth_phone');
-                if(empty($authPhone)){   // 直接注册
-                    $nickName = $this->shuffleName();
-                    $user_info['nick_name'] = $nickName;
-                    $user_info['mobile'] = '';
-                }else{// 使用手机注册
+                if($authPhone){
                     if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
                         $mobile=$this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
                         if (!$mobile){
@@ -233,14 +232,18 @@ class Login extends Controller
                         $user_info['mobile']= $mobile['phoneNumber'];
                         $user_info['nick_name'] = $mobile['phoneNumber'];
                     }else{
-                        return R::error('未授权');
+                        return R::code(401,'未授权');
                     }
+                }else{
+                    $nickName = $this->shuffleName();
+                    $user_info['nick_name'] = $nickName;
+                    $user_info['mobile'] = '';
                 }
                 $user_info['open_id']=$json_obj['openid'];
                 $user_info['create_time']=$time;
                 $user_info['login_time']=$time;
                 $user_info['agent_id']=$agent_id;
-                $user_info['token']=$_3rd_session;
+                $user_info['token']= $_3rd_session;
                 $user_info['auth_ids'] = $auth_ids;
                 //如果携带邀请码登录
                 if(!empty($param["invitcode"])){
@@ -287,9 +290,25 @@ class Login extends Controller
                 ];
                 cache($_3rd_session,$session,3600*24*25);
             }else{
-                $data=['status'=>400,'data'=>'','msg'=>'登录失败'];
+                return R::error('登录失败');
             }
-            return json($data);
+            if(isset($param['update'])){
+                return R::ok([
+                    'nick_name' => $user_info['nick_name'],
+                    'avatar' => $user_info['avatar'] ?? $this->request->domain() . '/assets/img/front-avatar.png' ,
+                    'mobile' => $user_info['mobile'],
+                    'score' => $user_info['score']??0, // 积分
+                    'token' => $_3rd_session,
+                    'myinvitecode' => $user_info['myinvitecode']??'',
+                    'money' => $user_info['money']??0, // 可体现金额
+                    'uservip' => $user_info['uservip']??0, // 0：普通用户，1：Plus会员
+                    'vipvaliddate' => $user_info['vipvaliddate']??'',
+                    'authPhone' => $authPhone,
+                ]);
+            }else{
+                return R::ok($_3rd_session);
+            }
+
         }catch (\Exception $exception){
             recordLog('wx-shouquan-err', "登录失败：" . PHP_EOL .
                 $exception->getLine() . $exception->getMessage() . PHP_EOL .
