@@ -65,7 +65,7 @@ class Poster extends Backend
                 $validate = is_bool($this->modelValidate) ? ($this->modelSceneValidate ? $name . '.edit' : $name) : $this->modelValidate;
                 $row->validateFailException()->validate($validate);
             }
-            $params['agent_poster']=$this->request->domain().$params['agent_poster'];
+            $params['agent_poster']= $params['agent_poster']?$this->request->domain().$params['agent_poster']:'';
 
             $result = $row->allowField('agent_poster')->save($params);
             Db::commit();

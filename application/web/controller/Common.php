@@ -326,6 +326,41 @@ class Common
     }
 
     /**
+     * 直接获取小程序|公众号 令牌
+     * $agent_id 代理商id
+     * $type xcx  小程序 默认
+     * $type gzh  公众号
+     * @throws Exception
+     */
+    function direct_get_authorizer_access_token($app_id){
+        $kaifang_appid=config('site.kaifang_appid');
+        $refresh_token=db('agent_auth')->where('app_id',$app_id)->value('refresh_token');
+        $data=[
+            'component_appid'=>$kaifang_appid,
+            'authorizer_appid'=>$app_id,
+            'authorizer_refresh_token'=>$refresh_token,
+        ];
+
+        $authorizer_token_json= $this->httpRequest('https://api.weixin.qq.com/cgi-bin/component/api_authorizer_token?component_access_token='.$this->get_component_access_token(),$data,'POST');
+        $authorizer_token=json_decode($authorizer_token_json,true);
+        if (isset($authorizer_token['errcode'])){
+            $wxBusiness = new WxBusiness();
+            $info = $wxBusiness->getAuthorizerInfo($app_id);
+            if (isset($info['authorization_info']['authorizer_refresh_token'])){
+                $refresh_token = $info['authorization_info']['authorizer_refresh_token'];
+                $data = db('agent_auth')->where('app_id', $app_id)->update(['refresh_token'=>$refresh_token]);
+                if($data){
+                    $this->get_authorizer_access_token($app_id);
+                }
+            }
+            throw new Exception($authorizer_token_json);
+        }
+        db('access_token')->insert(['access_token'=>$authorizer_token['authorizer_access_token'],'app_id'=>$app_id,'create_time'=>time()]);
+        return $authorizer_token['authorizer_access_token'];
+
+    }
+
+    /**
      * 构建微信支付请求参数
      * $merchantId  商户号
      * $merchantCertificateSerial  证书序列号

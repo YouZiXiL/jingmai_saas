@@ -108,12 +108,10 @@ class Wxim extends Backend
         $wxImBot = input('wxImBot');
         $wxImWeight = input('wxImWeight');
 
-        if ($wxImWeight){
-            $row->allowField(true)->save([
-                'wx_im_bot' => $wxImBot,
-                'wx_im_weight' => $wxImWeight,
-            ]);
-        }
+        $row->allowField(true)->save([
+            'wx_im_bot' => $wxImBot,
+            'wx_im_weight' => $wxImWeight,
+        ]);
         $this->success();
     }
 

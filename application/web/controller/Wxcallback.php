@@ -148,6 +148,7 @@ class Wxcallback extends Controller
     /**
      * 授权小程序|公众号
      * @return void
+     * @throws Exception
      */
     public function shouquan_success(){
         $param=$this->request->param();
@@ -285,9 +286,22 @@ class Wxcallback extends Controller
                     recordLog('wx-shouquan', "小程序耗材补交模板订阅失败" . $materialJson . PHP_EOL);
                     exit('小程序耗材补交模板订阅失败'.PHP_EOL.$material['errmsg']);
                 }
+
+                $feedbackJson=$common->httpRequest('https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token='.$authorization_info['authorizer_access_token'],[
+                    'tid'=>'8623',
+                    'kidList'=>[4,1,3],
+                    'sceneDesc'=>'问题反馈通知'
+                ],'POST');
+                $feedback=json_decode($feedbackJson,true);
+                if ($feedback['errcode']!=0){
+                    recordLog('wx-shouquan', "小程序反馈通知模板订阅失败" . $feedbackJson . PHP_EOL);
+                    exit('小程序反馈通知模板订阅失败'.PHP_EOL.$feedback['errmsg']);
+                }
+
                 $data['waybill_template']=$yundan['priTmplId']; // 小程序运单状态模板
                 $data['pay_template']=$overload['priTmplId']; // 小程序超重补交模板
                 $data['material_template']=$material['priTmplId']; // 小程序耗材补交模板
+                $data['feedback_template']=$feedback['priTmplId']; // 小程反馈通知模板
             }else{ // 公众号
 //                $wxBusiness = new WxBusiness();
 //                // 设置所属行业
@@ -372,10 +386,8 @@ class Wxcallback extends Controller
             if ($agent_auth){
                 $data['update_time'] = date('Y-m-d H:i:s');
                 $agent_auth->save($data);
-//                db('agent_auth')
-//                    ->where('agent_id',$parm['agent_id'])
-//                    ->where('auth_type',$parm['auth_type'])
-//                    ->update($data);
+                // 更新access_token
+                $common->direct_get_authorizer_access_token($data['app_id']);
 
             }else{
                 $data['xcx_audit'] = $parm['auth_type'] == 2?0:5;

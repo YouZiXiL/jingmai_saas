@@ -227,8 +227,8 @@ class BBDBusiness
             "Province"=> $order['receive_province'],
             "City"=> $order['receive_city'],
             "District"=> $order['receive_county'],
-            "Name"=> $order['receive_location'],
-            "Address"=> $order['receiver'],
+            "Name"=> $order['receiver'],
+            "Address"=> $order['receive_location'],
             "Mobile"=> $order['receiver_mobile'],
         ];
         $Sender = [

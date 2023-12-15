@@ -5,6 +5,7 @@ namespace app\admin\controller\orders;
 
 use app\admin\business\AfterSaleBusiness;
 use app\admin\model\Admin;
+use app\admin\model\User;
 use app\common\business\CouponBusiness;
 use app\common\business\OrderBusiness;
 use app\common\controller\Backend;
@@ -13,6 +14,7 @@ use app\common\model\Order;
 use app\web\controller\Common;
 use app\web\controller\Dbcommom;
 use app\web\model\AgentAuth;
+use app\web\model\Users;
 use think\Db;
 use think\Exception;
 use think\exception\DbException;
@@ -358,102 +360,148 @@ class Afterlist extends Backend
             }
 
             //超重核重处理
-            if ($row['salf_type']==1&&$params['cope_status']==1){
-                $orders=$orders->get(['id'=>$row['order_id']]);
-                $finalWeight = ceil($row['final_weight']); // 计费重量
-                if ($orders['overload_status']==0){
-                    throw new Exception('此订单没有超重');
-                }
+            if ($row['salf_type']==1 ) {
 
-                if (empty($params['cal_weight'])||$params['cal_weight']<$orders['weight']){
-                    throw new Exception('更改重量填写错误');
-                }
-
-                if($params['cal_weight'] == $orders['weight'] ){ // 经核实没有超重。
-                    if($orders['overload_status']==2 && $orders['pay_type'] == 1){ // 用户已付超重，退回客户之前补的超重费
-                        $out_overload_refund_no=$common->get_uniqid();//超重退款订单号
-                        $up_data['out_overload_refund_no']=$out_overload_refund_no;
-                        if($finalWeight  >  $params['cal_weight']){ // 计费重量大于审核重量
-                            // 退超重费
-                            $wx_pay=$common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
-                            $wx_pay
-                                ->chain('v3/refund/domestic/refunds')
-                                ->post(['json' => [
-                                    'transaction_id' => $orders['wx_out_overload_no'],
-                                    'out_refund_no'=>$out_overload_refund_no,
-                                    'reason'=>'超重退款',
-                                    'amount'       => [
-                                        'refund'   => (int)bcmul($orders['overload_price'],100),
-                                        'total'    =>(int)bcmul($orders['overload_price'],100),
-                                        'currency' => 'CNY'
-                                    ],
-                                ]]);
-                            $up_data['out_overload_refund_no']=$out_overload_refund_no;
-                        }
+                $authApp = AgentAuth::field('id,feedback_template,app_id')->find($orders['auth_id']);
+                if ($params['cope_status']==1) { // 审核通过
+                    $orders = $orders->get(['id' => $row['order_id']]);
+                    $finalWeight = ceil($row['final_weight']); // 计费重量
+                    if ($orders['overload_status'] == 0) {
+                        throw new Exception('此订单没有超重');
                     }
-                    // 代理商加款
-                    $up_data['agent_price']= bcsub($orders['agent_price'],$orders['agent_overload_price'],2) ;
-                    $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_overload_price'],1,'运单号：'.$orders['waybill'].' 核重退回金额：'.$orders['agent_overload_price'].'元');
-                    $remark='核重退回金额：'.$orders['agent_overload_price'].'元';
-                    $up_data['overload_status']=0;
-                    $up_data['overload_price']=0;//用户新超重金额
-                    $up_data['agent_overload_price']=0;//代理商新超重金额
-                }
 
-                else if($params['cal_weight'] > $orders['weight']){ // 超重，但超重金额不对
-                    $out_overload_refund_no = $common->get_uniqid();//超重退款订单号
-                    $newOverloadWeight = ceil( $params['cal_weight'] - $orders['weight']); // 新的超重重量
+                    if (empty($params['cal_weight']) || $params['cal_weight'] < $orders['weight']) {
+                        throw new Exception('更改重量填写错误');
+                    }
 
-                    if( $finalWeight > $params['cal_weight']){ // 计费重量大于真实重量，给用户退差价
-                        $diffWeight = ceil($row['final_weight'] - $params['cal_weight']); // 多扣的重量
-                        $usersDiffAmt=bcmul($diffWeight,$orders['users_xuzhong'],2);//用户差价金额
-                        $agentDiffAmt=bcmul($diffWeight,$orders['agent_xuzhong'],2);//代理差价金额
-                        if($orders['overload_status']==2 &&  $orders['pay_type'] == 1){
-                            $wx_pay= $common->wx_pay($orders['cz_mchid'],$orders['cz_mchcertificateserial']);
-                            $wx_pay
-                                ->chain('v3/refund/domestic/refunds')
-                                ->post(['json' => [
-                                    'transaction_id' => $orders['wx_out_overload_no'],
-                                    'out_refund_no'=> $out_overload_refund_no,
-                                    'reason'=>'超重退款',
-                                    'amount'       => [
-                                        'refund'   => (int)bcmul($usersDiffAmt,100),
-                                        'total'    =>(int)bcmul($orders['overload_price'],100),
-                                        'currency' => 'CNY'
-                                    ],
-                                ]]);
-                            $up_data['out_overload_refund_no']=$out_overload_refund_no;
+                    if ($params['cal_weight'] == $orders['weight']) { // 经核实没有超重。
+                        if ($orders['overload_status'] == 2 && $orders['pay_type'] == 1) { // 用户已付超重，退回客户之前补的超重费
+                            $out_overload_refund_no = $common->get_uniqid();//超重退款订单号
+                            $up_data['out_overload_refund_no'] = $out_overload_refund_no;
+                            if ($finalWeight > $params['cal_weight']) { // 计费重量大于审核重量
+                                // 退超重费
+                                $wx_pay = $common->wx_pay($orders['cz_mchid'], $orders['cz_mchcertificateserial']);
+                                $wx_pay
+                                    ->chain('v3/refund/domestic/refunds')
+                                    ->post(['json' => [
+                                        'transaction_id' => $orders['wx_out_overload_no'],
+                                        'out_refund_no' => $out_overload_refund_no,
+                                        'reason' => '超重退款',
+                                        'amount' => [
+                                            'refund' => (int)bcmul($orders['overload_price'], 100),
+                                            'total' => (int)bcmul($orders['overload_price'], 100),
+                                            'currency' => 'CNY'
+                                        ],
+                                    ]]);
+                                $up_data['out_overload_refund_no'] = $out_overload_refund_no;
+                            }
                         }
-                        $up_data['agent_price']= number_format($orders['agent_price'] - $agentDiffAmt,2) ;
                         // 代理商加款
-                        $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agentDiffAmt,1,'运单号：'.$orders['waybill'].' 核重退回金额：'.$agentDiffAmt.'元');
-                        $remark='核重退回金额：'.$agentDiffAmt.'元';
-                        $up_data['overload_price']= bcmul($newOverloadWeight, $orders['users_xuzhong'],2);//用户新超重金额
-                        $up_data['agent_overload_price']= bcmul($newOverloadWeight, $orders['agent_xuzhong'],2); //代理商新超重金额
+                        $up_data['agent_price'] = bcsub($orders['agent_price'], $orders['agent_overload_price'], 2);
+                        $Dbcommon->set_agent_amount($orders['agent_id'], 'setInc', $orders['agent_overload_price'], 1, '运单号：' . $orders['waybill'] . ' 核重退回金额：' . $orders['agent_overload_price'] . '元');
+                        $remark = '核重退回金额：' . $orders['agent_overload_price'] . '元';
+                        $up_data['overload_status'] = 0;
+                        $up_data['overload_price'] = 0;//用户新超重金额
+                        $up_data['agent_overload_price'] = 0;//代理商新超重金额
                     }
-                    else if( $finalWeight < $params['cal_weight']){   //  比之前重
-                        if($orders['overload_status'] == 1){ // 超重未处理
-                            $userWeight = $newOverloadWeight;
-                        }else if($orders['overload_status'] == 2){ // 超重已处理（支付过超重费）
-                            $userWeight = ceil($params['cal_weight']) - $finalWeight;
-                        }else{
-                            $this->error('订单没有超重');
-                        }
-                        $agentWeight = ceil($params['cal_weight']) - $finalWeight; // 代理之前已扣过超重费，所以这里只算新增的超重重量
+                    else if ($params['cal_weight'] > $orders['weight']) { // 超重，但超重金额不对
+                        $out_overload_refund_no = $common->get_uniqid();//超重退款订单号
+                        $newOverloadWeight = ceil($params['cal_weight'] - $orders['weight']); // 新的超重重量
 
-                        $usersDiffAmt=bcmul($userWeight,$orders['users_xuzhong'],2);//用户差价金额
-                        $agentDiffAmt=bcmul($agentWeight,$orders['agent_xuzhong'],2);//代理差价金额
-                        if($orders['pay_type'] == 3) $usersDiffAmt = $agentDiffAmt;
-                        $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$agentDiffAmt,4,'运单号：'.$orders['waybill'].' 超重扣除金额：'.$agentDiffAmt.'元');
-                        $up_data['agent_price']= number_format($orders['agent_price'] + (float) $agentDiffAmt,2) ;
-                        $remark='核重扣款金额：'.$agentDiffAmt.'元';
-                        $up_data['overload_price']= $usersDiffAmt;//用户新超重金额
-                        $up_data['agent_overload_price']= $agentDiffAmt;//用户新超重金额
+                        if ($finalWeight > $params['cal_weight']) { // 计费重量大于真实重量，给用户退差价
+                            $diffWeight = ceil($row['final_weight'] - $params['cal_weight']); // 多扣的重量
+                            $usersDiffAmt = bcmul($diffWeight, $orders['users_xuzhong'], 2);//用户差价金额
+                            $agentDiffAmt = bcmul($diffWeight, $orders['agent_xuzhong'], 2);//代理差价金额
+                            if ($orders['overload_status'] == 2 && $orders['pay_type'] == 1) {
+                                $wx_pay = $common->wx_pay($orders['cz_mchid'], $orders['cz_mchcertificateserial']);
+                                $wx_pay
+                                    ->chain('v3/refund/domestic/refunds')
+                                    ->post(['json' => [
+                                        'transaction_id' => $orders['wx_out_overload_no'],
+                                        'out_refund_no' => $out_overload_refund_no,
+                                        'reason' => '超重退款',
+                                        'amount' => [
+                                            'refund' => (int)bcmul($usersDiffAmt, 100),
+                                            'total' => (int)bcmul($orders['overload_price'], 100),
+                                            'currency' => 'CNY'
+                                        ],
+                                    ]]);
+                                $up_data['out_overload_refund_no'] = $out_overload_refund_no;
+                            }
+                            $up_data['agent_price'] = number_format($orders['agent_price'] - $agentDiffAmt, 2);
+                            // 代理商加款
+                            $Dbcommon->set_agent_amount($orders['agent_id'], 'setInc', $agentDiffAmt, 1, '运单号：' . $orders['waybill'] . ' 核重退回金额：' . $agentDiffAmt . '元');
+                            $remark = '核重退回金额：' . $agentDiffAmt . '元';
+                            $up_data['overload_price'] = bcmul($newOverloadWeight, $orders['users_xuzhong'], 2);//用户新超重金额
+                            $up_data['agent_overload_price'] = bcmul($newOverloadWeight, $orders['agent_xuzhong'], 2); //代理商新超重金额
+                        } else if ($finalWeight < $params['cal_weight']) {   //  比之前重
+                            if ($orders['overload_status'] == 1) { // 超重未处理
+                                $userWeight = $newOverloadWeight;
+                            } else if ($orders['overload_status'] == 2) { // 超重已处理（支付过超重费）
+                                $userWeight = ceil($params['cal_weight']) - $finalWeight;
+                            } else {
+                                $this->error('订单没有超重');
+                            }
+                            $agentWeight = ceil($params['cal_weight']) - $finalWeight; // 代理之前已扣过超重费，所以这里只算新增的超重重量
+
+                            $usersDiffAmt = bcmul($userWeight, $orders['users_xuzhong'], 2);//用户差价金额
+                            $agentDiffAmt = bcmul($agentWeight, $orders['agent_xuzhong'], 2);//代理差价金额
+                            if ($orders['pay_type'] == 3) $usersDiffAmt = $agentDiffAmt;
+                            $Dbcommon->set_agent_amount($orders['agent_id'], 'setDec', $agentDiffAmt, 4, '运单号：' . $orders['waybill'] . ' 超重扣除金额：' . $agentDiffAmt . '元');
+                            $up_data['agent_price'] = number_format($orders['agent_price'] + (float)$agentDiffAmt, 2);
+                            $remark = '核重扣款金额：' . $agentDiffAmt . '元';
+                            $up_data['overload_price'] = $usersDiffAmt;//用户新超重金额
+                            $up_data['agent_overload_price'] = $agentDiffAmt;//用户新超重金额
+                        }
+
+                    }
+                    $up_data['final_weight'] = $params['cal_weight'];
+                    $orders->allowField(true)->save($up_data);
+                    try {
+                        if($authApp['feedback_template']){ // 给用户发送消息通知
+                            $user = Users::field('id,open_id')->find($orders['user_id']);
+                            $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='. $common->get_authorizer_access_token($authApp['app_id']),[
+                                'touser'=>$user['open_id'],  //接收者openid
+                                'template_id'=>$authApp['feedback_template'],
+                                'page'=>'pages/homepage/homepage',  //模板跳转链接
+                                'data'=>[
+                                    'character_string4'=>['value'=>$orders['waybill']], // 订单号
+                                    'thing1'=>['value'=>$row['salf_content']], // 问题内容
+                                    'thing3'=>['value'=> '状态：通过；'. '详情：' . $params['cope_content'] ], // 问题回复
+                                ],
+                                'miniprogram_state'=>'formal',
+                                'lang'=>'zh_CN'
+                            ],'POST');
+                            recordLog('after-list',$row['out_trade_no'] . '- 发送反馈通知' . $resultJson);
+                        }
+                    }catch (\Exception $e){
+                        recordLog('after-list',$row['out_trade_no'] . '- 发送反馈通知模版失败' . $e->getMessage(). PHP_EOL . $e->getTraceAsString());
                     }
 
                 }
-                $up_data['final_weight']=$params['cal_weight'];
-                $orders->allowField(true)->save($up_data);
+                else { // 审核驳回
+                    try {
+                        if($authApp['feedback_template']){ // 给用户发送消息通知
+                            $user = Users::field('id,open_id')->find($orders['user_id']);
+                            $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='. $common->get_authorizer_access_token($authApp['app_id']),[
+                                'touser'=>$user['open_id'],  //接收者openid
+                                'template_id'=>$authApp['feedback_template'],
+                                'page'=>'pages/homepage/homepage',  //模板跳转链接
+                                'data'=>[
+                                    'character_string4'=>['value'=>$orders['waybill']], // 订单号
+                                    'thing1'=>['value'=>$row['salf_content']], // 问题内容
+                                    'thing3'=>['value'=> '状态：驳回；'. '详情：' . $params['cope_content'] ], // 问题回复
+                                ],
+                                'miniprogram_state'=>'formal',
+                                'lang'=>'zh_CN'
+                            ],'POST');
+                            recordLog('after-list',$row['out_trade_no'] . '- 发送反馈通知' . $resultJson);
+                        }
+                    } catch (\Exception $e) {
+                        recordLog('after-list',$row['out_trade_no'] . '- 发送反馈通知模版失败' . $e->getMessage(). PHP_EOL . $e->getTraceAsString());
+                    }
+
+                }
             }
             $Admin= Admin::get($row['agent_id']);
             //发送公众号模板消息

@@ -1422,7 +1422,7 @@ class Users extends Controller
         }
     $posters=[
         [
-            "url"=> $agent->agent_poster? $agent->agent_poster: \request()->domain()."/assets/img/poster/1.jpg",]
+            "url"=> $agent->agent_poster? $agent->agent_poster: request()->domain()."/assets/img/poster/1.jpg",]
         ];
         return json(['status'=>200,'data'=>$posters,'msg'=>"Success"]);
     }

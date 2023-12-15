@@ -960,7 +960,16 @@ class Yunyang extends Controller
         if (empty($id)||!is_numeric($id)){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }
-        $order=db('orders')->field('id,waybill,item_name,weight,final_weight,overload_price')->where('overload_status',1)->where('id',$id)->where('user_id',$this->user->id)->find();
+//        $order=db('orders')
+//            ->field('id,waybill,item_name,weight,final_weight,overload_price')
+//            ->where('overload_status',1)
+//            ->where('id',$id)
+//            ->where('user_id',$this->user->id)->find();
+
+        $order = Order::with('authApp')
+            ->where('id',$id)
+            ->field('id,waybill,item_name,weight,final_weight,overload_price,auth_id')
+            ->find();
         if(!$order) return R::error('没有超重信息');
         $order['weight'] = $order['weight'] . 'kg';
         $order['final_weight'] = $order['final_weight'] . 'kg';
