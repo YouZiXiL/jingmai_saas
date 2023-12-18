@@ -3,6 +3,7 @@
 namespace app\admin\controller;
 
 use app\admin\business\Admin;
+use app\admin\business\ProfitsBusiness;
 use app\common\controller\Backend;
 use think\Db;
 use think\db\exception\BindParamException;
@@ -276,12 +277,23 @@ class Dashboard extends Backend
                 ->sum('final_price');
 
             //昨日营业额
-            $yesterday_final_price=  Db::query("select sum(final_price) as total from fa_orders 
+            $yesterday_final_price =  Db::query("select sum(final_price) as total from fa_orders 
                  where from_unixtime(create_time) > current_date - interval 1 day 
                  and from_unixtime(create_time) < current_date 
                  and pay_status = '1'");
             $arr['yesterday_final_price'] = $yesterday_final_price[0]['total'];
 
+            $profitsBusiness = new ProfitsBusiness();
+            $nmhdProfits = $profitsBusiness->getAppRecentDayByAgentId(15);
+            $bjhdProfits = $profitsBusiness->getAppRecentDayByAgentId(17);
+            $nmkdProfits = $profitsBusiness->getAppRecentDayByAgentId(18);
+            $platform = $profitsBusiness->getPlatformRecentDay();
+
+            $arr['profitLineDate'] = array_column($nmhdProfits,'date');
+            $arr['nmhdProfitLine'] = array_column($nmhdProfits,'profit');
+            $arr['bjhdProfitLine'] = array_column($bjhdProfits,'profit');
+            $arr['nmkdProfitLine'] = array_column($nmkdProfits,'profit');
+            $arr['platformProfitLine'] = array_column($platform,'profit');
 
             //今日利润(自营小程序)
             $selfAppToday = $this->agentProfits('today',"agent_id in (15,17,18)");
@@ -685,9 +697,7 @@ class Dashboard extends Backend
 
     // 利润列表
     public function profit($startDate, $endDate){
-        if($startDate == $endDate){
-            $endDate =  strtotime('+1 day', $endDate);
-        }
+        $endDate =  strtotime('+1 day', $endDate);
         $appList = $this->selfAppProfits2($startDate, $endDate);
         $platform =  $this->platformProfits2($startDate, $endDate);
         $platformOther =  $this->platformProfitsOther2($startDate, $endDate);
@@ -724,6 +734,56 @@ class Dashboard extends Backend
             }
         }, array_column($appList, 'agent_id'));
         $this->success('', '', compact('name', 'total'));
+    }
+
+    /**
+     * 利润折线图
+     * @param $value
+     * @return void
+     */
+    public function profitLine($value){
+        $profitsBusiness = new ProfitsBusiness();
+        switch ($value){
+            case 'day': // 最近30天
+                $nmhdProfits = $profitsBusiness->getAppRecentDayByAgentId(15);
+                $bjhdProfits = $profitsBusiness->getAppRecentDayByAgentId(17);
+                $nmkdProfits = $profitsBusiness->getAppRecentDayByAgentId(18);
+                $platformProfits = $profitsBusiness->getPlatformRecentDay();
+                break;
+            case 'month': // 本月
+                $nmhdProfits = $profitsBusiness->getAppMonthByAgentId(15);
+                $bjhdProfits = $profitsBusiness->getAppMonthByAgentId(17);
+                $nmkdProfits = $profitsBusiness->getAppMonthByAgentId(18);
+                $platformProfits = $profitsBusiness->getPlatformMonth();
+                break;
+            case 'lastMonth': // 上个月
+                $nmhdProfits = $profitsBusiness->getAppLastMonthByAgentId(15);
+                $bjhdProfits = $profitsBusiness->getAppLastMonthByAgentId(17);
+                $nmkdProfits = $profitsBusiness->getAppLastMonthByAgentId(18);
+                $platformProfits = $profitsBusiness->getPlatformLastMonth();
+                break;
+            case 'year': // 本年
+                $nmhdProfits = $profitsBusiness->getAppYearByAgentId(15);
+                $bjhdProfits = $profitsBusiness->getAppYearByAgentId(17);
+                $nmkdProfits = $profitsBusiness->getAppYearByAgentId(18);
+                $platformProfits = $profitsBusiness->getPlatformYear();
+                break;
+            default:
+                $nmhdProfits = $profitsBusiness->getAppRecentDayByAgentId(15);
+                $bjhdProfits = $profitsBusiness->getAppRecentDayByAgentId(17);
+                $nmkdProfits = $profitsBusiness->getAppRecentDayByAgentId(18);
+                $platformProfits = $profitsBusiness->getPlatformRecentDay();
+        }
+
+
+        $profitLineDate = array_column($nmhdProfits,'date');
+        $nmhdProfitLine = array_column($nmhdProfits,'profit');
+        $bjhdProfitLine = array_column($bjhdProfits,'profit');
+        $nmkdProfitLine = array_column($nmkdProfits,'profit');
+
+
+        $platformProfitLine = array_column($platformProfits,'profit');
+        $this->success('', '',compact('profitLineDate','nmhdProfitLine', 'bjhdProfitLine', 'nmkdProfitLine','platformProfitLine'));
     }
 
     // 代理商最近三天或三月的订单

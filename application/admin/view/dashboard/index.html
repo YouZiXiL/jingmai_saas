@@ -201,14 +201,36 @@
                 <el-col :span="24">
                     <div class="panel-7">
                         <div class="d-flex j-sb">
+                            <div class="dashboard-title">利润折线图</div>
+                            <div class="block">
+                                <el-select v-model="profitLineValue" placeholder="请选择"  @change="onProfitLineChange">
+                                    <el-option
+                                            v-for="item in profitLineOptions"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value"
+                                    >
+                                    </el-option>
+                                </el-select>
+                            </div>
+                        </div>
+                        <div id="profit-line" style="height: 420px" class="echart"></div>
+                    </div>
+                </el-col>
+            </el-row>
+
+            <el-row v-if="auth" class="mt-1">
+                <el-col :span="24">
+                    <div class="panel-7">
+                        <div class="d-flex j-sb">
                             <div class="dashboard-title">代理商订单</div>
                             <div class="block">
                                 <el-select v-model="agentOrderValue" placeholder="请选择"  @change="onAgentOrderChange">
                                     <el-option
-                                        v-for="item in agentOrderOptions"
-                                        :key="item.value"
-                                        :label="item.label"
-                                        :value="item.value"
+                                            v-for="item in agentOrderOptions"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value"
                                     >
                                     </el-option>
                                 </el-select>
@@ -278,6 +300,7 @@
     let agentTopCharts = ''
     let profitListCharts = ''
     let agentOrderCharts = ''
+    let profitLine = ''
     new Vue({
         el: '#dashboard',
         mixins:[],
@@ -391,6 +414,31 @@
                 }],
                 agentOrderValue: 'day', // 最近几日
 
+
+                // 利润折线图
+                profitLineDate:[], // 日期
+                nmhdProfitLine:[], // 柠檬惠递利润
+                bjhdProfitLine:[], // 八戒惠递利润
+                nmkdProfitLine:[], // 柠檬快递利润
+                platformProfitLine:[], // 平台利润
+
+                profitLineOptions: [
+                    {
+                        value: 'day',
+                        label: '最近30天'
+                    }, {
+                        value: 'month',
+                        label: '本月'
+                    }, {
+                        value: 'lastMonth',
+                        label: '上月'
+                    }, {
+                        value: 'year',
+                        label: '本年'
+                    }
+                ],
+                profitLineValue: 'day', // 最近几日
+
                 authApp:'' // 我的小程序
 
             };
@@ -400,10 +448,10 @@
             this.setEchartBar()
             this.setEchartPie()
             this.setEchartLine()
+            this.setProfitLine()
             this.setEchartAgentTop()
             this.setEchartProfitList()
             this.setEchartAgentOrder()
-
         },
         methods:{
             init(){
@@ -449,6 +497,13 @@
                 const day = String(currentDate.getDate()).padStart(2, '0');
                 this.today = `${year}-${month}-${day}`; // 当天
                 this.firstDay = `${year}-${month}-01`; // 本月第一天
+
+                // 利润折线图
+                this.profitLineDate = data.profitLineDate; // 日期
+                this.nmhdProfitLine = data.nmhdProfitLine; // 柠檬惠递利润
+                this.bjhdProfitLine = data.bjhdProfitLine; // 八戒惠递利润
+                this.nmkdProfitLine = data.nmkdProfitLine; // 八戒惠递利润
+                this.platformProfitLine = data.platformProfitLine; // 平台利润
 
                 // 小程序
                 this.authApp =  data.app
@@ -698,7 +753,7 @@
                 window.addEventListener('resize', pieChart.resize);
             },
 
-            // 折线图
+            // 订单折线图
             setEchartLine(){
                 const pieChart = echarts.init(document.getElementById('dashboard-echart-line'));
                 const option = {
@@ -1150,7 +1205,333 @@
                 }, (data,ret) => { //error
                     return true;
                 });
-            }
+            },
+
+
+            // 利润折线图
+            setProfitLine(){
+                profitLine = echarts.init(document.getElementById('profit-line'));
+                const option = {
+                    color: ['#FA9DA0', '#8cceff', "#dab7f5", '#CCEA90'],
+                    title: {
+                        // text: '订单量'
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross',
+                            label: {
+                                backgroundColor: '#6a7985'
+                            }
+                        }
+                    },
+                    legend: {
+                        data: ['柠檬惠递','八戒惠递','柠檬快递', '平台']
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '3%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: [
+                        {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: this.profitLineDate
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value'
+                        }
+                    ],
+                    series: [
+                        {
+                            name: '柠檬惠递',
+                            type: 'line',
+                            stack: 'nmhd',
+                            smooth: true,
+                            lineStyle: {
+                                width: 0
+                            },
+                            showSymbol: false,
+                            areaStyle: {
+                                opacity: 0.8,
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    {
+                                        offset: 0,
+                                        color: 'rgba(250,157,160,0.8)'
+                                    },
+                                    {
+                                        offset: 1,
+                                        color: 'rgba(250,190,192,0.8)'
+                                    },
+                                ])
+                            },
+                            emphasis: {
+                                focus: 'series'
+                            },
+                            data: this.nmhdProfitLine
+                        },
+                        {
+                            name: '八戒惠递',
+                            type: 'line',
+                            stack: 'bjhd',
+                            smooth: true,
+                            lineStyle: {
+                                width: 0
+                            },
+                            showSymbol: false,
+                            areaStyle: {
+                                opacity: 1,
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    {
+                                        offset: 0,
+                                        color: 'rgba(140,206,255,0.8)'
+                                    },
+                                    {
+                                        offset: 1,
+                                        color: 'rgba(189,226,253,0.80)'
+                                    },
+                                ])
+                            },
+                            emphasis: {
+                                focus: 'series'
+                            },
+                            // data: this.monthCancelOrder
+                            data:  this.bjhdProfitLine
+                        },
+                        {
+                            name: '柠檬快递',
+                            type: 'line',
+                            stack: 'nmkd',
+                            smooth: true,
+                            lineStyle: {
+                                width: 0
+                            },
+                            showSymbol: false,
+                            areaStyle: {
+                                opacity: 0.8,
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    {
+                                        offset: 0,
+                                        color: 'rgba(218,183,245,0.80)'
+                                    },
+                                    {
+                                        offset: 1,
+                                        color: 'rgba(234,213,250,0.80)'
+                                    }
+                                ])
+                            },
+                            emphasis: {
+                                focus: 'series'
+                            },
+                            data: this.nmkdProfitLine
+                        },
+                        {
+                            name: '平台',
+                            type: 'line',
+                            stack: 'platform',
+                            smooth: true,
+                            lineStyle: {
+                                width: 0
+                            },
+                            showSymbol: false,
+                            areaStyle: {
+                                opacity: 0.8,
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    {
+                                        offset: 0,
+                                        color: 'rgba(204,234,144,0.8)'
+                                    },
+                                    {
+                                        offset: 1,
+                                        color: 'rgba(234,250,204,0.8)'
+                                    }
+                                ])
+                            },
+                            emphasis: {
+                                focus: 'series'
+                            },
+                            data: this.platformProfitLine
+                        },
+                    ]
+                }
+                profitLine.setOption(option)
+                window.addEventListener('resize', profitLine.resize);
+            },
+
+            // 利润折线图，选择器
+            onProfitLineChange(event){
+                Fast.api.ajax({
+                    url: 'dashboard/profitLine',
+                    method: 'post',
+                    data:{
+                        value:event,
+                    },
+                },  (data) => { //success
+                    console.log('data', data)
+                    this.profitLineDate = data['profitLineDate'];
+                    this.nmhdProfitLine = data['nmhdProfitLine'];
+                    this.bjhdProfitLine = data['bjhdProfitLine'];
+                    this.nmkdProfitLine = data['nmkdProfitLine'];
+                    this.platformProfitLine = data['platformProfitLine'];
+                    const option = {
+                        color: ['#FA9DA0', '#8cceff', "#dab7f5", "#ccea90"],
+                        title: {
+                            // text: '订单量'
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'cross',
+                                label: {
+                                    backgroundColor: '#6a7985'
+                                }
+                            }
+                        },
+                        legend: {
+                            data: ['柠檬惠递', '八戒惠递','柠檬快递','平台']
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '3%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                boundaryGap: false,
+                                data: this.profitLineDate
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '柠檬惠递',
+                                type: 'line',
+                                stack: 'nmhd',
+                                smooth: true,
+                                lineStyle: {
+                                    width: 0
+                                },
+                                showSymbol: false,
+                                areaStyle: {
+                                    opacity: 0.8,
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        {
+                                            offset: 0,
+                                            color: 'rgba(250,157,160,0.8)'
+                                        },
+                                        {
+                                            offset: 1,
+                                            color: 'rgba(250,190,192,0.8)'
+                                        },
+                                    ])
+                                },
+                                emphasis: {
+                                    focus: 'series'
+                                },
+                                // data: this.monthValidOrder
+                                data: this.nmhdProfitLine
+                            },
+                            {
+                                name: '八戒惠递',
+                                type: 'line',
+                                stack: 'bjhd',
+                                smooth: true,
+                                lineStyle: {
+                                    width: 0
+                                },
+                                showSymbol: false,
+                                areaStyle: {
+                                    opacity: 1,
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        {
+                                            offset: 0,
+                                            color: 'rgba(140,206,255,0.8)'
+                                        },
+                                        {
+                                            offset: 1,
+                                            color: 'rgba(189,226,253,0.80)'
+                                        },
+                                    ])
+                                },
+                                emphasis: {
+                                    focus: 'series'
+                                },
+                                data:  this.bjhdProfitLine
+                            },
+                            {
+                                name: '柠檬快递',
+                                type: 'line',
+                                stack: 'nmkd',
+                                smooth: true,
+                                lineStyle: {
+                                    width: 0
+                                },
+                                showSymbol: false,
+                                areaStyle: {
+                                    opacity: 0.8,
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        {
+                                            offset: 0,
+                                            color: 'rgba(218,183,245,0.80)'
+                                        },
+                                        {
+                                            offset: 1,
+                                            color: 'rgba(234,213,250,0.80)'
+                                        }
+                                    ])
+                                },
+                                emphasis: {
+                                    focus: 'series'
+                                },
+                                // data: this.monthTotalOrder
+                                data: this.nmkdProfitLine
+                            },
+                            {
+                                name: '平台',
+                                type: 'line',
+                                stack: 'platform',
+                                smooth: true,
+                                lineStyle: {
+                                    width: 0
+                                },
+                                showSymbol: false,
+                                areaStyle: {
+                                    opacity: 0.8,
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                        {
+                                            offset: 0,
+                                            color: 'rgba(204,234,144,0.80)'
+                                        },
+                                        {
+                                            offset: 1,
+                                            color: 'rgba(212,234,169,0.6)'
+                                        }
+                                    ])
+                                },
+                                emphasis: {
+                                    focus: 'series'
+                                },
+                                data: this.platformProfitLine
+                            },
+
+                        ]
+                    }
+                    profitLine.setOption(option)
+                    return false
+                }, (data,ret) => { //error
+                    return true;
+                });
+            },
         },
 
     })

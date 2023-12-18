@@ -630,8 +630,8 @@ class OrderBusiness extends Backend
             "Province"=> $orderInfo['receive_province'],
             "City"=> $orderInfo['receive_city'],
             "District"=> $orderInfo['receive_county'],
-            "Name"=> $orderInfo['receive_location'],
-            "Address"=> $orderInfo['receiver'],
+            "Name"=> $orderInfo['receiver'],
+            "Address"=> $orderInfo['receive_location'],
             "Mobile"=> $orderInfo['receiver_mobile'],
         ];
         $Sender = [

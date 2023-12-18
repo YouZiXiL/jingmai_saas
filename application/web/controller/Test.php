@@ -108,7 +108,7 @@ class Test extends Controller
      * @return void
      * @throws DataNotFoundException
      * @throws ModelNotFoundException
-     * @throws DbException
+     * @throws DbException|Exception
      */
     public function open_upload(){
         $agentId = input('agent_id');
@@ -151,6 +151,7 @@ class Test extends Controller
         $res=json_decode($res,true);
         dd($res);
     }
+
 
     /**
      * 微信消息回调
@@ -602,9 +603,16 @@ class Test extends Controller
      * @throws Exception
      */
     public function getPrivacySetting(){
+
+        $agentId = 15;
+        $agent=db('agent_auth')
+            ->where('agent_id',$agentId)
+            ->where('auth_type', 2)
+            ->find();
+
         $wxBusiness = new WxBusiness();
 //        $openAccessToken = $wxBusiness->getOpenAccessToken();
-        $openAccessToken = $wxBusiness->getAccessToken('wx20a0814c2c7feb3d');
+        $openAccessToken = $wxBusiness->getAccessToken($agent['app_id']);
         $result = $wxBusiness->getPrivacySetting($openAccessToken);
         return R::ok($result);
     }

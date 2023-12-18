@@ -106,22 +106,17 @@ class Admin
     public function getRecentThreeMonths() {
         $currentMonth = date('m');
         $currentYear = date('Y');
-
         $result = array();
-
         for ($i = 2; $i >= 0; $i--) {
             $month = $currentMonth - $i;
             $year = $currentYear;
-
             if ($month <= 0) {
                 $month += 12;
                 $year--;
             }
-
             $date = date('Y-m', strtotime($year . '-' . $month));
             $result[] = $date;
         }
-
         return $result;
     }
 }

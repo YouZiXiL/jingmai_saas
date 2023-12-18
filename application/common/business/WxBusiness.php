@@ -204,7 +204,7 @@ class WxBusiness
      */
     public function getPrivacySetting($accessToken){
         $resJson=$this->utils->httpRequest('https://api.weixin.qq.com/cgi-bin/component/getprivacysetting?access_token='. $accessToken ,
-            [ "privacy_ver" => "2" ],
+            [ "privacy_ver" => "1" ],
             'post'
         );
         return json_decode($resJson,true);
