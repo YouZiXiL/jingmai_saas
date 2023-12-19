@@ -135,6 +135,7 @@ class YunYang{
             '[response]' . $content. PHP_EOL
         );
         $data= json_decode($content, true);
+
         if ($data['code']!=1){
             recordLog('channel-price-err','云洋-查价失败:' . PHP_EOL . $content);
             return [];
@@ -333,6 +334,11 @@ class YunYang{
      */
     protected function storagePrice(array $data, array $param, array $channel){
         extract($data);
+
+        $channel['insured_price']= $channel['freightInsured'];// 代理商结算金额
+        if($channel['tagType'] == '百世'){ // 强制保价
+            if($channel['insured_price'] < 4) $channel['insured_price'] = 4;
+        }
         $channel['agent_price']= $agent['price'];// 代理商结算金额
         $channel['final_price']= $user['price'];//用户支付总价
         $channel['admin_shouzhong']= $admin['onePrice'];//平台首重
@@ -525,8 +531,10 @@ class YunYang{
             $agentFreight = $agentFreight + $channelItem['extFreight'];
             $userFreight = $userFreight + $channelItem['extFreight'];
         }
-        $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
-        $userPrice =  bcadd($userFreight, $channelItem['freightInsured'], 2); //代理商结算
+        $freightInsured = $channelItem['freightInsured'];
+        if($freightInsured < 4) $freightInsured = 4; // 强制4元保价费
+        $agentPrice =  bcadd($agentFreight, $freightInsured, 2); //代理商结算
+        $userPrice =  bcadd($userFreight, $freightInsured, 2); //代理商结算
 
         $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
         $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];

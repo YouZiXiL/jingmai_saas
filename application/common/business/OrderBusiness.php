@@ -174,7 +174,7 @@ class OrderBusiness
             'agent_price'=>$channel['agent_price'], // 代理商支付费用
             'final_price'=>$channel['final_price'], // 用户支付费用
             'user_price'=>$channel['final_price'], // 用户支付费用
-            'insured_price'=>$channel['freightInsured']??0,//保价费用
+            'insured_price'=>$channel['insured_price']??0,//保价费用
             'comments'=>'无',
             'pay_status'=>0,
             'order_status'=>'已派单',

@@ -95,7 +95,7 @@ class OrderBusiness extends Backend
             'agent_price'=>$channel['agent_price'],
             'final_price'=>$channel['final_price'],
             'user_price'=>$channel['final_price'],
-            'insured_price'=>$channel['freightInsured']??0,//保价费用
+            'insured_price'=>$channel['insured_price']??0,//保价费用
             'insured'=>$info['insured'],//保价金额
             'weight'=>$info['weight'],
             'package_count'=>$info['packageCount'],
@@ -248,6 +248,12 @@ class OrderBusiness extends Backend
 
             $agent = $priceInfo['agent'];
             $admin = $priceInfo['admin'];
+
+            $item['insured_price']= $item['freightInsured'];// 代理商结算金额
+            if($item['tagType'] == '百世'){ // 强制保价
+                if($item['insured_price'] < 4) $item['insured_price'] = 4;
+            }
+
             $item['agent_price']= $agent['price'];// 代理商结算金额
             $item['final_price']= $agent['price'];//用户支付总价
             $item['admin_shouzhong']=$admin['onePrice'];//平台首重
@@ -1503,7 +1509,11 @@ class OrderBusiness extends Backend
         if(isset($channelItem['extFreightFlag'])){
             $agentFreight = $agentFreight + $channelItem['extFreight'];
         }
-        $agentPrice =  bcadd($agentFreight, $channelItem['freightInsured'], 2); //代理商结算
+
+        $freightInsured = $channelItem['freightInsured'];
+        if($freightInsured < 4) $freightInsured = 4; // 强制4元保价费
+
+        $agentPrice =  bcadd($agentFreight, $freightInsured, 2); //代理商结算
 
         $admin = [ 'onePrice' => $adminOne, 'morePrice' => $adminMore ];
         $agent = [ 'onePrice' => $agentOne, 'morePrice' => $agentMore, 'price' => $agentPrice];
