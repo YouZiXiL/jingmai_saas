@@ -168,8 +168,10 @@ class Afterlist extends Backend
                     $params['cope_status']=4;
 
                     if($params['cal_weight'] == $orders['final_weight']){
+                        $right_data['tralight_status'] = '2';
                         $agent_tralight_amt = $orders['agent_tralight_price'];//代理退款金额
-                        $orders->allowField(true)->save(['tralight_status'=>2]);
+                        $right_data['agent_price'] = $orders['agent_price'] - $agent_tralight_amt;
+                        $orders->allowField(true)->save($right_data);
                     }else{
                         $gapWeight = $orders['weight'] - $params['cal_weight']; // 重量差
                         $right_data['agent_tralight_price'] = number_format( $orders['agent_xuzhong'] * $gapWeight,2); //代理商超重金额
@@ -177,6 +179,7 @@ class Afterlist extends Backend
                         $right_data['tralight_status'] = '2';
                         $right_data['final_weight'] = $params['cal_weight'];
                         $agent_tralight_amt = $right_data['agent_tralight_price'];//代理退款金额
+                        $right_data['agent_price'] = $orders['agent_price'] - $agent_tralight_amt;
                         $orders->allowField(true)->save($right_data);
                     }
                     if($orders['pay_status'] == 1){

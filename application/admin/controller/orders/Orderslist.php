@@ -154,6 +154,12 @@ class Orderslist extends Backend
                 }else{
                     $haocai_freight=0;
                 }
+                //保价
+                if ($v['insured_status']==2){
+                    $bjPrice=$v['insured_cost'];
+                }else{
+                    $bjPrice=0;
+                }
                 //超轻
                 if ($v['tralight_status']==2){
                     $tralight_price=$v['tralight_price'];//用户超轻
@@ -165,12 +171,14 @@ class Orderslist extends Backend
                 //使用优惠券
                 if ($v['couponid']){
                     $couponpapermoney=$v['couponpapermoney'];
+                    if($couponpapermoney>=$v['final_price']){
+                        $couponpapermoney -= 0.01;
+                    }
                 }else{
                     $couponpapermoney=0;
                 }
-                $amount=$v['agent_price']-$agent_tralight_price;
 
-                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight-$tralight_price-$couponpapermoney,$amount,2);
+                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight+$bjPrice-$tralight_price-$couponpapermoney,$v['agent_price'],2);
             }
         }
         $result = ['total' => $list->total(),'rows' => $list->items(), 'extend' => $count[0]];

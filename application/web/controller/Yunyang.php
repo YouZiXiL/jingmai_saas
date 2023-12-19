@@ -384,6 +384,9 @@ class Yunyang extends Controller
             }
 
             $wx_pay=$this->common->wx_pay($agent_info['wx_mchid'],$agent_info['wx_mchcertificateserial']);
+            // 支付金额
+            $total = $check_channel_intellect['final_price']-$couponmoney;
+            if($total<=0) $total = 0.01;
             $json=[
                 'mchid'        => $agent_info['wx_mchid'],
                 'out_trade_no' => $out_trade_no,
@@ -391,7 +394,7 @@ class Yunyang extends Controller
                 'description'  => '快递下单-'.$out_trade_no,
                 'notify_url'   => Request::instance()->domain().'/web/wxcallback/wx_order_pay',
                 'amount'       => [
-                    'total'    =>(int)bcmul($check_channel_intellect['final_price']-$couponmoney,100),
+                    'total'    =>(int)bcmul($total,100),
                     'currency' => 'CNY'
                 ],
                 'payer'        => [
@@ -432,8 +435,8 @@ class Yunyang extends Controller
 //                $couponinfo->save();
                 //表示该笔订单使用了优惠券
                 $orderData["couponid"]=$param["couponid"];
-                $orderData["couponpapermoney"]=$couponinfo->money;
-                $orderData["aftercoupon"]=$check_channel_intellect['final_price']-$couponmoney;
+                $orderData["couponpapermoney"]= $couponmoney;
+                $orderData["aftercoupon"]=$total;
             }
             $orderBusiness = new OrderBusiness();
             $orderBusiness->create($orderData, $check_channel_intellect, $agent_info);
