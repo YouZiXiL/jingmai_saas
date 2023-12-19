@@ -604,7 +604,7 @@ class Test extends Controller
      */
     public function getPrivacySetting(){
 
-        $agentId = 15;
+        $agentId = 16;
         $agent=db('agent_auth')
             ->where('agent_id',$agentId)
             ->where('auth_type', 2)

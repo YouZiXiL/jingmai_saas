@@ -5,6 +5,15 @@ use think\Model;
 
 class Users extends Model
 {
+    /**
+     * @param $value
+     * @param $data
+     * @return string
+     * 获取头像完整url
+     */
+    public function getAvatarAttr($value,$data){
+        return request()->domain() . $value;
+    }
 
     public function getinviteusers(){
         return self::all(["invitercode"=>$this->getAttr("myinvitecode")]);

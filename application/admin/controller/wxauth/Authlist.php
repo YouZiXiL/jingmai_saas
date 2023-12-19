@@ -339,6 +339,7 @@ class Authlist extends Backend
         // return Response::create($res,'',200,['Content-Type' =>'image/jpeg']);
         $resJson=$common->httpRequest('https://api.weixin.qq.com/cgi-bin/component/setprivacysetting?access_token='.$xcx_access_token,[
             'setting_list'=>[
+                ['privacy_key'=>'UserInfo','privacy_text'=>'展示用户的头像和昵称'],
                 ['privacy_key'=>'Album','privacy_text'=>'订单详情上传图片'],
                 ['privacy_key'=>'PhoneNumber','privacy_text'=>'推送提醒'],
                 ['privacy_key'=>'AlbumWriteOnly','privacy_text'=>'海报保存'],

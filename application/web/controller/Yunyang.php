@@ -4,7 +4,7 @@ namespace app\web\controller;
 
 use app\common\business\AliBusiness;
 use app\common\business\BBDBusiness;
-use app\common\business\FengHuoDi;
+use app\web\model\Users;
 use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
 use app\common\business\OrderBusiness;
@@ -1071,11 +1071,23 @@ class Yunyang extends Controller
         $pamar=$this->request->param();
         $avatar=$this->request->file('avatar');
         if (!empty($avatar)&&!empty($pamar['nick_name'])){
+            $user = Users::where('id','<>',$this->user->id)
+                ->where('nick_name',$pamar['nick_name'])
+                ->field('avatar,nick_name')
+                ->find();
+            if (!empty($user)){
+                return R::error('昵称已存在');
+            }
             $upload = new Upload($avatar);
-            $attachment = $upload->upload();
+            $attachment = $upload->upload('uploads/avatar/' . date('Y/m/d/', time()));
             try {
-                db('users')->where('id',$this->user->id)->update(['nick_name'=>$pamar['nick_name'],'avatar'=>$this->request->domain().$attachment->url]);
-                return json(['status'=>200,'data'=>'','msg'=>'成功']);
+                $user = Users::Update([
+                    'id' => $this->user->id,
+                    'nick_name' => $pamar['nick_name'],
+                    'avatar' => $attachment->url,
+                ])->hidden(['id']);
+                return R::ok($user);
+
             }catch (Exception $e){
                 return json(['status'=>400,'data'=>'','msg'=>$e->getMessage()]);
             }

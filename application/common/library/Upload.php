@@ -184,9 +184,9 @@ class Upload
         $filename = xss_clean(strip_tags(htmlspecialchars($filename)));
         $md5 = $md5 ? $md5 : md5_file($this->fileInfo['tmp_name']);
         $replaceArr = [
-            '{year}'     => date("Y"),
-            '{mon}'      => date("m"),
-            '{day}'      => date("d"),
+            '{year}'     => date("Y") . '/',
+            '{mon}'      => date("m"). '/',
+            '{day}'      => date("d") ,
             '{hour}'     => date("H"),
             '{min}'      => date("i"),
             '{sec}'      => date("s"),
@@ -351,13 +351,12 @@ class Upload
         if (empty($this->file)) {
             throw new Exception(__('No file upload or server upload limit exceeded'));
         }
-
         $this->checkSize();
         $this->checkExecutable();
         $this->checkMimetype();
         $this->checkImage();
 
-        $savekey = $savekey ? $savekey : $this->getSavekey();
+        $savekey = $savekey ? : $this->getSavekey();
         $savekey = '/' . ltrim($savekey, '/');
         $uploadDir = substr($savekey, 0, strripos($savekey, '/') + 1);
         $fileName = substr($savekey, strripos($savekey, '/') + 1);
