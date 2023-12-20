@@ -4,6 +4,7 @@ namespace app\web\controller;
 
 use app\admin\model\market\Couponlists;
 use app\common\business\AliBusiness;
+use app\common\business\BBDBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
@@ -107,7 +108,30 @@ class Notice extends Controller
                             '运单号：'.$result['data']['expressNo'].' 下单支付成功'
                         );
                     }
+                    break;
+                case Channel::$bbd:
+                    $BBDBusiness = new BBDBusiness();
+                    $result = $BBDBusiness->createOrderHandle($orders);
+                    if( isset($result['code']) && $result['code'] == '00'){ // 下单成功
+                        $update=[
+                            'id' => $orders['id'],
+                            'pay_status'=> 1,
+                            'shopbill'=>$result['data']['bbdOrderNo'],
+                            'waybill'=>$result['data']['expressOrderNo'],
+                            'order_status'=> '已付款',
+                        ];
 
+                        $DbCommon->set_agent_amount(
+                            $orders['agent_id'],
+                            'setDec',$orders['agent_price'],
+                            0,
+                            '运单号：'.$result['data']['expressOrderNo'].' 下单支付成功'
+                        );
+
+                    }else{ //  订单下单失败
+                        $orderBusiness = new OrderBusiness();
+                        $orderBusiness->orderFail($orderModel, $result['msg']??'响应超时');
+                    }
                     break;
                  case 'JILU':
                     $jiLu = new JiLuBusiness();

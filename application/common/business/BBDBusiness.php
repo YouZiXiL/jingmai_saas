@@ -124,8 +124,12 @@ class BBDBusiness
             "clientOrderNo"=> "123456789",
         ];
 
-        $volume = (int) $param['vloum_long'] * (int)$param['vloum_long'] * (int)$param['vloum_long'];
-        if($volume) $paramData['Volume'] = $volume;
+        if(isset($param['vloum_long']) && isset($param['vloum_width'])  && isset($param['vloum_height'])){
+            $volume = (int) $param['vloum_long'] * (int)$param['vloum_width'] * (int)$param['vloum_height'];
+            if($volume) $paramData['Volume'] = $volume;
+        }
+
+
 
         return [
             'url' => $this->url,
