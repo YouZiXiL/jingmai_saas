@@ -51,7 +51,7 @@ class Order extends Backend
         //黑名单
         $blacklist=db('agent_blacklist')
             ->where('agent_id',$this->auth->id)
-            ->where('mobile',$channel['receiverInfo']['mobile'])->find();
+            ->where('mobile',$channel['senderInfo']['mobile'])->find();
         if ($blacklist)  $this->error('此手机号无法下单');
         recordLog('auto-order', json_encode($channel, JSON_UNESCAPED_UNICODE).PHP_EOL);
         $orderInfo = $orderBusiness->createOrder($channel, $agent_info);
