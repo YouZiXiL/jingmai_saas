@@ -62,7 +62,7 @@ class DoJob
                     if (empty($orders['final_weight_time'])){
                         db('orders')->where('id',$orders['id'])->setInc('agent_price',$data['agent_overload_amt']);//代理商结算金额+代理超重金额
                         //代理商减少余额  代理超重
-                        $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['agent_overload_amt'],4,'运单号：'.$orders['waybill'].' 超重扣除金额：'.$data['agent_overload_amt'].'元');
+                        $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['agent_overload_amt'],4,'订单号：'.$orders['out_trade_no'].' 超重扣除金额：'.$data['agent_overload_amt'].'元');
                         //发送小程序超重订阅消息
                         if($orders['pay_type'] == 1 && !empty($data['template_id']) && !empty($data['open_id'])){
                             $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
@@ -117,7 +117,7 @@ class DoJob
                     if (empty($orders['consume_time'])){
                         db('orders')->where('id',$orders['id'])->setInc('agent_price',$data['freightHaocai']);//代理商结算金额+耗材金额
                         //代理商减少余额  耗材
-                        $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'运单号：'.$orders['waybill'].' 耗材扣除金额：'.$data['freightHaocai'].'元');
+                        $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'订单号：'.$orders['out_trade_no'] .' 耗材扣除金额：'.$data['freightHaocai'].'元');
                         //发送小程序耗材订阅消息
                         if ($orders['pay_type'] == 1 && !empty($data['template_id']) && !empty($data['open_id'])){
                             $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
@@ -380,11 +380,7 @@ class DoJob
                         $up_data['cancel_time']= time();
                         $up_data['order_status']= $data['order_status']??'已取消';
                         $up_data['yy_fail_reason']= $data['yy_fail_reason']??'';
-                        if($row['waybill']){
-                            $remark = '运单号：'.$row['waybill'].$up_data['order_status'].'并退款';
-                        }else {
-                            $remark = '订单号：'.$row['out_trade_no'].$up_data['order_status'].'并退款';
-                        }
+                        $remark = '订单号：'.$row['out_trade_no'].$up_data['order_status'].'并退款';
                         //代理结算金额 代理运费+保价金+耗材+超重
                         $Dbcommon->set_agent_amount($row['agent_id'],'setInc',$row['agent_price'],1,$remark);
 

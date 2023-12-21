@@ -184,7 +184,7 @@ class Afterlist extends Backend
                     }
                     if($orders['pay_status'] == 1){
                         // 给代理商退超轻款
-                        $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'运单号：'.$orders['waybill'].' 超轻增加金额：'.$agent_tralight_amt.'元');
+                        $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'订单号：'.$orders['out_trade_no'].' 超轻增加金额：'.$agent_tralight_amt.'元');
                     }
 
                 }else{
@@ -319,7 +319,7 @@ class Afterlist extends Backend
 
                 //代理商增加余额  退款
                 //代理结算金额 代理运费+保价金+耗材+超重
-                $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已作废并退款');
+                $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'订单号：'.$orders['out_trade_no'].' 已作废并退款');
 
                 if(!empty($orders["couponid"])){
                     // 返还优惠券
@@ -356,7 +356,7 @@ class Afterlist extends Backend
                 if($orders['pay_status'] == 1){
                     //代理商增加余额  退款
                     //代理结算金额 代理运费+保价金+耗材+超重
-                    $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已取消并退款');
+                    $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'订单号：'.$orders['out_trade_no'].' 已取消并退款');
 
                 }
 
@@ -401,7 +401,7 @@ class Afterlist extends Backend
                         }
                         // 代理商加款
                         $up_data['agent_price'] = bcsub($orders['agent_price'], $orders['agent_overload_price'], 2);
-                        $Dbcommon->set_agent_amount($orders['agent_id'], 'setInc', $orders['agent_overload_price'], 1, '运单号：' . $orders['waybill'] . ' 核重退回金额：' . $orders['agent_overload_price'] . '元');
+                        $Dbcommon->set_agent_amount($orders['agent_id'], 'setInc', $orders['agent_overload_price'], 1, '订单号：'.$orders['out_trade_no'] . ' 核重退回金额：' . $orders['agent_overload_price'] . '元');
                         $remark = '核重退回金额：' . $orders['agent_overload_price'] . '元';
                         $up_data['overload_status'] = 0;
                         $up_data['overload_price'] = 0;//用户新超重金额
@@ -433,7 +433,7 @@ class Afterlist extends Backend
                             }
                             $up_data['agent_price'] = number_format($orders['agent_price'] - $agentDiffAmt, 2);
                             // 代理商加款
-                            $Dbcommon->set_agent_amount($orders['agent_id'], 'setInc', $agentDiffAmt, 1, '运单号：' . $orders['waybill'] . ' 核重退回金额：' . $agentDiffAmt . '元');
+                            $Dbcommon->set_agent_amount($orders['agent_id'], 'setInc', $agentDiffAmt, 1, '订单号：'.$orders['out_trade_no'] . ' 核重退回金额：' . $agentDiffAmt . '元');
                             $remark = '核重退回金额：' . $agentDiffAmt . '元';
                             $up_data['overload_price'] = bcmul($newOverloadWeight, $orders['users_xuzhong'], 2);//用户新超重金额
                             $up_data['agent_overload_price'] = bcmul($newOverloadWeight, $orders['agent_xuzhong'], 2); //代理商新超重金额
@@ -450,7 +450,7 @@ class Afterlist extends Backend
                             $usersDiffAmt = bcmul($userWeight, $orders['users_xuzhong'], 2);//用户差价金额
                             $agentDiffAmt = bcmul($agentWeight, $orders['agent_xuzhong'], 2);//代理差价金额
                             if ($orders['pay_type'] == 3) $usersDiffAmt = $agentDiffAmt;
-                            $Dbcommon->set_agent_amount($orders['agent_id'], 'setDec', $agentDiffAmt, 4, '运单号：' . $orders['waybill'] . ' 超重扣除金额：' . $agentDiffAmt . '元');
+                            $Dbcommon->set_agent_amount($orders['agent_id'], 'setDec', $agentDiffAmt, 4, '订单号：'.$orders['out_trade_no'] . ' 超重扣除金额：' . $agentDiffAmt . '元');
                             $up_data['agent_price'] = number_format($orders['agent_price'] + (float)$agentDiffAmt, 2);
                             $remark = '核重扣款金额：' . $agentDiffAmt . '元';
                             $up_data['overload_price'] = $usersDiffAmt;//用户新超重金额

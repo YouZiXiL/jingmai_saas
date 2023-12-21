@@ -633,7 +633,7 @@ class Wxcallback extends Controller
                     $up_data['insured_status'] = 1;
                     $DbCommon= new Dbcommom();
                     // 给代理商扣款
-                    $DbCommon->set_agent_amount($orders['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$orders['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
+                    $DbCommon->set_agent_amount($orders['agent_id'],'setDec',$insuredPrice,8,'订单号：'.$orders['out_trade_no'].' 保价扣除金额：'. $insuredPrice.'元');
                     // 发送保价短信
                     KD100Sms::run()->insured($orders);
 
@@ -699,7 +699,7 @@ class Wxcallback extends Controller
                     ];
                     $orderModel->save($update);
                     $DbCommon= new Dbcommom();
-                    $DbCommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已取消并退款');
+                    $DbCommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'订单号：'.$orders['out_trade_no'] . ' 已取消并退款');
                     return json(['code'=>1, 'message'=>'ok']);
                 }
                 else{ // 支付宝
@@ -719,7 +719,7 @@ class Wxcallback extends Controller
                     }
                     $orderModel->save($update);
                     $DbCommon= new Dbcommom();
-                    $DbCommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'运单号：'.$orders['waybill'].' 已取消并退款');
+                    $DbCommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'订单号：'.$orders['out_trade_no'].' 已取消并退款');
                     return json(['code'=>1, 'message'=>'ok']);
                 }
                 if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
@@ -1041,7 +1041,7 @@ class Wxcallback extends Controller
                     $up_data['insured_status'] = 1;
                     $DbCommon= new Dbcommom();
                     // 给代理商扣款
-                    $DbCommon->set_agent_amount($order['agent_id'],'setDec',$kdnData['InsureAmount'],8,'运单号：'.$order['waybill'].' 保价扣除金额：'. $kdnData['InsureAmount'].'元');
+                    $DbCommon->set_agent_amount($order['agent_id'],'setDec',$kdnData['InsureAmount'],8,'订单号：'.$order['out_trade_no'].' 保价扣除金额：'. $kdnData['InsureAmount'].'元');
                     // 发送保价短信
                     KD100Sms::run()->insured($order);
 
@@ -1274,7 +1274,7 @@ class Wxcallback extends Controller
                            $up_data['insured_status'] = 1;
                            $DbCommon= new Dbcommom();
                            // 给代理商扣款
-                           $DbCommon->set_agent_amount($order['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$order['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
+                           $DbCommon->set_agent_amount($order['agent_id'],'setDec',$insuredPrice,8,'订单号：'.$order['out_trade_no'].' 保价扣除金额：'. $insuredPrice.'元');
                            // 发送保价短信
                            KD100Sms::run()->insured($order);
 
@@ -2223,7 +2223,7 @@ class Wxcallback extends Controller
                         if($orders['tag_type'] == '京东' || $orders['tag_type'] == '德邦'){
                             Queue::push(TrackJob::class, $orders['id'], 'track');
                         }
-                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'].' 下单支付成功');
                         // 云洋账号余额
                         $balance = $yy->queryBalance();
                         $setup= new SetupBusiness();
@@ -2279,7 +2279,7 @@ class Wxcallback extends Controller
 
                             }
                         }
-                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['expressNo'].' 下单支付成功');
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'] .' 下单支付成功');
                         $balance = $jiLu->queryBalance(); // 余额
                         $setup= new SetupBusiness();
                         // 设置的提醒金额
@@ -2361,7 +2361,7 @@ class Wxcallback extends Controller
                                 }
                             }
                         }
-                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$result['Order']['OrderCode'].' 下单支付成功');
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'] .' 下单支付成功');
                     }
                     else{
                         recordLog('kdn-create-order', '下单失败：'.$orders['out_trade_no'] );
@@ -2418,7 +2418,7 @@ class Wxcallback extends Controller
                                 }
                             }
                         }
-                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$result['data']['expressOrderNo'].' 下单支付成功');
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'] .' 下单支付成功');
                         // 包包达账号余额
                         $balance = $BBDBusiness->queryBalance();
                         $setup= new SetupBusiness();
@@ -2518,7 +2518,7 @@ class Wxcallback extends Controller
                                 }
                             }
                         }
-                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['data']['waybillCode'].' 下单支付成功');
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'] .' 下单支付成功');
                         $balance = $fhd->queryBalance();
                         $setup= new SetupBusiness();
                         // 设置的提醒金额
@@ -2583,7 +2583,7 @@ class Wxcallback extends Controller
                                 }
                             }
                         }
-                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0, ' 下单支付成功');
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0, '订单号：'.$orders['out_trade_no'].' 下单支付成功');
                         // 余额
                         $balance = $wanli->getWalletBalance();
                         $setup= new SetupBusiness();
@@ -3172,7 +3172,7 @@ class Wxcallback extends Controller
                             }
                         }
                     }
-                    $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybill'].' 下单支付成功');
+                    $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'].' 下单支付成功');
                 }
             }
 
@@ -3780,7 +3780,7 @@ class Wxcallback extends Controller
                     'pay_status'=>1,
                 ];
 
-                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['order_number'].' 下单支付成功');
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'].' 下单支付成功');
             }
             if($isopenrecharge==1){
                 $update["state"]=8;
@@ -3952,7 +3952,7 @@ class Wxcallback extends Controller
                     'pay_status'=>1,
                 ];
 
-                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['order_number'].' 下单支付成功');
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'].' 下单支付成功');
             }
             if($isopenrecharge==1){
                 $update["state"]=8;
@@ -4073,7 +4073,7 @@ class Wxcallback extends Controller
                     'pay_status'=>1,
                 ];
 
-                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['order_number'].' 下单支付成功');
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'].' 下单支付成功');
             }
             if($isopenrecharge==1){
                 $update["state"]=8;
@@ -4217,7 +4217,7 @@ class Wxcallback extends Controller
                         }
                     }
                 }
-                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'运单号：'.$result['waybillNo'].' 下单支付成功');
+                $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：' . $orders['out_trade_no'].' 下单支付成功');
                 $qbd = new QBiDaBusiness();
                 // 所剩余额
                 $balance = $qbd->queryBalance();
