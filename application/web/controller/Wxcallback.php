@@ -466,7 +466,6 @@ class Wxcallback extends Controller
                     $up_data['final_weight'] = $finalWeight;
                 }else{
                     if(number_format($finalWeight, 2) != number_format($orders['final_weight'],2)){
-                        $common = new Common();
                         $content = [
                             'title' => '计费重量变化',
                             'user' =>  'JX', //$order['channel_merchant'],
@@ -516,9 +515,6 @@ class Wxcallback extends Controller
             if(!empty($pamar['comments'])){
                 $up_data['comments'] = $pamar['comments'];
             }
-
-
-
 
             $finalWeight = $pamar['calWeight'];
 
@@ -618,42 +614,66 @@ class Wxcallback extends Controller
             }
 
             // 保价费用
-            if (!empty($pamar['freightInsured']) && empty($orders['insured_time']) && $pamar['freightInsured']>$orders['insured_price']){
+            if (!empty($pamar['freightInsured']) && $pamar['freightInsured']>$orders['insured_price']){
                 $insuredPrice =  round($pamar['freightInsured'] - $orders['insured_price'],2) ;
-                // 保价费用
-                $up_data['insured_cost']= $insuredPrice ;
-                $up_data['agent_price']= $orders['agent_price'] +  $insuredPrice;
-                $up_data['insured_time'] = time();
-                $up_data['insured_status'] = 1;
-                $DbCommon= new Dbcommom();
-                // 给代理商扣款
-                $DbCommon->set_agent_amount($orders['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$orders['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
-                // 发送保价短信
-                KD100Sms::run()->insured($orders);
+                if($orders['insured_cost'] != 0 && $orders['insured_cost'] != $insuredPrice ){
+                    $content = [
+                        'title' => '保价费发生变化',
+                        'user' =>   $orders['tag_type'],
+                        'waybill' =>  $orders['waybill'],
+                        'body' => "新保价费：" . $pamar['freightInsured']
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }
+                if(empty($orders['insured_time']) ){
+                    // 保价费用
+                    $up_data['insured_cost']= $insuredPrice ;
+                    $up_data['agent_price']= $orders['agent_price'] +  $insuredPrice;
+                    $up_data['insured_time'] = time();
+                    $up_data['insured_status'] = 1;
+                    $DbCommon= new Dbcommom();
+                    // 给代理商扣款
+                    $DbCommon->set_agent_amount($orders['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$orders['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
+                    // 发送保价短信
+                    KD100Sms::run()->insured($orders);
 
-                $rebateListController = new RebateListController();
-                $rebateListController->upState($orders, $users, 2);
+                    $rebateListController = new RebateListController();
+                    $rebateListController->upState($orders, $users, 2);
+                }
+
             }
 
             //更改耗材状态
-            if ( !empty($pamar['freightHaocai']) && empty($orders['consume_time'] )){
-                $up_data['haocai_freight']=  $pamar['freightHaocai'];
-                $data = [
-                    'type'=>2,
-                    'freightHaocai' =>$pamar['freightHaocai'],
-                    'order_id' => $orders['id'],
-                    'xcx_access_token'=>$xcx_access_token,
-                    'open_id'=>$users?$users['open_id']:"",
-                    'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
-                ];
-                // 将该任务推送到消息队列，等待对应的消费者去执行
-                Queue::push(DoJob::class, $data,'way_type');
+            if ( !empty($pamar['freightHaocai'])){
+                if($orders['haocai_freight'] !=0 && $orders['haocai_freight'] != $pamar['freightHaocai']){
+                    $content = [
+                        'title' => '耗材费发生变化',
+                        'user' =>   $orders['tag_type'],
+                        'waybill' =>  $orders['waybill'],
+                        'body' => "新耗材费：" . $pamar['freightHaocai']
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }
+                $up_data['haocai_freight'] =  $pamar['freightHaocai'];
+                if(empty($orders['consume_time'])){
+                    $data = [
+                        'type'=>2,
+                        'freightHaocai' =>$pamar['freightHaocai'],
+                        'order_id' => $orders['id'],
+                        'xcx_access_token'=>$xcx_access_token,
+                        'open_id'=>$users?$users['open_id']:"",
+                        'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
+                    ];
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
 
-                // 发送耗材短信
-                KD100Sms::run()->material($orders);
+                    // 发送耗材短信
+                    KD100Sms::run()->material($orders);
 
-                $rebateListController = new RebateListController();
-                $rebateListController->upState($orders, $users, 2);
+                    $rebateListController = new RebateListController();
+                    $rebateListController->upState($orders, $users, 2);
+                }
+
             }
 
             if($pamar['type']=='已取消'&&$orders['pay_status']!=2){
@@ -972,39 +992,62 @@ class Wxcallback extends Controller
                 }
             }
 
-            if(($kdnData['PackageFee'] != 0 ||  $kdnData['OtherFee'] != 0 ||  $kdnData['OverFee'] != 0) && empty($order['consume_time'])){ // 耗材
+            if(($kdnData['PackageFee'] != 0 ||  $kdnData['OtherFee'] != 0 ||  $kdnData['OverFee'] != 0) ){ // 耗材
                 $up_data['haocai_freight'] =  $kdnData['PackageFee'] + $kdnData['OtherFee'] + $kdnData['OverFee'];
-                $data = [
-                    'type'=>2,
-                    'freightHaocai' =>  $up_data['haocai_freight'],
-                    'order_id' => $order['id'],
-                    'xcx_access_token'=>$xcx_access_token,
-                    'open_id'=>$users?$users['open_id']:"",
-                    'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
-                ];
-                // 将该任务推送到消息队列，等待对应的消费者去执行
-                Queue::push(DoJob::class, $data,'way_type');
+                if($order['haocai_freight'] !=0 && $order['haocai_freight'] != $up_data['haocai_freight'] ){
+                    $content = [
+                        'title' => '耗材费发生变化',
+                        'user' =>   $order['tag_type'],
+                        'waybill' =>  $order['waybill'],
+                        'body' => "新耗材费：" . $up_data['haocai_freight']
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }
+                if(empty($order['consume_time'])){
+                    $data = [
+                        'type'=>2,
+                        'freightHaocai' =>  $up_data['haocai_freight'],
+                        'order_id' => $order['id'],
+                        'xcx_access_token'=>$xcx_access_token,
+                        'open_id'=>$users?$users['open_id']:"",
+                        'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
+                    ];
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
 
-                // 发送耗材短信
-                KD100Sms::run()->material($order);
+                    // 发送耗材短信
+                    KD100Sms::run()->material($order);
 
-                $rebateListController = new RebateListController();
-                $rebateListController->upState($order, $users, 2);
+                    $rebateListController = new RebateListController();
+                    $rebateListController->upState($order, $users, 2);
+                }
             }
-            if($kdnData['InsureAmount'] != 0 && empty($order['insured_time'])){ // 保价
+            if($kdnData['InsureAmount'] != 0 ){ // 保价
                 // 保价费用
                 $up_data['insured_cost']= $kdnData['InsureAmount'] ;
-                $up_data['agent_price']= $order['agent_price'] +  $kdnData['InsureAmount'];
-                $up_data['insured_time'] = time();
-                $up_data['insured_status'] = 1;
-                $DbCommon= new Dbcommom();
-                // 给代理商扣款
-                $DbCommon->set_agent_amount($order['agent_id'],'setDec',$kdnData['InsureAmount'],8,'运单号：'.$order['waybill'].' 保价扣除金额：'. $kdnData['InsureAmount'].'元');
-                // 发送保价短信
-                KD100Sms::run()->insured($order);
 
-                $rebateListController = new RebateListController();
-                $rebateListController->upState($order, $users, 2);
+                if($order['insured_cost'] != 0 && $order['insured_cost'] != $kdnData['InsureAmount']) {
+                    $content = [
+                        'title' => '保价费发生变化',
+                        'user' =>   $order['tag_type'],
+                        'waybill' =>  $order['waybill'],
+                        'body' => "新保价费：" . $up_data['insured_cost']
+                    ];
+                    $common->wxrobot_channel_exception($content);
+                }
+                if(empty($order['insured_time'])){
+                    $up_data['agent_price']= $order['agent_price'] +  $kdnData['InsureAmount'];
+                    $up_data['insured_time'] = time();
+                    $up_data['insured_status'] = 1;
+                    $DbCommon= new Dbcommom();
+                    // 给代理商扣款
+                    $DbCommon->set_agent_amount($order['agent_id'],'setDec',$kdnData['InsureAmount'],8,'运单号：'.$order['waybill'].' 保价扣除金额：'. $kdnData['InsureAmount'].'元');
+                    // 发送保价短信
+                    KD100Sms::run()->insured($order);
+
+                    $rebateListController = new RebateListController();
+                    $rebateListController->upState($order, $users, 2);
+                }
             }
 
             //发送小程序订阅消息(运单状态)
@@ -1093,9 +1136,9 @@ class Wxcallback extends Controller
                 if ($order['pay_status']=='2'){
                     throw new Exception('订单已退款-'. $insertData['clientOrderNo']);
                 }
+                $common= new Common();
                 if($order['order_status']=='已签收'){
                     if(number_format($insertData['calcFeeWeight'], 2) != number_format($order['final_weight'],2)){
-                        $common = new Common();
                         $content = [
                             'title' => '计费重量变化',
                             'user' =>  'JX', //$order['channel_merchant'],
@@ -1113,7 +1156,7 @@ class Wxcallback extends Controller
                 $aliOrder = $order['pay_type'] == 2;
                 $autoOrder = $order['pay_type'] == 3;
                 $users = $autoOrder?null:db('users')->where('id',$order['user_id'])->find();
-                $common= new Common();
+
                 if($wxOrder){
                     $agent_auth_xcx=db('agent_auth')
                         ->where('id',$order['auth_id'])
@@ -1178,41 +1221,67 @@ class Wxcallback extends Controller
                         + $insertData['hcPrice'] // 耗材
                         + $insertData['backPrice'] // 逆向费用
                         + $insertData['otherPrice']; // 其他费用
-                    if($hcPrice  > 0 && empty($order['consume_time'])) { // 耗材费用
+                    if($hcPrice  > 0) { // 耗材费用
                         $up_data['haocai_freight'] = $hcPrice;
-                        $data = [
-                            'type'=>2,
-                            'freightHaocai' =>  $up_data['haocai_freight'],
-                            'order_id' => $order['id'],
-                            'xcx_access_token'=>$xcx_access_token,
-                            'open_id'=>$users?$users['open_id']:"",
-                            'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
-                        ];
-                        // 将该任务推送到消息队列，等待对应的消费者去执行
-                        Queue::push(DoJob::class, $data,'way_type');
+                        if($order['haocai_freight'] != 0 && $order['haocai_freight'] != $hcPrice){
+                            $content = [
+                                'title' => '耗材费发生变化',
+                                'user' =>   $order['tag_type'],
+                                'waybill' =>  $order['waybill'],
+                                'body' => "新耗材费：" . $hcPrice
+                            ];
+                            $common->wxrobot_channel_exception($content);
+                        }
+                        if( empty($order['consume_time'])){
+                            $data = [
+                                'type'=>2,
+                                'freightHaocai' =>  $up_data['haocai_freight'],
+                                'order_id' => $order['id'],
+                                'xcx_access_token'=>$xcx_access_token,
+                                'open_id'=>$users?$users['open_id']:"",
+                                'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
+                            ];
+                            // 将该任务推送到消息队列，等待对应的消费者去执行
+                            Queue::push(DoJob::class, $data,'way_type');
 
-                        // 发送耗材短信
-                        KD100Sms::run()->material($order);
+                            // 发送耗材短信
+                            KD100Sms::run()->material($order);
 
-                        $rebateListController = new RebateListController();
-                        $rebateListController->upState($order, $users, 2);
+                            $rebateListController = new RebateListController();
+                            $rebateListController->upState($order, $users, 2);
+                        }
+
                     }
 
-                    if($insertData['insuredPrice'] != 0 && empty($order['insured_time'])){ // 保价
+                    if($insertData['insuredPrice'] != 0){ // 保价
                         $insuredPrice = (float) number_format($insertData['insuredPrice'], 2);
                         // 保价费用
                         $up_data['insured_cost']= $insuredPrice ;
-                        $up_data['agent_price']= $order['agent_price'] +  $insuredPrice;
-                        $up_data['insured_time'] = time();
-                        $up_data['insured_status'] = 1;
-                        $DbCommon= new Dbcommom();
-                        // 给代理商扣款
-                        $DbCommon->set_agent_amount($order['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$order['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
-                        // 发送保价短信
-                        KD100Sms::run()->insured($order);
 
-                        $rebateListController = new RebateListController();
-                        $rebateListController->upState($order, $users, 2);
+                        if($order['insured_cost'] != 0 && $order['insured_cost'] != $insuredPrice){
+                            $content = [
+                                'title' => '保价费发生变化',
+                                'user' =>   $order['tag_type'],
+                                'waybill' =>  $order['waybill'],
+                                'body' => "新保价费：" . $insuredPrice
+                            ];
+                            $common->wxrobot_channel_exception($content);
+                        }
+
+                       if(empty($order['insured_time'])){
+                           $up_data['agent_price']= $order['agent_price'] +  $insuredPrice;
+                           $up_data['insured_time'] = time();
+                           $up_data['insured_status'] = 1;
+                           $DbCommon= new Dbcommom();
+                           // 给代理商扣款
+                           $DbCommon->set_agent_amount($order['agent_id'],'setDec',$insuredPrice,8,'运单号：'.$order['waybill'].' 保价扣除金额：'. $insuredPrice.'元');
+                           // 发送保价短信
+                           KD100Sms::run()->insured($order);
+
+                           $rebateListController = new RebateListController();
+                           $rebateListController->upState($order, $users, 2);
+                       }
+
                     }
 
                 }else if($insertData['status'] == 'SIGNED_IN'){ // 已签收
