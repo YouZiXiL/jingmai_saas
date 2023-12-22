@@ -16,12 +16,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
 
             var table = $("#table");
-
+            $.fn.bootstrapTable.locales[Table.defaults.locale]['formatSearch'] = function(){return "输入商户订单号";};
             // 初始化表格
             table.bootstrapTable({
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'id',
+                trimOnSearch:true,
+                search:true,
                 columns: [
                     [
                         {checkbox: true},

@@ -53,7 +53,7 @@ class Assetslist extends Backend
         if ($this->request->request('keyField')) {
             return $this->selectpage();
         }
-        [$where, $sort, $order, $offset, $limit] = $this->buildparams();
+        [$where, $sort, $order, $offset, $limit] = $this->buildparams("remark");
         if (in_array(2,$this->auth->getGroupIds())) {
 
             $list = $this->model->where("agent_id", $this->auth->id);
