@@ -43,6 +43,7 @@ class Index extends Backend
                 config('fastadmin.' . $key, $cookieValue);
             }
         }
+
         //左侧菜单
         list($menulist, $navlist, $fixedmenu, $referermenu) = $this->auth->getSidebar([
             'dashboard' => 'hot',
@@ -137,25 +138,37 @@ class Index extends Backend
         if ($this->request->isPost()) {
             $username = $this->request->post('username');
             $mobile = $this->request->post('mobile');
+            $email = $this->request->post('email');
             $password = $this->request->post('password');
             $passwordConfirm = $this->request->post('passwordConfirm');
             if($password != $passwordConfirm) $this->error(__('密码和密码确认不一致'));
             $token = $this->request->post('__token__');
             $rule = [
-                'username'  => 'require|length:3,30',
+                'username'  => 'require|alphaNum|length:3,30',
                 'password'  => 'require|length:3,30',
+                'mobile'  => 'require|^1[3456789]\d{9}',
+                'email'  => 'require|email',
                 '__token__' => 'require|token',
             ];
             $data = [
                 'username'  => $username,
                 'password'  => $password,
+                'mobile'  => $mobile,
+                'email'  => $email,
                 '__token__' => $token,
             ];
             if (Config::get('fastadmin.login_captcha')) {
                 $rule['captcha'] = 'require|captcha';
                 $data['captcha'] = $this->request->post('captcha');
             }
-            $validate = new Validate($rule, [], ['username' => __('Username'), 'password' => __('Password'), 'captcha' => __('Captcha')]);
+            $validate = new Validate($rule, [],
+                [
+                    'username' => __('Username'),
+                    'password' => __('Password'),
+                    'mobile' => __('Mobile'),
+                    'email' => __('Email'),
+                    'captcha' => __('Captcha')
+                ]);
             $result = $validate->check($data);
             if (!$result) {
                 $this->error($validate->getError(), $url, ['token' => $this->request->token()]);
@@ -163,11 +176,13 @@ class Index extends Backend
 
             $agent = db('admin')->where('username',$username)
                 ->whereOr('mobile',$mobile)
-                ->field('id,username,mobile')
+                ->whereOr('email',$email)
+                ->field('id,username,mobile,email')
                 ->find();
             if ($agent){
                 if($agent['username'] == $username) $this->error('该用户名已注册');
                 if($agent['mobile'] == $mobile) $this->error('该手机号已注册');
+                if($agent['email'] == $email) $this->error('该邮箱已注册');
             }
 
 
@@ -177,7 +192,7 @@ class Index extends Backend
                 $insert['username'] = $username;
                 $insert['nickname'] = $username;
                 $insert['mobile'] = $mobile;
-                $insert['email'] = 'email@email.com';
+                $insert['email'] = $email;
                 $insert['salt'] = Random::alnum();
                 $insert['password'] = md5(md5($password) . $insert['salt']);
                 $insert['avatar'] = '/assets/img/avatar.png'; //设置新管理员默认头像。

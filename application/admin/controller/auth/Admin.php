@@ -4,6 +4,7 @@ namespace app\admin\controller\auth;
 
 use app\admin\model\AuthGroup;
 use app\admin\model\AuthGroupAccess;
+use app\admin\model\users\AgentInvitation;
 use app\common\controller\Backend;
 use app\common\model\Profit;
 use fast\Random;

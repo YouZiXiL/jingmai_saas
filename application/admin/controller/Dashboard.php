@@ -30,7 +30,7 @@ class Dashboard extends Backend
         $param = $this->request->param();//start_time  | end_time
         $groupIds =  $this->auth->getGroupIds();
         // 代理商
-        if (in_array(2,$groupIds)) {
+        if (in_array(2,$groupIds) || in_array(12, $groupIds)) {
             $arr['auth'] = false;
             $agentId = $this->auth->id;
 

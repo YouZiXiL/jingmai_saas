@@ -96,6 +96,34 @@ define(['jquery', 'bootstrap', 'backend', 'addtabs', 'adminlte', 'form'], functi
                 });
             });
 
+            // 激活用户
+            $(document).on('click', "[data-toggle='active-user']", function () {
+                Layer.open({
+                    icon:0,
+                    title:['用户激活'],
+                    content:'' +
+                        '<label style="float:left">邀请码：</label>' +
+                        '<input id="code" autocomplete="off" >',
+                    btn:['确认','取消'],
+                    yes:function (index){
+                        let code = $('#code').val()
+                        if(!code){
+                            Toastr.error('请输入邀请码');
+                            return false;
+                        }
+                        Fast.api.ajax({
+                            url: 'general/profile/active?code='+code,
+                        }, function (data) { //success
+                            location.reload();
+                        }, function () { //error
+
+                        });
+                        Layer.close(index);
+                    }
+                })
+
+            });
+
             //全屏事件
             $(document).on('click', "[data-toggle='fullscreen']", function () {
                 var doc = document.documentElement;

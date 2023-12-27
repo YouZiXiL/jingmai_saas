@@ -2,9 +2,15 @@
 
 namespace app\admin\controller\general;
 
+use app\admin\library\Auth;
 use app\admin\model\Admin;
+use app\admin\model\users\AgentInvitation;
 use app\common\controller\Backend;
 use fast\Random;
+use think\Db;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
+use think\exception\DbException;
 use think\Session;
 use think\Validate;
 
@@ -83,5 +89,39 @@ class Profile extends Backend
             $this->error();
         }
         return;
+    }
+
+
+    /**
+     * 代理商激活
+     * @param $code
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
+     */
+    public function active($code){
+        if (!$code) $this->error('邀请码不存在');
+        $invitation = AgentInvitation::where('code', $code)->find();
+        if(empty($invitation)) $this->error('邀请码不存在');
+        if($invitation['status'] == 1) $this->error('邀请码已失效');
+        try {
+            Db::startTrans();
+            $groupId = db('auth_group_access')->where('uid', $this->auth->id)->value('group_id');
+            if($groupId != 12) $this->error('您不是测试账号，不能激活');
+//            $groupId = $auth->getChildrenGroupIds(true);
+            $invitation->status = 1;
+            $invitation->use_id = $this->auth->id;
+            $invitation->save();
+
+            // 先移除所有权限
+            model('AuthGroupAccess')->where('uid',  $this->auth->id)->delete();
+            model('AuthGroupAccess')->save( ['uid' => $this->auth->id, 'group_id' => 2]);
+            Db::commit();
+
+        }catch (\Exception $e){
+            Db::rollback();
+            $this->error($e->getMessage());
+        }
+        $this->success('激活成功');
     }
 }

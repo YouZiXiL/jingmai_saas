@@ -105,7 +105,7 @@ class Notice extends Controller
                             $orders['agent_id'],
                             'setDec',$orders['agent_price'],
                             0,
-                            '运单号：'.$result['data']['expressNo'].' 下单支付成功'
+                            '运单号：'.$result['Order']['OrderCode'].' 下单支付成功'
                         );
                     }
                     break;

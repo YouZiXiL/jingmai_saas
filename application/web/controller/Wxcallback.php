@@ -567,8 +567,8 @@ class Wxcallback extends Controller
                 $up_data['final_weight_time']=time();
             }
             // 超重
-            if ($orders['weight'] < $finalWeight&&empty($orders['final_weight_time'])){
-
+            if ($orders['weight'] < $finalWeight && empty($orders['final_weight_time'])){
+                $up_data['final_weight'] = $finalWeight;
                 $up_data['overload_status']=1;
                 //超出重量
                 $overloadWeight = ceil($finalWeight - $orders['weight']);

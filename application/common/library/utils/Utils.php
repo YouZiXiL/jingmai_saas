@@ -2,10 +2,12 @@
 
 namespace app\common\library\utils;
 
+use PhpOffice\PhpSpreadsheet\Reader\Xls\MD5;
+
 class Utils
 {
     /**
-     * 生成6位邀请码，无规律、唯一、不重复
+     *  生成6位邀请码，无规律、唯一、不重复
      *  @param $id int 0到22440497216区间的整数
      *  @return string 6位邀请码
      */
@@ -23,5 +25,14 @@ class Utils
             $id = bcdiv($id, $base);
         } while ($id > 0);
         return $code;
+    }
+
+
+    /**
+     * 生成邀请码
+     * @return string
+     */
+    public static function invite(){
+         return strtoupper(md5(str_shuffle(time()) . time())) ;
     }
 }
