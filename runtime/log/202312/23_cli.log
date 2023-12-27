@@ -1,0 +1,78 @@
+[2023-12-23T11:40:33+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000822s ]
+[ info ] [ LOG ] INIT File
+info
+[2023-12-23T11:40:33+08:00][ info ] [ CACHE ] INIT File
+info
+[2023-12-23T11:40:33+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.002429s ]
+info
+[2023-12-23T11:40:33+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.000454s ]
+info
+[2023-12-23T11:40:33+08:00][ info ] [ DB ] INIT mysql
+info
+[2023-12-23T11:46:21+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000064s ]
+[ info ] [ LOG ] INIT File
+info
+[2023-12-23T11:46:21+08:00][ info ] [ CACHE ] INIT File
+info
+[2023-12-23T11:46:21+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.001168s ]
+info
+[2023-12-23T11:46:21+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.000477s ]
+info
+[2023-12-23T11:46:21+08:00][ info ] [ DB ] INIT mysql
+info
+[2023-12-23T11:46:22+08:00][ sql ] [ DB ] CONNECT:[ UseTime:0.101490s ] mysql:host=111.229.10.234;dbname=admin_bajiehuidi;charset=utf8mb4
+sql
+[2023-12-23T11:46:22+08:00][ sql ] [ SQL ] SHOW TABLE STATUS LIKE 'test' [ RunTime:0.066709s ]
+sql
+[2023-12-23T11:46:22+08:00][ sql ] [ SQL ] SHOW TABLE STATUS LIKE 'fa_test' [ RunTime:0.066748s ]
+sql
+[2023-12-23T11:46:22+08:00][ sql ] [ SQL ] SELECT * FROM `information_schema`.`columns` WHERE TABLE_SCHEMA = 'admin_bajiehuidi' AND table_name = 'fa_test' ORDER BY ORDINAL_POSITION [ RunTime:0.067939s ]
+sql
+[2023-12-23T11:46:22+08:00][ info ] [ DB ] INIT mysql
+info
+[2023-12-23T11:46:22+08:00][ sql ] [ DB ] CONNECT:[ UseTime:0.086086s ] mysql:host=111.229.10.234;dbname=admin_bajiehuidi;charset=utf8mb4
+sql
+[2023-12-23T11:46:22+08:00][ sql ] [ SQL ] SHOW COLUMNS FROM `fa_user` [ RunTime:0.057886s ]
+sql
+[2023-12-23T11:46:22+08:00][ sql ] [ SQL ] SHOW COLUMNS FROM `fa_category` [ RunTime:0.059763s ]
+sql
+[2023-12-23T11:53:35+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000063s ]
+[ info ] [ LOG ] INIT File
+info
+[2023-12-23T11:53:35+08:00][ info ] [ CACHE ] INIT File
+info
+[2023-12-23T11:53:35+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.001153s ]
+info
+[2023-12-23T11:53:35+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.000319s ]
+info
+[2023-12-23T11:53:35+08:00][ info ] [ DB ] INIT mysql
+info
+[2023-12-23T11:53:35+08:00][ sql ] [ DB ] CONNECT:[ UseTime:0.123936s ] mysql:host=111.229.10.234;dbname=admin_bajiehuidi;charset=utf8mb4
+sql
+[2023-12-23T11:53:35+08:00][ sql ] [ SQL ] SHOW TABLE STATUS LIKE 'test' [ RunTime:0.068659s ]
+sql
+[2023-12-23T11:53:35+08:00][ sql ] [ SQL ] SHOW TABLE STATUS LIKE 'fa_test' [ RunTime:0.067588s ]
+sql
+[2023-12-23T11:56:54+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.000065s ]
+[ info ] [ LOG ] INIT File
+info
+[2023-12-23T11:56:54+08:00][ info ] [ CACHE ] INIT File
+info
+[2023-12-23T11:56:54+08:00][ info ] [ BEHAVIOR ] Run Closure @app_init [ RunTime:0.001245s ]
+info
+[2023-12-23T11:56:54+08:00][ info ] [ BEHAVIOR ] Run app\common\behavior\Common @app_init [ RunTime:0.000303s ]
+info
+[2023-12-23T11:56:54+08:00][ info ] [ DB ] INIT mysql
+info
+[2023-12-23T11:56:54+08:00][ sql ] [ DB ] CONNECT:[ UseTime:0.103158s ] mysql:host=111.229.10.234;dbname=admin_bajiehuidi;charset=utf8mb4
+sql
+[2023-12-23T11:56:54+08:00][ sql ] [ SQL ] SHOW TABLE STATUS LIKE 'agent_invitation' [ RunTime:0.051670s ]
+sql
+[2023-12-23T11:56:54+08:00][ sql ] [ SQL ] SHOW TABLE STATUS LIKE 'fa_agent_invitation' [ RunTime:0.050101s ]
+sql
+[2023-12-23T11:56:54+08:00][ sql ] [ SQL ] SELECT * FROM `information_schema`.`columns` WHERE TABLE_SCHEMA = 'admin_bajiehuidi' AND table_name = 'fa_agent_invitation' ORDER BY ORDINAL_POSITION [ RunTime:0.051283s ]
+sql
+[2023-12-23T11:56:54+08:00][ info ] [ DB ] INIT mysql
+info
+[2023-12-23T11:56:54+08:00][ sql ] [ DB ] CONNECT:[ UseTime:0.090947s ] mysql:host=111.229.10.234;dbname=admin_bajiehuidi;charset=utf8mb4
+sql

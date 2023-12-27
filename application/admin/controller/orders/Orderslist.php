@@ -115,7 +115,7 @@ class Orderslist extends Backend
             ->where($where)
             ->field("id,tag_type,couponid,couponpapermoney,waybill,couponpapermoney,aftercoupon,out_trade_no,sender,sender_mobile,
             receiver,receiver_mobile,weight,item_name,create_time,channel_merchant,insured_status,insured_cost,pay_status,overload_status,
-            consume_status,tralight_status,agent_price,final_price,order_status,cancel_reason,overload_price,pay_type,haocai_freight,
+            consume_status,tralight_status,agent_price,final_price,freight,final_freight,order_status,cancel_reason,overload_price,pay_type,haocai_freight,
             final_weight,users_xuzhong,tralight_price,agent_tralight_price")
             ->where('pay_status','<>',0)
             ->where('channel_tag','<>','同城')
@@ -138,6 +138,7 @@ class Orderslist extends Backend
             $v['show'] = $showAuth;
             if ($v['pay_status']==2||$v['pay_status']==4){
                     $v['profit']='0.00';
+                    $v['self_profit']='0.00';
             }else{
                 //超重已补交
                 if ($v['overload_status']==2){
@@ -179,6 +180,9 @@ class Orderslist extends Backend
                 }
 
                 $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight+$bjPrice-$tralight_price-$couponpapermoney,$v['agent_price'],2);
+
+                $freight = $v['final_freight']?:$v['freight'];
+                $v['self_profit']=bcsub($v['agent_price'],$freight,2);
             }
         }
         $result = ['total' => $list->total(),'rows' => $list->items(), 'extend' => $count[0]];

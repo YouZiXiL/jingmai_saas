@@ -412,6 +412,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                      <div class="p-1">  
                                        <span class="text-muted item_name">物品名称：</span><span>${row.item_name}</span>
                                     </div>
+                                    <div class="p-1" ${Config.show?'':'hidden'}>  
+                                       <span class="text-muted">平台利润：</span><span>${row.self_profit} 元</span>
+                                    </div>
                                </div>
                             `;
                         }},
