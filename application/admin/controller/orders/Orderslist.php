@@ -559,6 +559,64 @@ class Orderslist extends Backend
         }
     }
 
+
+    /**
+     * 发送保价短信
+     * @param $ids
+     * @return Json
+     * @throws DbException
+     * @throws Exception
+     */
+    function send_sms_insured($ids = null): Json
+    {
+        $row = $this->model->get(['id'=>$ids]);
+        if (!$row) {
+            $this->error(__('No Results were found'));
+        }
+        $agent_sms=db('admin')->where('id',$row['agent_id'])->value('agent_sms');
+        if ($agent_sms<=1){
+            $this->error('短信次数不足');
+        }
+        $kuaidi100_userid=config('site.kuaidi100_userid');
+        $kuaidi100_key=config('site.kuaidi100_key');
+        $common=new Common();
+        $out_trade_no=$common->get_uniqid();
+        $content=json_encode(['发收人姓名'=>$row['sender'],'快递单号'=>$row['waybill']]);
+        $sendData = [
+            'sign'=>strtoupper(md5($kuaidi100_key.$kuaidi100_userid)),
+            'userid'=>$kuaidi100_userid,
+            'seller'=>'鲸喜',
+            'phone'=>$row['sender_mobile'],
+            'tid'=>8345,
+            'content'=>$content,
+            'outorder'=>$out_trade_no,
+            'callback'=> $this->request->domain().'/web/wxcallback/sms_callback'
+        ];
+        $res=$common->httpRequest('https://apisms.kuaidi100.com/sms/send.do',$sendData,'POST',['Content-Type: application/x-www-form-urlencoded']);
+        recordLog('sms',  '单号：' . $row['waybill'].PHP_EOL.
+            '发送参数：' . json_encode($sendData, JSON_UNESCAPED_UNICODE) . PHP_EOL.
+            '返回参数：' . $res);
+
+        $res=json_decode($res,true);
+        if ($res['status']==1){
+            db('admin')->where('id',$row['agent_id'])->update(['agent_sms' => $agent_sms-2]);
+            db('agent_sms')->insert([
+                'agent_id'=>$row['agent_id'],
+                'type'=>1,
+                'phone'=>$row['sender_mobile'],
+                'waybill'=>$row['waybill'],
+                'status'=>1,
+                'out_trade_no'=>$out_trade_no,
+                'content'=>$content,
+                'create_time'=>time()
+            ]);
+            $this->success('发送耗材短信成功');
+
+        }else{
+            $this->error($res['msg']);
+        }
+    }
+
     /**
      * 查寻快递员信息
      */

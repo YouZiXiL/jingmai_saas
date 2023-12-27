@@ -533,7 +533,26 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                                         return row.consume_status === '1';
                                     }
                                 },
-
+                                {
+                                    name: 'send_sms_insured',
+                                    title: __('发送保价短信'),
+                                    text: __('发送保价短信'),
+                                    dropdown:'更多',
+                                    classname: 'btn btn-xs btn-success btn-ajax',
+                                    icon: 'fa fa-magic',
+                                    url: 'orders/orderslist/send_sms_insured',
+                                    success: function (data, ret) {
+                                        //如果需要阻止成功提示，则必须使用return false;
+                                        return true;
+                                    },
+                                    error: function (data, ret) {
+                                        Layer.alert(ret.msg);
+                                        return false;
+                                    },
+                                    visible: function (row) {
+                                        return row.insured_status === 1;
+                                    }
+                                },
 
                                 {
                                     name: 'send_vocie_overload',

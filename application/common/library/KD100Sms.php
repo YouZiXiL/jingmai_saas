@@ -17,7 +17,7 @@ class KD100Sms
 {
     public static string $overloadId = '7762'; // 超重模版ID
     public static string $materialId = '7769'; // 耗材模版ID
-    public static string $insuredId = '8345'; // 耗材模版ID
+    public static string $insuredId = '8345'; // 保价模版ID
     private $domain = '';
     private $userid = '';
     private $key = '';
