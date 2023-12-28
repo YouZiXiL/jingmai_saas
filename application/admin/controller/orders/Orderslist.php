@@ -181,7 +181,8 @@ class Orderslist extends Backend
 
                 $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight+$bjPrice-$tralight_price-$couponpapermoney,$v['agent_price'],2);
 
-                $freight = $v['final_freight']?:$v['freight'];
+                $freight = $v['final_freight'];
+                if($v['final_freight'] == 0) $freight = $v['freight'];
                 $v['self_profit']=bcsub($v['agent_price'],$freight,2);
             }
         }
