@@ -148,7 +148,6 @@ class Wxcallback extends Controller
     /**
      * 授权小程序|公众号
      * @return void
-     * @throws Exception
      */
     public function shouquan_success(){
         $param=$this->request->param();

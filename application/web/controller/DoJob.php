@@ -100,7 +100,8 @@ class DoJob
                         }
                         db('orders')->where('id',$orders['id'])->update([
                             'final_weight_time'=>time(),
-                            'overload_status' => 1
+                            'overload_status' => 1,
+                            'agent_price' => $orders['agent_price'] + $data['agent_overload_amt'],
                         ]);
                     }
                 }catch (\Exception $e){
