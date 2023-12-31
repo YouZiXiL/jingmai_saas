@@ -201,11 +201,29 @@
                 <el-col :span="24">
                     <div class="panel-7">
                         <div class="d-flex j-sb">
-                            <div class="dashboard-title">利润折线图</div>
+                            <div class="dashboard-title">订单折线图</div>
                             <div class="block">
-                                <el-select v-model="profitLineValue" placeholder="请选择"  @change="onProfitLineChange">
+                                <el-select class="mr-3" v-model="expressTypeValue" placeholder="请选择"  @change="expressTypeChange">
                                     <el-option
-                                            v-for="item in profitLineOptions"
+                                            v-for="item in expressTypeOptions"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value"
+                                    >
+                                    </el-option>
+                                </el-select>
+                                <el-select class="mr-3" v-model="orderTypeValue" placeholder="请选择"  @change="orderTypeChange">
+                                    <el-option
+                                            v-for="item in orderTypeOptions"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value"
+                                    >
+                                    </el-option>
+                                </el-select>
+                                <el-select v-model="orderDateValue" placeholder="请选择"  @change="orderDateChange">
+                                    <el-option
+                                            v-for="item in orderDateOptions"
                                             :key="item.value"
                                             :label="item.label"
                                             :value="item.value"
@@ -415,14 +433,15 @@
                 agentOrderValue: 'day', // 最近几日
 
 
-                // 利润折线图
+                // 订单折线图
                 profitLineDate:[], // 日期
                 nmhdProfitLine:[], // 柠檬惠递利润
                 bjhdProfitLine:[], // 八戒惠递利润
                 nmkdProfitLine:[], // 柠檬快递利润
                 platformProfitLine:[], // 平台利润
 
-                profitLineOptions: [
+                orderDateValue: 'day', // 下拉框 时间选择
+                orderDateOptions: [ // 日期选项
                     {
                         value: 'day',
                         label: '最近30天'
@@ -437,7 +456,43 @@
                         label: '本年'
                     }
                 ],
-                profitLineValue: 'day', // 最近几日
+
+                orderTypeValue: 'profit', // 订单类型下拉框 订单利润or订单数量
+                orderTypeOptions: [ // 订单类型选项
+                    {
+                        value: 'order',
+                        label: '订单数量'
+                    }, {
+                        value: 'profit',
+                        label: '订单利润'
+                    }
+                ],
+
+                expressTypeValue: 'all', // 快递类型
+                expressTypeOptions: [ // 订单类型选项
+                    {
+                        value: 'all',
+                        label: '全部快递'
+                    },{
+                        value: '圆通①',
+                        label: '圆通①'
+                    }, {
+                        value: '圆通快递',
+                        label: '圆通快递'
+                    }, {
+                        value: '韵达①',
+                        label: '韵达①'
+                    }, {
+                        value: '德邦',
+                        label: '德邦'
+                    }, {
+                        value: '京东',
+                        label: '京东'
+                    }, {
+                        value: '顺心捷达',
+                        label: '顺心捷达'
+                    }
+                ],
 
                 authApp:'' // 我的小程序
 
@@ -498,7 +553,7 @@
                 this.today = `${year}-${month}-${day}`; // 当天
                 this.firstDay = `${year}-${month}-01`; // 本月第一天
 
-                // 利润折线图
+                // 订单折线图
                 this.profitLineDate = data.profitLineDate; // 日期
                 this.nmhdProfitLine = data.nmhdProfitLine; // 柠檬惠递利润
                 this.bjhdProfitLine = data.bjhdProfitLine; // 八戒惠递利润
@@ -1208,7 +1263,7 @@
             },
 
 
-            // 利润折线图
+            // 订单折线图
             setProfitLine(){
                 profitLine = echarts.init(document.getElementById('profit-line'));
                 const option = {
@@ -1362,16 +1417,41 @@
                 window.addEventListener('resize', profitLine.resize);
             },
 
-            // 利润折线图，选择器
-            onProfitLineChange(event){
+            // 快递选择器
+            expressTypeChange(event){
+                let express = this.expressTypeValue // 快递
+                let date = this.orderDateValue // 时间
+                let type = this.orderTypeValue // 类型
+                this.getOrderLineData(type, date, express)
+            },
+
+            // 订单类型选择器（利润和数量）
+            orderTypeChange(event){
+                let express = this.expressTypeValue // 快递
+                let date = this.orderDateValue // 时间
+                let type = this.orderTypeValue // 类型
+                this.getOrderLineData(type, date, express)
+            },
+
+            // 时间选择器
+            orderDateChange(event){
+                let express = this.expressTypeValue // 快递
+                let date = this.orderDateValue // 时间
+                let type = this.orderTypeValue // 类型
+                this.getOrderLineData(type, date, express)
+            },
+
+            // 获取订单折线图数据
+            getOrderLineData(type, date, express) {
                 Fast.api.ajax({
-                    url: 'dashboard/profitLine',
+                    // url: 'dashboard/profitLine',
+                    url: 'dashboard/orderLine',
                     method: 'post',
                     data:{
-                        value:event,
+                        type,date,express
                     },
-                },  (data) => { //success
-                    console.log('data', data)
+                },
+                (data) => { //success
                     this.profitLineDate = data['profitLineDate'];
                     this.nmhdProfitLine = data['nmhdProfitLine'];
                     this.bjhdProfitLine = data['bjhdProfitLine'];
@@ -1504,6 +1584,7 @@
                                 lineStyle: {
                                     width: 0
                                 },
+                                zlevel:-1,
                                 showSymbol: false,
                                 areaStyle: {
                                     opacity: 0.8,
@@ -1524,14 +1605,14 @@
                                 data: this.platformProfitLine
                             },
 
-                        ]
+                        ],
                     }
                     profitLine.setOption(option)
                     return false
                 }, (data,ret) => { //error
                     return true;
                 });
-            },
+            }
         },
 
     })

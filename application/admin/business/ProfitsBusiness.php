@@ -7,7 +7,7 @@ use think\exception\PDOException;
 
 class ProfitsBusiness
 {
-    // 获取小程序指点时间的利润列表
+    // 获取小程序制定时间的利润列表
     public function getAppByAgentId($agentId)
     {
         $sql = "select 
@@ -37,8 +37,13 @@ class ProfitsBusiness
 
 
     // 获取小程序最近30天的利润列表
-    public function getAppRecentDayByAgentId($agentId, $day = 30)
+    public function getAppRecentDayByAgentId($agentId, $express = 'all', $day = 30)
     {
+        if ($express == 'all'){
+            $where = 1;
+        }else{
+            $where = "tag_type = '$express'";
+        }
         $sql = "select 
             date_format(from_unixtime(create_time),'%m-%d') as date,
             sum(
@@ -50,7 +55,8 @@ class ProfitsBusiness
                 - agent_price
             ) as profit
             from fa_orders 
-            where pay_status = '1'
+            where pay_status = '1' 
+            and $where
             and date(from_unixtime(create_time)) >= date_sub(curdate(),interval $day day)
             and agent_id = $agentId
             group by date(from_unixtime(create_time)) 
@@ -64,12 +70,18 @@ class ProfitsBusiness
     }
 
     // 获取平台最近30天利润列表
-    public function getPlatformRecentDay($day = 30)
+    public function getPlatformRecentDay($express='all', $day = 30)
     {
+        if ($express == 'all'){
+            $where = 1;
+        }else{
+            $where = "tag_type = '$express'";
+        }
         $sql = "
             select sum(agent_price - if(final_freight,final_freight,freight )) as profit
             from fa_orders 
             where pay_status = '1' 
+            and $where
             and date(from_unixtime(create_time)) >= date_sub(curdate(),interval $day day)
             group by date(from_unixtime(create_time)) 
          ";
@@ -84,10 +96,16 @@ class ProfitsBusiness
     /**
      * 获取小程序本月利润列表
      * @param $agentId
+     * @param string $express
      * @return mixed|void
      */
-    public function getAppMonthByAgentId($agentId)
+    public function getAppMonthByAgentId($agentId, string $express='all')
     {
+        if ($express == 'all'){
+            $where = 1;
+        }else{
+            $where = "tag_type = '$express'";
+        }
         $sql = "select 
                 date_format(from_unixtime(create_time),'%m-%d') as date,
                 sum(
@@ -100,6 +118,7 @@ class ProfitsBusiness
                 ) as profit
                 from fa_orders 
                 where pay_status = '1'
+                and $where  
                 and YEAR(FROM_UNIXTIME(create_time)) = YEAR(CURDATE())
                 and MONTH(FROM_UNIXTIME(create_time)) = MONTH(CURDATE())
                 and agent_id = $agentId
@@ -114,12 +133,18 @@ class ProfitsBusiness
     }
 
     // 获取平台本月利润列表
-    public function getPlatformMonth()
+    public function getPlatformMonth($express='all')
     {
+        if ($express == 'all'){
+            $where = 1;
+        }else{
+            $where = "tag_type = '$express'";
+        }
         $sql = "
             select sum(agent_price - if(final_freight,final_freight,freight )) as profit
             from fa_orders 
             where pay_status = '1' 
+            and $where  
             and YEAR(FROM_UNIXTIME(create_time)) = YEAR(CURDATE())
                 and MONTH(FROM_UNIXTIME(create_time)) = MONTH(CURDATE())
             group by date(from_unixtime(create_time)) 
@@ -137,8 +162,13 @@ class ProfitsBusiness
      * @param $agentId
      * @return mixed|void
      */
-    public function getAppLastMonthByAgentId($agentId)
+    public function getAppLastMonthByAgentId($agentId, $express='all')
     {
+        if ($express == 'all'){
+            $where = 1;
+        }else{
+            $where = "tag_type = '$express'";
+        }
         $sql = "select 
                 date_format(from_unixtime(create_time),'%m-%d') as date,
                 sum(
@@ -151,6 +181,7 @@ class ProfitsBusiness
                 ) as profit
                 from fa_orders 
                 where pay_status = '1'
+                and $where  
                 and year(from_unixtime(create_time)) = year(curdate())
                 and month(from_unixtime(create_time)) = month(date_sub(curdate(), interval 1 month))
                 and agent_id = $agentId
@@ -165,12 +196,18 @@ class ProfitsBusiness
     }
 
     // 获取平台上月利润列表
-    public function getPlatformLastMonth()
+    public function getPlatformLastMonth($express='all')
     {
+        if ($express == 'all'){
+            $where = 1;
+        }else{
+            $where = "tag_type = '$express'";
+        }
         $sql = "
             select sum(agent_price - if(final_freight,final_freight,freight )) as profit
             from fa_orders 
             where pay_status = '1' 
+            and $where    
             and year(from_unixtime(create_time)) = year(curdate())
             and month(from_unixtime(create_time)) = month(date_sub(curdate(), interval 1 month))
             group by date(from_unixtime(create_time)) 
@@ -188,8 +225,13 @@ class ProfitsBusiness
      * @param $agentId
      * @return mixed|void
      */
-    public function getAppYearByAgentId($agentId)
+    public function getAppYearByAgentId($agentId, $express='all')
     {
+        if ($express == 'all'){
+            $where = 1;
+        }else{
+            $where = "tag_type = '$express'";
+        }
         $sql = "
             select 
                 date_format(from_unixtime(create_time),'%Y-%m') as date,
@@ -203,6 +245,7 @@ class ProfitsBusiness
                 ) as profit
                 from fa_orders 
                 where pay_status = '1'
+                 and $where    
                 and year(from_unixtime(create_time)) = year(curdate())
                 and agent_id = $agentId
                 group by date_format(from_unixtime(create_time),'%Y-%m') 
@@ -216,12 +259,18 @@ class ProfitsBusiness
     }
 
     // 获取平台上月利润列表
-    public function getPlatformYear()
+    public function getPlatformYear($express='all')
     {
+        if ($express == 'all'){
+            $where = 1;
+        }else{
+            $where = "tag_type = '$express'";
+        }
         $sql = "
             select sum(agent_price - if(final_freight,final_freight,freight )) as profit
             from fa_orders 
             where pay_status = '1' 
+            and $where  
             and year(from_unixtime(create_time)) = year(curdate())
             group by date_format(from_unixtime(create_time),'%Y-%m') 
          ";
