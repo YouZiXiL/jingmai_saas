@@ -164,24 +164,24 @@ class Afterlist extends Backend
                     if ($orders['tralight_status']!=3){
                         throw new Exception('此订并未反馈超轻');
                     }
-
                     $params['cope_status']=4;
-
                     if($params['cal_weight'] == $orders['final_weight']){
                         $right_data['tralight_status'] = '2';
                         $agent_tralight_amt = $orders['agent_tralight_price'];//代理退款金额
-                        $right_data['agent_price'] = $orders['agent_price'] - $agent_tralight_amt;
-                        $orders->allowField(true)->save($right_data);
+                        $admin_tralight_amt = $orders['admin_tralight_price'];//平台退款金额
                     }else{
                         $gapWeight = $orders['weight'] - $params['cal_weight']; // 重量差
+                        $right_data['admin_tralight_price'] = number_format( $orders['admin_xuzhong'] * $gapWeight,2); //代理商超重金额
                         $right_data['agent_tralight_price'] = number_format( $orders['agent_xuzhong'] * $gapWeight,2); //代理商超重金额
                         $right_data['tralight_price'] = number_format($orders['users_xuzhong'] * $gapWeight, 2); //用户超重金额
                         $right_data['tralight_status'] = '2';
                         $right_data['final_weight'] = $params['cal_weight'];
                         $agent_tralight_amt = $right_data['agent_tralight_price'];//代理退款金额
-                        $right_data['agent_price'] = $orders['agent_price'] - $agent_tralight_amt;
-                        $orders->allowField(true)->save($right_data);
+                        $admin_tralight_amt = $right_data['admin_tralight_price'];//平台超轻金额
                     }
+                    $right_data['agent_price'] = $orders['agent_price'] - $agent_tralight_amt;
+                    $right_data['final_freight'] = $orders['final_freight'] - $admin_tralight_amt;
+                    $orders->allowField(true)->save($right_data);
                     if($orders['pay_status'] == 1){
                         // 给代理商退超轻款
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setInc',$agent_tralight_amt,2,'订单号：'.$orders['out_trade_no'].' 超轻增加金额：'.$agent_tralight_amt.'元');
@@ -400,12 +400,14 @@ class Afterlist extends Backend
                             }
                         }
                         // 代理商加款
+                        $up_data['final_freight'] = bcsub($orders['final_freight'], $orders['admin_overload_price'], 2);
                         $up_data['agent_price'] = bcsub($orders['agent_price'], $orders['agent_overload_price'], 2);
                         $Dbcommon->set_agent_amount($orders['agent_id'], 'setInc', $orders['agent_overload_price'], 1, '订单号：'.$orders['out_trade_no'] . ' 核重退回金额：' . $orders['agent_overload_price'] . '元');
                         $remark = '核重退回金额：' . $orders['agent_overload_price'] . '元';
                         $up_data['overload_status'] = 0;
                         $up_data['overload_price'] = 0;//用户新超重金额
                         $up_data['agent_overload_price'] = 0;//代理商新超重金额
+                        $up_data['admin_overload_price'] = 0;//平台新超重金额
                     }
                     else if ($params['cal_weight'] > $orders['weight']) { // 超重，但超重金额不对
                         $out_overload_refund_no = $common->get_uniqid();//超重退款订单号
@@ -415,6 +417,7 @@ class Afterlist extends Backend
                             $diffWeight = ceil($row['final_weight'] - $params['cal_weight']); // 多扣的重量
                             $usersDiffAmt = bcmul($diffWeight, $orders['users_xuzhong'], 2);//用户差价金额
                             $agentDiffAmt = bcmul($diffWeight, $orders['agent_xuzhong'], 2);//代理差价金额
+                            $adminDiffAmt = bcmul($diffWeight, $orders['admin_xuzhong'], 2);//平台差价金额
                             if ($orders['overload_status'] == 2 && $orders['pay_type'] == 1) {
                                 $wx_pay = $common->wx_pay($orders['cz_mchid'], $orders['cz_mchcertificateserial']);
                                 $wx_pay
@@ -432,11 +435,14 @@ class Afterlist extends Backend
                                 $up_data['out_overload_refund_no'] = $out_overload_refund_no;
                             }
                             $up_data['agent_price'] = number_format($orders['agent_price'] - $agentDiffAmt, 2);
+                            $up_data['final_freight'] = number_format($orders['final_freight'] - $adminDiffAmt, 2);
+                            $up_data['admin_price'] = $up_data['final_freight'];
                             // 代理商加款
                             $Dbcommon->set_agent_amount($orders['agent_id'], 'setInc', $agentDiffAmt, 1, '订单号：'.$orders['out_trade_no'] . ' 核重退回金额：' . $agentDiffAmt . '元');
                             $remark = '核重退回金额：' . $agentDiffAmt . '元';
                             $up_data['overload_price'] = bcmul($newOverloadWeight, $orders['users_xuzhong'], 2);//用户新超重金额
                             $up_data['agent_overload_price'] = bcmul($newOverloadWeight, $orders['agent_xuzhong'], 2); //代理商新超重金额
+                            $up_data['admin_overload_price'] = bcmul($newOverloadWeight, $orders['admin_xuzhong'], 2); //代理商新超重金额
                         } else if ($finalWeight < $params['cal_weight']) {   //  比之前重
                             if ($orders['overload_status'] == 1) { // 超重未处理
                                 $userWeight = $newOverloadWeight;
@@ -449,12 +455,16 @@ class Afterlist extends Backend
 
                             $usersDiffAmt = bcmul($userWeight, $orders['users_xuzhong'], 2);//用户差价金额
                             $agentDiffAmt = bcmul($agentWeight, $orders['agent_xuzhong'], 2);//代理差价金额
+                            $adminDiffAmt = bcmul($agentWeight, $orders['admin_xuzhong'], 2);//平台差价金额
                             if ($orders['pay_type'] == 3) $usersDiffAmt = $agentDiffAmt;
                             $Dbcommon->set_agent_amount($orders['agent_id'], 'setDec', $agentDiffAmt, 4, '订单号：'.$orders['out_trade_no'] . ' 超重扣除金额：' . $agentDiffAmt . '元');
+                            $up_data['final_freight'] = number_format($orders['final_freight'] + (float)$agentDiffAmt, 2);
                             $up_data['agent_price'] = number_format($orders['agent_price'] + (float)$agentDiffAmt, 2);
+                            $up_data['final_freight'] = number_format($orders['final_freight'] + (float)$adminDiffAmt, 2);
                             $remark = '核重扣款金额：' . $agentDiffAmt . '元';
                             $up_data['overload_price'] = $usersDiffAmt;//用户新超重金额
                             $up_data['agent_overload_price'] = $agentDiffAmt;//用户新超重金额
+                            $up_data['admin_overload_price'] = $adminDiffAmt;//用户新超重金额
                         }
 
                     }

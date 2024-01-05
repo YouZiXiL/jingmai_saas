@@ -51,8 +51,9 @@ class DoJob
             $common=new Common();
             $Dbcommon=new Dbcommom();
             /**
-             * type 1 超重退款
-             * type 2 耗材退款
+             * type 1 超重
+             * type 2 耗材
+             * type 5 保价
              * type 3 下单失败
              * type 4 取消订单
              */
@@ -65,33 +66,41 @@ class DoJob
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['agent_overload_amt'],4,'订单号：'.$orders['out_trade_no'].' 超重扣除金额：'.$data['agent_overload_amt'].'元');
                         //发送小程序超重订阅消息
                         if($orders['pay_type'] == 1 && !empty($data['template_id']) && !empty($data['open_id'])){
-                            $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
-                                'touser'=>$data['open_id'],  //接收者openid
-                                'template_id'=>$data['template_id'],
-                                'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],  //模板跳转链接
-                                'data'=>[
-                                    'character_string6'=>['value'=>$orders['waybill']],
-                                    'thing5'=>['value'=>$data['cal_weight']],
-                                    'amount11'=>['value'=>$data['users_overload_amt']],
-                                    'thing2'=>['value'=>'站点核重超出下单重量'],
-                                    'thing7'  =>['value'=>'点击补缴运费，以免对您的运单造成影响',]
-                                ],
-                                'miniprogram_state'=>'formal',
-                                'lang'=>'zh_CN'
-                            ],'POST');
-                            $result = json_decode($resultJson, true);
-                            PushNotice::create([
-                                'user_id' => $orders['user_id'],
-                                'agent_id' => $orders['agent_id'],
-                                'name' => $orders['sender'],
-                                'mobile' => $orders['sender_mobile'],
-                                'order_no' => $orders['out_trade_no'],
-                                'waybill' => $orders['waybill'],
-                                'channel' => 2,
-                                'type' => 1,
-                                'status'=>$result['errcode'] == 0?1:2,
-                                'comment' => $resultJson,
-                            ]);
+                            try {
+                                $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
+                                    'touser'=>$data['open_id'],  //接收者openid
+                                    'template_id'=>$data['template_id'],
+                                    'page'=>'pages/informationDetail/overload/overload?id='.$orders['id'],  //模板跳转链接
+                                    'data'=>[
+                                        'character_string6'=>['value'=>$orders['waybill']],
+                                        'thing5'=>['value'=>$data['cal_weight']],
+                                        'amount11'=>['value'=>$data['users_overload_amt']],
+                                        'thing2'=>['value'=>'站点核重超出下单重量'],
+                                        'thing7'  =>['value'=>'点击补缴运费，以免对您的运单造成影响',]
+                                    ],
+                                    'miniprogram_state'=>'formal',
+                                    'lang'=>'zh_CN'
+                                ],'POST');
+                                $result = json_decode($resultJson, true);
+                                PushNotice::create([
+                                    'user_id' => $orders['user_id'],
+                                    'agent_id' => $orders['agent_id'],
+                                    'name' => $orders['sender'],
+                                    'mobile' => $orders['sender_mobile'],
+                                    'order_no' => $orders['out_trade_no'],
+                                    'waybill' => $orders['waybill'],
+                                    'channel' => 2,
+                                    'type' => 1,
+                                    'status'=>$result['errcode'] == 0?1:2,
+                                    'comment' => $resultJson,
+                                ]);
+                            }catch (\Exception $e){
+                                recordLog('queue-err', '小程序发送超重订阅信息失败'
+                                    . '-' . $orders['out_trade_no'].
+                                    '-' . $e->getMessage()
+                                );
+                            }
+
                         }
                         elseif ($orders['pay_type'] == 2 && !empty($data['template_id'])){
                             // 超重
@@ -101,13 +110,13 @@ class DoJob
                         db('orders')->where('id',$orders['id'])->update([
                             'final_weight_time'=>time(),
                             'overload_status' => 1,
-                            'agent_price' => $orders['agent_price'] + $data['agent_overload_amt'],
                         ]);
                     }
                 }catch (\Exception $e){
-                    Log::error("队列：超重-". $e->getMessage() . PHP_EOL
-                        . "订单：" . $orders['out_trade_no'].PHP_EOL
-                        . $e->getTraceAsString()
+                    recordLog('queue-err', '超重订单'
+                        . '-' . $orders['out_trade_no'].
+                        '-' . $e->getMessage().
+                        '-' . $e->getTraceAsString()
                     );
                 }
 
@@ -121,33 +130,41 @@ class DoJob
                         $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['freightHaocai'],8,'订单号：'.$orders['out_trade_no'] .' 耗材扣除金额：'.$data['freightHaocai'].'元');
                         //发送小程序耗材订阅消息
                         if ($orders['pay_type'] == 1 && !empty($data['template_id']) && !empty($data['open_id'])){
-                            $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
-                                'touser'=>$data['open_id'],  //接收者openid
-                                'template_id'=>$data['template_id'],
-                                'page'=>'pages/informationDetail/haocai/haocai?id='.$orders['id'],  //模板跳转链接
-                                'data'=>[
-                                    'character_string7'=>['value'=>$orders['waybill']],
-                                    'phone_number4'=>['value'=>$orders['sender_mobile']],
-                                    'amount2'=>['value'=>$data['freightHaocai']],
-                                    'thing6'=>['value'=>'产生包装费用'],
-                                    'thing5'  =>['value'=>'点击补缴运费，以免对您的运单造成影响',]
-                                ],
-                                'miniprogram_state'=>'formal',
-                                'lang'=>'zh_CN'
-                            ],'POST');
-                            $result = json_decode($resultJson, true);
-                            PushNotice::create([
-                                'user_id' => $orders['user_id'],
-                                'agent_id' => $orders['agent_id'],
-                                'name' => $orders['sender'],
-                                'mobile' => $orders['sender_mobile'],
-                                'order_no' => $orders['out_trade_no'],
-                                'waybill' => $orders['waybill'],
-                                'channel' => 2,
-                                'type' => 2,
-                                'status'=>$result['errcode'] == 0?1:2,
-                                'comment' => $resultJson,
-                            ]);
+                            try {
+                                $resultJson = $common->httpRequest('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token='.$data['xcx_access_token'],[
+                                    'touser'=>$data['open_id'],  //接收者openid
+                                    'template_id'=>$data['template_id'],
+                                    'page'=>'pages/informationDetail/haocai/haocai?id='.$orders['id'],  //模板跳转链接
+                                    'data'=>[
+                                        'character_string7'=>['value'=>$orders['waybill']],
+                                        'phone_number4'=>['value'=>$orders['sender_mobile']],
+                                        'amount2'=>['value'=>$data['freightHaocai']],
+                                        'thing6'=>['value'=>'产生包装费用'],
+                                        'thing5'  =>['value'=>'点击补缴运费，以免对您的运单造成影响',]
+                                    ],
+                                    'miniprogram_state'=>'formal',
+                                    'lang'=>'zh_CN'
+                                ],'POST');
+                                $result = json_decode($resultJson, true);
+                                PushNotice::create([
+                                    'user_id' => $orders['user_id'],
+                                    'agent_id' => $orders['agent_id'],
+                                    'name' => $orders['sender'],
+                                    'mobile' => $orders['sender_mobile'],
+                                    'order_no' => $orders['out_trade_no'],
+                                    'waybill' => $orders['waybill'],
+                                    'channel' => 2,
+                                    'type' => 2,
+                                    'status'=>$result['errcode'] == 0?1:2,
+                                    'comment' => $resultJson,
+                                ]);
+                            }catch (\Exception $e){
+                                recordLog('queue-err', '小程序发送耗材订阅信息失败'
+                                    . '-' . $orders['out_trade_no'].
+                                    '-' . $e->getMessage()
+                                );
+                            }
+
                         }
                         elseif ($orders['pay_type'] == 2 && !empty($data['template_id'])){
                             $aliBusiness = new AliBusiness();
@@ -173,9 +190,10 @@ class DoJob
                         }
                     }
                 }catch (\Exception $e){
-                    Log::error("队列：耗材错误-". $e->getMessage() . PHP_EOL
-                        . "订单：" . $orders['out_trade_no'].PHP_EOL
-                        . $e->getTraceAsString()
+                    recordLog('queue-err', '耗材订单'
+                        . '-' . $orders['out_trade_no'].
+                        '-' . $e->getMessage().
+                        '-' . $e->getTraceAsString()
                     );
                 }
 
@@ -217,9 +235,10 @@ class DoJob
                             ]]);
                     }
                 }catch (\Exception $e){
-                    Log::error("队列：退款错误-". $e->getMessage() . PHP_EOL
-                        . "订单：" . $orders['out_trade_no'].PHP_EOL
-                        . $e->getTraceAsString()
+                    recordLog('queue-err', '下单失败'
+                        . '-' . $orders['out_trade_no'].
+                        '-' . $e->getMessage().
+                        '-' . $e->getTraceAsString()
                     );
                 }
 
@@ -395,17 +414,42 @@ class DoJob
 
                     }
                 }catch (\Exception $e){
-                    Log::error("队列：4-". $e->getMessage() . PHP_EOL
-                        . "订单：" . $row['out_trade_no'].PHP_EOL
-                        . $e->getTraceAsString()
+                    recordLog('queue-err', '取消订单'
+                        . '-' . $row['out_trade_no'].
+                        '-' . $e->getMessage().
+                        '-' . $e->getTraceAsString()
+                    );
+                }
+
+            }
+            elseif ($data['type']==5){ // 保价
+                $orders=db('orders')->where('id',$data['order_id'])->find();
+                try {
+                    if (empty($orders['insured_time'])){
+                        db('orders')->where('id',$orders['id'])->setInc('agent_price',$data['insuredPrice']);//代理商结算金额+保价金额
+                        //代理商减少余额  耗材
+                        $Dbcommon->set_agent_amount($orders['agent_id'],'setDec',$data['insuredPrice'],8,'订单号：'.$orders['out_trade_no'] .' 保价扣除金额：'.$data['insuredPrice'].'元');
+
+                        $upData = [
+                            'insured_status'=> 1,
+                            'insured_time'=> time(),
+                        ];
+                        db('orders')->where('id',$orders['id'])->update($upData);
+                    }
+                }catch (\Exception $e){
+                    recordLog('queue-err', '保价订单'
+                        . '-' . $orders['out_trade_no'].
+                        '-' . $e->getMessage().
+                        '-' . $e->getTraceAsString()
                     );
                 }
 
             }
             return true;
         }catch (\Exception $e){
-            Log::error("队列执行异常：". $e->getMessage() . PHP_EOL
-                . $e->getTraceAsString() . PHP_EOL
+            recordLog('queue-err', '队列执行异常'.
+                '-' . $e->getMessage().
+                '-' . $e->getTraceAsString()
             );
             return false;
         }

@@ -34,7 +34,6 @@ class Dashboard extends Backend
         if (in_array(2,$groupIds) || in_array(12, $groupIds)) {
             $arr['auth'] = false;
             $agentId = $this->auth->id;
-
             try {
                 $agentAuth = db('agent_auth')
                     ->where('agent_id', $agentId)
@@ -43,8 +42,6 @@ class Dashboard extends Backend
             } catch (DataNotFoundException|ModelNotFoundException|DbException $e) {
                 $agentAuth = [];
             }
-
-
             if(count($agentAuth)>1){
                 $app = [];
                 foreach ($agentAuth as $k=>$v){
@@ -300,7 +297,7 @@ class Dashboard extends Backend
             $selfAppToday = $this->agentProfits('today',"agent_id in (15,17,18)");
             $selfAppYesterday = $this->agentProfits('yesterday',"agent_id in (15,17,18)");
             $selfAppMonth = $this->agentProfits('month',"agent_id in (15,17,18)");
-            $selfAppYear = $this->todayProfits('year',["agent_id" => ["in","15,17,18"]]);
+            $selfAppYear = $this->agentProfits('year',"agent_id in (15,17,18)");
             // 平台进入利润
             $platformToday = $this->platformProfits();
             $platformYesterday = $this->platformProfits('yesterday');
@@ -309,7 +306,7 @@ class Dashboard extends Backend
 
             $arr['today_profits'] =  number_format( $selfAppToday + $platformToday, 2);
             $arr['month_profits'] =  number_format($selfAppMonth + $platformMonth,2);
-            $arr['year_profits'] =  number_format((float)$selfAppYear + $platformYear,2);
+            $arr['year_profits'] =  number_format($selfAppYear + $platformYear,2);
 
             // 当月利润列表
             $arr['profit_list'] = $this->profitList('month');
@@ -361,8 +358,6 @@ class Dashboard extends Backend
             $arr['agent_order'] = compact('name', 'today','day_1', 'day_2');
 
         }
-
-
         $this->view->assign("row",json_encode($arr));
         return $this->view->fetch();
     }

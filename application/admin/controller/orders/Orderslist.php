@@ -704,7 +704,6 @@ class Orderslist extends Backend
             'Content-Type:application/x-www-form-urlencoded'
         ]);
         $res=json_decode($res,true);
-
         if ($res['code']==200000){
             db('admin')->where('id',$row['agent_id'])->setDec('agent_voice');
             db('agent_sms')->insert([
@@ -722,8 +721,9 @@ class Orderslist extends Backend
                 'create_time'=>time()
             ]);
             $this->success('发送超重语音成功');
-        }else{
-            $this->error($res['message']);
+        }
+        else{
+            $this->error($res['msg_zh']);
         }
     }
 

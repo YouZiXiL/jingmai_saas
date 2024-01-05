@@ -535,7 +535,7 @@ class Wxcallback extends Controller
             }
 
             //超轻处理
-            if ($orders['weight'] > ceil($finalWeight)  && $finalWeight!=0 && empty($orders['final_weight_time'])){
+            if ($orders['weight'] > ceil($finalWeight) &&  $pamar['feeOver'] == 1 && $finalWeight!=0 && empty($orders['final_weight_time'])){
                 $lightWeight = floor($orders['weight']-$finalWeight); //超轻重量
 
                 if($orders['freight'] < $pamar['freight']){
@@ -547,6 +547,7 @@ class Wxcallback extends Controller
                     ];
                     $common->wxrobot_channel_exception($content);
                 }else{
+                    $adminMore = $orders['admin_xuzhong'];
                     $agentMore = $orders['agent_xuzhong'];
                     $userMore = $orders['users_xuzhong'];
                     if(empty((float)$agentMore)){
@@ -558,6 +559,7 @@ class Wxcallback extends Controller
                         $agentMore = $up_data['agent_xuzhong'];
                         $userMore = $up_data['users_xuzhong'];
                     }
+                    $up_data['admin_tralight_price']=  bcmul($lightWeight,  $adminMore,2);
                     $up_data['agent_tralight_price']=  bcmul($lightWeight,  $agentMore,2);
                     $up_data['tralight_price']=  bcmul($lightWeight,  $userMore,2);;
                 }
@@ -566,12 +568,13 @@ class Wxcallback extends Controller
                 $up_data['final_weight_time']=time();
             }
             // 超重
-            if ($orders['weight'] < $finalWeight && empty($orders['final_weight_time'])){
+            if ($orders['weight'] < $finalWeight && $pamar['feeOver'] == 1 && empty($orders['final_weight_time'])){
                 $up_data['final_weight'] = $finalWeight;
                 $up_data['overload_status']=1;
                 //超出重量
                 $overloadWeight = ceil($finalWeight - $orders['weight']);
 
+                $adminMore = $orders['admin_xuzhong'];
                 $agentMore = $orders['agent_xuzhong'];
                 $userMore = $orders['users_xuzhong'];
 
@@ -586,6 +589,8 @@ class Wxcallback extends Controller
                     $userMore = $up_data['users_xuzhong'];
                 }
 
+                //平台超重金额
+                $up_data['admin_overload_price'] = bcmul($overloadWeight,  $adminMore,2);
                 //代理超重金额
                 $up_data['agent_overload_price'] = bcmul($overloadWeight,  $agentMore,2);
                 //用户超重金额
@@ -613,7 +618,7 @@ class Wxcallback extends Controller
             }
 
             // 保价费用
-            if (!empty($pamar['freightInsured']) && $pamar['freightInsured']>$orders['insured_price']){
+            if (!empty($pamar['freightInsured']) && $pamar['feeOver'] == 1 && $pamar['freightInsured']>$orders['insured_price']){
                 $insuredPrice =  round($pamar['freightInsured'] - $orders['insured_price'],2) ;
                 if($orders['insured_cost'] != 0 && $orders['insured_cost'] != $insuredPrice ){
                     $content = [
@@ -625,14 +630,16 @@ class Wxcallback extends Controller
                     $common->wxrobot_channel_exception($content);
                 }
                 if(empty($orders['insured_time']) ){
+                    $data = [
+                        'type'=> 5,
+                        'insuredPrice' => $insuredPrice,
+                        'order_id' => $orders['id'],
+                    ];
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
+
                     // 保价费用
-                    $up_data['insured_cost']= $insuredPrice ;
-                    $up_data['agent_price']= $orders['agent_price'] +  $insuredPrice;
-                    $up_data['insured_time'] = time();
-                    $up_data['insured_status'] = 1;
-                    $DbCommon= new Dbcommom();
-                    // 给代理商扣款
-                    $DbCommon->set_agent_amount($orders['agent_id'],'setDec',$insuredPrice,8,'订单号：'.$orders['out_trade_no'].' 保价扣除金额：'. $insuredPrice.'元');
+                    $up_data['insured_cost']= $insuredPrice;
                     // 发送保价短信
                     KD100Sms::run()->insured($orders);
 
@@ -960,6 +967,7 @@ class Wxcallback extends Controller
                 $overloadPrice = $kdnData['Cost'] - $order['freight']; // 超出金额
                 if($overloadPrice > 0){
 //                    $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
+                    $up_data['admin_overload_price'] = number_format( $order['admin_xuzhong'] * $overloadWeight,2); //代理商超重金额
                     $up_data['agent_overload_price'] = number_format( $order['agent_xuzhong'] * $overloadWeight,2); //代理商超重金额
                     $up_data['overload_price'] = number_format((float)$order['users_xuzhong'] * $overloadWeight, 2); //用户超重金额
                     $data = [
@@ -985,6 +993,7 @@ class Wxcallback extends Controller
                     $lightWeight = abs($overloadWeight);
                     $lightPrice = abs($overloadPrice); // 超轻金额
                     $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
+                    $up_data['admin_tralight_price'] = number_format( $lightPrice  * $lightWeight,2); //代理商超重金额
                     $up_data['agent_tralight_price'] = number_format( $lightPrice + $profit['more_weight'] * $lightWeight,2); //代理商超重金额
                     $up_data['tralight_price'] = number_format((float)$up_data['agent_tralight_price'] + $profit['user_more_weight'] * $lightWeight, 2); //用户超重金额
                     $up_data['tralight_status'] = '1';
@@ -1035,12 +1044,13 @@ class Wxcallback extends Controller
                     $common->wxrobot_channel_exception($content);
                 }
                 if(empty($order['insured_time'])){
-                    $up_data['agent_price']= $order['agent_price'] +  $kdnData['InsureAmount'];
-                    $up_data['insured_time'] = time();
-                    $up_data['insured_status'] = 1;
-                    $DbCommon= new Dbcommom();
-                    // 给代理商扣款
-                    $DbCommon->set_agent_amount($order['agent_id'],'setDec',$kdnData['InsureAmount'],8,'订单号：'.$order['out_trade_no'].' 保价扣除金额：'. $kdnData['InsureAmount'].'元');
+                    $data = [
+                        'type'=> 5,
+                        'insuredPrice' => $kdnData['InsureAmount'],
+                        'order_id' => $order['id'],
+                    ];
+                    // 将该任务推送到消息队列，等待对应的消费者去执行
+                    Queue::push(DoJob::class, $data,'way_type');
                     // 发送保价短信
                     KD100Sms::run()->insured($order);
 
@@ -1137,7 +1147,7 @@ class Wxcallback extends Controller
                 }
                 $common= new Common();
                 if($order['order_status']=='已签收'){
-                    if(number_format($insertData['calcFeeWeight'], 2) != number_format($order['final_weight'],2)){
+                    if($insertData['calcFeeWeight'] != 0 && number_format($insertData['calcFeeWeight'], 2) != number_format($order['final_weight'],2)){
                         $content = [
                             'title' => '计费重量变化',
                             'user' =>  'JX', //$order['channel_merchant'],
@@ -1187,6 +1197,7 @@ class Wxcallback extends Controller
                         $calcFeeWeight = ceil($insertData['calcFeeWeight']); // 计费重量
                         $gapWeight = abs(number_format($calcFeeWeight - $order['weight'],2)); // 计费重量与实际重量的差
                         if($calcFeeWeight > $order['weight']){ // 超重
+                            $up_data['admin_overload_price'] = number_format( $order['admin_xuzhong'] * $gapWeight,2); //代理商超重金额
                             $up_data['agent_overload_price'] = number_format( $order['agent_xuzhong'] * $gapWeight,2); //代理商超重金额
                             $up_data['overload_price'] = number_format((float)$order['users_xuzhong'] * $gapWeight, 2); //用户超重金额
                             $data = [
@@ -1209,6 +1220,7 @@ class Wxcallback extends Controller
                             $rebateListController->upState($order, $users, 2);
                         }
                         elseif($calcFeeWeight < $order['weight']){ // 超轻
+                            $up_data['admin_tralight_price'] = number_format( $order['admin_xuzhong'] * $gapWeight,2); //代理商超重金额
                             $up_data['agent_tralight_price'] = number_format( $order['agent_xuzhong'] * $gapWeight,2); //代理商超重金额
                             $up_data['tralight_price'] = number_format((float)$order['users_xuzhong'] * $gapWeight, 2); //用户超重金额
                             $up_data['final_weight_time']=time();
@@ -1268,12 +1280,14 @@ class Wxcallback extends Controller
                         }
 
                        if(empty($order['insured_time'])){
-                           $up_data['agent_price']= $order['agent_price'] +  $insuredPrice;
-                           $up_data['insured_time'] = time();
-                           $up_data['insured_status'] = 1;
-                           $DbCommon= new Dbcommom();
-                           // 给代理商扣款
-                           $DbCommon->set_agent_amount($order['agent_id'],'setDec',$insuredPrice,8,'订单号：'.$order['out_trade_no'].' 保价扣除金额：'. $insuredPrice.'元');
+                           $data = [
+                               'type'=> 5,
+                               'insuredPrice' => $insuredPrice,
+                               'order_id' => $order['id'],
+                           ];
+                           // 将该任务推送到消息队列，等待对应的消费者去执行
+                           Queue::push(DoJob::class, $data,'way_type');
+
                            // 发送保价短信
                            KD100Sms::run()->insured($order);
 
@@ -1533,8 +1547,9 @@ class Wxcallback extends Controller
                     $up_data['admin_xuzhong']=sprintf("%.2f",$admin_xuzhong);//平台续重单价
                     $up_data['agent_xuzhong']=sprintf("%.2f",$agent_xuzhong);//代理商续重
                     $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
-                    $users_tralight_amt=$tralight_weight*$up_data['users_xuzhong'];//代理商给用户退款金额
-                    $agent_tralight_amt=$tralight_weight*$up_data['agent_xuzhong'];//平台给代理商退余额
+                    $users_tralight_amt=$tralight_weight*$up_data['users_xuzhong'];//用户超轻金额
+                    $agent_tralight_amt=$tralight_weight*$up_data['agent_xuzhong'];//代理商超轻金额
+                    $admin_tralight_amt=$tralight_weight*$up_data['admin_xuzhong'];//平台超轻金额
 
                     if(!empty($users["rootid"])){
                         $superB=db("admin")->find($users["rootid"]);
@@ -1547,6 +1562,7 @@ class Wxcallback extends Controller
                     $up_data['final_weight_time']=time();
                     $up_data['tralight_price']=$users_tralight_amt;
                     $up_data['agent_tralight_price']=$agent_tralight_amt;
+                    $up_data['admin_tralight_price']=$admin_tralight_amt;
                 }
                 else if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000 &&empty($orders['final_weight_time'])){
 //                    if ($orders['weight']<$result['orderEvent']['calculateWeight']/1000){
@@ -1566,12 +1582,15 @@ class Wxcallback extends Controller
                     $up_data['users_xuzhong']=sprintf("%.2f",$users_xuzhong);//用户续重
                     $users_overload_amt=bcmul($overload_weight,$up_data['users_xuzhong'],2);//用户补缴金额
                     $agent_overload_amt=bcmul($overload_weight,$up_data['agent_xuzhong'],2);//代理补缴金额
+                    $admin_overload_amt=bcmul($overload_weight,$up_data['admin_xuzhong'],2);//代理补缴金额
 
-                    $users_overload_amt = $users_overload_amt<0?0:$users_overload_amt;
-                    $agent_overload_amt = $agent_overload_amt<0?0:$agent_overload_amt;
+                    $users_overload_amt = max($users_overload_amt, 0);
+                    $agent_overload_amt = max($agent_overload_amt, 0);
+                    $admin_overload_amt = max($admin_overload_amt, 0);
 
                     $up_data['overload_price']=$users_overload_amt;//用户超重金额
                     $up_data['agent_overload_price']=$agent_overload_amt;//代理商超重金额
+                    $up_data['admin_overload_price']=$admin_overload_amt;//平台超重金额
                     $data = [
                         'type'=>1,
                         'agent_overload_amt' =>$agent_overload_amt,
@@ -3325,6 +3344,7 @@ class Wxcallback extends Controller
                     $up_data['final_weight_time']=time();
                     $up_data['tralight_price']=number_format($orders["final_price"]-$users_price,2);
                     $up_data['agent_tralight_price']=number_format($orders["agent_price"]-$agent_price,2);
+                    $up_data['admin_tralight_price']=number_format($orders["final_freight"]-$price,2);
 
 
                     if(!empty($users["rootid"]) ){
@@ -3343,20 +3363,10 @@ class Wxcallback extends Controller
                         $rebatelistdata["root_vip_rebate"]=number_format($rebatelistdata["final_price"]-$agent_price-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
                         $rebatelistdata["root_default_rebate"]=number_format($rebatelistdata["final_price"]-$agent_default_price-$rebatelistdata["imm_rebate"]-$rebatelistdata["mid_rebate"],2);
                     }
-//                    else{
-//
-//                        $rebatelistdata["final_price"]=$users_price;
-//
-//                        $rebatelistdata["imm_rebate"]=number_format(($rebatelistdata["final_price"])*($agent_info["imm_rate"]??0)/100,2);
-//                        $rebatelistdata["mid_rebate"]=number_format(($rebatelistdata["final_price"])*($agent_info["midd_rate"]??0)/100,2);
-//
-//                    }
-
-
                 }
 
 
-                //更改超重状态
+                //超重
                 if ($orders['weight']<$pamar['calWeight']&&empty($orders['final_weight_time'])){
                     $up_data['overload_status']=1;
                     $overload_weight=ceil($pamar['calWeight']-$orders['weight']);//超出重量
@@ -4476,9 +4486,11 @@ class Wxcallback extends Controller
                         if($isNew){
                             $up_data['tralight_price']=number_format($weightprice,2);
                             $up_data['agent_tralight_price']=number_format($weightprice,2);
+                            $up_data['admin_tralight_price']=number_format($weightprice,2);
                         }else{
                             $up_data['tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);
                             $up_data['agent_tralight_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);
+                            $up_data['admin_tralight_price']=number_format($weightprice*$dicount,2);
                         }
 
                     }
@@ -4496,9 +4508,11 @@ class Wxcallback extends Controller
                     if($isNew){
                         $up_data['overload_price']=number_format($weightprice,2);//用户超重金额
                         $up_data['agent_overload_price']=number_format($weightprice,2);//代理商超重金额
+                        $up_data['admin_overload_price']=number_format($weightprice,2);//代理商超重金额
                     }else{
                         $up_data['overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);//用户超重金额
                         $up_data['agent_overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);//代理商超重金额
+                        $up_data['admin_overload_price']=number_format($weightprice*$dicount,2);//代理商超重金额
                     }
 
 
@@ -4691,7 +4705,7 @@ class Wxcallback extends Controller
                 }
 
             }
-            else{ // 重量，补差价
+            else{
 
                 $finalFreight = $order['final_freight'];
                 if ($order['final_freight'] == 0){
@@ -4705,7 +4719,7 @@ class Wxcallback extends Controller
 
                     $jiLu = new JiLuBusiness();
                     $cost = $jiLu->getCost($order['sender_province'], $order['receive_province']);
-                    $reWeight = $cost['more_weight']; // 续重单价
+                    $morePrice = $cost['more_weight']; // 续重单价
                     $newPrice = 0; // 新增补缴费用
                     $material = 0; // 耗材
                     $addWeight = 0; // 新增重量（续重）
@@ -4732,11 +4746,13 @@ class Wxcallback extends Controller
                         }
                         $update['final_freight'] = $finalFreight + $newPrice;
                         $update['admin_price'] = $finalFreight + $newPrice;
+                        // 平台超重金额
+                        $update['admin_overload_price'] = $morePrice * $addWeight;
                         // 代理商超重金额
-                        $reWeightAgent = $reWeight + $profit['more_weight'];
-                        $update['agent_overload_price'] = $reWeightAgent * $addWeight;
+                        $morePriceAgent = $morePrice + $profit['more_weight'];
+                        $update['agent_overload_price'] = $morePriceAgent * $addWeight;
                         // 用户超重金额
-                        $update['overload_price'] = ($reWeightAgent +  $profit['user_more_weight']) * $addWeight;
+                        $update['overload_price'] = ($morePriceAgent +  $profit['user_more_weight']) * $addWeight;
 
                         $pushData = [
                             'type'=>1,
@@ -4806,11 +4822,12 @@ class Wxcallback extends Controller
                     // 退款重量（超轻重量）
                     $subWeight = $subpriceInfo['subWeight'];
                     // 代理商超续重单价
-                    $reWeightAgent = $cost['more_weight'] + $profit['more_weight'];
+                    $morePriceAgent = $cost['more_weight'] + $profit['more_weight'];
                     // 代理商超轻金额
-                    $update['agent_tralight_price'] = $reWeightAgent * $subWeight;
+                    $update['admin_tralight_price'] = $cost['more_weight'] * $subWeight;
+                    $update['agent_tralight_price'] = $morePriceAgent * $subWeight;
                     // 用户超轻金额
-                    $update['tralight_price'] = ($reWeightAgent +  $profit['user_more_weight']) * $subWeight;
+                    $update['tralight_price'] = ($morePriceAgent +  $profit['user_more_weight']) * $subWeight;
 
                     $update['tralight_status']=1;
                     $update['final_weight_time']=time();
