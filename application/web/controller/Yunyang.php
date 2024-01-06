@@ -122,8 +122,10 @@ class Yunyang extends Controller
     function set_default_address(): Json
     {
         $param=$this->request->param();
+        $status = 1;
+        if (isset($param['status'])) $status = $param['status'];
         db('users_address')->where('user_id',$this->user->id)->update(['default_status'=>0]);
-        db('users_address')->where('id',$param['id'])->update(['default_status'=>1]);
+        db('users_address')->where('id',$param['id'])->update(['default_status'=>$status]);
         return json(['status'=>200, 'data'=>'', 'msg'=>'成功']);
     }
 
@@ -341,7 +343,8 @@ class Yunyang extends Controller
             //黑名单
             $blacklist=db('agent_blacklist')
                 ->where(function ($query){
-                    $query->where('agent_id', $this->user->agent_id);
+                    $query->where('agent_id', $this->user->agent_id)
+                        ->whereOr('agent_id', 0);
                 })->where(function ($query) use ($userMobile, $jijian_address) {
                     $query->where('mobile',$jijian_address['mobile'])
                         ->whereOr('mobile', $userMobile);

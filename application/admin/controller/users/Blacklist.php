@@ -3,8 +3,13 @@
 namespace app\admin\controller\users;
 
 use app\common\controller\Backend;
+use Exception;
+use think\Db;
 use think\exception\DbException;
+use think\exception\PDOException;
+use think\exception\ValidateException;
 use think\response\Json;
+use think\Validate;
 
 /**
  * 
@@ -69,5 +74,54 @@ class Blacklist extends Backend
         return json($result);
     }
 
+    public function add(){
+        if (false === $this->request->isPost()) {
+            return $this->view->fetch();
+        }
+        $params = $this->request->post('row/a');
+        if (empty($params)) {
+            $this->error(__('Parameter %s can not be empty', ''));
+        }
+        $params = $this->preExcludeFields($params);
+
+        if ($this->dataLimit && $this->dataLimitFieldAutoFill) {
+            $params[$this->dataLimitField] = $this->auth->id;
+        }
+        $result = false;
+
+        $rule = [
+            'remark'  => 'require',
+            'mobile'  => 'require|^1[23456789]\d{9}',
+        ];
+        $validate = new Validate($rule,[],['mobile' => '手机号']);
+        $check = $validate->check($params);
+        if (!$check) {
+            $this->error($validate->getError());
+        }
+        $groupIds = $this->auth->getGroupIds();
+        if (in_array(1,$groupIds) ||  in_array(3,$groupIds)  ||  in_array(8,$groupIds)) {
+            $params['agent_id'] = 0;
+        }else{
+            $params['agent_id'] = $this->auth->id;
+        }
+        Db::startTrans();
+        try {
+            //是否采用模型验证
+            if ($this->modelValidate) {
+                $name = str_replace("\\model\\", "\\validate\\", get_class($this->model));
+                $validate = is_bool($this->modelValidate) ? ($this->modelSceneValidate ? $name . '.add' : $name) : $this->modelValidate;
+                $this->model->validateFailException()->validate($validate);
+            }
+            $result = $this->model->allowField(true)->save($params);
+            Db::commit();
+        } catch (ValidateException|PDOException|Exception $e) {
+            Db::rollback();
+            $this->error($e->getMessage());
+        }
+        if ($result === false) {
+            $this->error(__('No rows were inserted'));
+        }
+        $this->success();
+    }
 
 }

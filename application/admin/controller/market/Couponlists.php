@@ -127,7 +127,7 @@ class Couponlists extends Backend
             }
             $params['agent_id']=$this->auth->id;
             for ($i=1;$i<=$params['number'];$i++){
-                $params['papercode']=$common->getinvitecode(5).'-'.$common->getinvitecode(5).'-'.$common->getinvitecode(5).'-'.$common->getinvitecode(5);
+                $params['papercode']=$common->getinvitecode(5).'-'.$common->getinvitecode(5).'-'.$common->getinvitecode(5).'-'.$common->getinvitecode(5).'-'.$common->getinvitecode(5);
                 $data[]=$params;
             }
             $result = $this->model->allowField(true)->saveAll($data);

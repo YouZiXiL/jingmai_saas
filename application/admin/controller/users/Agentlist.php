@@ -226,7 +226,9 @@ class Agentlist extends Backend
                 'pay_type'=>3,
                 'create_time'=>time()
             ]);
-            $remark = trim(input('remark')) ?input('remark'):'后台加款：'.$param['amount'].'元，到账：'.$param['amount'].'元，操作人'.$this->auth->username;
+            $remark = trim(input('remark')) ?: '后台加款';
+            $remark .= '。操作人：'. $this->auth->username;
+//            $remark .= $param['amount'].'元，到账：'.$param['amount'].'元，操作人'.$this->auth->username;
 
             $Dbcommmon->set_agent_amount($row['id'],'setInc',$param['amount'],5,$remark);
         }catch (\Exception $e){
