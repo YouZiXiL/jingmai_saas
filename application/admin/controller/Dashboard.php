@@ -169,7 +169,7 @@ class Dashboard extends Backend
             // 获取每月订单数据
             $arr['month_order_group_count']=db('orders')
                 ->where('agent_id',$this->auth->id)
-                ->whereTime('create_time','year')
+                ->whereTime('create_time','-1 year')
                 ->field("date_format(from_unixtime(create_time), '%Y-%m') as month, {$validSql}, {$cancelSql}, {$totalSql}")
                 ->group("date_format(from_unixtime(create_time), '%Y-%m')")
                 ->select();
@@ -322,7 +322,7 @@ class Dashboard extends Backend
 
             // 获取每月订单数据
             $arr['month_order_group_count']=db('orders')
-                ->whereTime('create_time','year')
+                ->whereTime('create_time','-1 year')
                 ->field("date_format(from_unixtime(create_time), '%Y-%m') as month, {$validSql}, {$cancelSql}, {$totalSql}")
                 ->group("date_format(from_unixtime(create_time), '%Y-%m')")
                 ->select();

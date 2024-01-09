@@ -456,11 +456,11 @@ class Wxcallback extends Controller
                 throw new Exception('订单已退款：'. $orders['out_trade_no']);
             }
             $up_data = [];
+            $finalWeight = $pamar['calWeight'];
+            if($pamar['calWeight'] < $pamar['parseWeight']){
+                $finalWeight = $pamar['parseWeight'];
+            }
             if($orders['order_status']=='已签收'){
-                $finalWeight = $pamar['calWeight'];
-                if($pamar['calWeight'] < $pamar['parseWeight']){
-                    $finalWeight = $pamar['parseWeight'];
-                }
                 if($orders['final_weight'] == 0){
                     $up_data['final_weight'] = $finalWeight;
                 }else{
@@ -515,15 +515,9 @@ class Wxcallback extends Controller
                 $up_data['comments'] = $pamar['comments'];
             }
 
-            $finalWeight = $pamar['calWeight'];
-
-            if($pamar['calWeight']<$pamar['parseWeight']){
-                $finalWeight = $pamar['parseWeight'];
-            }
-
             if($orders['final_weight'] == 0){
                 $up_data['final_weight'] = $finalWeight;
-            }elseif(number_format($finalWeight, 2) != number_format($orders['final_weight'],2)){
+            }elseif($finalWeight !=0 && number_format($finalWeight, 2) != number_format($orders['final_weight'],2)){
                 $common = new Common();
                 $content = [
                     'title' => '计费重量变化',

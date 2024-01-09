@@ -3,6 +3,7 @@
 namespace app\admin\controller\assets;
 
 use app\common\controller\Backend;
+use think\Exception;
 use think\exception\DbException;
 use think\response\Json;
 
@@ -39,7 +40,7 @@ class System extends Backend
      * 查看
      *
      * @return string|Json
-     * @throws \think\Exception
+     * @throws Exception
      * @throws DbException
      */
     public function index()
@@ -61,6 +62,9 @@ class System extends Backend
             $list = $this->model;
         }
         $list = $list
+            ->with(['agent'=> function($query){
+                $query->withField('username,nickname,mobile');
+            }])
             ->where($where)
             ->where("type", '5')
             ->order($sort, $order)

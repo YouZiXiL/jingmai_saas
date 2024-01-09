@@ -752,7 +752,7 @@ class Yunyang extends Controller
             if (empty($id)){
                 return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
             }
-            $agent_info=db('admin')->field('zizhu,wx_im_bot')->where('id',$this->user->agent_id)->find();
+            $agent_info=db('admin')->field('zizhu,wx_im_bot,wx_im_weight')->where('id',$this->user->agent_id)->find();
             if ($agent_info['zizhu']==0){
                 return json(['status'=>400,'data'=>'','msg'=>'请联系管理员取消订单']);
             }
@@ -814,6 +814,11 @@ class Yunyang extends Controller
                         // 取消成功  执行退款操作
                         $orderBusiness = new OrderBusiness();
                         $orderBusiness->orderCancel($orderModel, $cancelReason);
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $row['weight'] >= $agent_info['wx_im_weight'] ){
+                            //推送企业微信消息
+                            $utils = new Common();
+                            $utils->wxim_bot($agent_info['wx_im_bot'],$row);
+                        }
                     }else{
                         return R::error($res['Reason']);
                     }

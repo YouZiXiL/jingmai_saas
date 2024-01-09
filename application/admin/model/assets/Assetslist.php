@@ -2,6 +2,7 @@
 
 namespace app\admin\model\assets;
 
+use app\admin\model\Admin;
 use think\Model;
 
 
@@ -28,7 +29,10 @@ class Assetslist extends Model
         'type_text',
         'create_time_text'
     ];
-    
+
+    public function agent(){
+        return $this->belongsTo(Admin::class,'agent_id','id')->setEagerlyType(0);
+    }
 
     
     public function getTypeList()

@@ -55,7 +55,6 @@ class Assetslist extends Backend
         }
         [$where, $sort, $order, $offset, $limit] = $this->buildparams("remark");
         if (in_array(2,$this->auth->getGroupIds())) {
-
             $list = $this->model->where("agent_id", $this->auth->id);
         } else {
             $list = $this->model;
@@ -67,6 +66,4 @@ class Assetslist extends Backend
         $result = ['total' => $list->total(), 'rows' => $list->items()];
         return json($result);
     }
-
-
 }
