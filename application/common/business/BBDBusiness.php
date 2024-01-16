@@ -192,7 +192,7 @@ class BBDBusiness
                 $list[$key]['onePrice'] =  $content['users_shouzhong'];
                 $list[$key]['morePrice'] = $content['users_xuzhong']??0;
                 $list[$key]['tag_type'] = $content['tagType'];
-                $list[$key]['logo']= 'https://admin.bajiehuidi.com/assets/img/express/yd.png';
+                $list[$key]['logo']=  request()->domain().'/assets/img/express/yd.png' ;
             }
         }
         return $list;

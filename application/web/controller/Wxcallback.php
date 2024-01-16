@@ -722,7 +722,10 @@ class Wxcallback extends Controller
                     $DbCommon->set_agent_amount($orders['agent_id'],'setInc',$orders['agent_price'],1,'订单号：'.$orders['out_trade_no'].' 已取消并退款');
                     return json(['code'=>1, 'message'=>'ok']);
                 }
-                if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                if (!empty($agent_info['wx_im_bot'])
+                    && $agent_info['wx_im_weight'] != 0
+                    && $orders['order_status'] != '已取消'
+                    && $orders['weight'] >= $agent_info['wx_im_weight'] ){
                     //推送企业微信消息
                     $common->wxim_bot($agent_info['wx_im_bot'],$orders);
                 }

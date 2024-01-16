@@ -392,7 +392,7 @@ class OrderBusiness extends Backend
         $list['channel']=$content['channel'];
         $list['onePrice']= $content['agent_shouzhong'];
         $list['morePrice']= $content['agent_xuzhong'];
-        $list['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+        $list['channelLogoUrl']= request()->domain().'/assets/img/express/yt.png' ;
         $list['requireId']=(string)$requireId;
 
         return $list;
@@ -449,7 +449,7 @@ class OrderBusiness extends Backend
                 $list[$key]['channel']=$content['channel'];
                 $list[$key]['onePrice']= $content['agent_shouzhong'];
                 $list[$key]['morePrice']= $content['agent_xuzhong'];
-                $list[$key]['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+                $list[$key]['channelLogoUrl']= request()->domain().'/assets/img/express/yt.png' ;
                 $list[$key]['requireId']=(string)$requireId;
             }
         }
@@ -623,7 +623,7 @@ class OrderBusiness extends Backend
                 $list[$key]['tagType'] =  $content['tagType'];
                 $list[$key]['onePrice']=  $content['agent_shouzhong'];
                 $list[$key]['morePrice']= $content['agent_xuzhong'];
-                $list[$key]['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yd.png';
+                $list[$key]['channelLogoUrl']= request()->domain().'/assets/img/express/yd.png' ;
                 $list[$key]['requireId']= (string) $requireId;
             }
         }
@@ -897,7 +897,7 @@ class OrderBusiness extends Backend
         $list['channel']=$content['channel'];
         $list['onePrice']= $content['agent_shouzhong'];
         $list['morePrice']= $content['agent_xuzhong'];
-        $list['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+        $list['channelLogoUrl']= request()->domain().'/assets/img/express/yt.png' ;
         $list['requireId']=(string)$requireId;
 
         return $list;
@@ -951,7 +951,7 @@ class OrderBusiness extends Backend
             $list[$index]['tagType']=$item['tagType'];
             $list[$index]['channelId']=$item['channelId'];
             $list[$index]['channel']=$item['channel'];
-            $list[$index]['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+            $list[$index]['channelLogoUrl']= request()->domain().'/assets/img/express/yt.png' ;
             $list[$index]['requireId']=(string)$requireId;
         }
         return isset($list) ?array_values($list):[];
@@ -1129,7 +1129,7 @@ class OrderBusiness extends Backend
             'channel'=>'',
             'onePrice'=> 0,
             'morePrice'=> 0,
-            'channelLogoUrl'=> 'https://admin.bajiehuidi.com/assets/img/express/db.png', // 快递类型
+            'channelLogoUrl'=> request()->domain().'/assets/img/express/db.png' , // 快递类型
         ];
     }
 
@@ -1298,7 +1298,7 @@ class OrderBusiness extends Backend
             $list[$key]['tagType'] =  $item['channelName'];
             $list[$key]['onePrice']= 0;
             $list[$key]['morePrice']= 0;
-            $list[$key]['channelLogoUrl']= 'https://admin.bajiehuidi.com/assets/img/express/sf.png';
+            $list[$key]['channelLogoUrl']= request()->domain().'/assets/img/express/sf.png' ;
             $list[$key]['requireId']= (string) $requireId;
 
         }

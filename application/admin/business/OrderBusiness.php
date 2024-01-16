@@ -245,19 +245,27 @@ class OrderBusiness extends Backend
     }
 
     // 获取小程序最近30天的订单列表
-    public function getAppRecentDayByAgentId($agentId, $express='all', $day = 30)
+    public function getAppRecentDayByAgentId($agentId, $express='all', $type  = 'order', $day = 30)
     {
         if ($express == 'all'){
-            $where = 1;
+            $whereExpress = 1;
         }else{
-            $where = "tag_type = '$express'";
+            $whereExpress = "tag_type = '$express'";
         }
+
+        if($type == 'order'){
+            $whereType = 1;
+        }else{
+            $whereType = "overload_status = '1'";
+        }
+
         $sql = "select 
-            date_format(from_unixtime(create_time),'%m-%d') as date,
+            date_format(from_unixtime(create_time),'%Y-%m-%d') as date,
             count(*) as total
             from fa_orders 
             where pay_status = '1'
-            and $where    
+            and $whereExpress   
+            and $whereType              
             and date(from_unixtime(create_time)) >= date_sub(curdate(),interval $day day)
             and agent_id = $agentId
             group by date(from_unixtime(create_time)) 
@@ -270,18 +278,26 @@ class OrderBusiness extends Backend
         }
     }
 
-    public function getPlatformRecentDay($express='all',$day = 30)
+
+    public function getPlatformRecentDay($express='all',$type  = 'order',$day = 30)
     {
         if ($express == 'all'){
-            $where = 1;
+            $whereExpress = 1;
         }else{
-            $where = "tag_type = '$express'";
+            $whereExpress = "tag_type = '$express'";
+        }
+
+        if($type == 'order'){
+            $whereType = 1;
+        }else{
+            $whereType = "overload_status = '1'";
         }
         $sql = "
             select count(*) as total
             from fa_orders 
             where pay_status = '1' 
-            and $where    
+            and $whereExpress    
+            and $whereType    
             and date(from_unixtime(create_time)) >= date_sub(curdate(),interval $day day)
             group by date(from_unixtime(create_time)) 
          ";
@@ -296,16 +312,24 @@ class OrderBusiness extends Backend
     /**
      * 获取小程序本月订单数量
      * @param int $agentId
+     * @param string $type
      * @param string $express
      * @return mixed|void
      */
-    public function getAppMonthByAgentId(int $agentId, string $express='all')
+    public function getAppMonthByAgentId(int $agentId, string $express='all', string $type  = 'order')
     {
         if ($express == 'all'){
-            $where = 1;
+            $whereExpress = 1;
         }else{
-            $where = "tag_type = '$express'";
+            $whereExpress = "tag_type = '$express'";
         }
+
+        if($type == 'order'){
+            $whereType = 1;
+        }else{
+            $whereType = "overload_status = '1'";
+        }
+
         $sql = "select 
                 date_format(from_unixtime(create_time),'%m-%d') as date,
                 count(*) as total
@@ -314,7 +338,8 @@ class OrderBusiness extends Backend
                 and YEAR(FROM_UNIXTIME(create_time)) = YEAR(CURDATE())
                 and MONTH(FROM_UNIXTIME(create_time)) = MONTH(CURDATE())
                 and agent_id = $agentId
-                 and $where  
+                 and $whereExpress
+                 and $whereType  
                 group by date(from_unixtime(create_time)) 
             "
         ;
@@ -328,18 +353,25 @@ class OrderBusiness extends Backend
     /**
      * 获取平台本月订单量
      */
-    public function getPlatformMonth($express='all')
+    public function getPlatformMonth($express='all', string $type  = 'order')
     {
         if ($express == 'all'){
-            $where = 1;
+            $whereExpress = 1;
         }else{
-            $where = "tag_type = '$express'";
+            $whereExpress = "tag_type = '$express'";
+        }
+
+        if($type == 'order'){
+            $whereType = 1;
+        }else{
+            $whereType = "overload_status = '1'";
         }
         $sql = "
             select count(*) as total
             from fa_orders 
             where pay_status = '1' 
-            and $where    
+            and $whereExpress
+            and $whereType    
             and YEAR(FROM_UNIXTIME(create_time)) = YEAR(CURDATE())
                 and MONTH(FROM_UNIXTIME(create_time)) = MONTH(CURDATE())
             group by date(from_unixtime(create_time)) 
@@ -356,14 +388,21 @@ class OrderBusiness extends Backend
      * 获取小程序上个月订单量
      * @param $agentId
      * @param string $express
+     * @param string $type
      * @return mixed|void
      */
-    public function getAppLastMonthByAgentId($agentId, string $express='all')
+    public function getAppLastMonthByAgentId($agentId, string $express='all', string $type  = 'order')
     {
         if ($express == 'all'){
-            $where = 1;
+            $whereExpress = 1;
         }else{
-            $where = "tag_type = '$express'";
+            $whereExpress = "tag_type = '$express'";
+        }
+
+        if($type == 'order'){
+            $whereType = 1;
+        }else{
+            $whereType = "overload_status = '1'";
         }
         $sql = "select 
                 date_format(from_unixtime(create_time),'%m-%d') as date,
@@ -373,7 +412,8 @@ class OrderBusiness extends Backend
                 and year(from_unixtime(create_time)) = year(curdate())
                 and month(from_unixtime(create_time)) = month(date_sub(curdate(), interval 1 month))
                 and agent_id = $agentId
-                and $where  
+                and  $whereExpress
+                and $whereType  
                 group by date(from_unixtime(create_time)) 
             "
         ;
@@ -385,18 +425,25 @@ class OrderBusiness extends Backend
     }
 
     // 获取平台上月订单量
-    public function getPlatformLastMonth($express)
+    public function getPlatformLastMonth($express, string $type  = 'order')
     {
         if ($express == 'all'){
-            $where = 1;
+            $whereExpress = 1;
         }else{
-            $where = "tag_type = '$express'";
+            $whereExpress = "tag_type = '$express'";
+        }
+
+        if($type == 'order'){
+            $whereType = 1;
+        }else{
+            $whereType = "overload_status = '1'";
         }
         $sql = "
             select count(*) as total
             from fa_orders 
             where pay_status = '1' 
-            and $where    
+            and  $whereType
+            and $whereExpress    
             and year(from_unixtime(create_time)) = year(curdate())
             and month(from_unixtime(create_time)) = month(date_sub(curdate(), interval 1 month))
             group by date(from_unixtime(create_time)) 
@@ -413,14 +460,21 @@ class OrderBusiness extends Backend
      * 获取小程序本年订单量
      * @param $agentId
      * @param $express
+     * @param string $type
      * @return mixed|void
      */
-    public function getAppYearByAgentId($agentId,$express)
+    public function getAppYearByAgentId($agentId,$express, string $type  = 'order')
     {
         if ($express == 'all'){
-            $where = 1;
+            $whereExpress = 1;
         }else{
-            $where = "tag_type = '$express'";
+            $whereExpress = "tag_type = '$express'";
+        }
+
+        if($type == 'order'){
+            $whereType = 1;
+        }else{
+            $whereType = "overload_status = '1'";
         }
         $sql = "
             select 
@@ -428,9 +482,10 @@ class OrderBusiness extends Backend
                 count(*) as total
                 from fa_orders 
                 where pay_status = '1'
-                and year(from_unixtime(create_time)) = year(curdate())
+                and  month(from_unixtime(create_time)) >= month(date_sub(curdate(), interval 1 year ))
                 and agent_id = $agentId
-                and $where  
+                and  $whereExpress
+                and  $whereType  
                 group by date_format(from_unixtime(create_time),'%Y-%m') 
             "
         ;
@@ -442,19 +497,26 @@ class OrderBusiness extends Backend
     }
 
     // 获取平台本年订单量
-    public function getPlatformYear($express)
+    public function getPlatformYear($express, string $type  = 'order')
     {
         if ($express == 'all'){
-            $where = 1;
+            $whereExpress = 1;
         }else{
-            $where = "tag_type = '$express'";
+            $whereExpress = "tag_type = '$express'";
+        }
+
+        if($type == 'order'){
+            $whereType = 1;
+        }else{
+            $whereType = "overload_status = '1'";
         }
         $sql = "
             select count(*) as total
             from fa_orders 
             where pay_status = '1' 
-            and $where    
-            and year(from_unixtime(create_time)) = year(curdate())
+            and   $whereExpress
+            and   $whereType    
+            and  month(from_unixtime(create_time)) >= month(date_sub(curdate(), interval 1 year ))
             group by date_format(from_unixtime(create_time),'%Y-%m') 
          ";
 

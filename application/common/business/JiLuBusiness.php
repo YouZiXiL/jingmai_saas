@@ -203,7 +203,7 @@ class JiLuBusiness
         $list['onePrice']=$content['users_shouzhong'];
         $list['morePrice']=$content['users_xuzhong'];
         $list['tag_type']=$content['tagType'];
-        $list['logo']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+        $list['logo']= request()->domain().'/assets/img/express/yt.png' ;
         return $list;
     }
 

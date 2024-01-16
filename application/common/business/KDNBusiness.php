@@ -337,9 +337,9 @@ class KDNBusiness
                 $list[$key]['final_price'] = $content['final_price'];
                 $list[$key]['insert_id'] = $insert_id;
                 $list[$key]['onePrice'] =  $content['users_shouzhong'];
-                $list[$key]['morePrice'] = $content['users_xuzhong']??0;
+                $list[$key]['morePrice'] = $content['users_xuzhong'];
                 $list[$key]['tag_type'] = $content['tagType'];
-                $list[$key]['logo']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+                $list[$key]['logo']= request()->domain().'/assets/img/express/yt.png' ;;
             }
         }
         return $list;
@@ -468,9 +468,8 @@ class KDNBusiness
         $list['onePrice']=$content['users_shouzhong'];
         $list['morePrice']=$content['users_xuzhong'];
         $list['tag_type']=$content['tagType'];
-        $list['logo']= 'https://admin.bajiehuidi.com/assets/img/express/yt.png';
+        $list['logo']= request()->domain().'/assets/img/express/yt.png' ;
         return $list;
-
     }
 
     /**
