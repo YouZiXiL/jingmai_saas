@@ -167,7 +167,7 @@ class YunYang{
                     $priceInfo = $this->priceHandleA($v,$agent_info, $param);
                     break;
                 case 'EMS':
-                case '顺丰':
+//                case '顺丰':
                     $ratioAgent = $agent_info['sf_agent_ratio']/100;
                     $ratioUser = $agent_info['sf_users_ratio']/100;
                     $priceInfo = $this->priceHandleD($v, $ratioAgent, $ratioUser);
@@ -194,8 +194,6 @@ class YunYang{
                 default:
                     continue 2;
             }
-
-
 
             if($v['tagType'] == '菜鸟'){
                 $caiNiaoEnable = false; // 菜鸟是否可用
@@ -262,7 +260,6 @@ class YunYang{
      * @param $agent_info
      * @param $param
      * @return array
-     * @throws Exception
      */
     public function advanceHandleBySF($content, $agent_info, $param)
     {

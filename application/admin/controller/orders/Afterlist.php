@@ -96,6 +96,7 @@ class Afterlist extends Backend
      * salf_type=1：超重订单
      * salf_type=2：超轻订单
      * salf_type=3：现结/到付订单
+     * cal_weight 更改重量
      * @param $ids
      * @return string|void
      * @throws DbException
@@ -364,7 +365,6 @@ class Afterlist extends Backend
 
             //超重核重处理
             if ($row['salf_type']==1 ) {
-
                 $authApp = AgentAuth::field('id,feedback_template,app_id')->find($orders['auth_id']);
                 if ($params['cope_status']==1) { // 审核通过
                     $orders = $orders->get(['id' => $row['order_id']]);
@@ -443,7 +443,8 @@ class Afterlist extends Backend
                             $up_data['overload_price'] = bcmul($newOverloadWeight, $orders['users_xuzhong'], 2);//用户新超重金额
                             $up_data['agent_overload_price'] = bcmul($newOverloadWeight, $orders['agent_xuzhong'], 2); //代理商新超重金额
                             $up_data['admin_overload_price'] = bcmul($newOverloadWeight, $orders['admin_xuzhong'], 2); //代理商新超重金额
-                        } else if ($finalWeight < $params['cal_weight']) {   //  比之前重
+                        }
+                        else if ($finalWeight < $params['cal_weight']) {   //  比之前重
                             if ($orders['overload_status'] == 1) { // 超重未处理
                                 $userWeight = $newOverloadWeight;
                             } else if ($orders['overload_status'] == 2) { // 超重已处理（支付过超重费）
@@ -458,9 +459,7 @@ class Afterlist extends Backend
                             $adminDiffAmt = bcmul($agentWeight, $orders['admin_xuzhong'], 2);//平台差价金额
                             if ($orders['pay_type'] == 3) $usersDiffAmt = $agentDiffAmt;
                             $Dbcommon->set_agent_amount($orders['agent_id'], 'setDec', $agentDiffAmt, 4, '订单号：'.$orders['out_trade_no'] . ' 超重扣除金额：' . $agentDiffAmt . '元');
-                            $up_data['final_freight'] = number_format($orders['final_freight'] + (float)$agentDiffAmt, 2);
                             $up_data['agent_price'] = number_format($orders['agent_price'] + (float)$agentDiffAmt, 2);
-                            $up_data['final_freight'] = number_format($orders['final_freight'] + (float)$adminDiffAmt, 2);
                             $remark = '核重扣款金额：' . $agentDiffAmt . '元';
                             $up_data['overload_price'] = $usersDiffAmt;//用户新超重金额
                             $up_data['agent_overload_price'] = $agentDiffAmt;//用户新超重金额

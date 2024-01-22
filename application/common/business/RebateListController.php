@@ -96,8 +96,17 @@ class RebateListController
 
             $beneficiary = Users::get(['myinvitecode' => $users['invitercode']]);
             if(empty($beneficiary)) return false;
-            $totalAmount = $beneficiary['money'] += $amount;
-            $beneficiary->isUpdate()->save(['money' => $totalAmount]);
+
+            // 直接返佣，更新用户余额。
+            $beneficiary->isUpdate()->save(['money' => $beneficiary['money'] += $immRebate]);
+
+            if($midRebate != 0){
+                // 间接返佣，更新用户余额。
+                $beneficiary2 = Users::get(['myinvitecode' => $users['fainvitercode']]);
+                if($beneficiary2)  $beneficiary2->isUpdate()->save(['money' => $beneficiary2['money'] += $midRebate]);
+            }
+
+            // 更新返佣状态
             $rebate->isUpdate()->save($update);
             Db::commit();
             return true;

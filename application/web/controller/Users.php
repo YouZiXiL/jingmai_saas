@@ -425,8 +425,8 @@ class Users extends Controller
             ->order("id","desc")
             ->page($page,$this->page_rows)
             ->where(function ($query) use($user_info){
-            $query->where("invitercode",$user_info->myinvitecode)->whereOr("fainvitercode",$user_info->myinvitecode);
-        })->select();
+                $query->where("invitercode",$user_info->myinvitecode)->whereOr("fainvitercode",$user_info->myinvitecode);
+            })->select();
         if(!empty($userorders)){
             foreach ($userorders as $userorder)
             {

@@ -803,7 +803,7 @@ class Wxcallback extends Controller
                 'KDNOrderCode' => $shopbill,
                 'OrderCode' => $out_trade_no,
                 'LogisticCode' => $waybill,
-                'Weight' => isset($resData['Weight'])? ceil($resData['Weight']):0,
+                'Weight' => $resData['Weight'] ?? 0,
                 'Cost' => $resData['Cost']??0, // 运费
                 'InsureAmount' => $resData['InsureAmount']??0, // 保价费
                 'PackageFee' => $resData['PackageFee']??0, // 包装费
@@ -4432,13 +4432,14 @@ class Wxcallback extends Controller
                 $up_data['final_weight']=$params["data"]['weightFee'];
                 $up_data['haocai_freight'] = 0;
                 $haocai = 0;
-
+                $insuredPrice = 0;
                 $originalFreight = 0;
                 foreach ($params["data"]["feeList"] as $fee){
-                    if($fee['type'] == 1){
+                    if($fee['type'] == 1){ // 运费
                         $originalFreight =  $fee["fee"];
-                    }else {
-                        //耗材
+                    }else if($fee['type'] == 2){ // 保价
+                        $insuredPrice = $fee["fee"];
+                    }else { //剩下的都是耗材
                         $haocai += $fee["fee"];
                     }
                 }
@@ -4469,6 +4470,25 @@ class Wxcallback extends Controller
                     KD100Sms::run()->material($orders);
                 }
 
+                if($insuredPrice > $orders['insured_price']){ // 保价
+                    $insuredPrice -= $orders['insured_price'];
+                    if(empty($orders['insured_time']) ){
+                        $data = [
+                            'type'=> 5,
+                            'insuredPrice' => $insuredPrice,
+                            'order_id' => $orders['id'],
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
+
+                        // 保价费用
+                        $up_data['insured_cost']= $insuredPrice;
+                        // 发送保价短信
+                        KD100Sms::run()->insured($orders);
+                        $rebateListController = new RebateListController();
+                        $rebateListController->upState($orders, $users, 2);
+                    }
+                }
 
                 $pamar=$params["data"];
                 //超轻处理
@@ -4496,22 +4516,18 @@ class Wxcallback extends Controller
                 //更改超重状态
                 if ($orders['weight']<$pamar['weightFee']&&empty($orders['final_weight_time'])){
                     $up_data['overload_status']=1;
-                    $overload_weight=ceil($pamar['weightFee']-$orders['weight']);//超出重量
-
-                    $weightprice= $diffWeightPrice??$pamar["totalFee"]-$haocai-$orders["final_price"];
-
-                    $dicount=number_format($orders["freight"]/$orders['originalFee'],2);
-
+                    $overloadPrice= $diffWeightPrice??$pamar["totalFee"]-$haocai-$orders["final_price"]; // 超重金额
+                    $up_data['admin_overload_price']=number_format($overloadPrice,2);
                     if($isNew){
-                        $up_data['overload_price']=number_format($weightprice,2);//用户超重金额
-                        $up_data['agent_overload_price']=number_format($weightprice,2);//代理商超重金额
-                        $up_data['admin_overload_price']=number_format($weightprice,2);//代理商超重金额
-                    }else{
-                        $up_data['overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100+$agent_info["sf_users_ratio"]/100),2);//用户超重金额
-                        $up_data['agent_overload_price']=number_format($weightprice*($dicount+$agent_info["sf_agent_ratio"]/100),2);//代理商超重金额
-                        $up_data['admin_overload_price']=number_format($weightprice*$dicount,2);//代理商超重金额
-                    }
+                        $up_data['overload_price']=number_format($overloadPrice,2);//用户超重金额
+                        $up_data['agent_overload_price']=number_format($overloadPrice,2);//代理商超重金额
 
+                    }else{
+                        //代理商超重金额
+                        $agentOverloadPrice = $overloadPrice +  $overloadPrice*$agent_info["sf_agent_ratio"]/100; // 代理商超重金额
+                        $up_data['agent_overload_price']=number_format($agentOverloadPrice,2);//代理商超重金额
+                        $up_data['overload_price']=number_format($agentOverloadPrice + $agentOverloadPrice*$agent_info["sf_users_ratio"]/100,2);//用户超重金额
+                    }
 
                     $data = [
                         'type'=>1,

@@ -410,8 +410,6 @@ class DoJob
                             $couponBusiness = new CouponBusiness();
                             $couponBusiness->notUsedStatus($row);
                         }
-
-
                     }
                 }catch (\Exception $e){
                     recordLog('queue-err', '取消订单'
