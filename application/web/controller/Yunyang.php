@@ -668,6 +668,7 @@ class Yunyang extends Controller
             case '圆通①':
                 $cpCode='YTO'; break;
             case '顺丰':
+            case '顺丰快递':
                 $cpCode='SF';
                 $data['tel']=$orders['sender_mobile'];
                 break;
