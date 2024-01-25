@@ -59,6 +59,20 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 });
             });
 
+            $(document).on('click', '.btn-auth-dy', function () {
+                Fast.api.ajax({
+                    url:"wxauth/authlist/auth_link?auth_type=4",
+                    loading:false,
+                },function (data) {
+                    window.open(data);
+                    return false;
+                },function (data, ret){
+
+                    Layer.msg(ret.msg);
+                    return false;
+                });
+            });
+
             // 初始化表格参数配置
             Table.api.init({
                 extend: {

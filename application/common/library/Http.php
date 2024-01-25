@@ -52,18 +52,22 @@ class Http
      * post请求
      * @param string $url
      * @param array $options
+     * @param array $header
      * @return bool|string
      * @throws Exception
      */
-    static public function post(string $url, array $options = [] )
+    static public function post(string $url, array $options = [], array $header = [] )
     {
 //         $data = http_build_query($options);
         $data = json_encode($options, JSON_UNESCAPED_UNICODE);
 
-        $header = array(
+        $headers = [
             'Content-Type: application/json',
-            'Content-Length: ' . strlen($data)
-        );
+        ];
+
+        if (!empty($header)){
+            $headers = array_merge($headers, $header);
+        }
 
         //初始化
         $curl = curl_init();
@@ -80,7 +84,7 @@ class Http
         // curl_setopt($curl, CURLOPT_TIMEOUT_MS, 500);
 
         // 设置请求头
-        curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
 
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE );
         curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE );

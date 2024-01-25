@@ -2,22 +2,29 @@
 
 namespace app\common\library\douyin\utils;
 
+use app\common\library\douyin\Douyin;
 use app\common\library\douyin\DyConfig;
 use Exception;
 
 class Utils
 {
+    use Common;
     /**
      * 获取component_ticket
      * @return bool|string
      * @throws \Exception
      */
     public function getComponentTicket(){
-        $ticket = cache( 'jx:dy:ticket');
-        if(!$ticket){
-            $ticket = db('dy_ticket')->where('id',1)->value('ticket');
-        }
-        return $ticket;
+        return $this->_getComponentTicket();
+    }
+
+
+    /**
+     * 获取第三方小程序access_token
+     * @throws Exception
+     */
+    public function getComponentAccessToken(){
+        return $this->_getComponentAccessToken();
     }
 
     /**

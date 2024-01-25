@@ -7,6 +7,7 @@ use app\admin\model\cdk\Cdklist;
 use app\common\controller\Backend;
 use app\common\library\alipay\AliConfig;
 use app\common\library\alipay\Alipay;
+use app\common\library\douyin\Douyin;
 use app\web\controller\Common;
 use app\web\model\AgentAuth;
 use Endroid\QrCode\QrCode;
@@ -136,7 +137,11 @@ class Authlist extends Backend
     public function auth_link(){
         $pamar=$this->request->param();
         if($pamar['auth_type'] == 3) {
-            $this->auth_ali($pamar);
+            $this->auth_ali();
+            return;
+        }
+        if($pamar['auth_type'] == 4){
+            $this->auth_douyin();
             return;
         }
         $common=new Common();
@@ -168,10 +173,9 @@ class Authlist extends Backend
 
     /**
      * 支付宝小程序授权
-     * @param $data
-     * @throws  Exception
+     * @throws Exception
      */
-    public function auth_ali($data){
+    public function auth_ali(){
         $redirectUri = request()->domain() . "/web/notice/aliappauth"; // 授权后的回调地址
         $appTypes = ["TINYAPP"]; // 可选值：APP、SERVICE，表示获取的授权令牌可用于哪种类型的应用
         $isvAppId = AliConfig::$appid; //  // 可选项，如果开发者是 ISV 应用，则需要传入 ISV 应用的 AppID
@@ -539,5 +543,17 @@ class Authlist extends Backend
         $agentAuth = $this->model->get($ids);
         $agentAuth->save(['map_key' => input('map')]);
         $this->success();
+    }
+
+    /**
+     * 抖音授权
+     * @return void
+     * @throws Exception
+     */
+    private function auth_douyin()
+    {
+        $options = Douyin::start();
+        $url = $options->auth()->getAuthLink();
+        $this->success('成功', '', $url);
     }
 }
