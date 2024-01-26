@@ -5,6 +5,8 @@ namespace app\common\library\douyin\utils;
 use app\common\library\douyin\Douyin;
 use app\common\library\douyin\DyConfig;
 use Exception;
+use think\Cache;
+use think\exception\PDOException;
 
 class Utils
 {
@@ -18,6 +20,23 @@ class Utils
         return $this->_getComponentTicket();
     }
 
+    /**
+     * 将抖音推送过来的component_ticket存储到缓存（有效期3个小时）
+     * @param $ticket
+     * @return void
+     * @throws \think\Exception
+     * @throws PDOException
+     */
+    public function setComponentTicket($ticket){
+        Cache::store('redis')->set('jx:dy:ticket', $ticket, 10500);
+        // 更新数据库的component_ticket
+        $ticketDb = db('dy_ticket')->where('id',1)->value('ticket');
+        if($ticket != $ticketDb){
+            db('dy_ticket')->where('id',1)->update(['ticket' => $ticket]);
+        }
+
+    }
+
 
     /**
      * 获取第三方小程序access_token
@@ -25,6 +44,62 @@ class Utils
      */
     public function getComponentAccessToken(){
         return $this->_getComponentAccessToken();
+    }
+
+    /**
+     * 存储授权小程序接口调用凭证authorizer_access_token，有效期为2小时（7200秒）
+     * @param int $authId int agent_auth表中的id
+     * @param string $accessToken
+     * @param int $expiresIn
+     * @return void
+     */
+    public function setAuthorizerAccessToken(int $authId, string $accessToken, int $expiresIn = 7100){
+        Cache::store('redis')->set('jx:dy:authorizer_access_token:'.$authId, $accessToken, $expiresIn);
+    }
+
+
+    /**
+     * 存储刷新令牌authorizer_refresh_token，有效期30天（259200秒）
+     * @param int $authId
+     * @param string $refreshToken
+     * @param int $expiresIn
+     * @return void
+     */
+    public function setAuthorizerRefreshToken(int $authId, string $refreshToken, int $expiresIn = 2591000){
+        Cache::store('redis')->set('jx:dy:authorizer_refresh_token:'.$authId, $refreshToken, $expiresIn);
+    }
+
+    /**
+     * 通过授权码获取授权小程序接口调用凭证authorizer_access_token
+     * @param int $authId int agent_auth表中的id
+     * @return mixed
+     * @throws Exception
+     */
+    public function getAuthorizerAccessToken(int $authId){
+        $token = Cache::store('redis')->get('jx:dy:authorizer_access_token:'.$authId);
+        if($token) return $token;
+        return $this->reAuthorizerAccessToken($authId);
+    }
+
+    /**
+     * 找回authorizer_access_token
+     * @param int $authId int agent_auth表中的id
+     * @return mixed
+     * @throws Exception
+     */
+    public function reAuthorizerAccessToken(int $authId){
+        $reToken = Cache::store('redis')->get('jx:dy:authorizer_refresh_token:' . $authId);
+        if($reToken){
+            $result = $this->_reAuthorizerAccessToken($reToken);
+        }else{
+            $appid = db('agent_auth')->where('id', $authId)->value('app_id');
+            // 获取授权码
+            $authCode = $this->retrieveAuthCode($appid);
+            $result = $this->_getAuthorizerAccessToken($authCode);
+        }
+        $this->setAuthorizerAccessToken($authId, $result['authorizer_access_token']);
+        $this->setAuthorizerRefreshToken($authId, $result['authorizer_refresh_token']);
+        return $result['authorizer_access_token'];
     }
 
     /**

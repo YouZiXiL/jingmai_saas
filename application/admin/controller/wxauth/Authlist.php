@@ -553,7 +553,7 @@ class Authlist extends Backend
     private function auth_douyin()
     {
         $options = Douyin::start();
-        $url = $options->auth()->getAuthLink();
+        $url = $options->auth()->getAuthLink($this->auth->id);
         $this->success('成功', '', $url);
     }
 }

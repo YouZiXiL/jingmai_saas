@@ -23,11 +23,7 @@ class Notice extends Controller
             $body = $options->utils()->decrypt($params['Encrypt']);
             // 保存component_ticket
             $content = json_decode($body, true);
-            cache( 'jx:dy:ticket', $content['Ticket'], 7200);
-            $ticket = db('dy_ticket')->where('id',1)->value('ticket');
-            if($ticket != $content['Ticket']){
-                db('dy_ticket')->where('id',1)->update(['ticket' => $content['Ticket']]);
-            }
+            $options->utils()->setComponentTicket($content['Ticket']);
         }catch (\Exception $e){
             recordLog('dy-ticket', $e->getMessage());
         }
