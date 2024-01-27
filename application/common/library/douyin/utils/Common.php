@@ -9,6 +9,7 @@ use think\Cache;
 trait Common
 {
     private string $baseUrl = DyConfig::BASE_URI_V2;
+    private string $baseUrl1 = DyConfig::BASE_URI_V1;
     private string $componentAppid = DyConfig::COMPONENT_APPID;
     private string $componentAppsecret = DyConfig::COMPONENT_APPSECRET;
     /**
@@ -51,6 +52,31 @@ trait Common
         }
     }
 
+    /**
+     * 获取component_access_token V1版本
+     * @return bool|string
+     * @throws \Exception
+     */
+    private function _getComponentAccessTokenV1(){
+        $cacheId = 'jx:dy:component_access_token_v1';
+        $token = Cache::store('redis')->get($cacheId);
+        if ($token) return $token;
+        $url = $this->baseUrl1 . '/openapi/v1/auth/tp/token';
+        $json =  $this->get($url, [
+            'component_appid' => $this->componentAppid,
+            'component_appsecret' => $this->componentAppsecret,
+            'component_ticket' => $this->_getComponentTicket(),
+        ]);
+        $result = json_decode($json, true);
+        if (isset($result['component_access_token'])){
+            $token =  $result['component_access_token'];
+            Cache::store('redis')->set($cacheId, $token, 7000);
+            return $token;
+        }else{
+            recordLog('dy-auth','获取component_access_token失败：'.$json);
+            throw new \Exception('获取component_access_token失败：'.$json);
+        }
+    }
 
     /**
      * 通过授权码获取授权小程序接口调用凭证authorizer_access_token
@@ -58,7 +84,7 @@ trait Common
      * @return mixed
      * @throws Exception
      */
-    private function _getAuthorizerAccessToken(string $authCode){
+    private function _getAuthorizerAccessTokenByCode(string $authCode){
         $url = $this->baseUrl . '/api/tpapp/v2/auth/get_auth_token';
         $json =  $this->get(
             $url,
@@ -73,6 +99,32 @@ trait Common
         $result = json_decode($json, true);
         if (isset($result['data']['authorizer_access_token'])){
             return $result['data'];
+        }else{
+            recordLog('dy-auth','获取authorizer_access_token失败：'.$json);
+            throw new \Exception('获取authorizer_access_token失败：'.$json);
+        }
+    }
+
+    /**
+     * 通过授权码获取授权小程序接口调用凭证authorizer_access_token V1
+     * @param $authCode string 授权码
+     * @return mixed
+     * @throws Exception
+     */
+    private function _getAuthorizerAccessTokenByCodeV1(string $authCode){
+        $url = $this->baseUrl1 . '/openapi/v1/oauth/token';
+        $json =  $this->get(
+            $url,
+            [
+                'component_appid' => $this->componentAppid,
+                'component_access_token' => $this->_getComponentAccessTokenV1(),
+                'authorization_code' => $authCode,
+                'grant_type' => 'app_to_tp_authorization_code',
+            ],
+        );
+        $result = json_decode($json, true);
+        if (isset($result['authorizer_access_token'])){
+            return $result;
         }else{
             recordLog('dy-auth','获取authorizer_access_token失败：'.$json);
             throw new \Exception('获取authorizer_access_token失败：'.$json);
@@ -119,6 +171,27 @@ trait Common
         }else{
             recordLog('dy-auth','获取authorization_code失败：'.$json);
             throw new \Exception('获取authorization_code失败：'.$json);
+        }
+    }
+
+    /**
+     * 找回已授权的小程序的授权码V1版本(在refresh_token令牌丢失的情况下，用此接口找到它们)
+     * @param string $appid 授权小程序的appid
+     * @throws Exception
+     */
+    private function retrieveAuthCodeV1(string $appid){
+        $url = $this->baseUrl1 . '/openapi/v1/auth/retrieve';
+        $json = $this->post($url, [
+            'component_appid' => $this->componentAppid,
+            'component_access_token' => $this->_getComponentAccessTokenV1(),
+            'authorization_appid' => $appid
+        ]);
+        $result = json_decode($json, true);
+        if (isset($result['authorization_code'])){
+            return $result['authorization_code'];
+        }else{
+            recordLog('dy-auth','V1获取authorization_code失败：'.$json);
+            throw new \Exception('V1获取authorization_code失败：'.$json);
         }
     }
 

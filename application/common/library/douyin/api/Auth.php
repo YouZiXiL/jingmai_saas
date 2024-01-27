@@ -42,8 +42,18 @@ class Auth
      * @return mixed
      * @throws Exception
      */
-    public function getAuthorizerAccessToken(string $authCode){
-        return $this->_getAuthorizerAccessToken($authCode);
+    public function getAuthorizerAccessTokenByCode(string $authCode){
+        return $this->_getAuthorizerAccessTokenByCode($authCode);
+    }
+
+    /**
+     * 通过授权码获取授权小程序接口调用凭证authorizer_access_token
+     * @param $authCode string 授权码
+     * @return mixed
+     * @throws Exception
+     */
+    public function getAuthorizerAccessTokenByCodeV1(string $authCode){
+        return $this->_getAuthorizerAccessTokenByCodeV1($authCode);
     }
 
     /**

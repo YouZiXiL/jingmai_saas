@@ -12,7 +12,7 @@ class Users extends Model
      * 获取头像完整url
      */
     public function getAvatarAttr($value,$data){
-        return request()->domain() . $value;
+        return $value? request()->domain() . $value: request()->domain() . '/assets/img/front-avatar.png';
     }
 
     public function getinviteusers(){

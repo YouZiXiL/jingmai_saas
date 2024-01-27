@@ -3,8 +3,9 @@
 namespace app\web\controller;
 
 use app\admin\model\basicset\Banner;
-use app\common\library\alipay\AliConfig;
-use app\common\library\alipay\AliConfigB;
+use app\web\business\douyin\Auth as Dy;
+use app\web\business\LoginBusiness;
+use  app\web\business\wx\Auth as Wx;
 use app\common\library\alipay\Alipay;
 use app\common\library\alipay\aop\AopUtils;
 use app\common\library\R;
@@ -55,72 +56,61 @@ class Login extends Controller
                 Log::error(json_encode($param));
                 return json(['status'=>400,'data'=>'','msg'=>'请重新登录']);
             }
-            $url = "https://api.weixin.qq.com/sns/component/jscode2session?component_access_token=" .$this->common->get_component_access_token().'&appid='. $param['app_id'] . "&component_appid=" . config('site.kaifang_appid') . "&js_code=" . $param['code'] . "&grant_type=authorization_code";
-            $url=$this->common->httpRequest($url);
-
-            $json_obj=json_decode($url,true);
-            if (empty($json_obj['openid'])){
-                return json(['status'=>400,'data'=>'','msg'=>$json_obj['errmsg']]);
-            }
-            //  存储登录态
-            $_3rd_session=$this->common->get_uniqid();
-            $user = new Users;
-            if (!empty($param["agent_id"])){
-                $agentAuth=db('agent_auth')
-                    ->field('id,agent_id')
-                    ->where('agent_id',$param['agent_id'])
-                    ->find();
-            }else{
-                $agentAuth=db('agent_auth')
-                    ->field('id,agent_id')
-                    ->where('app_id',$param['app_id'])
-                    ->find();
-            }
-            if (empty($agentAuth)){
-                return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
-            }
+            $agentAuth = AgentAuth::where('app_id', $param['app_id'])->field('id,agent_id')->find();
+            if (empty($agentAuth))  return R::error('小程序未授权');
             $agent_id = $agentAuth['agent_id'];
             $auth_id = $agentAuth['id'];
-            $user_info=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
-            $auth_ids = [];
-            if (!empty($user_info['auth_ids'])) $auth_ids = explode(',', $user_info['auth_ids']);
-
-            if(!in_array($auth_id, $auth_ids)){
-                $auth_ids[]=$auth_id;
-            }
-
             // 是否手机授权登录：0=不使用，1=使用
-            $authPhone = db('agent_config')->where('agent_id',$agentAuth['agent_id'])
-                ->field('id,auth_phone')
-                ->value('auth_phone');
-//if ($param['app_id'] == 'wx4e1c5790644d5936'){
-//    dd($agentAuth['agent_id']);
-//}
-            $auth_ids = implode(',', $auth_ids);
-            $time=time();
-            if(empty($user_info)){ // 没有这个用户，注册用户
-                if($authPhone){
-                    if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
-                        $mobile=$this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
-                        if (!$mobile){
-                            return json(['status'=>400,'data'=>'','msg'=>'信息解密失败']);
-                        }
-                        $user_info['mobile']= $mobile['phoneNumber'];
-                        $user_info['nick_name'] = $mobile['phoneNumber'];
-                    }else{
-                        return R::code(401,'未授权');
+            $authPhone = db('agent_config')->where('agent_id',$agent_id)->field('id,auth_phone')->value('auth_phone');
+
+            $auth = new Wx();
+            $json_obj = $auth->login($param);
+            if($authPhone){
+                if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
+                    $wxDecryption = $this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
+                    if (!$wxDecryption){
+                        return R::error('信息解密失败');
                     }
+                    $mobile = $wxDecryption['phoneNumber'];
+                    $nickName = $mobile;
                 }else{
-                    $nickName = $this->shuffleName();
-                    $user_info['nick_name'] = $nickName;
-                    $user_info['mobile'] = '';
+                    return R::code(401,'未授权');
                 }
+            }else{
+                $nickName = $this->shuffleName();
+                $mobile  ='';
+            }
+            $user = new Users;
+            $user_info=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
+            $time=time();
+            // 生成登录token
+            $_3rd_session=$this->common->get_uniqid();
+
+            if($user_info){ // 用户存在，更新用户信息
+                // 用户授权的应用ID
+                $auth_ids = [];
+                if (!empty($user_info['auth_ids'])) $auth_ids = explode(',', $user_info['auth_ids']);
+                if(!in_array($auth_id, $auth_ids))  $auth_ids[]=$auth_id;
+                $auth_ids = implode(',', $auth_ids);
+
+                $data=[
+                    'login_time' => $time,
+                    'agent_id'   => $agent_id,
+                    'token'      => $_3rd_session,
+                    'auth_ids'    => $auth_ids
+                ];
+                // 更新用信息
+                $isSave = $user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
+                $user_id = $user_info['id'];
+            }else{ // 用户不存在，注册用户
+                $user_info['nick_name'] = $nickName;
+                $user_info['mobile'] = $mobile;
                 $user_info['open_id']=$json_obj['openid'];
                 $user_info['create_time']=$time;
                 $user_info['login_time']=$time;
                 $user_info['agent_id']=$agent_id;
                 $user_info['token']= $_3rd_session;
-                $user_info['auth_ids'] = $auth_ids;
+                $user_info['auth_ids'] = $auth_id;
                 //如果携带邀请码登录
                 if(!empty($param["invitcode"])){
                     $invitcode = explode('%3D', $param["invitcode"])[1]??'';
@@ -141,21 +131,89 @@ class Login extends Controller
                     }
                 }
                 $user_info = Users::create($user_info);
-                $user_id=$user_info['id'];
+                $user_id = $user_info['id'];
                 $isSave = true; // 创建成功
             }
-            else { // 用户登录
-                $data=[
-                    'login_time' => $time,
-                    'agent_id'   => $agent_id,
-                    'token'      => $_3rd_session,
-                    'auth_ids'    => $auth_ids
-                ];
-                $isSave=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
-                $user_id = $user_info['id'];
-            }
+
+//            $url = "https://api.weixin.qq.com/sns/component/jscode2session?component_access_token=" .$this->common->get_component_access_token().'&appid='. $param['app_id'] . "&component_appid=" . config('site.kaifang_appid') . "&js_code=" . $param['code'] . "&grant_type=authorization_code";
+//            $url=$this->common->httpRequest($url);
+//
+//            $json_obj=json_decode($url,true);
+//            if (empty($json_obj['openid'])){
+//                return json(['status'=>400,'data'=>'','msg'=>$json_obj['errmsg']]);
+//            }
+            //  存储登录态
+//            $_3rd_session=$this->common->get_uniqid();
+
+//            if (!empty($param["agent_id"])){
+//                $agentAuth=db('agent_auth')
+//                    ->field('id,agent_id')
+//                    ->where('agent_id',$param['agent_id'])
+//                    ->find();
+//            }else{
+//                $agentAuth=db('agent_auth')
+//                    ->field('id,agent_id')
+//                    ->where('app_id',$param['app_id'])
+//                    ->find();
+//            }
+//            if (empty($agentAuth)){
+//                return json(['status'=>400,'data'=>'','msg'=>'未授权此小程序']);
+//            }
+
+
+//            $auth_ids = [];
+//            if (!empty($user_info['auth_ids'])) $auth_ids = explode(',', $user_info['auth_ids']);
+//            if(!in_array($auth_id, $auth_ids))  $auth_ids[]=$auth_id;
+//            $auth_ids = implode(',', $auth_ids);
+//
+//            $time=time();
+//            if(empty($user_info)){ // 没有这个用户，注册用户
+//                if($authPhone){
+//                }else{
+//                    $nickName = $this->shuffleName();
+//                    $user_info['nick_name'] = $nickName;
+//                    $user_info['mobile'] = '';
+//                }
+//                $user_info['open_id']=$json_obj['openid'];
+//                $user_info['create_time']=$time;
+//                $user_info['login_time']=$time;
+//                $user_info['agent_id']=$agent_id;
+//                $user_info['token']= $_3rd_session;
+//                $user_info['auth_ids'] = $auth_ids;
+//                //如果携带邀请码登录
+//                if(!empty($param["invitcode"])){
+//                    $invitcode = explode('%3D', $param["invitcode"])[1]??'';
+//                    recordLog('invite-code',
+//                        '参数邀请码-' . $param["invitcode"] . PHP_EOL
+//                        .'邀请码-' . $invitcode
+//                    );
+//                    if(!empty($invitcode)){
+//                        $pauser=$user->get(["myinvitecode"=>$invitcode]);
+//                        if(!empty($pauser)){
+//                            $user_info["invitercode"]=$invitcode;
+//                            $user_info["fainvitercode"]=$pauser["invitercode"];
+//                        }
+//                        //超级B 身份核验
+//                        if(!empty($pauser->rootid)){
+//                            $user_info["rootid"]=$pauser["rootid"];
+//                        }
+//                    }
+//                }
+//                $user_info = Users::create($user_info);
+//                $user_id=$user_info['id'];
+//                $isSave = true; // 创建成功
+//            }
+//            else { // 用户登录
+//                $data=[
+//                    'login_time' => $time,
+//                    'agent_id'   => $agent_id,
+//                    'token'      => $_3rd_session,
+//                    'auth_ids'    => $auth_ids
+//                ];
+//                $isSave=$user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
+//                $user_id = $user_info['id'];
+//            }
             if ($isSave){
-                $data=['status'=>200,'data'=>$_3rd_session,'msg'=>'登录成功'];
                 $session=[
                     'id' =>$user_id,
                     'mobile' => $user_info['mobile'],
@@ -187,6 +245,26 @@ class Login extends Controller
 
         }catch (\Exception $exception){
             recordLog('wx-shouquan-err', "登录失败：" . PHP_EOL .
+                $exception->getLine() . $exception->getMessage() . PHP_EOL .
+                $exception->getTraceAsString());
+            return R::error('登录失败');
+        }
+    }
+
+    /**
+     * 用户登录
+     * @return  Json
+     */
+    public function login(LoginBusiness $loginBusiness){
+        try{
+            $params = input();
+            if (empty($params['app_id'])||trim($params['code'])=='null'){
+                return R::error('参数错误');
+            }
+            $info = $loginBusiness->login($params);
+            return R::ok($info);
+        }catch (\Exception $exception){
+            recordLog('login-err', "登录失败：" . PHP_EOL .
                 $exception->getLine() . $exception->getMessage() . PHP_EOL .
                 $exception->getTraceAsString());
             return R::error('登录失败');

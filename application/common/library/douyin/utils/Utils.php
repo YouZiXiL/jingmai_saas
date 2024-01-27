@@ -47,6 +47,14 @@ class Utils
     }
 
     /**
+     * 获取第三方小程序access_token V1版本
+     * @throws Exception
+     */
+    public function getComponentAccessTokenV1(){
+        return $this->_getComponentAccessTokenV1();
+    }
+
+    /**
      * 存储授权小程序接口调用凭证authorizer_access_token，有效期为2小时（7200秒）
      * @param int $authId int agent_auth表中的id
      * @param string $accessToken
@@ -55,6 +63,18 @@ class Utils
      */
     public function setAuthorizerAccessToken(int $authId, string $accessToken, int $expiresIn = 7100){
         Cache::store('redis')->set('jx:dy:authorizer_access_token:'.$authId, $accessToken, $expiresIn);
+    }
+
+
+    /**
+     * 存储授权小程序接口调用凭证authorizer_access_token，有效期为2小时（7200秒）V1版本
+     * @param int $authId int agent_auth表中的id
+     * @param string $accessToken
+     * @param int $expiresIn
+     * @return void
+     */
+    public function setAuthorizerAccessTokenV1(int $authId, string $accessToken, int $expiresIn = 7100){
+        Cache::store('redis')->set('jx:dy:authorizer_access_token_v1:'.$authId, $accessToken, $expiresIn);
     }
 
 
@@ -70,35 +90,57 @@ class Utils
     }
 
     /**
-     * 通过授权码获取授权小程序接口调用凭证authorizer_access_token
+     * 存储刷新令牌authorizer_refresh_token，有效期30天（259200秒） V1
+     * @param int $authId
+     * @param string $refreshToken
+     * @param int $expiresIn
+     * @return void
+     */
+    public function setAuthorizerRefreshTokenV1(int $authId, string $refreshToken, int $expiresIn = 2591000){
+        Cache::store('redis')->set('jx:dy:authorizer_refresh_token_v1:'.$authId, $refreshToken, $expiresIn);
+    }
+
+    /**
+     * 获取授权小程序接口调用凭证authorizer_access_token
      * @param int $authId int agent_auth表中的id
      * @return mixed
      * @throws Exception
      */
     public function getAuthorizerAccessToken(int $authId){
+        // 获取access_token
         $token = Cache::store('redis')->get('jx:dy:authorizer_access_token:'.$authId);
         if($token) return $token;
-        return $this->reAuthorizerAccessToken($authId);
-    }
-
-    /**
-     * 找回authorizer_access_token
-     * @param int $authId int agent_auth表中的id
-     * @return mixed
-     * @throws Exception
-     */
-    public function reAuthorizerAccessToken(int $authId){
-        $reToken = Cache::store('redis')->get('jx:dy:authorizer_refresh_token:' . $authId);
-        if($reToken){
-            $result = $this->_reAuthorizerAccessToken($reToken);
+        // 获取refresh_token
+        $refreshToken = Cache::store('redis')->get('jx:dy:authorizer_refresh_token:' . $authId);
+        if($refreshToken){
+            $result = $this->_reAuthorizerAccessToken($refreshToken);
         }else{
             $appid = db('agent_auth')->where('id', $authId)->value('app_id');
             // 获取授权码
             $authCode = $this->retrieveAuthCode($appid);
-            $result = $this->_getAuthorizerAccessToken($authCode);
+            $result = $this->_getAuthorizerAccessTokenByCode($authCode);
         }
         $this->setAuthorizerAccessToken($authId, $result['authorizer_access_token']);
         $this->setAuthorizerRefreshToken($authId, $result['authorizer_refresh_token']);
+        return $result['authorizer_access_token'];
+    }
+
+    /**
+     * 获取授权小程序接口调用凭证authorizer_access_token V1版本
+     * @param int $authId int agent_auth表中的id
+     * @return mixed
+     * @throws Exception
+     */
+    public function getAuthorizerAccessTokenV1(int $authId){
+        // 获取access_token
+        $token = Cache::store('redis')->get('jx:dy:authorizer_access_token_v1:'.$authId);
+        if($token) return $token;
+
+        $appid = db('agent_auth')->where('id', $authId)->value('app_id');
+        // 获取授权码
+        $authCode = $this->retrieveAuthCode($appid);
+        $result = $this->_getAuthorizerAccessTokenByCodeV1($authCode);
+        $this->setAuthorizerAccessTokenV1($authId, $result['authorizer_access_token']);
         return $result['authorizer_access_token'];
     }
 

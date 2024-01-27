@@ -21,9 +21,11 @@ class Notice extends Controller
             if (!$verify)  recordLog('dy-CheckSign',  '签名验证失败：'.json_encode($params));
             // 解密推送消息，获取component_ticket
             $body = $options->utils()->decrypt($params['Encrypt']);
+            recordLog('dy-decrypt',  '解密内容：'.$body);
             // 保存component_ticket
             $content = json_decode($body, true);
-            $options->utils()->setComponentTicket($content['Ticket']);
+            if (isset($content['Ticket']))  $options->utils()->setComponentTicket($content['Ticket']);
+
         }catch (\Exception $e){
             recordLog('dy-ticket', $e->getMessage());
         }

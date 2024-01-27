@@ -21,7 +21,7 @@ class Auth extends Controller
         $authCode = $params['authorization_code'];
         $options = Douyin::start();
         // 获取用户授权的访问令牌
-        $result = $options->auth()->getAuthorizerAccessToken($authCode);
+        $result = $options->auth()->getAuthorizerAccessTokenByCode($authCode);
         recordLog('dy-callback', json_encode($result));
         $info = $options->xcx()->getInfo($result['authorizer_access_token']);
         $data = [
@@ -46,6 +46,10 @@ class Auth extends Controller
             }
             $options->utils()->setAuthorizerAccessToken($agentAuth['id'], $result['authorizer_access_token']);
             $options->utils()->setAuthorizerRefreshToken($agentAuth['id'], $result['authorizer_refresh_token']);
+
+            // 存储v1版本authorizer_access_token ，部分v1版本接口需要使用
+            $resultV1 = $options->auth()->getAuthorizerAccessTokenByCodeV1($authCode);
+            $options->utils()->setAuthorizerAccessTokenV1($agentAuth['id'], $resultV1['authorizer_access_token']);
             Db::commit();
         } catch (\Exception $e) {
             Db::rollback();
