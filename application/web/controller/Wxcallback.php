@@ -4720,10 +4720,6 @@ class Wxcallback extends Controller
 
                 // 超重和耗材
                 if(!empty($addpriceInfos)){
-
-                    $jiLu = new JiLuBusiness();
-                    $cost = $jiLu->getCost($order['sender_province'], $order['receive_province']);
-                    $morePrice = $cost['more_weight']; // 续重单价
                     $newPrice = 0; // 新增补缴费用
                     $material = 0; // 耗材
                     $addWeight = 0; // 新增重量（续重）
@@ -4751,12 +4747,11 @@ class Wxcallback extends Controller
                         $update['final_freight'] = $finalFreight + $newPrice;
                         $update['admin_price'] = $finalFreight + $newPrice;
                         // 平台超重金额
-                        $update['admin_overload_price'] = $morePrice * $addWeight;
+                        $update['admin_overload_price'] = $order['admin_xuzhong'] * $addWeight;
                         // 代理商超重金额
-                        $morePriceAgent = $morePrice + $profit['more_weight'];
-                        $update['agent_overload_price'] = $morePriceAgent * $addWeight;
+                        $update['agent_overload_price'] = $order['agent_xuzhong'] * $addWeight;
                         // 用户超重金额
-                        $update['overload_price'] = ($morePriceAgent +  $profit['user_more_weight']) * $addWeight;
+                        $update['overload_price'] = $order['users_xuzhong'] * $addWeight;
 
                         $pushData = [
                             'type'=>1,
@@ -4821,17 +4816,13 @@ class Wxcallback extends Controller
                     }
                     $update['final_freight'] =  $finalFreight - $subpriceInfo['subMemberMoney'];
                     $update['admin_price'] =  $finalFreight - $subpriceInfo['subMemberMoney'];
-                    $jiLu = new JiLuBusiness();
-                    $cost = $jiLu->getCost($order['sender_province'], $order['receive_province']);
                     // 退款重量（超轻重量）
                     $subWeight = $subpriceInfo['subWeight'];
-                    // 代理商超续重单价
-                    $morePriceAgent = $cost['more_weight'] + $profit['more_weight'];
                     // 代理商超轻金额
-                    $update['admin_tralight_price'] = $cost['more_weight'] * $subWeight;
-                    $update['agent_tralight_price'] = $morePriceAgent * $subWeight;
+                    $update['admin_tralight_price'] = $order['admin_xuzhong'] * $subWeight;
+                    $update['agent_tralight_price'] = $order['agent_xuzhong'] * $subWeight;
                     // 用户超轻金额
-                    $update['tralight_price'] = ($morePriceAgent +  $profit['user_more_weight']) * $subWeight;
+                    $update['tralight_price'] = $order['users_xuzhong'] * $subWeight;
 
                     $update['tralight_status']=1;
                     $update['final_weight_time']=time();
