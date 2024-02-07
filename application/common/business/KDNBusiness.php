@@ -428,8 +428,8 @@ class KDNBusiness
 
         $weight =  ceil($param['weight']); // 下单重量
         $reWeight = $weight-1; // 续重重量
-        $onePrice = $cost['one_price']; // 平台首重单价
-        $rePrice = $cost['more_price']; // 平台续重单价
+        $onePrice = $cost['one_price'] + 5; // 平台首重单价
+        $rePrice = $cost['more_price'] + 0.5; // 平台续重单价
         $freight = number_format($onePrice + $rePrice * $reWeight, 2) ; // 平台预估运费
 
 

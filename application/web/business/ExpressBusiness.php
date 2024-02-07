@@ -352,7 +352,7 @@ class ExpressBusiness
             list($yyRes, $qbdRes) = $response;
 
             $yy =  $yunYang->advanceHandleBySF($yyRes, $agent_info, $data);
-            $qbd = $qbdBusiness->advanceHandle($qbdRes, $agent_info, $data);
+            $qbd = [];// $qbdBusiness->advanceHandle($qbdRes, $agent_info, $data);
             $result = array_merge_recursive($yy,$qbd);
             $result = array_filter($result, function($subArray) {
                 return !empty($subArray);

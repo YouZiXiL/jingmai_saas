@@ -85,7 +85,7 @@ class Shunfeng extends Controller
             list($yyRes, $qbdRes) = $response;
 
             $yy =  $yunYang->advanceHandleBySF($yyRes, $agent_info, $param);
-            $qbd = $qbdBusiness->advanceHandle($qbdRes, $agent_info, $param);
+            $qbd = [];// $qbdBusiness->advanceHandle($qbdRes, $agent_info, $param);
             $result = array_merge_recursive($yy,$qbd);
             $result = array_filter($result, function($subArray) {
                 return !empty($subArray);
