@@ -2,6 +2,7 @@
 
 namespace app\admin\controller\wxauth;
 
+use app\admin\business\dy\Version;
 use app\admin\model\Admin;
 use app\admin\model\cdk\Cdklist;
 use app\common\controller\Backend;
@@ -321,10 +322,16 @@ class Authlist extends Backend
      * @return void
      * @throws Exception
      */
-    public function uploads_app($ids=null){
+    public function uploads_app($ids){
         $row = $this->model->get($ids);
         if ($row['wx_auth'] == 2){
             $this->aliUpload($row);
+            return;
+        }
+
+        if ($row['wx_auth'] == 3){
+            $dyXcx = new Version();
+            $dyXcx->upload($row);
             return;
         }
         $common=new Common();

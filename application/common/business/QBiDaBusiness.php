@@ -54,8 +54,8 @@ class QBiDaBusiness
         $header =  $this->setParam();
         $res = $this->utils->httpRequest($url,[], 'POST',$header );
         $result = json_decode($res, true);
-        if($result['code'] != 0) return $result['msg'];
-        return $result['data']['balance'];
+        if(isset($result['data']['balance'])) return $result['data']['balance'];
+        return $result['msg']??'查询失败';
     }
 
     /**

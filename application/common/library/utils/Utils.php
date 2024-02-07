@@ -3,6 +3,7 @@
 namespace app\common\library\utils;
 
 use PhpOffice\PhpSpreadsheet\Reader\Xls\MD5;
+use think\Cache;
 
 class Utils
 {
@@ -35,4 +36,29 @@ class Utils
     public static function invite(){
          return strtoupper(md5(str_shuffle(time()) . time())) ;
     }
+
+    /**
+     * 缓存已选择的快递
+     * @param $data
+     * @param string $key
+     * @return float|int
+     */
+    public static function setExpressData($data, string $key = '')
+    {
+        $requireId = $key?:SnowFlake::createId();
+        Cache::store('redis')->set($requireId, json_encode($data,JSON_UNESCAPED_UNICODE ), 1800);
+        return $requireId;
+    }
+
+    /**
+     * 缓存已选择的快递
+     * @param string $key
+     * @return mixed
+     */
+    public static function getExpressData(string $key)
+    {
+        return Cache::store('redis')->get($key);
+    }
+
+
 }

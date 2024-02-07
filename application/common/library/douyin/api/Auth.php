@@ -2,16 +2,16 @@
 
 namespace app\common\library\douyin\api;
 
-use app\common\library\douyin\DyConfig;
+use app\common\library\douyin\config\Config;
 use app\common\library\douyin\utils\Common;
 use Exception;
 
 class Auth
 {
-    private string $baseUrl1 = DyConfig::BASE_URI_V1;
-    private string $baseUrl = DyConfig::BASE_URI_V2;
-    private string $componentAppid = DyConfig::COMPONENT_APPID;
-    private string $componentAppsecret = DyConfig::COMPONENT_APPSECRET;
+    private string $baseUrl1 = Config::BASE_URI_V1;
+    private string $baseUrl = Config::BASE_URI_V2;
+    private string $componentAppid = Config::COMPONENT_APPID;
+    private string $componentAppsecret = Config::COMPONENT_APPSECRET;
     use Common;
 
     /**

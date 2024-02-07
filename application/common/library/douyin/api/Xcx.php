@@ -2,7 +2,7 @@
 
 namespace app\common\library\douyin\api;
 
-use app\common\library\douyin\DyConfig;
+use app\common\library\douyin\config\Config;
 use app\common\library\douyin\utils\Common;
 
 /**
@@ -10,10 +10,10 @@ use app\common\library\douyin\utils\Common;
  */
 class Xcx
 {
-    private string $baseUrl = DyConfig::BASE_URI_V2;
-    private string $baseUrl1 = DyConfig::BASE_URI_V1;
-    private string $componentAppid = DyConfig::COMPONENT_APPID;
-    private string $componentAppsecret = DyConfig::COMPONENT_APPSECRET;
+    private string $baseUrl = Config::BASE_URI_V2;
+    private string $baseUrl1 = Config::BASE_URI_V1;
+    private string $componentAppid = Config::COMPONENT_APPID;
+    private string $componentAppsecret = Config::COMPONENT_APPSECRET;
     use Common;
 
     /**
@@ -54,6 +54,141 @@ class Xcx
         }else{
             recordLog('dy-auth','codeToSessionV1调用失败：'.$json);
             throw new \Exception('codeToSessionV1调用失败：'.$json);
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function uploadV1($authorizerAccessToken, $appid){
+        $componentAppid =  $this->componentAppid;
+        $url = $this->baseUrl1 . '/openapi/v1/microapp/package/upload?component_appid=' . $componentAppid .  '&authorizer_access_token=' . $authorizerAccessToken;
+        $json = $this->post($url,[
+            'template_id' => 32392,
+            'user_desc' => '上传代码',
+            'user_version' => '1.0.0',
+            'ext_json'=> json_encode([
+                'extEnable' => true,
+                'extAppid' => $appid,
+                "directCommit"=> true
+            ])
+        ],['access-token: '. $this->_getComponentAccessTokenV1()]);
+        $result = json_decode($json, true);
+        if (isset($result['errno']) && $result['errno'] == 0){
+            return $result;
+        }else{
+            recordLog('dy-auth','上传代码失败：'.$json);
+            throw new \Exception('上传代码失败：'.$json);
+        }
+    }
+
+    /**
+     * 获取模板小程序列表
+     * @throws \Exception
+     */
+    public function getTplAppList(){
+        $url = $this->baseUrl . '/api/tpapp/v2/template/get_tpl_app_list';
+        $json = $this->get($url,[],['access-token: '.$this->_getComponentAccessToken()]);
+        $result = json_decode($json, true);
+        if (isset($result['data'])){
+            return $result['data'];
+        }else{
+            recordLog('dy-auth','获取模板小程序列表失败：'.$json);
+            throw new \Exception('获取模板小程序列表失败：'.$json);
+        }
+    }
+
+    /**
+     * 获取模板列表
+     * @throws \Exception
+     */
+    public function getTplList(){
+        $url = $this->baseUrl . '/api/tpapp/v2/template/get_tpl_list';
+        $json = $this->get($url,[],['access-token: '.$this->_getComponentAccessToken()]);
+        $result = json_decode($json, true);
+        if (isset($result['data'])){
+            return $result['data'];
+        }else{
+            recordLog('dy-auth','获取模板列表失败：'.$json);
+            throw new \Exception('获取模板列表失败：'.$json);
+        }
+    }
+
+    /**
+     * 提审代码
+     * @return void
+     * @throws \Exception
+     */
+    public function auditV1($authorizerAccessToken){
+        $componentAppid =  $this->componentAppid;
+        $url = $this->baseUrl1 . '/openapi/v2/microapp/package/audit?component_appid=' . $componentAppid .  '&authorizer_access_token=' . $authorizerAccessToken;
+        $json = $this->post($url,[
+            "hostNames"=> ["toutiao", "douyin"],
+        ],['access-token: '. $this->_getComponentAccessTokenV1()]);
+        $result = json_decode($json, true);
+        if (isset($result['errno']) && $result['errno'] == 0){
+            return $result;
+        }else{
+            recordLog('dy-auth','提审代码失败：'.$json);
+            throw new \Exception('提审代码失败：'.$json);
+        }
+    }
+
+    /**
+     * 发布代码
+     * @return void
+     * @throws \Exception
+     */
+    public function releaseV1($authorizerAccessToken){
+        $componentAppid =  $this->componentAppid;
+        $url = $this->baseUrl1 . '/openapi/v1/microapp/package/release?component_appid=' . $componentAppid .  '&authorizer_access_token=' . $authorizerAccessToken;
+        $json = $this->post($url,[],['access-token: '. $this->_getComponentAccessTokenV1()]);
+        $result = json_decode($json, true);
+        if (isset($result['errno']) && $result['errno'] == 0){
+            return $result;
+        }else{
+            recordLog('dy-auth','发布代码失败：'.$json);
+            throw new \Exception('发布代码失败：'.$json);
+        }
+    }
+
+    /**
+     * 获取小程序版本列表信息
+     * @throws \Exception
+     */
+    public function versionListV1($authorizerAccessToken){
+        $componentAppid =  $this->componentAppid;
+        $url = $this->baseUrl1 . '/openapi/v1/microapp/package/versions?component_appid=' . $componentAppid .  '&authorizer_access_token=' . $authorizerAccessToken;
+        $json = $this->get($url,[],['access-token: '. $this->_getComponentAccessTokenV1()]);
+        $result = json_decode($json, true);
+        if (isset($result['data'])){
+            return $result['data'];
+        }else{
+            recordLog('dy-auth','获取小程序版本列表失败：'.$json);
+            throw new \Exception('获取小程序版本列表失败：'.$json);
+        }
+    }
+
+    /**
+     * 生成链接
+     * @throws \Exception
+     */
+    public function generateLink($accessToken, $appid, $path, $query='', $expireTime=null){
+        if (empty($expireTime)) $expireTime = time() + 3600 * 24 * 30;
+        $url = $this->baseUrl . '/api/apps/v1/url_link/generate';
+        $json = $this->post($url,[
+            'app_name' => 'douyin',
+            'app_id' => $appid,
+            'path' => $path,
+            'expire_time' => $expireTime,
+            'query' => $query,
+        ],['access-token: '. $accessToken]);
+        $result = json_decode($json, true);
+        if (isset($result['data'])){
+            return $result['data'];
+        }else{
+            recordLog('dy-auth','生成链接失败：'.$json);
+            throw new \Exception('生成链接失败：'.$json);
         }
     }
 }

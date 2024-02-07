@@ -2,8 +2,7 @@
 
 namespace app\common\library\douyin\utils;
 
-use app\common\library\douyin\Douyin;
-use app\common\library\douyin\DyConfig;
+use app\common\library\douyin\config\Config;
 use Exception;
 use think\Cache;
 use think\exception\PDOException;
@@ -73,7 +72,7 @@ class Utils
      * @param int $expiresIn
      * @return void
      */
-    public function setAuthorizerAccessTokenV1(int $authId, string $accessToken, int $expiresIn = 7100){
+    public function setAuthorizerAccessTokenV1(int $authId, string $accessToken, int $expiresIn = 7000){
         Cache::store('redis')->set('jx:dy:authorizer_access_token_v1:'.$authId, $accessToken, $expiresIn);
     }
 
@@ -135,10 +134,10 @@ class Utils
         // 获取access_token
         $token = Cache::store('redis')->get('jx:dy:authorizer_access_token_v1:'.$authId);
         if($token) return $token;
-
         $appid = db('agent_auth')->where('id', $authId)->value('app_id');
         // 获取授权码
         $authCode = $this->retrieveAuthCode($appid);
+
         $result = $this->_getAuthorizerAccessTokenByCodeV1($authCode);
         $this->setAuthorizerAccessTokenV1($authId, $result['authorizer_access_token']);
         return $result['authorizer_access_token'];
@@ -152,7 +151,7 @@ class Utils
     public static function verify($timestamp, $nonce, $encrypt, $msgSignature)
     {
         try {
-            $values = array(DyConfig::TOKEN, $timestamp, $nonce, $encrypt);
+            $values = array(Config::TOKEN, $timestamp, $nonce, $encrypt);
             sort($values, SORT_STRING);
             $newMsgSignature = sha1(join("", $values));
             if ($newMsgSignature == $msgSignature) {
@@ -176,7 +175,7 @@ class Utils
     public function decrypt(string $encrypted)
     {
         try {
-            $encodingAesKey = DyConfig::AesKey;
+            $encodingAesKey = Config::AesKey;
             $aesKey = base64_decode($encodingAesKey . "=");
             // 使用BASE64对需要解密的字符串进行解码
             $ciphertextDec = base64_decode($encrypted);
@@ -212,7 +211,6 @@ class Utils
         return $postBodyMsg;
     }
 
-
     /**
      * 对解密后的明文进行补位删除
      * @param $text
@@ -227,4 +225,5 @@ class Utils
         }
         return substr($text, 0, (strlen($text) - $pad));
     }
+
 }

@@ -2,10 +2,13 @@
 namespace app\common\business;
 
 use app\common\config\Channel;
+use app\common\library\utils\SnowFlake;
+use app\common\library\utils\Utils;
 use app\web\controller\Common;
 use app\web\controller\DoJob;
 use app\web\model\Couponlist;
 use app\web\model\Rebatelist;
+use think\Cache;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\Exception;
@@ -353,8 +356,15 @@ class YunYang{
         $channel['vloumLong'] = isset($param['vloum_long'])?(int)$param['vloum_long']:0;
         $channel['vloumWidth'] = isset($param['vloum_width'])?(int) $param['vloum_width']:0;
         $channel['vloumHeight'] = isset($param['vloum_height'])?(int) $param['vloum_height']:0;
+
         $channelTag = $param['channel_tag']??'智能';
-        return db('check_channel_intellect')->insertGetId(['channel_tag'=>$channelTag,'content'=>json_encode($channel,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
+
+        $channel['jxTag'] = 'default'; // 渠道类型
+        $channel['channel_tag'] = $channelTag; // 渠道类型
+
+        $insertId =  db('check_channel_intellect')->insertGetId(['channel_tag'=>$channelTag,'content'=>json_encode($channel,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
+        Utils::setExpressData($channel, $insertId);
+        return $insertId;
     }
     /**
      * 支付成功时的下单逻辑

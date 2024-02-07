@@ -3,7 +3,6 @@
 namespace app\web\business\douyin;
 
 use app\common\library\douyin\Douyin;
-use app\web\model\AgentAuth;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\exception\DbException;
@@ -20,6 +19,7 @@ class Auth
     public function login($param, $agentAuth){
         $app = Douyin::start();
         $accessToken = $app->utils()->getAuthorizerAccessTokenV1($agentAuth['id']);
+
         return $app->xcx()->codeToSessionV1($param['code'], $accessToken);
     }
 }

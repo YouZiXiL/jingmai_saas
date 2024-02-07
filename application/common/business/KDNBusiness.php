@@ -3,6 +3,7 @@
 namespace app\common\business;
 
 use app\common\config\Channel;
+use app\common\library\utils\Utils;
 use app\web\controller\Common;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -458,11 +459,12 @@ class KDNBusiness
         $content['jijian_id']=$param['jijian_id'];//寄件id
         $content['shoujian_id']=$param['shoujian_id'];//收件id
         $content['weight']=$param['weight'];//重量;
-        $content['channel_tag'] = '智能'; // 渠道类型
         $content['channel_merchant'] = Channel::$kdn; // 渠道商
-
-        $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>$content['channel_tag'],'content'=>json_encode($content,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
-
+        $channelTag = $param['channel_tag']??'智能';
+        $content['jxTag'] = 'default'; // 渠道类型
+        $content['channel_tag'] = $channelTag; // 渠道类型
+        $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>$channelTag,'content'=>json_encode($content,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
+        Utils::setExpressData($content, $insert_id);
         $list['final_price']=$content['final_price'];
         $list['insert_id']=$insert_id;
         $list['onePrice']=$content['users_shouzhong'];

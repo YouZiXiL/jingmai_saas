@@ -3,6 +3,8 @@
 namespace app\web\controller;
 
 use app\common\business\WxBusiness;
+use app\common\library\douyin\Douyin;
+use app\common\model\Order;
 use app\web\model\Admin;
 use app\web\model\AgentAuth;
 use think\db\exception\DataNotFoundException;
@@ -567,7 +569,7 @@ class Common
      * @return Redirect
      * @throws DataNotFoundException
      * @throws ModelNotFoundException
-     * @throws DbException
+     * @throws DbException|Exception
      */
     public function miniLink($agentCode){
         $agentId = $this->decodeShortCode($agentCode);
@@ -600,29 +602,38 @@ class Common
      * @return Redirect
      * @throws DataNotFoundException
      * @throws DbException
-     * @throws ModelNotFoundException
+     * @throws ModelNotFoundException|Exception
+     * @throws \Exception
      */
     public function miniOverloadLink(){
-
-        $agentId = $this->decodeShortCode(input('agentCode'));
         $orderId = $this->decodeShortCode(input('orderCode'));
-        $agent = Admin::find($agentId);
-        if(!$agent) exit('代理商不存在');
-        $appId=db('agent_auth')
-            ->where('agent_id',$agentId)
-            ->where('auth_type', 2)
-            ->value('app_id' );
-        if (!$appId) exit('代理商没配置APPID');
-        $accessToken = $this->get_authorizer_access_token($appId);
-        $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
-        $resJson = $this->httpRequest($url,[
-            "path" => "/pages/informationDetail/overload/overload",
-            "query" =>  "id={$orderId}",
-        ],'post');
-        $res = json_decode($resJson, true);
-        if (@$res['errcode'] == 0)  return redirect($res['url_link']);
-        Log::error("生成超重链接失败：orderId = {$orderId}，详情：{$resJson}");
-        exit("超重-进入小程序失败：orderId = {$orderId}");
+        $order = db('order')->where('id',$orderId)->field('id,auth_id')->find();
+        if (empty($order)) exit('订单不存在');
+        $authApp=db('agent_auth')->where('id',$order['auth_id'])->field('id,app_id,wx_auth' )->find();
+        if (!$authApp) exit('小程序未授权');
+        $path = '/pages/informationDetail/overload/overload';
+        if($authApp['wx_auth'] == 1){ // 微信
+            $accessToken = $this->get_authorizer_access_token($authApp['app_id']);
+            $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
+            $resJson = $this->httpRequest($url,[
+                "path" => $path,
+                "query" =>  "id={$orderId}",
+            ],'post');
+            $res = json_decode($resJson, true);
+            if (@$res['errcode'] == 0)  return redirect($res['url_link']);
+            Log::error("生成超重链接失败：orderId = {$orderId}，详情：{$resJson}");
+            exit("超重-进入小程序失败：orderId = {$orderId}");
+        }elseif ($authApp['wx_auth'] == 3){ // 抖音
+            $douyin = Douyin::start();
+            $accessToken = $douyin->utils()->getAuthorizerAccessToken($authApp['id']);
+            $link = $douyin->xcx()->generateLink(
+                $accessToken, $authApp['app_id'],$path, "id={$orderId}"
+            );
+            return redirect($link);
+        }else{
+            exit('小程序未授权');
+        }
+
     }
 
     /**
@@ -631,27 +642,38 @@ class Common
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException
+     * @throws Exception
+     * @throws \Exception
      */
     public function miniMaterialLink(){
-        $agentId = $this->decodeShortCode(input('agentCode'));
         $orderId = $this->decodeShortCode(input('orderCode'));
-        $agent = Admin::find($agentId);
-        if(!$agent) exit('代理商不存在');
-        $appId=db('agent_auth')
-            ->where('agent_id',$agentId)
-            ->where('auth_type', 2)
-            ->value('app_id' );
-        if (!$appId) exit('代理商没配置APPID');
-        $accessToken = $this->get_authorizer_access_token($appId);
-        $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
-        $resJson = $this->httpRequest($url,[
-            "path" => "/pages/informationDetail/haocai/haocai",
-            "query" =>  "id={$orderId}",
-        ],'post');
-        $res = json_decode($resJson, true);
-        if (@$res['errcode'] == 0)  return redirect($res['url_link']);
-        Log::error("生成耗材链接失败：orderId = {$orderId}，详情：{$resJson}");
-        exit("耗材-进入小程序失败：orderId = {$orderId}");
+        $order = db('order')->where('id',$orderId)->field('id,auth_id')->find();
+        if (empty($order)) exit('订单不存在');
+        $authApp=db('agent_auth')->where('id',$order['auth_id'])->field('id,app_id,wx_auth' )->find();
+        if (!$authApp) exit('小程序未授权');
+        $path = '/pages/informationDetail/haocai/haocai';
+        if ($authApp['wx_auth'] == 1){ // 微信
+            $accessToken = $this->get_authorizer_access_token($authApp['app_id']);
+            $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
+            $resJson = $this->httpRequest($url,[
+                "path" => $path,
+                "query" =>  "id={$orderId}",
+            ],'post');
+            $res = json_decode($resJson, true);
+            if (@$res['errcode'] == 0)  return redirect($res['url_link']);
+            Log::error("生成耗材链接失败：orderId = {$orderId}，详情：{$resJson}");
+            exit("耗材-进入小程序失败：orderId = {$orderId}");
+        }elseif ($authApp['wx_auth'] == 3){ // 抖音
+            $douyin = Douyin::start();
+            $accessToken = $douyin->utils()->getAuthorizerAccessToken($authApp['id']);
+            $link = $douyin->xcx()->generateLink(
+                $accessToken, $authApp['app_id'], $path, "id={$orderId}"
+            );
+            return redirect($link);
+        }else{
+            exit('小程序未授权');
+        }
+
     }
 
 
@@ -662,27 +684,36 @@ class Common
      * @throws DbException
      * @throws ModelNotFoundException
      * @throws Exception
+     * @throws \Exception
      */
     public function miniInsuredLink(){
-        $agentId = $this->decodeShortCode(input('agentCode'));
         $orderId = $this->decodeShortCode(input('orderCode'));
-        $agent = Admin::find($agentId);
-        if(!$agent) exit('代理商不存在');
-        $appId=db('agent_auth')
-            ->where('agent_id',$agentId)
-            ->where('auth_type', 2)
-            ->value('app_id' );
-        if (!$appId) exit('代理商没配置APPID');
-        $accessToken = $this->get_authorizer_access_token($appId);
-        $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
-        $resJson = $this->httpRequest($url,[
-            "path" => "/pages/informationDetail/insured/insured",
-            "query" =>  "id={$orderId}",
-        ],'post');
-        $res = json_decode($resJson, true);
-        if (@$res['errcode'] == 0)  return redirect($res['url_link']);
-        Log::error("生成保价链接失败：orderId = {$orderId}，详情：{$resJson}");
-        exit("保价-进入小程序失败：orderId = {$orderId}");
+        $order = db('order')->where('id',$orderId)->field('id,auth_id')->find();
+        if (empty($order)) exit('订单不存在');
+        $authApp=db('agent_auth')->where('id',$order['auth_id'])->field('id,app_id,wx_auth' )->find();
+        if (!$authApp) exit('小程序未授权');
+        $path = '/pages/informationDetail/insured/insured';
+        if ($authApp['wx_auth'] == 1) { // 微信
+            $accessToken = $this->get_authorizer_access_token($authApp['app_id']);
+            $url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token={$accessToken}";
+            $resJson = $this->httpRequest($url,[
+                "path" => $path,
+                "query" =>  "id={$orderId}",
+            ],'post');
+            $res = json_decode($resJson, true);
+            if (@$res['errcode'] == 0)  return redirect($res['url_link']);
+            Log::error("生成保价链接失败：orderId = {$orderId}，详情：{$resJson}");
+            exit("保价-进入小程序失败：orderId = {$orderId}");
+        }elseif ($authApp['wx_auth'] == 3){ // 抖音
+            $douyin = Douyin::start();
+            $accessToken = $douyin->utils()->getAuthorizerAccessToken($authApp['id']);
+            $link = $douyin->xcx()->generateLink(
+                $accessToken, $authApp['app_id'], $path, "id={$orderId}"
+            );
+            return redirect($link);
+        }else{
+            exit('小程序未授权');
+        }
     }
 
     private function buildMiniLink() {

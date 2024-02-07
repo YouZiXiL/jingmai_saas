@@ -9,16 +9,13 @@ use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
 use app\common\business\OrderBusiness;
 use app\common\config\Channel;
-use app\common\config\ProfitConfig;
 use app\common\library\alipay\Alipay;
 use app\common\library\R;
 use app\common\library\Upload;
 use app\common\model\Order;
-use app\common\model\User;
 use app\web\model\Admin;
 use app\web\model\AgentAuth;
 use app\web\model\Couponlist;
-use fast\Date;
 use stdClass;
 use think\Controller;
 use think\db\exception\DataNotFoundException;
@@ -377,7 +374,7 @@ class Yunyang extends Controller
             ];
             $couponmoney=0;
             if(!empty($param["couponid"])){
-                $couponinfo=Couponlist::get(["id"=>$param["couponid"],"state"=>1]);
+                $couponinfo= Couponlist::get(["id"=>$param["couponid"],"state"=>1]);
                 if($check_channel_intellect['final_price']<$couponinfo["uselimits"]){
                     return json(['status'=>400,'data'=>'','msg'=>'优惠券信息错误']);
                 }
@@ -968,7 +965,6 @@ class Yunyang extends Controller
     function overload_detail(): Json
     {
         $id=$this->request->param('id');
-        Log::error("超重详情ID：{$id}");
         if (empty($id)||!is_numeric($id)){
             return json(['status'=>400,'data'=>'','msg'=>'参数错误']);
         }

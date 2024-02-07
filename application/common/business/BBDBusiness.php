@@ -3,6 +3,7 @@
 namespace app\common\business;
 
 use app\common\config\Channel;
+use app\common\library\utils\Utils;
 use app\web\controller\Common;
 use stdClass;
 use think\db\exception\DataNotFoundException;
@@ -151,8 +152,8 @@ class BBDBusiness
         $list = [];
         foreach ($bbdData['data'] as $key => &$item) {
             if ($item['CompanyCode'] == 'YUND'){
+                $channelTag = '智能';
                 $detailPrice =  $item['detailPrice'];
-
                 $adminOne= $detailPrice['firstWeightPrice'];//平台首重单价
                 $adminMore= $detailPrice['addOnePrice'];//平台首重单价
                 $adminMoreTotal = $detailPrice['addWeightPrice'];//平台续重价格（总价）
@@ -182,13 +183,15 @@ class BBDBusiness
                 $content['jijian_id']=$param['jijian_id'];//寄件id
                 $content['shoujian_id']=$param['shoujian_id'];//收件id
                 $content['weight']= ceil($param['weight']);//重量;
-                $content['channel_tag'] = '智能'; // 渠道类型
+                $content['channel_tag'] = $channelTag; // 渠道类型
+                $content['jxTag'] = 'default'; // 渠道类型
                 $content['channel_merchant'] = Channel::$bbd; // 渠道商
 
-                $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>$content['channel_tag'],'content'=>json_encode($content,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
+                $insertId = db('check_channel_intellect')->insertGetId(['channel_tag'=>$channelTag,'content'=>json_encode($content,JSON_UNESCAPED_UNICODE ),'create_time'=>time()]);
+                Utils::setExpressData($content, $insertId);
 
                 $list[$key]['final_price'] = $content['final_price'];
-                $list[$key]['insert_id'] = $insert_id;
+                $list[$key]['insert_id'] = $insertId;
                 $list[$key]['onePrice'] =  $content['users_shouzhong'];
                 $list[$key]['morePrice'] = $content['users_xuzhong']??0;
                 $list[$key]['tag_type'] = $content['tagType'];

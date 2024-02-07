@@ -23,8 +23,8 @@ class LoginBusiness
     public function login($params)
     {
         $agentAuth = AgentAuth::where('app_id', $params['app_id'])->field('id,agent_id')->find();
+        if (empty($agentAuth)) throw new \Exception('小程序未授权', 401);
         $utils =  new Common();
-        if (empty($agentAuth))  return R::error('小程序未授权');
         $agent_id = $agentAuth['agent_id'];
         $auth_id = $agentAuth['id'];
 
@@ -32,30 +32,18 @@ class LoginBusiness
         $nickName = '';
         // 是否手机授权登录：0=不使用，1=使用
         $authPhone = db('agent_config')->where('agent_id',$agent_id)->field('id,auth_phone')->value('auth_phone');
-        if ($params['fromType'] == 'wx'){
+        if ($params['origin'] == 'wx'){
             $auth = new Wx();
-            $json_obj = $auth->login($params);
-            if($authPhone){
-                if (!empty($params['encrypted_data'])&&!empty($params['iv'])){
-                    $wxDecryption = $utils->getUserInfo($params['encrypted_data'], $params['iv'],$json_obj['session_key'],$params['app_id']);
-                    if (!$wxDecryption){
-                        throw new \Exception('信息解密失败');
-                    }
-                    $mobile = $wxDecryption['phoneNumber'];
-                    $nickName = $mobile;
-                }else{
-                    throw new \Exception('未授权',401);
-                }
-            }else{
-                $nickName = $this->shuffleName();
-            }
-        }else if($params['fromType'] == 'dy'){
+            $accessToken = $auth->login($params);
+        }
+        else if($params['origin'] == 'dy'){
             $auth = new Dy();
-            $json_obj = $auth->login($params, $agentAuth);
-            $nickName = $this->shuffleName();
+            $accessToken = $auth->login($params, $agentAuth);
+        }else{
+            throw new \Exception('未知客户端');
         }
         $user = new Users;
-        $userInfo=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
+        $userInfo=$user->get(['open_id'=>$accessToken["openid"],'agent_id'=>$agent_id]);
         $time=time();
         // 生成登录token
         $_3rd_session=$utils->get_uniqid();
@@ -77,9 +65,23 @@ class LoginBusiness
             $isSave = $userInfo->save($data);
             $userId = $userInfo['id'];
         }else{ // 用户不存在，注册用户
+            if($authPhone && $params['origin'] == 'wx'){
+                if (!empty($params['encrypted_data'])&&!empty($params['iv'])){
+                    $wxDecryption = $utils->getUserInfo($params['encrypted_data'], $params['iv'],$accessToken['session_key'],$params['app_id']);
+                    if (!$wxDecryption){
+                        throw new \Exception('信息解密失败');
+                    }
+                    $mobile = $wxDecryption['phoneNumber'];
+                    $nickName = $mobile;
+                }else{
+                    throw new \Exception('未授权',401);
+                }
+            }else{
+                $nickName = $this->shuffleName();
+            }
             $userInfo['nick_name'] = $nickName;
             $userInfo['mobile'] = $mobile;
-            $userInfo['open_id']=$json_obj['openid'];
+            $userInfo['open_id']=$accessToken['openid'];
             $userInfo['create_time']=$time;
             $userInfo['login_time']=$time;
             $userInfo['agent_id']=$agent_id;
@@ -115,8 +117,8 @@ class LoginBusiness
                 'mobile' => $userInfo['mobile'],
                 'agent_id'=>$agent_id,
                 'app_id' =>$params['app_id'],
-                'open_id'=>$json_obj["openid"],
-                'session_key'=>$json_obj["session_key"]
+                'open_id'=>$accessToken["openid"],
+                'session_key'=>$accessToken["session_key"]
             ];
             cache($_3rd_session,$session,3600*24*25);
         }else{

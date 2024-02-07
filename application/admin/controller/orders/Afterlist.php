@@ -7,9 +7,11 @@ use app\admin\business\AfterSaleBusiness;
 use app\admin\model\Admin;
 use app\admin\model\User;
 use app\common\business\CouponBusiness;
+use app\common\business\DyBusiness;
 use app\common\business\OrderBusiness;
 use app\common\controller\Backend;
 use app\common\library\alipay\Alipay;
+use app\common\library\douyin\Douyin;
 use app\common\model\Order;
 use app\web\controller\Common;
 use app\web\controller\Dbcommom;
@@ -219,6 +221,9 @@ class Afterlist extends Backend
                             ],
                         ]]);
                     $up_data['out_refund_no'] = $out_refund_no;
+                }elseif ($orders['pay_type'] == 4){
+                    $dyBusiness = new DyBusiness();
+                    $up_data = $dyBusiness->orderRefund($orders, '现结/到付', '已作废' );
                 }
                 elseif ($orders['pay_type'] == 2){
                     $refund = Alipay::start()->base()
@@ -378,24 +383,31 @@ class Afterlist extends Backend
                     }
 
                     if ($params['cal_weight'] == $orders['weight']) { // 经核实没有超重。
-                        if ($orders['overload_status'] == 2 && $orders['pay_type'] == 1) { // 用户已付超重，退回客户之前补的超重费
+                        if ($orders['overload_status'] == 2) { // 用户已付超重，退回客户之前补的超重费
                             $out_overload_refund_no = $common->get_uniqid();//超重退款订单号
-                            $up_data['out_overload_refund_no'] = $out_overload_refund_no;
                             if ($finalWeight > $params['cal_weight']) { // 计费重量大于审核重量
-                                // 退超重费
-                                $wx_pay = $common->wx_pay($orders['cz_mchid'], $orders['cz_mchcertificateserial']);
-                                $wx_pay
-                                    ->chain('v3/refund/domestic/refunds')
-                                    ->post(['json' => [
-                                        'transaction_id' => $orders['wx_out_overload_no'],
-                                        'out_refund_no' => $out_overload_refund_no,
-                                        'reason' => '超重退款',
-                                        'amount' => [
-                                            'refund' => (int)bcmul($orders['overload_price'], 100),
-                                            'total' => (int)bcmul($orders['overload_price'], 100),
-                                            'currency' => 'CNY'
-                                        ],
-                                    ]]);
+                                if($orders['pay_type'] == 1){
+                                    // 退超重费
+                                    $wx_pay = $common->wx_pay($orders['cz_mchid'], $orders['cz_mchcertificateserial']);
+                                    $wx_pay
+                                        ->chain('v3/refund/domestic/refunds')
+                                        ->post(['json' => [
+                                            'transaction_id' => $orders['wx_out_overload_no'],
+                                            'out_refund_no' => $out_overload_refund_no,
+                                            'reason' => '超重退款',
+                                            'amount' => [
+                                                'refund' => (int)bcmul($orders['overload_price'], 100),
+                                                'total' => (int)bcmul($orders['overload_price'], 100),
+                                                'currency' => 'CNY'
+                                            ],
+                                        ]]);
+                                }elseif ($orders['pay_type'] == 4){
+                                    Douyin::start()->pay()
+                                        ->createRefund(
+                                            $orders['overload_price'],$authApp['app_id'],
+                                            $orders['out_overload_no'],$out_overload_refund_no, '超重退款'
+                                        );
+                                }
                                 $up_data['out_overload_refund_no'] = $out_overload_refund_no;
                             }
                         }
@@ -418,20 +430,29 @@ class Afterlist extends Backend
                             $usersDiffAmt = bcmul($diffWeight, $orders['users_xuzhong'], 2);//用户差价金额
                             $agentDiffAmt = bcmul($diffWeight, $orders['agent_xuzhong'], 2);//代理差价金额
                             $adminDiffAmt = bcmul($diffWeight, $orders['admin_xuzhong'], 2);//平台差价金额
-                            if ($orders['overload_status'] == 2 && $orders['pay_type'] == 1) {
-                                $wx_pay = $common->wx_pay($orders['cz_mchid'], $orders['cz_mchcertificateserial']);
-                                $wx_pay
-                                    ->chain('v3/refund/domestic/refunds')
-                                    ->post(['json' => [
-                                        'transaction_id' => $orders['wx_out_overload_no'],
-                                        'out_refund_no' => $out_overload_refund_no,
-                                        'reason' => '超重退款',
-                                        'amount' => [
-                                            'refund' => (int)bcmul($usersDiffAmt, 100),
-                                            'total' => (int)bcmul($orders['overload_price'], 100),
-                                            'currency' => 'CNY'
-                                        ],
-                                    ]]);
+                            if ($orders['overload_status'] == 2 ) {
+                                if( $orders['pay_type'] == 1){
+                                    $wx_pay = $common->wx_pay($orders['cz_mchid'], $orders['cz_mchcertificateserial']);
+                                    $wx_pay
+                                        ->chain('v3/refund/domestic/refunds')
+                                        ->post(['json' => [
+                                            'transaction_id' => $orders['wx_out_overload_no'],
+                                            'out_refund_no' => $out_overload_refund_no,
+                                            'reason' => '超重退款',
+                                            'amount' => [
+                                                'refund' => (int)bcmul($usersDiffAmt, 100),
+                                                'total' => (int)bcmul($orders['overload_price'], 100),
+                                                'currency' => 'CNY'
+                                            ],
+                                        ]]);
+
+                                }elseif ($orders['pay_type'] == 4){
+                                    Douyin::start()->pay()
+                                        ->createRefund(
+                                            $usersDiffAmt,$authApp['app_id'],
+                                            $orders['out_overload_no'],$out_overload_refund_no, '超重退款'
+                                        );
+                                }
                                 $up_data['out_overload_refund_no'] = $out_overload_refund_no;
                             }
                             $up_data['agent_price'] = number_format($orders['agent_price'] - $agentDiffAmt, 2);

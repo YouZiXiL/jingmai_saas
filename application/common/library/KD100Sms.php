@@ -45,12 +45,11 @@ class KD100Sms
      */
     public function overload($order){
         $out_trade_no=$this->utils->get_uniqid();
-        $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
         // 是否开启自动发送短信
         $autoSms = db('admin')->where('id',$order['agent_id'])->value('sms_send');
         if($autoSms){
-            $link = request()->host() . "/cz/{$agentCode}/{$orderCode}";
+            $link = request()->host() . "/cz/{$orderCode}";
             $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link], JSON_UNESCAPED_UNICODE);
             $resJson = $this->send($content, $out_trade_no, $order,self::$overloadId);
             $this->pushLog($resJson, $order, 1);
@@ -67,12 +66,11 @@ class KD100Sms
      */
     public function material($order){
         $out_trade_no=$this->utils->get_uniqid();
-        $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
         // 是否开启自动发送短信
         $autoSms = db('admin')->where('id',$order['agent_id'])->value('sms_send');
         if($autoSms){
-            $link = request()->host() . "/hc/{$agentCode}/{$orderCode}";
+            $link = request()->host() . "/hc/{$orderCode}";
             $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
             $resJson = $this->send($content, $out_trade_no, $order,self::$materialId);
             $this->pushLog($resJson, $order, 2);
@@ -88,12 +86,11 @@ class KD100Sms
      */
     public function insured($order){
         $out_trade_no=$this->utils->get_uniqid();
-        $agentCode = $this->utils->generateShortCode($order['agent_id']);
         $orderCode = $this->utils->generateShortCode($order['id']);
         // 是否开启自动发送短信
         $autoSms = db('admin')->where('id',$order['agent_id'])->value('sms_send');
         if($autoSms){
-            $link = request()->host() . "/bj/{$agentCode}/{$orderCode}";
+            $link = request()->host() . "/bj/{$orderCode}";
             $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link]);
             $resJson = $this->send($content, $out_trade_no, $order,self::$insuredId);
             $this->pushLog($resJson, $order, 3);

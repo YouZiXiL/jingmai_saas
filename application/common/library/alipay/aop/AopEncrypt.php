@@ -22,7 +22,6 @@ function encrypt($str, $screct_key)
     $str = addPKCS7Padding($str);
 
     //设置全0的IV
-
     $iv = str_repeat("\0", 16);
     $encrypt_str = openssl_encrypt($str, 'aes-128-cbc', $screct_key, OPENSSL_NO_PADDING, $iv);
     return base64_encode($encrypt_str);

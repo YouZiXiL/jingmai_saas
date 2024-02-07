@@ -3,6 +3,7 @@
 namespace app\common\business;
 
 use app\common\library\alipay\Alipay;
+use app\common\library\douyin\Douyin;
 use app\common\model\Order;
 use app\web\controller\Common;
 use app\web\controller\Dbcommom;
@@ -21,13 +22,15 @@ class OrderBusiness
      * @param string $reason 取消原因
      * @return void
      * @throws Exception
+     * @throws \Exception
      */
-    public function orderCancel(Model $orderModel, string $reason = '',string $status = '已取消')
+    public function orderCancel(Model $orderModel, string $reason = '取消订单',string $status = '已取消')
     {
         $order = $orderModel->toArray();
         $wxOrder = $order['pay_type'] == 1; // 微信支付
         $aliOrder = $order['pay_type'] == 2; // 支付宝支付
         $autoOrder = $order['pay_type'] == 3; // 智能下单
+        $dyOrder = $order['pay_type'] == 4; // 抖音支付
         $utils = new Common();
         if ($wxOrder) {
             $data = [
@@ -49,9 +52,10 @@ class OrderBusiness
                 'overload_status'=> 0,
                 'consume_status'=> 0,
                 'insured_status'=> 0,
+                'cancel_time'=> time(),
             ];
             $orderModel->isUpdate()->save($update);
-            $this->setAgentAmount($order, $status);
+            $this->addAgentAmount($order, $status);
         } else if ($aliOrder) { // 支付宝
             $agentAuth = AgentAuth::where('id', $order['auth_id'])->value('auth_token');
             // 执行退款操作
@@ -67,16 +71,23 @@ class OrderBusiness
                 'order_status' => $status,
                 'out_refund_no' => $out_refund_no,
                 'yy_fail_reason'=> $reason,
+                'cancel_time'=> time(),
             ];
             if (!$refund) {
                 $update['pay_status'] = 4;
             }
             $orderModel->isUpdate()->save($update);
-            if($order['pay_status'] == 1){
-                // 只有支付成功的订单，取消操作时才给商家退款
-                $this->setAgentAmount($order, $status);
-            }
+            $this->addAgentAmount($order, $status);
 
+        } else if ($dyOrder) {
+            $dyBusiness = new DyBusiness();
+            $update = $dyBusiness->orderRefund($orderModel,  $reason ,  $status );
+            $update['pay_status'] = 2;
+            $update['order_status'] = $status;
+            $update['yy_fail_reason'] = $reason;
+            $update['cancel_time'] = time();
+            $orderModel->isUpdate()->save($update);
+            $this->addAgentAmount($order, $status);
         }
     }
 
@@ -92,6 +103,7 @@ class OrderBusiness
         $wxOrder = $order['pay_type'] == 1; // 微信支付
         $aliOrder = $order['pay_type'] == 2; // 支付宝支付
         $autoOrder = $order['pay_type'] == 3; // 智能下单
+        $dyOrder = $order['pay_type'] == 4; // 智能下单
         $utils = new Common();
         if ($wxOrder) {
             $data = [
@@ -103,7 +115,24 @@ class OrderBusiness
 
             // 将该任务推送到消息队列，等待对应的消费者去执行
             Queue::push(DoJob::class, $data, 'way_type');
-        } else if ($autoOrder) { // 智能下单
+        } else if($dyOrder){
+            $out_refund_no = $utils->get_uniqid();//下单退款订单号
+            $appid = AgentAuth::where('id', $order['auth_id'])->value('app_id');
+            $totalAmount = $order['final_price'];
+            if($order['aftercoupon']>0) $totalAmount = $order['aftercoupon'];
+            Douyin::start()->pay()->createRefund($totalAmount,$appid,$order['out_trade_no'],$out_refund_no, $errMsg);
+            $update = [
+                'id'=> $order['id'],
+                'pay_status' => 2,
+                'order_status' => '下单失败',
+                'out_refund_no' => $out_refund_no,
+                'yy_fail_reason'=> $errMsg,
+                'cancel_time'=> time(),
+            ];
+            $orderModel->isUpdate()->save($update);
+            $this->addAgentAmount($order, '下单失败');
+        }
+        else if ($autoOrder) { // 智能下单
             $out_refund_no = $utils->get_uniqid();//下单退款订单号
             $update = [
                 'pay_status' => 2,
@@ -112,7 +141,7 @@ class OrderBusiness
                 'yy_fail_reason'=> $errMsg,
             ];
             $orderModel->isUpdate()->save($update);
-            $this->setAgentAmount($order, '下单失败');
+            $this->addAgentAmount($order, '下单失败');
         } else if ($aliOrder){
             $agentAuth = AgentAuth::where('id', $order['auth_id'])->value('auth_token');
             // 执行退款操作
@@ -134,7 +163,7 @@ class OrderBusiness
             }
             if($order['pay_status'] == 1){
                 // 只有支付成功的订单，取消操作时才给商家退款
-                $this->setAgentAmount($order,  '下单失败');
+                $this->addAgentAmount($order,  '下单失败');
             }
             $orderModel->isUpdate()->save($update);
         }
@@ -221,19 +250,15 @@ class OrderBusiness
     }
 
     /**
-     * 设置代理商余额
+     * 代理商加余额
      * @param array $order
      * @param $status
      * @return void
      */
-    public function setAgentAmount(array $order, $status): void
+    public function addAgentAmount(array $order, $status): void
     {
         $DbCommon = new Dbcommom();
-        if ($order['waybill']) {
-            $remark = '运单号：' . $order['waybill'] . $status . '并退款';
-        } else {
-            $remark = '订单号：' . $order['out_trade_no'] . $status . '并退款';
-        }
+        $remark = '订单号：' . $order['out_trade_no'] . $status . '并退款';
         $DbCommon->set_agent_amount($order['agent_id'], 'setInc', $order['agent_price'], 1, $remark);
     }
 }

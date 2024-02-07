@@ -2,16 +2,16 @@
 
 namespace app\common\library\douyin\utils;
 
-use app\common\library\douyin\DyConfig;
+use app\common\library\douyin\config\Config;
 use Exception;
 use think\Cache;
 
 trait Common
 {
-    private string $baseUrl = DyConfig::BASE_URI_V2;
-    private string $baseUrl1 = DyConfig::BASE_URI_V1;
-    private string $componentAppid = DyConfig::COMPONENT_APPID;
-    private string $componentAppsecret = DyConfig::COMPONENT_APPSECRET;
+    private string $baseUrl = Config::BASE_URI_V2;
+    private string $baseUrl1 = Config::BASE_URI_V1;
+    private string $componentAppid = Config::COMPONENT_APPID;
+    private string $componentAppsecret = Config::COMPONENT_APPSECRET;
     /**
      * 获取component_ticket
      * @return bool|string
@@ -193,6 +193,88 @@ trait Common
             recordLog('dy-auth','V1获取authorization_code失败：'.$json);
             throw new \Exception('V1获取authorization_code失败：'.$json);
         }
+    }
+
+
+
+    /**
+     * 对解密后的明文进行补位删除
+     * @param $map
+     * @return string
+     */
+    private function sign($map) {
+        $rList = [];
+        foreach($map as $k =>$v) {
+            if ($k == "other_settle_params" || $k == "app_id" || $k == "sign" || $k == "thirdparty_id")
+                continue;
+
+            $value = trim(strval($v));
+            if (is_array($v)) {
+                $value = $this->arrayToStr($v);
+            }
+
+            $len = strlen($value);
+            if ($len > 1 && substr($value, 0,1)=="\"" && substr($value, $len-1)=="\"")
+                $value = substr($value,1, $len-1);
+            $value = trim($value);
+            if ($value == "" || $value == "null")
+                continue;
+            $rList[] = $value;
+        }
+        $rList[] = $this->salt ;
+        sort($rList, SORT_STRING);
+        return md5(implode('&', $rList));
+    }
+
+    private function arrayToStr($map) {
+        $isMap = $this->isArrMap($map);
+
+        $result = "";
+        if ($isMap){
+            $result = "map[";
+        }
+
+        $keyArr = array_keys($map);
+        if ($isMap) {
+            sort($keyArr);
+        }
+
+        $paramsArr = array();
+        foreach($keyArr as  $k) {
+            $v = $map[$k];
+            if ($isMap) {
+                if (is_array($v)) {
+                    $paramsArr[] = sprintf("%s:%s", $k, $this->arrayToStr($v));
+                } else  {
+                    $paramsArr[] = sprintf("%s:%s", $k, trim(strval($v)));
+                }
+            } else {
+                if (is_array($v)) {
+                    $paramsArr[] = $this->arrayToStr($v);
+                } else  {
+                    $paramsArr[] = trim(strval($v));
+                }
+            }
+        }
+
+        $result = sprintf("%s%s", $result, join(" ", $paramsArr));
+        if (!$isMap) {
+            $result = sprintf("[%s]", $result);
+        } else {
+            $result = sprintf("%s]", $result);
+        }
+
+        return $result;
+    }
+
+    private function isArrMap($map) {
+        foreach($map as $k =>$v) {
+            if (is_string($k)){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function get($url, $data = [], $header=[]){

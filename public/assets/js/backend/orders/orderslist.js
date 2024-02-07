@@ -431,6 +431,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
                             }else if(row.pay_type === '3'){
                                 auth = '智能下单';
                                 authClass = 'text-yellow';
+                            }else if(row.pay_type === '4'){
+                                auth = '抖音';
+                                authClass = 'text-primary';
                             }
                             let authHidden = Config.show?'':'hidden'; // 对代理因此
                                 let reasonHidden = 'hidden';

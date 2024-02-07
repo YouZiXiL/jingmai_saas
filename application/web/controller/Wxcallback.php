@@ -18,6 +18,7 @@ use app\common\business\WxBusiness;
 use app\common\config\Channel;
 use app\common\config\ProfitConfig;
 use app\common\library\alipay\Alipay;
+use app\common\library\douyin\Douyin;
 use app\common\library\KD100Sms;
 use app\common\library\R;
 use app\common\model\Order;
@@ -482,13 +483,9 @@ class Wxcallback extends Controller
             $wxOrder = $orders['pay_type'] == 1;
             $aliOrder = $orders['pay_type'] == 2;
             $autoOrder = $orders['pay_type'] == 3;
+            $dyOrder = $orders['pay_type'] == 4;
 
             $users = $autoOrder?null:db('users')->where('id',$orders['user_id'])->find();
-            if(!empty($users["rootid"])){
-                $superB=Admin::get($users["rootid"]);
-            } else{
-                $superB = null;
-            }
             if($wxOrder){
                 $agent_auth_xcx=db('agent_auth')
                     ->where('id',$orders['auth_id'])
@@ -527,6 +524,7 @@ class Wxcallback extends Controller
                 ];
                 $common->wxrobot_channel_exception($content);
             }
+
 
             //超轻处理
             if ($orders['weight'] > ceil($finalWeight) &&  $pamar['feeOver'] == 1 && $finalWeight!=0 && empty($orders['final_weight_time'])){
@@ -689,8 +687,15 @@ class Wxcallback extends Controller
                     $rebateListController = new RebateListController();
                     $rebateListController->upState($orders, $users, 3);
                 }
-                else if($autoOrder){ // 智能下单
+                else if($dyOrder){ // 抖音
+                    $orderBusiness = new OrderBusiness();
+                    $orderBusiness->orderCancel($orderModel);
+                    $rebateListController = new RebateListController();
+                    $rebateListController->upState($orders, $users, 3);
+                    return json(['code'=>1, 'message'=>'ok']);
 
+                }
+                else if($autoOrder){ // 智能下单
                     $out_refund_no=$common->get_uniqid();//下单退款订单号
                     $update=[
                         'pay_status'=>2,
@@ -729,7 +734,8 @@ class Wxcallback extends Controller
                     //推送企业微信消息
                     $common->wxim_bot($agent_info['wx_im_bot'],$orders);
                 }
-            }else if(!empty($pamar['type'])){
+            }
+            else if(!empty($pamar['type'])){
                 // 订单状态
                 $up_data['order_status']=$pamar['type'];
             }
@@ -920,7 +926,8 @@ class Wxcallback extends Controller
 
                 $rebateController = new RebateListController();
                 $rebateController->upState($order, $users,3);
-            }else if($kdnData['State'] == 206){ // 虚假揽收
+            }
+            else if($kdnData['State'] == 206){ // 虚假揽收
                 $orderBusiness = new OrderBusiness();
                 $orderBusiness->orderCancel($order, $resData['Reason'], '虚假揽收');
                 if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $order['weight'] >= $agent_info['wx_im_weight'] ){
@@ -929,7 +936,8 @@ class Wxcallback extends Controller
                 }
                 $rebateController = new RebateListController();
                 $rebateController->upState($order, $users,3);
-            }else if($kdnData['State'] == 207){ // 线下收费
+            }
+            else if($kdnData['State'] == 207){ // 线下收费
                 $orderBusiness = new OrderBusiness();
                 $orderBusiness->orderCancel($order, $resData['Reason'], '线下收费');
                 if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $order['weight'] >= $agent_info['wx_im_weight'] ){
@@ -941,9 +949,11 @@ class Wxcallback extends Controller
             }
             else if($kdnData['State'] == 302){ // 更换运单号
                 $up_data['waybill'] =  $waybill;
-            }else if($kdnData['State'] == 2 || $kdnData['State'] == 104){
+            }
+            else if($kdnData['State'] == 2 || $kdnData['State'] == 104){
                 $up_data['order_status'] =  $KDNBusiness->getState($kdnData['State']);;
-            }else if($kdnData['State'] == 3){
+            }
+            else if($kdnData['State'] == 3){
                 $up_data['order_status'] = '已签收';
                 // 返佣计算
                 if(
@@ -954,7 +964,8 @@ class Wxcallback extends Controller
                     $rebateListController = new RebateListController();
                     $rebateListController->handle($order, $agent_info, $users);
                 }
-            }else if($kdnData['State'] == 99 && $order['pay_status']!=2){  // 下单失败
+            }
+            else if($kdnData['State'] == 99 && $order['pay_status']!=2){  // 下单失败
                 $orderBusiness = new OrderBusiness();
                 $orderBusiness->orderFail($order, $resData['Reason']);
             }
@@ -989,10 +1000,10 @@ class Wxcallback extends Controller
                 else if($overloadPrice < 0){ // 超轻
                     $lightWeight = abs($overloadWeight);
                     $lightPrice = abs($overloadPrice); // 超轻金额
-                    $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
-                    $up_data['admin_tralight_price'] = number_format( $lightPrice  * $lightWeight,2); //代理商超重金额
-                    $up_data['agent_tralight_price'] = number_format( $lightPrice + $profit['more_weight'] * $lightWeight,2); //代理商超重金额
-                    $up_data['tralight_price'] = number_format((float)$up_data['agent_tralight_price'] + $profit['user_more_weight'] * $lightWeight, 2); //用户超重金额
+                    // $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
+                    $up_data['admin_tralight_price'] = number_format( $lightPrice,2); //代理商超重金额
+                    $up_data['agent_tralight_price'] = number_format(  $order['agent_xuzhong'] * $lightWeight,2); //代理商超重金额
+                    $up_data['tralight_price'] = number_format( $order['users_xuzhong'] * $lightWeight, 2); //用户超重金额
                     $up_data['tralight_status'] = '1';
                 }
             }
@@ -1367,7 +1378,8 @@ class Wxcallback extends Controller
                     'body' => "bbd调账重量推送"
                 ];
                 $common->wxrobot_channel_exception($content);
-            }else if($params['pushType'] == 'EXPRESSORDERNO_CHANGE'){
+            }
+            else if($params['pushType'] == 'EXPRESSORDERNO_CHANGE'){
                 $insertData = [
                     "expressOrderNo"=> $params['newExpressOrderNo'], // 快递单号
                     "raw" => $paramJson,
@@ -1383,7 +1395,8 @@ class Wxcallback extends Controller
                     'body' => "新单号：" . $params['newExpressOrderNo']
                 ];
                 $common->wxrobot_channel_exception($content);
-            }else if($params['pushType'] == 'WORK_ORDER_PUSH'){
+            }
+            else if($params['pushType'] == 'WORK_ORDER_PUSH'){
                 $insertData = [
                     "expressOrderNo"=> $params['newExpressOrderNo'], // 快递单号
                     "raw" => $paramJson,
@@ -1400,9 +1413,6 @@ class Wxcallback extends Controller
                 ];
                 $common->wxrobot_channel_exception($content);
             }
-
-
-
 
             return R::ok('接收成功');
         }catch (\Exception $e){
@@ -1689,11 +1699,6 @@ class Wxcallback extends Controller
                 }
                 $up_data['order_status']='已作废';
 
-                $data = [
-                    'type'=>4,
-                    'order_id' => $orders['id'],
-                ];
-
                 // 退优惠券
                 if(!empty($orders["couponid"])){
                     $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
@@ -1708,8 +1713,8 @@ class Wxcallback extends Controller
                     }
                 }
 
-                // 将该任务推送到消息队列，等待对应的消费者去执行
-                Queue::push(DoJob::class, $data,'way_type');
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderCancel($orderModel);
 
                 $rebateController = new RebateListController();
                 $rebateController->upState($orders, $users,3);
@@ -1817,14 +1822,9 @@ class Wxcallback extends Controller
                         $coupon->save();
                     }
                 }
-                // 取消订单
-                $data = [
-                    'type'=>4,
-                    'order_id' => $orders['id'],
-                    'refund' => $returnPrice,
-                ];
-                // 将该任务推送到消息队列，等待对应的消费者去执行
-                Queue::push(DoJob::class, $data,'way_type');
+
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderCancel($orderModel);
 
                 $rebateController = new RebateListController();
                 $rebateController->upState($orders, $users,3);
@@ -2168,17 +2168,8 @@ class Wxcallback extends Controller
             }
             $orderId = 'wx:pay:' . $orders['id'];
             $cache = Cache::store('redis')->get($orderId);
-            recordLog('wx-pay-callback',
-                '订单ID：'. $orderId .  PHP_EOL .
-                '订单号：'. $orders['out_trade_no'] .  PHP_EOL .
-                '缓存：' . $cache  );
             if($cache) throw new Exception('正在处理中:'. $orderId);
             Cache::store('redis')->set($orderId, 'value',300);
-            $cache = Cache::store('redis')->get($orderId);
-            recordLog('wx-pay-callback',
-                '订单ID：'. $orderId .  PHP_EOL .
-                '订单号：'. $orders['out_trade_no'] .  PHP_EOL .
-                '继续执行：'. $cache );
             //如果订单未支付调用云洋下单接口
             $Common=new Common();
             $Dbcommmon= new Dbcommom();

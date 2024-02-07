@@ -65,21 +65,7 @@ class Login extends Controller
 
             $auth = new Wx();
             $json_obj = $auth->login($param);
-            if($authPhone){
-                if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
-                    $wxDecryption = $this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
-                    if (!$wxDecryption){
-                        return R::error('信息解密失败');
-                    }
-                    $mobile = $wxDecryption['phoneNumber'];
-                    $nickName = $mobile;
-                }else{
-                    return R::code(401,'未授权');
-                }
-            }else{
-                $nickName = $this->shuffleName();
-                $mobile  ='';
-            }
+
             $user = new Users;
             $user_info=$user->get(['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
             $time=time();
@@ -103,6 +89,21 @@ class Login extends Controller
                 $isSave = $user->save($data,['open_id'=>$json_obj["openid"],'agent_id'=>$agent_id]);
                 $user_id = $user_info['id'];
             }else{ // 用户不存在，注册用户
+                if($authPhone){
+                    if (!empty($param['encrypted_data'])&&!empty($param['iv'])){
+                        $wxDecryption = $this->common->getUserInfo($param['encrypted_data'], $param['iv'],$json_obj['session_key'],$param['app_id']);
+                        if (!$wxDecryption){
+                            return R::error('信息解密失败');
+                        }
+                        $mobile = $wxDecryption['phoneNumber'];
+                        $nickName = $mobile;
+                    }else{
+                        return R::code(401,'未授权');
+                    }
+                }else{
+                    $nickName = $this->shuffleName();
+                    $mobile  ='';
+                }
                 $user_info['nick_name'] = $nickName;
                 $user_info['mobile'] = $mobile;
                 $user_info['open_id']=$json_obj['openid'];
@@ -264,6 +265,9 @@ class Login extends Controller
             $info = $loginBusiness->login($params);
             return R::ok($info);
         }catch (\Exception $exception){
+            if ($exception->getCode() == 401){
+                return R::code(401,'未授权');
+            }
             recordLog('login-err', "登录失败：" . PHP_EOL .
                 $exception->getLine() . $exception->getMessage() . PHP_EOL .
                 $exception->getTraceAsString());
@@ -433,6 +437,7 @@ class Login extends Controller
         }
         //file_put_contents('get_config.txt',$param['app_id'].PHP_EOL,FILE_APPEND);
         $agentAuth=db('agent_auth')->where('app_id',$param['app_id'])->field('agent_id,map_key')->find();
+        if (empty($agentAuth)) return R::error('小程序未授权');
         $config = Admin::where('id',$agentAuth['agent_id'])
             ->with('agentConfig' )
             ->field('id,zizhu,zhonghuo,coupon,wx_guanzhu,qywx_id,
