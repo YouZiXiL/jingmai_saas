@@ -160,8 +160,8 @@ class JiLuBusiness
 
         $weight = ceil($param['weight']) ; // 下单重量
         $sequelWeight = $weight-1; // 续重重量
-        $oneWeight = $cost['one_weight'] + 5; // 平台首重单价
-        $reWeight = $cost['more_weight'] + 0.5; // 平台续重单价
+        $oneWeight = $cost['one_weight']; // 平台首重单价
+        $reWeight = $cost['more_weight']; // 平台续重单价
         $freight = $oneWeight + $reWeight * $sequelWeight; // 平台预估运费
 
         $agentOne = $oneWeight+ $profit['one_weight']; //代理商首单价

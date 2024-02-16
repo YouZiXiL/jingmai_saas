@@ -355,8 +355,8 @@ class OrderBusiness extends Backend
         $weight = $param['info']['weight'];
 
         $reWeight = ceil($weight -1) ; // 续重重量
-        $adminOne = $cost['one_price'] + 5; // 平台首重单价
-        $adminMore = $cost['more_price'] + 0.5; // 平台续重单价
+        $adminOne = $cost['one_price']; // 平台首重单价
+        $adminMore = $cost['more_price']; // 平台续重单价
         $freight = $adminOne + $adminMore * $reWeight; // 平台预估运费
 
         $agentOne = $adminOne + $profit['one_weight']; //代理商首单价
