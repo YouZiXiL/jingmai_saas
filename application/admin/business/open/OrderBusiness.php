@@ -170,7 +170,6 @@ class OrderBusiness extends Backend
         // 被关闭的渠道
         $qudao_close=explode('|', $agent_info['qudao_close']);
 //        $qudao_close[] = '顺丰'; // 云洋禁用顺丰
-        $qudao_close[] = '圆通';
         $qudao_close[] = '韵达';
         // 返回参数
         $list = [];

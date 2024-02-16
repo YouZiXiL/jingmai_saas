@@ -60,13 +60,13 @@ class Xcx
     /**
      * @throws \Exception
      */
-    public function uploadV1($authorizerAccessToken, $appid){
+    public function uploadV1($authorizerAccessToken, $appid, $templateId, $version,$desc ){
         $componentAppid =  $this->componentAppid;
         $url = $this->baseUrl1 . '/openapi/v1/microapp/package/upload?component_appid=' . $componentAppid .  '&authorizer_access_token=' . $authorizerAccessToken;
         $json = $this->post($url,[
-            'template_id' => 32392,
-            'user_desc' => '上传代码',
-            'user_version' => '1.0.0',
+            'template_id' => $templateId,
+            'user_desc' => $desc,
+            'user_version' => $version,
             'ext_json'=> json_encode([
                 'extEnable' => true,
                 'extAppid' => $appid,
@@ -115,15 +115,35 @@ class Xcx
     }
 
     /**
+     * 获取可选审核宿主端列表
+     * @param $authorizerAccessToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getAuditHostsV1($authorizerAccessToken){
+        $componentAppid =  $this->componentAppid;
+        $url = $this->baseUrl1 . '/openapi/v1/microapp/package/audit_hosts?component_appid=' . $componentAppid .  '&authorizer_access_token=' . $authorizerAccessToken;
+        $json = $this->get($url,[],['access-token: '. $this->_getComponentAccessTokenV1()]);
+        $result = json_decode($json, true);
+        if (isset($result['errno']) && $result['errno'] == 0){
+            return $result['data'];
+        }else{
+            recordLog('dy-auth','获取可选审核宿主端列表失败：'.$json);
+            throw new \Exception('获取可选审核宿主端列表失败：'.$json);
+        }
+    }
+
+    /**
      * 提审代码
-     * @return void
+     * @param $authorizerAccessToken
+     * @return mixed
      * @throws \Exception
      */
     public function auditV1($authorizerAccessToken){
         $componentAppid =  $this->componentAppid;
         $url = $this->baseUrl1 . '/openapi/v2/microapp/package/audit?component_appid=' . $componentAppid .  '&authorizer_access_token=' . $authorizerAccessToken;
         $json = $this->post($url,[
-            "hostNames"=> ["toutiao", "douyin"],
+            "hostNames"=> ["douyin"],
         ],['access-token: '. $this->_getComponentAccessTokenV1()]);
         $result = json_decode($json, true);
         if (isset($result['errno']) && $result['errno'] == 0){
@@ -189,6 +209,40 @@ class Xcx
         }else{
             recordLog('dy-auth','生成链接失败：'.$json);
             throw new \Exception('生成链接失败：'.$json);
+        }
+    }
+
+    /**
+     * 添加服务器域名
+     * @param $accessToken
+     * @param array $request
+     * @param array|null $download
+     * @param array|null $upload
+     * @param array|null $socket
+     * @return mixed
+     * @throws \Exception
+     */
+    public function addServerDomain($accessToken, array $request = [],array $download = [], array $upload = [], array $socket = []){
+        $url = $this->baseUrl . '/api/apps/v2/domain/modify_server_domain';
+        $data = [
+            'action' => 'add',
+            'request' => $request,
+            'download' => $download,
+            'upload' => $upload,
+            'socket' => $socket,
+        ];
+        $json = $this->post($url,$data,['access-token: '.$accessToken]);
+        $result = json_decode($json, true);
+        if (isset($result['err_no'])){
+            if($result['err_no'] == 0 || $result['err_no'] == 40026){
+                return $result;
+            }else{
+                recordLog('dy-auth','添加服务器域名失败：'.$json);
+                throw new \Exception('添加服务器域名失败：'.$json);
+            }
+        }else{
+            recordLog('dy-auth','添加服务器域名失败：'.$json);
+            throw new \Exception('添加服务器域名失败：'.$json);
         }
     }
 }

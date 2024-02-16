@@ -336,13 +336,12 @@ trait Common
 
         $headers = [
             'Content-Type: application/json',
-            'access-token: '. $this->_getComponentAccessToken(),
         ];
-
-        if (!empty($header)){
+        if (empty($header)){
+            $headers[] = 'access-token: '. $this->_getComponentAccessToken();
+        }else{
             $headers = array_merge($headers, $header);
         }
-
         //初始化
         $curl = curl_init();
         //设置抓取的url

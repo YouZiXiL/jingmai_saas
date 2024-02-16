@@ -9,8 +9,8 @@ use think\Db;
 
 class Auth extends Controller
 {
-    // 授权回调地址
     /**
+     * 授权回调地址
      * @throws \Exception
      */
     public function appCallback()
@@ -23,7 +23,8 @@ class Auth extends Controller
         // 获取用户授权的访问令牌
         $result = $options->auth()->getAuthorizerAccessTokenByCode($authCode);
         recordLog('dy-callback', json_encode($result));
-        $info = $options->xcx()->getInfo($result['authorizer_access_token']);
+        $accessToken = $result['authorizer_access_token'];
+        $info = $options->xcx()->getInfo($accessToken);
         $data = [
             'agent_id' => $params['agent_id'],
             'app_id' => $result['authorizer_appid'],
@@ -40,11 +41,15 @@ class Auth extends Controller
                 // 更新授权应用
                 $data['id'] = $agentAuth['id'];
                 $agentAuth->save($data);
+                $serverUrl = ['jingxi.bajiehuidi.com'];
+                $options->xcx()->addServerDomain($accessToken,$serverUrl,$serverUrl,$serverUrl,$serverUrl);
             } else {
                 // 添加授权应用
                 $agentAuth = AgentAuth::create($data);
+                $serverUrl = ['jingxi.bajiehuidi.com'];
+                $options->xcx()->addServerDomain($accessToken,$serverUrl,$serverUrl,$serverUrl,$serverUrl);
             }
-            $options->utils()->setAuthorizerAccessToken($agentAuth['id'], $result['authorizer_access_token']);
+            $options->utils()->setAuthorizerAccessToken($agentAuth['id'], $accessToken);
             $options->utils()->setAuthorizerRefreshToken($agentAuth['id'], $result['authorizer_refresh_token']);
 
             // 存储v1版本authorizer_access_token ，部分v1版本接口需要使用

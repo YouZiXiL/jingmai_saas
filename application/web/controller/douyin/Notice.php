@@ -36,6 +36,38 @@ class Notice extends Controller
         echo 'success';
     }
 
+    /**
+     * 消息与事件接收 URL
+     * @throws \Exception
+     */
+    public function msg(){
+        $params = input();
+        recordLog('dy-msg',  '接收消息：'.json_encode($params));
+        $options = Douyin::start();
+        // 验证签名
+        $verify = $options->utils()->verify($params['TimeStamp'], $params['Nonce'], $params['Encrypt'], $params['MsgSignature']);
+        if (!$verify)  recordLog('dy-CheckSign',  '签名验证失败：'.json_encode($params));
+        // 解密推送消息，获取component_ticket
+        $body = $options->utils()->decrypt($params['Encrypt']);
+        $content = json_decode($body, true);
+        if(isset($content['Event'])){
+            if($content['Event'] == 'PACKAGE_AUDIT'){
+                $auditInfo  = $content['AuditResults'][0];
+                // 审核事件
+                if($auditInfo['status'] == 1){ // 审核通过
+                    db('agent_auth')->where('app_id', $content['AppId'])->update([
+                        'xcx_audit' => 1
+                    ]);
+                }else{
+                    db('agent_auth')->where('app_id', $content['AppId'])->update([
+                        'xcx_audit' => 2,
+                        'reason'=>  $auditInfo['auditDetail'][0]['reason']
+                    ]);
+                    recordLog('dy-msg',  "审核失败：{$content['AppId']}-". $body);
+                }
+            }
+        }
+    }
 
     /**
      * 支付回调

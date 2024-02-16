@@ -332,7 +332,7 @@ class Authlist extends Backend
         if ($row['wx_auth'] == 3){
             $dyXcx = new Version();
             $dyXcx->upload($row);
-            return;
+            $this->success("操作成功");
         }
         $common=new Common();
         $xcx_access_token=$common->get_authorizer_access_token($row['app_id']);
@@ -412,11 +412,16 @@ class Authlist extends Backend
      * @return void
      * @throws DbException
      * @throws \think\Exception
+     * @throws Exception
      */
     function audit_app($ids){
         $row = $this->model->get($ids);
+        if ($row['wx_auth'] == 3){
+            $dyXcx = new Version();
+            $dyXcx->audit($row);
+            $this->success("操作成功");
+        }
         $common=new Common();
-
         $xcx_access_token=$common->get_authorizer_access_token($row['app_id']);
 
         $resJson=$common->httpRequest('https://api.weixin.qq.com/wxa/security/get_code_privacy_info?access_token='.$xcx_access_token);
