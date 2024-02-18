@@ -126,7 +126,7 @@ class Order extends Backend
         $list = array_combine($keys, $response);
         $yyRes = isset($list['yy'])?$orderBusiness->yyPriceHandle($list['yy'], $agent_info, $paramData, $channelTag):[];
         // $fhdRes = $orderBusiness->fhdPriceHandle($fhd, $agent_info, $paramData, $channelTag);
-        $qbdRes = []; // isset($list['qbd'])?$orderBusiness->qbdPriceHandle($list['qbd'], $agent_info, $paramData):[];
+        $qbdRes = isset($list['qbd'])?$orderBusiness->qbdPriceHandle($list['qbd'], $agent_info, $paramData):[];
 //        $kdnRes = isset($list['kdn'])?$orderBusiness->kdnPriceHandle($list['kdn'], $agent_info, $paramData):[];
         $bbdRes = isset($list['bbd'])?$orderBusiness->bbdPriceHandle($list['bbd'], $agent_info, $paramData):[];
         $jlRes = $orderBusiness->jlPriceHandle($agent_info, $paramData);
