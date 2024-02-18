@@ -131,7 +131,7 @@ class Utils
      * @throws Exception
      */
     public function getAuthorizerAccessTokenV1(int $authId){
-        // 获取access_token
+        // 获取access_tokenfa_agent_blacklist
         $token = Cache::store('redis')->get('jx:dy:authorizer_access_token_v1:'.$authId);
         if($token) return $token;
         $appid = db('agent_auth')->where('id', $authId)->value('app_id');

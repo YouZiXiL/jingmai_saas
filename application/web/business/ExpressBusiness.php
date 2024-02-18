@@ -63,7 +63,6 @@ class ExpressBusiness
         $agentInfo = db('admin')->where('id',$this->user->agent_id)->find();
         if ($agentInfo['status']=='hidden') throw new Exception('该商户已禁止使用');
         if ($agentInfo['agent_expire_time']<=time())  throw new Exception('该商户已过期');
-        if (empty($agentInfo['wx_mchid'])||empty($agentInfo['wx_mchcertificateserial'])) throw new Exception('商户没有配置微信支付');
         if ($agentInfo['amount']<=100) throw new Exception('该商户余额不足,请联系客服');
         try {
             $owe=db('orders')
@@ -131,6 +130,7 @@ class ExpressBusiness
             if($total<=0) $total = 0.01;
 
             if($data['origin'] == 'wx'){
+                if (empty($agentInfo['wx_mchid'])||empty($agentInfo['wx_mchcertificateserial'])) throw new Exception('商户没有配置微信支付');
                 $wx_pay=$this->common->wx_pay($agentInfo['wx_mchid'],$agentInfo['wx_mchcertificateserial']);
                 $json=[
                     'mchid'        => $agentInfo['wx_mchid'],

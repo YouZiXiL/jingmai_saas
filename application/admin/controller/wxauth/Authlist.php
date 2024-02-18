@@ -479,8 +479,18 @@ class Authlist extends Backend
         }
     }
 
+    /**
+     * 发布代码
+     * @throws DbException
+     * @throws Exception
+     */
     function release_app($ids=null){
         $row = $this->model->get($ids);
+        if ($row['wx_auth'] == 3){
+            $dyXcx = new Version();
+            $dyXcx->release($row);
+            $this->success("操作成功");
+        }
         $common=new Common();
         try {
             $xcx_access_token = $common->get_authorizer_access_token($row['app_id']);

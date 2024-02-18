@@ -37,4 +37,18 @@ class Version
         $dy->xcx()->auditV1($accessToken);
         $authApp->save(['xcx_audit'=>4]);
     }
+
+    /**
+     * 发布代码
+     * @param Authlist|null $authApp
+     * @return void
+     * @throws \Exception
+     */
+    public function release(?Authlist $authApp)
+    {
+        $dy = Douyin::start();
+        $accessToken = $dy->utils()->getAuthorizerAccessTokenV1($authApp['id']);
+        $dy->xcx()->releaseV1($accessToken);
+        $authApp->save(['xcx_audit'=>5]);
+    }
 }

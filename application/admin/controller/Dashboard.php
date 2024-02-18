@@ -42,16 +42,16 @@ class Dashboard extends Backend
             } catch (DataNotFoundException|ModelNotFoundException|DbException $e) {
                 $agentAuth = [];
             }
-            if(count($agentAuth)>1){
-                $app = [];
-                foreach ($agentAuth as $k=>$v){
-                    $app[$k] = [
-                        'monthProfits' => $this->todayProfits('month',['auth_id' => $v['id']]),
-                        'yearProfits' => $this->todayProfits('year',['auth_id' => $v['id']]),
-                        'name' => $v['name'],
-                    ] ;
-                }
-            }
+//            if(count($agentAuth)>1){
+//                $app = [];
+//                foreach ($agentAuth as $k=>$v){
+//                    $app[$k] = [
+//                        'monthProfits' => $this->todayProfits('month',['auth_id' => $v['id']]),
+//                        'yearProfits' => $this->todayProfits('year',['auth_id' => $v['id']]),
+//                        'name' => $v['name'],
+//                    ] ;
+//                }
+//            }
             $arr['app'] = $app??'';
             // 总订单sql
             $totalSql = "count(if(pay_status != '0', 1, null)) as total";
