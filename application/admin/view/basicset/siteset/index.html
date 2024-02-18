@@ -58,14 +58,22 @@
     </div>
 
     <div class="form-group">
-        <label for="kf_url" class="control-label col-xs-12 col-sm-2">客服链接:</label>
+        <label for="kf_url" class="control-label col-xs-12 col-sm-2">微信客服:</label>
         <div class="col-xs-12 col-sm-4 ">
             <input type="text"  class="form-control" id="kf_url" name="row[agent_config][kf_url]" autocomplete="off" value="{$row.agent_config.kf_url}"  />
             <div class="text-primary" style="">企业微信客服链接如：https://kf.weixin.qq.com/</div>
         </div>
     </div>
+
     <div class="form-group">
-        <label for="kf-qrcode" class="control-label col-xs-12 col-sm-2">客服二维码:</label>
+        <label for="kf_url" class="control-label col-xs-12 col-sm-2">抖音客服:</label>
+        <div class="col-xs-12 col-sm-4 ">
+            <input type="text"  class="form-control" id="dy_kf" name="row[agent_config][dy_kf]" autocomplete="off" value="{$row.agent_config.dy_kf}"  />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="kf-qrcode" class="control-label col-xs-12 col-sm-2">微信客服二维码:</label>
         <div class="col-xs-12 col-sm-4">
             <div class="input-group">
                 <input id="kf-qrcode" data-rule="" class="form-control" size="50" name="row[agent_config][kf_qrcode]" type="text" value="{$row.agent_config.kf_qrcode}">
@@ -85,7 +93,7 @@
         </div>
     </div>
     <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">客服类型:</label>
+        <label class="control-label col-xs-12 col-sm-2">微信客服类型:</label>
         <div class="col-xs-12 col-sm-8">
             {:build_radios("row[agent_config][kf_type]",["1"=>"客服二维码","2"=>"客服链接"], $row.agent_config.kf_type)}
         </div>
