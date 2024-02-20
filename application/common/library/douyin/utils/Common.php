@@ -324,19 +324,24 @@ trait Common
     /**
      * post请求
      * @param string $url
-     * @param array $options
+     * @param array $data
      * @param array $header
+     * @param string $contentType
      * @return bool|string
      * @throws Exception
      */
-    private function post(string $url, array $options = [], array $header = [] )
+    private function post(string $url, array $data = [], array $header = [], string $contentType = 'json')
     {
-//         $data = http_build_query($options);
-        $data = json_encode($options, JSON_UNESCAPED_UNICODE);
+        if($contentType == 'json'){
+            $headers = ['Content-Type: application/json'];
+            $data = json_encode($data, JSON_UNESCAPED_UNICODE);
+        }elseif ($contentType == 'form-data'){
+            $headers = ['Content-Type: multipart/form-data'];
+        }else{
+            $headers = ['Content-Type: multipart/x-www-form-urlencoded'];
+            $data = http_build_query($data);;
+        }
 
-        $headers = [
-            'Content-Type: application/json',
-        ];
         if (empty($header)){
             $headers[] = 'access-token: '. $this->_getComponentAccessToken();
         }else{

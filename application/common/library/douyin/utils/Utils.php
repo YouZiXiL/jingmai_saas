@@ -226,4 +226,18 @@ class Utils
         return substr($text, 0, (strlen($text) - $pad));
     }
 
+    /**
+     *  敏感数据解密
+     * @param $encryptedData
+     * @param $iv
+     * @param $sessionKey
+     */
+    public function decryptData($encryptedData, $iv, $sessionKey){
+        $aesCipher=base64_decode($encryptedData);
+        $aesKey = base64_decode($sessionKey);
+        $iv = base64_decode($iv);
+        $decrypted = openssl_decrypt($aesCipher, 'AES-128-CBC', $aesKey, 1, $iv);
+        return  $decrypted ?json_decode($decrypted, true): false;
+    }
+
 }

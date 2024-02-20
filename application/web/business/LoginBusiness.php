@@ -2,6 +2,7 @@
 
 namespace app\web\business;
 
+use app\common\library\douyin\Douyin;
 use app\common\library\R;
 use app\web\business\douyin\Auth as Dy;
 use app\web\business\wx\Auth as Wx;
@@ -34,11 +35,11 @@ class LoginBusiness
         $authPhone = db('agent_config')->where('agent_id',$agent_id)->field('id,auth_phone')->value('auth_phone');
         if ($params['origin'] == 'wx'){
             $auth = new Wx();
-            $accessToken = $auth->login($params);
+            $accessToken = $auth->codeToSession($params);
         }
         else if($params['origin'] == 'dy'){
             $auth = new Dy();
-            $accessToken = $auth->login($params, $agentAuth);
+            $accessToken = $auth->codeToSession($params, $agentAuth);
         }else{
             throw new \Exception('未知客户端');
         }
@@ -64,18 +65,36 @@ class LoginBusiness
             // 更新用信息
             $isSave = $userInfo->save($data);
             $userId = $userInfo['id'];
-        }else{ // 用户不存在，注册用户
-            if($authPhone && $params['origin'] == 'wx'){
-                if (!empty($params['encrypted_data'])&&!empty($params['iv'])){
-                    $wxDecryption = $utils->getUserInfo($params['encrypted_data'], $params['iv'],$accessToken['session_key'],$params['app_id']);
-                    if (!$wxDecryption){
-                        throw new \Exception('信息解密失败');
+        }
+        else{ // 用户不存在，注册用户
+            if($authPhone){
+                if( $params['origin'] == 'wx'){
+                    if (!empty($params['encrypted_data'])&&!empty($params['iv'])){
+                        $wxDecryption = $utils->getUserInfo($params['encrypted_data'], $params['iv'],$accessToken['session_key'],$params['app_id']);
+                        if (!$wxDecryption){
+                            throw new \Exception('信息解密失败');
+                        }
+                        $mobile = $wxDecryption['phoneNumber'];
+                        $nickName = $mobile;
+                    }else{
+                        throw new \Exception('未授权',401);
                     }
-                    $mobile = $wxDecryption['phoneNumber'];
-                    $nickName = $mobile;
+                }else if($params['origin'] == 'dy'){
+                    if (!empty($params['encrypted_data'])&&!empty($params['iv'])){
+                        $app = Douyin::start();
+                        $decrypt = $app->utils()->decryptData($params['encrypted_data'],$params['iv'],$accessToken['session_key']);
+                        if (!$decrypt){
+                            throw new \Exception('信息解密失败');
+                        }
+                        $mobile = $decrypt['phoneNumber'];
+                        $nickName = $mobile;
+                    }else{
+                        throw new \Exception('未授权',401);
+                    }
                 }else{
-                    throw new \Exception('未授权',401);
+                    throw new \Exception('未知客户端',401);
                 }
+
             }else{
                 $nickName = $this->shuffleName();
             }

@@ -83,6 +83,26 @@ class Xcx
     }
 
     /**
+     * 代授权小程序上传资源
+     * @throws \Exception
+     */
+    public function uploadMaterial($authorizerAccessToken){
+        $url = $this->baseUrl . '/api/apps/v2/file/upload_material/';
+        $file =  root_path('public/assets/img/dy/phone_.pic.jpg');
+        $json = $this->post($url,[
+            'material_file' => curl_file_create($file),
+            'material_type' => 5,
+        ],['access-token: ' . $authorizerAccessToken],'form-data');
+        $result = json_decode($json, true);
+        if (isset($result['data'])){
+            return $result['data']['path'];
+        }else{
+            recordLog('dy-auth','上传资源失败：'.$json);
+            throw new \Exception('上传资源失败：'.$json);
+        }
+    }
+
+    /**
      * 获取模板小程序列表
      * @throws \Exception
      */
@@ -243,6 +263,29 @@ class Xcx
         }else{
             recordLog('dy-auth','添加服务器域名失败：'.$json);
             throw new \Exception('添加服务器域名失败：'.$json);
+        }
+    }
+
+
+    /**
+     * 申请「获取用户手机号」能力
+     * @throws \Exception
+     */
+    public function phoneNumberV1($authorizerAccessToken, $imagePaths){
+        $componentAppid =  $this->componentAppid;
+        $url = $this->baseUrl1 . '/openapi/v1/microapp/operation/phone_number_application?component_appid=' . $componentAppid .  '&authorizer_access_token=' . $authorizerAccessToken;
+        $json = $this->post($url,[
+            'reason' => 1,
+            'scene' => 4,
+            'description' => '寄快递时需要知道用户的手机号',
+            'imagePaths' => [$imagePaths],
+        ]);
+        $result = json_decode($json, true);
+        if (isset($result['errno']) && $result['errno'] == 0){
+            return $result['message'];
+        }else{
+            recordLog('dy-auth','申请「获取用户手机号」能力失败：'.$json);
+            throw new \Exception('申请「获取用户手机号」能力失败：'.$json);
         }
     }
 }

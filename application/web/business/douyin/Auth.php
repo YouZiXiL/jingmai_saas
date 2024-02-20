@@ -16,7 +16,7 @@ class Auth
      * @throws \Exception
      * @return  array  [session_key,openid,unionid,anonymous_openid]
      */
-    public function login($param, $agentAuth){
+    public function codeToSession($param, $agentAuth){
         $app = Douyin::start();
         $accessToken = $app->utils()->getAuthorizerAccessTokenV1($agentAuth['id']);
 

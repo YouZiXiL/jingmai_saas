@@ -20,6 +20,12 @@ class Version
         $version = $template['user_version'];
         $desc = $template['user_desc'];
         $accessTokenV1 = $dy->utils()->getAuthorizerAccessTokenV1($authApp['id']);
+
+        // $accessToken = $dy->utils()->getAuthorizerAccessToken($authApp['id']);
+        // $path = $dy->xcx()->uploadMaterial($accessToken);
+        // $data = $dy->xcx()->phoneNumberV1($accessTokenV1, $path);
+
+
         $dy->xcx()->uploadV1($accessTokenV1, $authApp['app_id'], $templateId, $version, $desc);
         $authApp->save(['xcx_audit'=>3,'user_version'=>$version]);
     }
