@@ -19,7 +19,17 @@ class Auth
     public function codeToSession($param, $agentAuth){
         $app = Douyin::start();
         $accessToken = $app->utils()->getAuthorizerAccessTokenV1($agentAuth['id']);
-
-        return $app->xcx()->codeToSessionV1($param['code'], $accessToken);
+        $result = $app->xcx()->codeToSessionV1($param['code'], $accessToken);
+        if($result['errno'] ==  0){
+            return $result['data'];
+        }else if($result['errno'] ==  40020){
+            $app->utils()->clearAuthorizerAccessTokenV1($agentAuth['id']);
+            $accessToken = $app->utils()->getAuthorizerAccessTokenV1($agentAuth['id']);
+            $result = $app->xcx()->codeToSessionV1($param['code'], $accessToken);
+            if($result['errno'] ==  0){
+                return $result['data'];
+            }
+        }
+        throw new \Exception('获取session_key失败');
     }
 }

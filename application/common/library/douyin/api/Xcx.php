@@ -38,7 +38,7 @@ class Xcx
      * 该接口用于第三方小程序应用为授权小程序获取用户的 session_key,openid以及unionid。
      * @param string $code 前端login接口返回的code
      * @param string $authorizerAccessToken 授权小程序的access_token
-     * @return array [session_key,openid,unionid,anonymous_openid]
+     * @return int|array [session_key,openid,unionid,anonymous_openid]
      * @throws \Exception
      */
     public function codeToSessionV1(string $code, string $authorizerAccessToken){
@@ -49,8 +49,8 @@ class Xcx
             'code' => $code,
         ]);
         $result = json_decode($json, true);
-        if (isset($result['data']['session_key'])){
-            return $result['data'];
+        if (isset($result['errno']) && ($result['errno'] == 0 || $result['errno'] == 40020)){
+            return $result;
         }else{
             recordLog('dy-auth','codeToSessionV1调用失败：'.$json);
             throw new \Exception('codeToSessionV1调用失败：'.$json);

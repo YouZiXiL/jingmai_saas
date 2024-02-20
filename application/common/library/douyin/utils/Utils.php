@@ -72,8 +72,17 @@ class Utils
      * @param int $expiresIn
      * @return void
      */
-    public function setAuthorizerAccessTokenV1(int $authId, string $accessToken, int $expiresIn = 7000){
-        Cache::store('redis')->set('jx:dy:authorizer_access_token_v1:'.$authId, $accessToken, $expiresIn);
+    public function setAuthorizerAccessTokenV1(int $authId, string $accessToken, int $expiresIn){
+        Cache::store('redis')->set('jx:dy:authorizer_access_token_v1:'.$authId, $accessToken, $expiresIn-200);
+    }
+
+    /**
+     * 清除授权小程序接口调用凭证authorizer_access_token，有效期为2小时（7200秒）V1版本
+     * @param int $authId int agent_auth表中的id
+     * @return void
+     */
+    public function clearAuthorizerAccessTokenV1(int $authId){
+        Cache::store('redis')->rm('jx:dy:authorizer_access_token_v1:'.$authId);
     }
 
 
@@ -139,7 +148,7 @@ class Utils
         $authCode = $this->retrieveAuthCode($appid);
 
         $result = $this->_getAuthorizerAccessTokenByCodeV1($authCode);
-        $this->setAuthorizerAccessTokenV1($authId, $result['authorizer_access_token']);
+        $this->setAuthorizerAccessTokenV1($authId, $result['authorizer_access_token'],  $result['expires_in']);
         return $result['authorizer_access_token'];
     }
 

@@ -54,7 +54,7 @@ class Auth extends Controller
 
             // 存储v1版本authorizer_access_token ，部分v1版本接口需要使用
             $resultV1 = $options->auth()->getAuthorizerAccessTokenByCodeV1($authCode);
-            $options->utils()->setAuthorizerAccessTokenV1($agentAuth['id'], $resultV1['authorizer_access_token']);
+            $options->utils()->setAuthorizerAccessTokenV1($agentAuth['id'], $resultV1['authorizer_access_token'], $resultV1['expires_in']);
             Db::commit();
         } catch (\Exception $e) {
             Db::rollback();
