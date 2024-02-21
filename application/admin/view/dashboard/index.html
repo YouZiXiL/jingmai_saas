@@ -318,7 +318,7 @@
     let agentTopCharts = ''
     let profitListCharts = ''
     let agentOrderCharts = ''
-    let profitLine = ''
+    let orderLine = ''
     new Vue({
         el: '#dashboard',
         mixins:[],
@@ -434,11 +434,11 @@
 
 
                 // 订单折线图
-                profitLineDate:[], // 日期
-                nmhdProfitLine:[], // 柠檬惠递利润
-                bjhdProfitLine:[], // 八戒惠递利润
-                nmkdProfitLine:[], // 柠檬快递利润
-                platformProfitLine:[], // 平台利润
+                orderLineDate:[], // 日期
+                nmhdOrderLine:[], // 柠檬惠递利润
+                bjhdOrderLine:[], // 八戒惠递利润
+                nmkdOrderLine:[], // 柠檬快递利润
+                platformOrderLine:[], // 平台利润
 
                 orderDateValue: 'day', // 下拉框 时间选择
                 orderDateOptions: [ // 日期选项
@@ -465,6 +465,9 @@
                     }, {
                         value: 'profit',
                         label: '订单利润'
+                    },{
+                        value: 'revenue',
+                        label: '订单营收'
                     },{
                         value: 'overloadOrder',
                         label: '超重未补缴数量'
@@ -560,11 +563,11 @@
                 this.firstDay = `${year}-${month}-01`; // 本月第一天
 
                 // 订单折线图
-                this.profitLineDate = data.profitLineDate; // 日期
-                this.nmhdProfitLine = data.nmhdProfitLine; // 柠檬惠递利润
-                this.bjhdProfitLine = data.bjhdProfitLine; // 八戒惠递利润
-                this.nmkdProfitLine = data.nmkdProfitLine; // 八戒惠递利润
-                this.platformProfitLine = data.platformProfitLine; // 平台利润
+                this.orderLineDate = data.orderLineDate; // 日期
+                this.nmhdOrderLine = data.nmhdOrderLine; // 柠檬惠递利润
+                this.bjhdOrderLine = data.bjhdOrderLine; // 八戒惠递利润
+                this.nmkdOrderLine = data.nmkdOrderLine; // 八戒惠递利润
+                this.platformOrderLine = data.platformOrderLine; // 平台利润
 
                 // 小程序
                 this.authApp =  data.app
@@ -1271,7 +1274,7 @@
 
             // 订单折线图
             setProfitLine(){
-                profitLine = echarts.init(document.getElementById('profit-line'));
+                orderLine = echarts.init(document.getElementById('profit-line'));
                 const option = {
                     color: ['#FA9DA0', '#8cceff', "#dab7f5", '#CCEA90'],
                     title: {
@@ -1299,7 +1302,7 @@
                         {
                             type: 'category',
                             boundaryGap: false,
-                            data: this.profitLineDate
+                            data: this.orderLineDate
                         }
                     ],
                     yAxis: [
@@ -1333,7 +1336,7 @@
                             emphasis: {
                                 focus: 'series'
                             },
-                            data: this.nmhdProfitLine
+                            data: this.nmhdOrderLine
                         },
                         {
                             name: '八戒惠递',
@@ -1361,7 +1364,7 @@
                                 focus: 'series'
                             },
                             // data: this.monthCancelOrder
-                            data:  this.bjhdProfitLine
+                            data:  this.bjhdOrderLine
                         },
                         {
                             name: '柠檬快递',
@@ -1388,7 +1391,7 @@
                             emphasis: {
                                 focus: 'series'
                             },
-                            data: this.nmkdProfitLine
+                            data: this.nmkdOrderLine
                         },
                         {
                             name: '平台',
@@ -1415,12 +1418,12 @@
                             emphasis: {
                                 focus: 'series'
                             },
-                            data: this.platformProfitLine
+                            data: this.platformOrderLine
                         },
                     ]
                 }
-                profitLine.setOption(option)
-                window.addEventListener('resize', profitLine.resize);
+                orderLine.setOption(option)
+                window.addEventListener('resize', orderLine.resize);
             },
 
             // 快递选择器
@@ -1458,11 +1461,11 @@
                     },
                 },
                 (data) => { //success
-                    this.profitLineDate = data['profitLineDate'];
-                    this.nmhdProfitLine = data['nmhdProfitLine'];
-                    this.bjhdProfitLine = data['bjhdProfitLine'];
-                    this.nmkdProfitLine = data['nmkdProfitLine'];
-                    this.platformProfitLine = data['platformProfitLine'];
+                    this.orderLineDate = data['orderLineDate'];
+                    this.nmhdOrderLine = data['nmhdOrderLine'];
+                    this.bjhdOrderLine = data['bjhdOrderLine'];
+                    this.nmkdOrderLine = data['nmkdOrderLine'];
+                    this.platformLine = data['platformOrderLine'];
                     const option = {
                         color: ['#FA9DA0', '#8cceff', "#dab7f5", "#ccea90"],
                         title: {
@@ -1490,7 +1493,7 @@
                             {
                                 type: 'category',
                                 boundaryGap: false,
-                                data: this.profitLineDate
+                                data: this.orderLineDate
                             }
                         ],
                         yAxis: [
@@ -1525,7 +1528,7 @@
                                     focus: 'series'
                                 },
                                 // data: this.monthValidOrder
-                                data: this.nmhdProfitLine
+                                data: this.nmhdOrderLine
                             },
                             {
                                 name: '八戒惠递',
@@ -1552,7 +1555,7 @@
                                 emphasis: {
                                     focus: 'series'
                                 },
-                                data:  this.bjhdProfitLine
+                                data:  this.bjhdOrderLine
                             },
                             {
                                 name: '柠檬快递',
@@ -1580,7 +1583,7 @@
                                     focus: 'series'
                                 },
                                 // data: this.monthTotalOrder
-                                data: this.nmkdProfitLine
+                                data: this.nmkdOrderLine
                             },
                             {
                                 name: '平台',
@@ -1608,12 +1611,12 @@
                                 emphasis: {
                                     focus: 'series'
                                 },
-                                data: this.platformProfitLine
+                                data: this.platformLine
                             },
 
                         ],
                     }
-                    profitLine.setOption(option)
+                    orderLine.setOption(option)
                     return false
                 }, (data,ret) => { //error
                     return true;

@@ -5,6 +5,7 @@ namespace app\admin\controller;
 use app\admin\business\Admin;
 use app\admin\business\OrderBusiness;
 use app\admin\business\ProfitsBusiness;
+use app\admin\business\RevenueBusiness;
 use app\common\controller\Backend;
 use think\Db;
 use think\db\exception\BindParamException;
@@ -125,22 +126,12 @@ class Dashboard extends Backend
                 ->where('pay_status',1)
                 ->sum('agent_price');
 
+            $revenueBusiness = new RevenueBusiness();
+            $revenueList = $revenueBusiness->getPlatformRecentDay($agentId, 1);
             //今日营业额
-            $arr['today_final_price']=db('orders')
-                ->where('agent_id',$this->auth->id)
-                ->whereTime('create_time','today')
-                ->where('pay_status',1)
-                ->sum('final_price');
-
-
+            $arr['today_final_price'] = $revenueList[1]['total'];
             //昨日营业额
-            $yesterday_final_price=  Db::query("select sum(final_price) as total from fa_orders
-                 where from_unixtime(create_time) > current_date - interval 1 day
-                 and agent_id = {$agentId}
-                 and from_unixtime(create_time) < current_date
-                 and pay_status = '1'");
-            $arr['yesterday_final_price'] =  $yesterday_final_price[0]['total'];
-
+            $arr['yesterday_final_price'] = $revenueList[0]['total'];
 
             $yesterday_overload_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
             $yesterday_haocai_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
@@ -268,30 +259,23 @@ class Dashboard extends Backend
             $arr['yesterday_agent_price'] = $yesterday_agent_price[0]['total'];
 
 
+
+            $revenueBusiness = new RevenueBusiness();
+            $revenueList = $revenueBusiness->getPlatformRecentDay('all', 1);
             //今日营业额
-            $arr['today_final_price']=db('orders')
-                ->whereTime('create_time','today')
-                ->where('pay_status',1)
-                ->sum('final_price');
-
+            $arr['today_final_price'] = $revenueList[1]['total'];
             //昨日营业额
-            $yesterday_final_price =  Db::query("select sum(final_price) as total from fa_orders 
-                 where from_unixtime(create_time) > current_date - interval 1 day 
-                 and from_unixtime(create_time) < current_date 
-                 and pay_status = '1'");
-            $arr['yesterday_final_price'] = $yesterday_final_price[0]['total'];
+            $arr['yesterday_final_price'] = $revenueList[0]['total'];
 
-            $profitsBusiness = new ProfitsBusiness();
-            $nmhdProfits = $profitsBusiness->getAppRecentDayByAgentId(15);
-            $bjhdProfits = $profitsBusiness->getAppRecentDayByAgentId(17);
-            $nmkdProfits = $profitsBusiness->getAppRecentDayByAgentId(18);
-            $platform = $profitsBusiness->getPlatformRecentDay();
 
-            $arr['profitLineDate'] = array_column($nmhdProfits,'date');
-            $arr['nmhdProfitLine'] = array_column($nmhdProfits,'profit');
-            $arr['bjhdProfitLine'] = array_column($bjhdProfits,'profit');
-            $arr['nmkdProfitLine'] = array_column($nmkdProfits,'profit');
-            $arr['platformProfitLine'] = array_column($platform,'profit');
+
+
+            $result = $this->orderProfitLine('day', 'all');
+            $arr['orderLineDate'] = $result['orderLineDate'];
+            $arr['nmhdOrderLine'] = $result['nmhdOrderLine'];
+            $arr['bjhdOrderLine'] = $result['bjhdOrderLine'];
+            $arr['nmkdOrderLine'] = $result['nmkdOrderLine'];
+            $arr['platformOrderLine'] = $result['platformOrderLine'];
 
             //今日利润(自营小程序)
             $selfAppToday = $this->agentProfits('today',"agent_id in (15,17,18)");
@@ -370,6 +354,7 @@ class Dashboard extends Backend
         $total =  array_column($result, 'total');
         $this->success('', '', compact('name', 'total'));
     }
+
 
     /**
      * 利润
@@ -737,7 +722,7 @@ class Dashboard extends Backend
      * @param $date
      * @param $express
      * @param string $type
-     * @return void
+     * @return array
      */
     public function orderProfitLine($date, $express, string $type = 'profit'){
         $profitsBusiness = new ProfitsBusiness();
@@ -774,30 +759,33 @@ class Dashboard extends Backend
         }
 
 
-        $nmhdProfitLineDate = array_column($nmhdProfits,'profit','date');
-        $bjhdProfitLineDate = array_column($bjhdProfits,'profit','date');
-        $nmkdProfitLineDate = array_column($nmkdProfits,'profit','date');
-        $profitLineDate = array_merge($nmhdProfitLineDate,$bjhdProfitLineDate,$nmkdProfitLineDate);
+        $nmhdLineDate = array_column($nmhdProfits,'profit','date');
+        $bjhdLineDate = array_column($bjhdProfits,'profit','date');
+        $nmkdLineDate = array_column($nmkdProfits,'profit','date');
+        $orderLineDate = array_merge($nmhdLineDate,$bjhdLineDate,$nmkdLineDate);
         // 按日期排序
-        uksort($profitLineDate, function ($a, $b) {
+        uksort($orderLineDate, function ($a, $b) {
             $dateA = strtotime(str_replace('-', '/', $a));
             $dateB = strtotime(str_replace('-', '/', $b));
             return $dateA - $dateB;
         });
 
-        $profitLineDate =  array_keys($profitLineDate);
-        $dateList = array_fill_keys($profitLineDate, 0);
+        $orderLineDate =  array_keys($orderLineDate);
+        $dateList = array_fill_keys($orderLineDate, 0);
 
-        $nmhdDateList = array_merge($dateList, $nmhdProfitLineDate);
-        $bjhdDateList = array_merge($dateList, $bjhdProfitLineDate);
-        $nmkdDateList = array_merge($dateList, $nmkdProfitLineDate);
+        $nmhdOrderLine = array_values(array_merge($dateList, $nmhdLineDate));
+        $bjhdOrderLine = array_values(array_merge($dateList, $bjhdLineDate));
+        $nmkdOrderLine = array_values(array_merge($dateList, $nmkdLineDate));
 
-        $nmhdProfitLine = array_values($nmhdDateList);
-        $bjhdProfitLine = array_values($bjhdDateList);
-        $nmkdProfitLine = array_values($nmkdDateList);
+        $platformOrderLine = array_column($platformProfits,'profit');
 
-        $platformProfitLine = array_column($platformProfits,'profit');
-        $this->success('', '',compact('profitLineDate','nmhdProfitLine', 'bjhdProfitLine', 'nmkdProfitLine','platformProfitLine'));
+        return [
+            'orderLineDate' => $orderLineDate,
+            'nmhdOrderLine' => $nmhdOrderLine,
+            'bjhdOrderLine' => $bjhdOrderLine,
+            'nmkdOrderLine' => $nmkdOrderLine,
+            'platformOrderLine' => $platformOrderLine,
+        ];
     }
 
     /**
@@ -809,9 +797,15 @@ class Dashboard extends Backend
      */
     public function orderLine(string $type, string $date, string $express){
         if($type == 'profit' ||  $type == 'overloadProfit'){
-            $this->orderProfitLine($date,$express,$type);
+            // 订单利润||超重未补缴利润
+            $result = $this->orderProfitLine($date,$express,$type);
+            $this->success('', '',$result);
         }else if($type  == 'order' ||  $type == 'overloadOrder'){
+            // 订单数量||超重未补缴数量
             $this->orderCountLine($date,$express,$type);
+        }else if($type  == 'revenue'){
+            // 营收
+            $this->orderRevenueLine($date,$express,$type);
         }
     }
 
@@ -845,61 +839,114 @@ class Dashboard extends Backend
         $orderBusiness = new OrderBusiness();
         switch ($date){
             case 'day': // 最近30天
-                $nmhdProfits = $orderBusiness->getAppRecentDayByAgentId(15,$express, $type);
-                $bjhdProfits = $orderBusiness->getAppRecentDayByAgentId(17,$express, $type);
-                $nmkdProfits = $orderBusiness->getAppRecentDayByAgentId(18,$express, $type);
-                $platformProfits = $orderBusiness->getPlatformRecentDay($express, $type);
+                $nmhd = $orderBusiness->getAppRecentDayByAgentId(15,$express, $type);
+                $bjhd = $orderBusiness->getAppRecentDayByAgentId(17,$express, $type);
+                $nmkd = $orderBusiness->getAppRecentDayByAgentId(18,$express, $type);
+                $platform = $orderBusiness->getPlatformRecentDay($express, $type);
                 break;
             case 'month': // 本月
-                $nmhdProfits = $orderBusiness->getAppMonthByAgentId(15,$express, $type);
-                $bjhdProfits = $orderBusiness->getAppMonthByAgentId(17,$express, $type);
-                $nmkdProfits = $orderBusiness->getAppMonthByAgentId(18,$express, $type);
-                $platformProfits = $orderBusiness->getPlatformMonth($express, $type);
+                $nmhd = $orderBusiness->getAppMonthByAgentId(15,$express, $type);
+                $bjhd = $orderBusiness->getAppMonthByAgentId(17,$express, $type);
+                $nmkd = $orderBusiness->getAppMonthByAgentId(18,$express, $type);
+                $platform = $orderBusiness->getPlatformMonth($express, $type);
                 break;
             case 'lastMonth': // 上个月
-                $nmhdProfits = $orderBusiness->getAppLastMonthByAgentId(15,$express, $type);
-                $bjhdProfits = $orderBusiness->getAppLastMonthByAgentId(17,$express, $type);
-                $nmkdProfits = $orderBusiness->getAppLastMonthByAgentId(18,$express, $type);
-                $platformProfits = $orderBusiness->getPlatformLastMonth($express, $type);
+                $nmhd = $orderBusiness->getAppLastMonthByAgentId(15,$express, $type);
+                $bjhd = $orderBusiness->getAppLastMonthByAgentId(17,$express, $type);
+                $nmkd = $orderBusiness->getAppLastMonthByAgentId(18,$express, $type);
+                $platform = $orderBusiness->getPlatformLastMonth($express, $type);
                 break;
             case 'year': // 本年
-                $nmhdProfits = $orderBusiness->getAppYearByAgentId(15,$express, $type);
-                $bjhdProfits = $orderBusiness->getAppYearByAgentId(17,$express, $type);
-                $nmkdProfits = $orderBusiness->getAppYearByAgentId(18,$express, $type);
-                $platformProfits = $orderBusiness->getPlatformYear($express, $type);
+                $nmhd = $orderBusiness->getAppYearByAgentId(15,$express, $type);
+                $bjhd = $orderBusiness->getAppYearByAgentId(17,$express, $type);
+                $nmkd = $orderBusiness->getAppYearByAgentId(18,$express, $type);
+                $platform = $orderBusiness->getPlatformYear($express, $type);
                 break;
             default:
-                $nmhdProfits = $orderBusiness->getAppRecentDayByAgentId(15,$express, $type);
-                $bjhdProfits = $orderBusiness->getAppRecentDayByAgentId(17,$express, $type);
-                $nmkdProfits = $orderBusiness->getAppRecentDayByAgentId(18,$express, $type);
-                $platformProfits = $orderBusiness->getPlatformRecentDay($express, $type);
+                $nmhd = $orderBusiness->getAppRecentDayByAgentId(15,$express, $type);
+                $bjhd = $orderBusiness->getAppRecentDayByAgentId(17,$express, $type);
+                $nmkd = $orderBusiness->getAppRecentDayByAgentId(18,$express, $type);
+                $platform = $orderBusiness->getPlatformRecentDay($express, $type);
         }
 
-        $nmhdProfitLineDate = array_column($nmhdProfits,'total','date');
-        $bjhdProfitLineDate = array_column($bjhdProfits,'total','date');
-        $nmkdProfitLineDate = array_column($nmkdProfits,'total','date');
-        $profitLineDate = array_merge($nmhdProfitLineDate,$bjhdProfitLineDate,$nmkdProfitLineDate);
+        $nmhdLineDate = array_column($nmhd,'total','date');
+        $bjhdLineDate = array_column($bjhd,'total','date');
+        $nmkdLineDate = array_column($nmkd,'total','date');
+        $orderLineDate = array_merge($nmhdLineDate,$bjhdLineDate,$nmkdLineDate);
         // 按日期排序
-        uksort($profitLineDate, function ($a, $b) {
+        uksort($orderLineDate, function ($a, $b) {
             $dateA = strtotime(str_replace('-', '/', $a));
             $dateB = strtotime(str_replace('-', '/', $b));
             return $dateA - $dateB;
         });
 
-        $profitLineDate =  array_keys($profitLineDate);
-        $dateList = array_fill_keys($profitLineDate, 0);
+        $orderLineDate =  array_keys($orderLineDate);
+        $dateList = array_fill_keys($orderLineDate, 0);
 
-        $nmhdDateList = array_merge($dateList, $nmhdProfitLineDate);
-        $bjhdDateList = array_merge($dateList, $bjhdProfitLineDate);
-        $nmkdDateList = array_merge($dateList, $nmkdProfitLineDate);
+        $nmhdOrderLine = array_values(array_merge($dateList, $nmhdLineDate));
+        $bjhdOrderLine = array_values(array_merge($dateList, $bjhdLineDate));
+        $nmkdOrderLine = array_values(array_merge($dateList, $nmkdLineDate));
 
-        $nmhdProfitLine = array_values($nmhdDateList);
-        $bjhdProfitLine = array_values($bjhdDateList);
-        $nmkdProfitLine = array_values($nmkdDateList);
-
-
-        $platformProfitLine = array_column($platformProfits,'total');
-        $this->success('', '',compact('profitLineDate','nmhdProfitLine', 'bjhdProfitLine', 'nmkdProfitLine','platformProfitLine'));
+        $platformOrderLine = array_column($platform,'total');
+        $this->success('', '',compact('orderLineDate','nmhdOrderLine', 'bjhdOrderLine', 'nmkdOrderLine','platformOrderLine'));
     }
+
+    // 获取小程序最近30天的营收列表
+    public function orderRevenueLine(string $date, $express = 'all')
+    {
+        $orderBusiness = new RevenueBusiness();
+        switch ($date){
+            case 'day': // 最近30天
+                $nmhd = $orderBusiness->getAppRecentDayByAgentId(15,$express);
+                $bjhd = $orderBusiness->getAppRecentDayByAgentId(17,$express);
+                $nmkd = $orderBusiness->getAppRecentDayByAgentId(18,$express);
+                $platform = $orderBusiness->getPlatformRecentDay($express);
+                break;
+            case 'month': // 本月
+                $nmhd = $orderBusiness->getAppMonthByAgentId(15,$express);
+                $bjhd = $orderBusiness->getAppMonthByAgentId(17,$express);
+                $nmkd = $orderBusiness->getAppMonthByAgentId(18,$express);
+                $platform = $orderBusiness->getPlatformMonth($express);
+                break;
+            case 'lastMonth': // 上个月
+                $nmhd = $orderBusiness->getAppLastMonthByAgentId(15,$express);
+                $bjhd = $orderBusiness->getAppLastMonthByAgentId(17,$express);
+                $nmkd = $orderBusiness->getAppLastMonthByAgentId(18,$express);
+                $platform = $orderBusiness->getPlatformLastMonth($express);
+                break;
+            case 'year': // 本年
+                $nmhd = $orderBusiness->getAppYearByAgentId(15,$express);
+                $bjhd = $orderBusiness->getAppYearByAgentId(17,$express);
+                $nmkd = $orderBusiness->getAppYearByAgentId(18,$express);
+                $platform = $orderBusiness->getPlatformYear($express);
+                break;
+            default:
+                $nmhd = $orderBusiness->getAppRecentDayByAgentId(15,$express);
+                $bjhd = $orderBusiness->getAppRecentDayByAgentId(17,$express);
+                $nmkd = $orderBusiness->getAppRecentDayByAgentId(18,$express);
+                $platform = $orderBusiness->getPlatformRecentDay($express);
+        }
+        $nmhdLineDate = array_column($nmhd,'total','date');
+        $bjhdLineDate = array_column($bjhd,'total','date');
+        $nmkdLineDate = array_column($nmkd,'total','date');
+        $orderLineDate = array_merge($nmhdLineDate,$bjhdLineDate,$nmkdLineDate);
+        // 按日期排序
+        uksort($orderLineDate, function ($a, $b) {
+            $dateA = strtotime(str_replace('-', '/', $a));
+            $dateB = strtotime(str_replace('-', '/', $b));
+            return $dateA - $dateB;
+        });
+
+        $orderLineDate =  array_keys($orderLineDate);
+        $dateList = array_fill_keys($orderLineDate, 0);
+
+        $nmhdOrderLine = array_values(array_merge($dateList, $nmhdLineDate));
+        $bjhdOrderLine = array_values(array_merge($dateList, $bjhdLineDate));
+        $nmkdOrderLine = array_values(array_merge($dateList, $nmkdLineDate));
+
+        $platformOrderLine = array_column($platform,'total');
+        $this->success('', '',compact('orderLineDate','nmhdOrderLine', 'bjhdOrderLine', 'nmkdOrderLine','platformOrderLine'));
+    }
+
 
 }
