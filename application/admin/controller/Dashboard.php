@@ -126,12 +126,21 @@ class Dashboard extends Backend
                 ->where('pay_status',1)
                 ->sum('agent_price');
 
-            $revenueBusiness = new RevenueBusiness();
-            $revenueList = $revenueBusiness->getPlatformRecentDay($agentId, 1);
             //今日营业额
-            $arr['today_final_price'] = $revenueList[1]['total'];
+            $arr['today_final_price']=db('orders')
+                ->where('agent_id',$this->auth->id)
+                ->whereTime('create_time','today')
+                ->where('pay_status',1)
+                ->sum('final_price');
+
             //昨日营业额
-            $arr['yesterday_final_price'] = $revenueList[0]['total'];
+            $yesterday_final_price=  Db::query("select sum(final_price) as total from fa_orders
+                 where from_unixtime(create_time) > current_date - interval 1 day
+                 and agent_id = {$agentId}
+                 and from_unixtime(create_time) < current_date
+                 and pay_status = '1'");
+            $arr['yesterday_final_price'] =  $yesterday_final_price[0]['total'];
+
 
             $yesterday_overload_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('overload_status',2)->sum('overload_price');
             $yesterday_haocai_amount=db('orders')->where('agent_id',$this->auth->id)->whereTime('create_time','-1 today')->where('pay_status',1)->where('consume_status',2)->sum('haocai_freight');
@@ -259,15 +268,17 @@ class Dashboard extends Backend
             $arr['yesterday_agent_price'] = $yesterday_agent_price[0]['total'];
 
 
-
-            $revenueBusiness = new RevenueBusiness();
-            $revenueList = $revenueBusiness->getPlatformRecentDay('all', 1);
             //今日营业额
-            $arr['today_final_price'] = $revenueList[1]['total'];
+            $revenueBusiness = new RevenueBusiness();
+            $arr['today_final_price'] = $revenueBusiness->getToday();
+
+
             //昨日营业额
-            $arr['yesterday_final_price'] = $revenueList[0]['total'];
-
-
+            $yesterday_final_price =  Db::query("select sum(final_price) as total from fa_orders 
+                 where from_unixtime(create_time) > current_date - interval 1 day 
+                 and from_unixtime(create_time) < current_date 
+                 and pay_status = '1'");
+            $arr['yesterday_final_price'] = $yesterday_final_price[0]['total'];
 
 
             $result = $this->orderProfitLine('day', 'all');
