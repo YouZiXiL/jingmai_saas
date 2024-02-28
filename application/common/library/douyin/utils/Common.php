@@ -283,7 +283,7 @@ trait Common
         }
 
         $headers = [
-            'Content-Type: application/json',
+            'content-type: application/json',
         ];
 
         if (!empty($header)){

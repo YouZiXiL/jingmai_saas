@@ -594,7 +594,7 @@ class Wxcallback extends Controller
                     'order_id' => $orders['id'],
                     'xcx_access_token'=>$xcx_access_token,
                     'open_id'=>$users?$users['open_id']:'',
-                    'template_id'=>$agent_auth_xcx['pay_template']??null,
+                    'template_id'=>$agent_auth_xcx['pay_template']??'',
                     'cal_weight'=>ceil($finalWeight) .'kg',
                     'users_overload_amt'=>$up_data['overload_price'] . '元'
                 ];
@@ -617,7 +617,7 @@ class Wxcallback extends Controller
                         'title' => '保价费发生变化',
                         'user' =>   $orders['tag_type'],
                         'waybill' =>  $orders['waybill'],
-                        'body' => "新保价费：" . $pamar['freightInsured']
+                        'body' => "新保价费：" . $pamar['freightInsured'],
                     ];
                     $common->wxrobot_channel_exception($content);
                 }
@@ -626,6 +626,9 @@ class Wxcallback extends Controller
                         'type'=> 5,
                         'insuredPrice' => $insuredPrice,
                         'order_id' => $orders['id'],
+                        'xcx_access_token'=>$xcx_access_token,
+                        'open_id'=>$users?$users['open_id']:'',
+                        'template_id'=>$agent_auth_xcx['insured_template']??'',
                     ];
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
@@ -1056,6 +1059,9 @@ class Wxcallback extends Controller
                         'type'=> 5,
                         'insuredPrice' => $kdnData['InsureAmount'],
                         'order_id' => $order['id'],
+                        'xcx_access_token'=>$xcx_access_token,
+                        'open_id'=>$users?$users['open_id']:'',
+                        'template_id'=>$agent_auth_xcx['insured_template']??'',
                     ];
                     // 将该任务推送到消息队列，等待对应的消费者去执行
                     Queue::push(DoJob::class, $data,'way_type');
@@ -1257,8 +1263,8 @@ class Wxcallback extends Controller
                                 'freightHaocai' =>  $up_data['haocai_freight'],
                                 'order_id' => $order['id'],
                                 'xcx_access_token'=>$xcx_access_token,
-                                'open_id'=>$users?$users['open_id']:"",
-                                'template_id'=>$wxOrder?$agent_auth_xcx['material_template']:null,
+                                'open_id'=> $users['open_id']??"",
+                                'template_id'=>$agent_auth_xcx['material_template']??null,
                             ];
                             // 将该任务推送到消息队列，等待对应的消费者去执行
                             Queue::push(DoJob::class, $data,'way_type');
@@ -1292,6 +1298,9 @@ class Wxcallback extends Controller
                                'type'=> 5,
                                'insuredPrice' => $insuredPrice,
                                'order_id' => $order['id'],
+                               'xcx_access_token'=>$xcx_access_token,
+                               'open_id'=>$users?$users['open_id']:"",
+                               'template_id'=> $agent_auth_xcx['insured_template']??'',
                            ];
                            // 将该任务推送到消息队列，等待对应的消费者去执行
                            Queue::push(DoJob::class, $data,'way_type');
@@ -1604,7 +1613,7 @@ class Wxcallback extends Controller
                         'order_id' => $orders['id'],
                         'xcx_access_token'=>$xcx_access_token,
                         'open_id'=>$users['open_id']??'',
-                        'template_id'=>$agent_auth_xcx['pay_template']??null,
+                        'template_id'=>$agent_auth_xcx['pay_template']??'',
                         'cal_weight'=>$up_data['final_weight'] .'kg',
                         'users_overload_amt'=>$users_overload_amt.'元'
                     ];
@@ -1649,7 +1658,7 @@ class Wxcallback extends Controller
                     $data = [
                         'type'=>2,
                         'freightHaocai' => $up_data['haocai_freight'],
-                        'template_id'=>$agent_auth_xcx['material_template']??null,
+                        'template_id'=>$agent_auth_xcx['material_template']??'',
                         'xcx_access_token'=>$xcx_access_token,
                         'order_id' => $orders['id'],
                         'open_id'=>$users['open_id']??null,
@@ -4301,7 +4310,6 @@ class Wxcallback extends Controller
                 'pay_status'=>1,
             ];
 
-
             db('viporders')->where('out_trade_no',$inBodyResourceArray['out_trade_no'])->update($update);
 
             $user=\app\web\model\Users::get($orders["user_id"]);
@@ -4468,6 +4476,9 @@ class Wxcallback extends Controller
                             'type'=> 5,
                             'insuredPrice' => $insuredPrice,
                             'order_id' => $orders['id'],
+                            'xcx_access_token'=>$xcx_access_token,
+                            'open_id'=>$users?$users['open_id']:'',
+                            'template_id'=>$agent_auth_xcx['insured_template']??'',
                         ];
                         // 将该任务推送到消息队列，等待对应的消费者去执行
                         Queue::push(DoJob::class, $data,'way_type');

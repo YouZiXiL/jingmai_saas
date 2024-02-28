@@ -24,7 +24,20 @@ class Auth extends Controller
         $result = $options->auth()->getAuthorizerAccessTokenByCode($authCode);
         recordLog('dy-callback', json_encode($result));
         $accessToken = $result['authorizer_access_token'];
+
+        $appTplList = $options->xcx()->queryAppTpl($accessToken);
+        // 删除所有小程序模板
+        if($appTplList['total_count'] > 0){
+            foreach ($appTplList['template_list'] as $item){
+                $options->xcx()->deleteAppTpl($accessToken, $item['msg_id']);
+            }
+        }
+        $tplCZ = $options->xcx()->addTplCZ($accessToken);
+        $tplHC = $options->xcx()->addTplHC($accessToken);
+        $tplBJ = $options->xcx()->addTplBJ($accessToken);
+
         $info = $options->xcx()->getInfo($accessToken);
+
         $data = [
             'agent_id' => $params['agent_id'],
             'app_id' => $result['authorizer_appid'],
@@ -34,6 +47,10 @@ class Auth extends Controller
             'wx_auth' => 3,
             'auth_type' => 2,
         ];
+
+        $data['pay_template']=$tplCZ; // 小程序超重补交模板
+        $data['material_template']=$tplHC; // 小程序耗材补交模板
+        $data['insured_template']=$tplBJ; // 小程序运保价补交模板
         $agentAuth = AgentAuth::where('app_id', $data['app_id'])->find();
         Db::startTrans();
         try {

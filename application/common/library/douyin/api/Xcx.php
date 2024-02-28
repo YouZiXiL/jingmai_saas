@@ -288,4 +288,161 @@ class Xcx
             throw new \Exception('申请「获取用户手机号」能力失败：'.$json);
         }
     }
+
+    /**
+     * 查询订阅消息模版库
+     * @param $authorizerAccessToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function queryTplList($authorizerAccessToken){
+        $url = $this->baseUrl . '/api/notification/v2/subscription/query_tpl_list/';
+        $json = $this->get($url, [
+            'classification' => 1,
+            'page_num' => 2,
+            'page_size' => 50,
+            'template_type' => 1,
+        ],[
+            'access-token: '. $authorizerAccessToken
+        ]);
+        $result =  json_decode($json, true);
+        if (isset($result['data'])){
+            return $result['data'];
+        }else{
+            recordLog('dy-auth','查询订阅消息模版库失败：'.$json);
+            throw new \Exception('查询订阅消息模版库失败：'.$json);
+        }
+    }
+
+    /**
+     * 获取小程序已添加的订阅消息模板列表
+     * @param $authorizerAccessToken
+     * @return mixed
+     * @throws \Exception
+     */
+    public function queryAppTpl($authorizerAccessToken){
+        $url = $this->baseUrl . '/api/notification/v2/subscription/query_app_tpl/';
+        $json = $this->get($url, [
+            'classification' => 1,
+            'page_num' => 1,
+            'page_size' => 10,
+            'template_type' => 1,
+        ],[
+            'access-token: '. $authorizerAccessToken
+        ]);
+        $result =  json_decode($json, true);
+        if (isset($result['data'])){
+            return $result['data'];
+        }else{
+            recordLog('dy-auth','获取小程序已添加的订阅消息模板列表失败：'.$json);
+            throw new \Exception('获取小程序已添加的订阅消息模板列表失败：'.$json);
+        }
+    }
+
+    /**
+     * 添加订阅消息模板库中的模板到小程序的订阅消息模板列表
+     * @param $authorizerAccessToken
+     * @param $template
+     * @return mixed
+     * @throws \Exception
+     */
+    public function addAppTpl($authorizerAccessToken, $template){
+        $url = $this->baseUrl . '/api/notification/v2/subscription/add_app_tpl/';
+        $json = $this->post($url, $template,[
+            'access-token: '. $authorizerAccessToken
+        ]);
+        $result =  json_decode($json, true);
+        if (isset($result['data'])){
+            return $result['data']['msg_id'];
+        }else{
+            recordLog('dy-auth','添加订阅消息失败：'.$json);
+            throw new \Exception('添加订阅消息失败：'.$json);
+        }
+    }
+
+    /**
+     * 添加超重补缴模板消息
+     * @param $authorizerAccessToke
+     * @return mixed
+     * @throws \Exception
+     */
+    public function addTplCZ($authorizerAccessToke){
+        $template = [
+            'template_id' => 15846,
+            'keyword_list' => [
+                '快递单号','物品重量','补缴金额','温馨提醒'
+            ]
+        ];
+        return $this->addAppTpl($authorizerAccessToke, $template);
+    }
+
+    /**
+     * 添加耗材补缴模板消息
+     * @param $authorizerAccessToke
+     * @return mixed
+     * @throws \Exception
+     */
+    public function addTplHC($authorizerAccessToke){
+        $template = [
+            'template_id' => 74771,
+            'keyword_list' => [
+                '运单号','待补费用','补缴原因','备注'
+            ]
+        ];
+        return $this->addAppTpl($authorizerAccessToke, $template);
+    }
+
+    /**
+     * 添加保价补缴模板消息
+     * @param $authorizerAccessToke
+     * @return mixed
+     * @throws \Exception
+     */
+    public function addTplBJ($authorizerAccessToke){
+        $template = [
+            'template_id' => 75102,
+            'keyword_list' => [
+                '快递单号','待补差价','补差原因','温馨提示'
+            ]
+        ];
+        return $this->addAppTpl($authorizerAccessToke, $template);
+    }
+
+    /**
+     * 删除小程序已添加的订阅消息模版
+     * @param $authorizerAccessToken
+     * @param $msgId
+     * @return mixed
+     * @throws \Exception
+     */
+    public function deleteAppTpl($authorizerAccessToken, $msgId){
+        $url = $this->baseUrl . '/api/notification/v2/subscription/delete_app_tpl/';
+        $json = $this->post($url, ['msg_id' => $msgId],[
+            'access-token: '. $authorizerAccessToken
+        ]);
+        $result =  json_decode($json, true);
+        if (isset($result['err_no']) && $result['err_no'] == 0){
+            return $result;
+        }else{
+            recordLog('dy-auth','删除订阅消息失败：'.$json);
+            throw new \Exception('删除订阅消息失败：'.$json);
+        }
+    }
+
+    /**
+     * 给用户发送订阅消息
+     * @return void
+     * @throws \Exception
+     */
+    public function sendTplMsg($authorizerAccessToken, $data){
+        $url = $this->baseUrl . '/api/notification/v2/subscription/notify_user/';
+        $json = $this->post($url, $data,[ 'access-token: '. $authorizerAccessToken]);
+        $result =  json_decode($json, true);
+        if (isset($result['err_no']) && $result['err_no'] == 0){
+            return $result;
+        }else{
+            recordLog('dy-auth','给用户发送订阅消息失败：'.$json);
+            throw new \Exception('给用户发送订阅消息失败：'.$json);
+        }
+    }
 }

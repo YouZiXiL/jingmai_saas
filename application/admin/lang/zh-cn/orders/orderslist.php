@@ -24,6 +24,7 @@ return [
     'Pay_type'   =>'授权平台',
     'Pay_type 1'   =>'微信',
     'Pay_type 2'   =>'支付宝',
+    'Pay_type 4'   =>'抖音',
     'Pay_type 3'   =>'智能下单',
     'Channel_id'         => '渠道id',
     'Channel_tag'        => '筛选类型',
