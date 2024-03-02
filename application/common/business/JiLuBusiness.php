@@ -202,6 +202,7 @@ class JiLuBusiness
         Utils::setExpressData($content, $insert_id);
         $list['final_price']=$content['final_price'];
         $list['insert_id']=$insert_id;
+        $list['brand']='YTO';
         $list['onePrice']=$content['users_shouzhong'];
         $list['morePrice']=$content['users_xuzhong'];
         $list['tag_type']=$content['tagType'];

@@ -153,6 +153,7 @@ class YunYang{
         $qudao_close=explode('|', $agent_info['qudao_close']);
 //        $qudao_close[] = '顺丰'; // 云洋禁用顺丰
         $qudao_close[] = '韵达'; // 云洋禁用顺丰
+        $qudao_close[] = '圆通'; // 云洋禁用顺丰
         $dbCount = 0; // 德邦出现次数
         foreach ($data['result'] as $k=>&$v){
             if (in_array($v['tagType'],$qudao_close)||($v['allowInsured']==0&&$param['insured']!=0)){
@@ -243,7 +244,17 @@ class YunYang{
                     } else {
                         $result["圆通"] = $item;
                     }
-                } else {
+                }
+                else if ($item["tag_type"] == "申通") {
+                    if (isset($result["申通"])) {
+                        if ($item["final_price"] < $result["申通"]["final_price"]) {
+                            $result["申通"] = $item;
+                        }
+                    } else {
+                        $result["申通"] = $item;
+                    }
+                }
+                else {
                     $result[] = $item;
                 }
             }

@@ -151,7 +151,7 @@ class OrderBusiness extends Backend
     public function yyPriceHandle(string $content, array $agent_info, array $param, $channelTag){
         if (empty($content)) return [];
         $data= json_decode($content, true);
-        if ($this->auth->id == 137){
+        if ($agent_info['id'] == 1){
             dd($content);
         }
         recordLog('yy-channel-price', $content);
@@ -171,6 +171,7 @@ class OrderBusiness extends Backend
         $qudao_close=explode('|', $agent_info['qudao_close']);
 //        $qudao_close[] = '顺丰'; // 云洋禁用顺丰
         $qudao_close[] = '韵达';
+        $qudao_close[] = '圆通';
         // 返回参数
         $list = [];
         $dbCount = 0; // 德邦出现次数
@@ -337,7 +338,6 @@ class OrderBusiness extends Backend
      */
     public function kdnPriceHandle(array $agent_info, array $param)
     {
-
         if($param['info']['insured']) return []; // 不支持保价费
         $qudao_close = explode('|', $agent_info['qudao_close']);
         if (in_array(KDNBusiness::$tag,$qudao_close)){
