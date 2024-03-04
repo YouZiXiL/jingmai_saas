@@ -81,7 +81,7 @@ class OrderBusiness
 
         } else if ($dyOrder) {
             $dyBusiness = new DyBusiness();
-            $update = $dyBusiness->orderRefund($orderModel,  $reason ,  $status );
+            $update = $dyBusiness->orderRefund($orderModel, $reason, $status);
             $update['pay_status'] = 2;
             $update['order_status'] = $status;
             $update['yy_fail_reason'] = $reason;
