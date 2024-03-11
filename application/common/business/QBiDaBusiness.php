@@ -3,6 +3,7 @@
 namespace app\common\business;
 
 use app\common\config\Channel;
+use app\common\library\utils\Utils;
 use app\common\model\Order;
 use app\web\controller\Common;
 use think\Exception;
@@ -145,6 +146,8 @@ class QBiDaBusiness
                 $v['package_count']=(int)$param['package_count'];//包裹数量
                 $insert_id = db('check_channel_intellect')->insertGetId(['channel_tag'=>  $v['channel_tag'],'content'=>json_encode($v,JSON_UNESCAPED_UNICODE ),'create_time'=>$time]);
                 $v["insert_id"]=$insert_id;
+                $v['channel'] = '圆通';
+                Utils::setExpressData($v, $insert_id);
                 $arr[] = [
                     'final_price' => $v["final_price"],
                     'insert_id' => $insert_id,
