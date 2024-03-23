@@ -151,9 +151,7 @@ class OrderBusiness extends Backend
     public function yyPriceHandle(string $content, array $agent_info, array $param, $channelTag){
         if (empty($content)) return [];
         $data= json_decode($content, true);
-        if ($agent_info['id'] == 1){
-            dd($content);
-        }
+
         recordLog('yy-channel-price', $content);
         if ($data['code']!=1){
             $errMsg = $data['message']??$content;

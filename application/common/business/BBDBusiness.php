@@ -263,6 +263,7 @@ class BBDBusiness
         if($volume) $param['Volume'] = $volume;
 
         $resultJson = $this->create($param);
+        recordLog('bbd-create',$resultJson);
         return json_decode($resultJson,true);
     }
 
