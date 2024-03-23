@@ -889,9 +889,9 @@ class Wxcallback extends Controller
                 $up_data['comments'] = "快递员：{$info['PersonName']}，电话：{$info['PersonTel']}，取件码：{$info['PickupCode']}";
             }else if($kdnData['State'] == 301){ // 已揽收
                 $up_data['order_status'] = '已揽件';
-
                 $up_data['final_freight'] = $kdnData['TotalFee'];
                 $up_data['admin_price'] = $kdnData['TotalFee'];
+                $up_data['collect_time'] = strtotime($kdnData['CreateTime']) ;
                 if($order['final_weight'] == 0){
                     $up_data['final_weight'] = $kdnData['Weight'];
                 }elseif(number_format($kdnData['Weight'], 2) != number_format($order['final_weight'],2)){
@@ -2477,6 +2477,101 @@ class Wxcallback extends Controller
                             'order_status'=>'未知',
                             'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
                         ];
+                    }
+                    break;
+                case Channel::$qbd:
+                    $receive_province = formatProvince($orders['receive_province']);
+                    $receiveAddress = $receive_province . $orders['receive_city'] .$orders['receive_county'].$orders['receive_location'];
+
+                    $sender_province = formatProvince($orders['sender_province']);
+                    $senderAddress = $sender_province . $orders['sender_city'] .$orders['sender_county'].$orders['sender_location'];
+                    $content=[
+                        "productCode"=>$orders['channel_id'],
+                        "senderPhone"=>$orders['sender_mobile'],
+                        "senderName"=>$orders['sender'],
+                        "senderAddress"=>$senderAddress,
+                        "receiveAddress"=>$receiveAddress,
+                        "receivePhone"=>$orders['receiver_mobile'],
+                        "receiveName"=>$orders['receiver'],
+                        "goods"=>$orders['item_name'],
+                        "packageNum"=>$orders['package_count'],
+                        'weight'=>ceil($orders['weight']),
+                        "payMethod"=>3,
+                        "thirdOrderNo"=>$orders["out_trade_no"]
+                    ];
+                    !empty($orders['insured']) &&($content['guaranteeValueAmount'] = $orders['insured']);
+                    !empty($orders['vloum_long']) &&($content['length'] = $orders['vloum_long']);
+                    !empty($orders['vloum_width']) &&($content['width'] = $orders['vloum_width']);
+                    !empty($orders['vloum_height']) &&($content['height'] = $orders['vloum_height']);
+                    !empty($orders['bill_remark']) &&($content['remark'] = $orders['bill_remark']);
+                    $data=$Common->shunfeng_api('http://api.wanhuida888.com/openApi/doOrder',$content);
+                    recordLog('qbd-create-order','订单：'. $orders["out_trade_no"] .  PHP_EOL.
+                        '请求参数：' . json_encode($content, JSON_UNESCAPED_UNICODE) . PHP_EOL.
+                        '返回结果：'. json_encode($data, JSON_UNESCAPED_UNICODE));
+                    if (!empty($data['code'])){
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        //支付成功下单失败  执行退款操作
+                        $update=[
+                            'pay_status'=>2,
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'yy_fail_reason'=>$data['msg'],
+                            'order_status'=>'下单失败',
+                            'out_refund_no'=>$out_refund_no,
+                        ];
+
+                        $data = [
+                            'type'=>3,
+                            'order_id'=>$orders['id'],
+                            'out_refund_no' => $out_refund_no,
+                            'reason'=>$data['msg'],
+                        ];
+
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
+
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                            //推送企业微信消息
+                            $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                        }
+                    }
+                    else{
+                        $rebateList = new RebateListController();
+                        $rebateList->create($orders, $agent_info);
+                        //支付成功下单成功
+                        $result=$data['data'];
+                        $update=[
+                            'waybill'=>$result['waybillNo'],
+                            'shopbill'=>$result['orderNo'],
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'pay_status'=>1,
+                        ];
+                        if(!empty($orders["couponid"])){
+                            $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                            if($couponinfo){
+                                $couponinfo->state=2;
+                                $couponinfo->save();
+                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                                if($coupon){
+                                    $coupon->state = 4;
+                                    $coupon->save();
+                                }
+                            }
+                        }
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：' . $orders['out_trade_no'].' 下单支付成功');
+                        $qbd = new QBiDaBusiness();
+                        // 所剩余额
+                        $balance = $qbd->queryBalance();
+                        $setup= new SetupBusiness();
+                        // 设置的提醒金额
+                        $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
+                        // 余额变动提醒
+                        if((int)$balance <= (int)$balanceValue){
+                            //推送企业微信消息
+                            $Common->wxrobot_balance([
+                                'name' => 'Q必达',
+                                'price' => $balance,
+                            ]);
+                        }
                     }
                     break;
                 case 'FHD':
