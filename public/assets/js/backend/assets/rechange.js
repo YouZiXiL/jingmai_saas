@@ -58,6 +58,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'out_trade_no', title: __('Out_trade_no'), operate: 'LIKE'},
                         {field: 'amount', title: __('Amount'), operate:'BETWEEN'},
                         {field: 'pay_amount', title: __('Pay_amount'), operate:'BETWEEN'},
+                        {field: 'agent', title: __('代理商'), operate:false, formatter:function (value, row){
+                                return row.agent.username;
+                        }},
                         {field: 'pay_status', title: __('Pay_status'), searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1')}, formatter: Table.api.formatter.status},
                         {field: 'pay_type', title: __('Pay_type'), searchList: {"1":__('Pay_type 1'),"2":__('Pay_type 2'),"3":__('Pay_type 3')}, formatter: Table.api.formatter.normal},
                         {field: 'create_time', title: __('Create_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},

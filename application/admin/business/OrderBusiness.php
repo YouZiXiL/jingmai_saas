@@ -482,7 +482,7 @@ class OrderBusiness extends Backend
                 count(*) as total
                 from fa_orders 
                 where pay_status = '1'
-                and  month(from_unixtime(create_time)) >= month(date_sub(curdate(), interval 1 year ))
+                and  date_format(from_unixtime(create_time),'%Y-%m') >= date_format(date_sub(curdate(), interval 1 year ), '%Y-%m')
                 and agent_id = $agentId
                 and  $whereExpress
                 and  $whereType  
@@ -516,7 +516,7 @@ class OrderBusiness extends Backend
             where pay_status = '1' 
             and   $whereExpress
             and   $whereType    
-            and  month(from_unixtime(create_time)) >= month(date_sub(curdate(), interval 1 year ))
+            and  date_format(from_unixtime(create_time),'%Y-%m') >= date_format(date_sub(curdate(), interval 1 year ), '%Y-%m')
             group by date_format(from_unixtime(create_time),'%Y-%m') 
          ";
 

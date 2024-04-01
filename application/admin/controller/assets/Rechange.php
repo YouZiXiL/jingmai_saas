@@ -67,6 +67,9 @@ class Rechange extends Backend
         }
         $list = $list
             ->where($where)
+            ->with(['agent' =>  function ($query) {
+                $query->WithField('id,username');
+            }])
             ->order($sort, $order)
             ->paginate($limit);
         $result = ['total' => $list->total(), 'rows' => $list->items()];

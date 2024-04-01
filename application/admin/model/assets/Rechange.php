@@ -2,6 +2,7 @@
 
 namespace app\admin\model\assets;
 
+use app\admin\model\Admin;
 use think\Model;
 
 
@@ -70,5 +71,8 @@ class Rechange extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    public function agent(){
+        return $this->belongsTo(Admin::class,'agent_id','id')->setEagerlyType(0);
+    }
 
 }

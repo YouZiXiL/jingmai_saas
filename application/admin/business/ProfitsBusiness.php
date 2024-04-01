@@ -301,7 +301,7 @@ class ProfitsBusiness
                 where pay_status = '1'
                 and $whereExpress
                 and $whereType   
-                and  month(from_unixtime(create_time)) >= month(date_sub(curdate(), interval 1 year ))
+                and  date_format(from_unixtime(create_time),'%Y-%m') >= date_format(date_sub(curdate(), interval 1 year ), '%Y-%m')
                 and agent_id = $agentId
                 group by date_format(from_unixtime(create_time),'%Y-%m') 
             "
@@ -327,7 +327,7 @@ class ProfitsBusiness
             from fa_orders 
             where pay_status = '1' 
             and $where  
-            and  month(from_unixtime(create_time)) >= month(date_sub(curdate(), interval 1 year ))
+            and  date_format(from_unixtime(create_time),'%Y-%m') >= date_format(date_sub(curdate(), interval 1 year ), '%Y-%m')
             group by date_format(from_unixtime(create_time),'%Y-%m') 
          ";
         }else{

@@ -112,9 +112,7 @@ class QBiDaBusiness
         $arr=[];
         $time=time();
         foreach ($content['data'] as $k=>&$v){
-
             if(isset($v["limitWeight"]) && $param['weight'] < $v["limitWeight"]){
-
                 $v['oldName'] = $v['channelName'];
                 if(strpos($v['channelName'], '新户')){
                     $v['isNew'] = (bool)strpos($v['channelName'], '新户');

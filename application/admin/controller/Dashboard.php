@@ -769,7 +769,6 @@ class Dashboard extends Backend
                 $platformProfits = $profitsBusiness->getPlatformRecentDay($express, $type);
         }
 
-
         $nmhdLineDate = array_column($nmhdProfits,'profit','date');
         $bjhdLineDate = array_column($bjhdProfits,'profit','date');
         $nmkdLineDate = array_column($nmkdProfits,'profit','date');

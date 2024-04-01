@@ -891,7 +891,7 @@ class Wxcallback extends Controller
                 $up_data['order_status'] = '已揽件';
                 $up_data['final_freight'] = $kdnData['TotalFee'];
                 $up_data['admin_price'] = $kdnData['TotalFee'];
-                $up_data['collect_time'] = strtotime($kdnData['CreateTime']) ;
+                $up_data['collect_time'] = strtotime($resData['CreateTime']) ;
                 if($order['final_weight'] == 0){
                     $up_data['final_weight'] = $kdnData['Weight'];
                 }elseif(number_format($kdnData['Weight'], 2) != number_format($order['final_weight'],2)){
