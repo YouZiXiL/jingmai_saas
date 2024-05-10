@@ -881,7 +881,6 @@ class Wxcallback extends Controller
                 $up_data['waybill'] = $waybill;
             }
 
-
             if($kdnData['State'] == 120){   // 推送运单号
                 $up_data['waybill'] = $kdnData['LogisticCode'];
             }else if($kdnData['State'] == 103){ // 快递员信息推送
@@ -975,40 +974,43 @@ class Wxcallback extends Controller
 
             if(empty($order['final_weight_time']) && $kdnData['Cost'] != 0 ){  // 超重
                 $overloadWeight =ceil( $kdnData['Weight'] - $order['weight']); // 超出重量
-                $overloadPrice = $kdnData['Cost'] - $order['freight']; // 超出金额
-                if($overloadPrice > 0){
+                if ($overloadWeight != 0){
+                    $overloadPrice = $kdnData['Cost'] - $order['freight']; // 超出金额
+                    if($overloadPrice > 0){
 //                    $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
-                    $up_data['admin_overload_price'] = number_format( $order['admin_xuzhong'] * $overloadWeight,2); //代理商超重金额
-                    $up_data['agent_overload_price'] = number_format( $order['agent_xuzhong'] * $overloadWeight,2); //代理商超重金额
-                    $up_data['overload_price'] = number_format((float)$order['users_xuzhong'] * $overloadWeight, 2); //用户超重金额
-                    $data = [
-                        'type'=>1,
-                        'agent_overload_amt' =>$up_data['agent_overload_price'],
-                        'order_id' => $order['id'],
-                        'xcx_access_token'=>$xcx_access_token,
-                        'open_id'=>$users?$users['open_id']:'',
-                        'template_id'=>$agent_auth_xcx['pay_template']??null,
-                        'cal_weight'=>ceil($overloadWeight) .'kg',
-                        'users_overload_amt'=>$up_data['overload_price'] . '元'
-                    ];
-                    // 将该任务推送到消息队列，等待对应的消费者去执行
-                    Queue::push(DoJob::class, $data,'way_type');
+                        $up_data['admin_overload_price'] = number_format( $order['admin_xuzhong'] * $overloadWeight,2); //代理商超重金额
+                        $up_data['agent_overload_price'] = number_format( $order['agent_xuzhong'] * $overloadWeight,2); //代理商超重金额
+                        $up_data['overload_price'] = number_format((float)$order['users_xuzhong'] * $overloadWeight, 2); //用户超重金额
+                        $data = [
+                            'type'=>1,
+                            'agent_overload_amt' =>$up_data['agent_overload_price'],
+                            'order_id' => $order['id'],
+                            'xcx_access_token'=>$xcx_access_token,
+                            'open_id'=>$users?$users['open_id']:'',
+                            'template_id'=>$agent_auth_xcx['pay_template']??null,
+                            'cal_weight'=>ceil($overloadWeight) .'kg',
+                            'users_overload_amt'=>$up_data['overload_price'] . '元'
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
 
-                    // 发送超重短信
-                    KD100Sms::run()->overload($order);
+                        // 发送超重短信
+                        KD100Sms::run()->overload($order);
 
-                    $rebateListController = new RebateListController();
-                    $rebateListController->upState($order, $users, 2);
+                        $rebateListController = new RebateListController();
+                        $rebateListController->upState($order, $users, 2);
+                    }
+                    else if($overloadPrice < 0){ // 超轻
+                        $lightWeight = abs($overloadWeight);
+                        $lightPrice = abs($overloadPrice); // 超轻金额
+                        // $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
+                        $up_data['admin_tralight_price'] = number_format( $lightPrice,2); //代理商超重金额
+                        $up_data['agent_tralight_price'] = number_format(  $order['agent_xuzhong'] * $lightWeight,2); //代理商超重金额
+                        $up_data['tralight_price'] = number_format( $order['users_xuzhong'] * $lightWeight, 2); //用户超重金额
+                        $up_data['tralight_status'] = '1';
+                    }
                 }
-                else if($overloadPrice < 0){ // 超轻
-                    $lightWeight = abs($overloadWeight);
-                    $lightPrice = abs($overloadPrice); // 超轻金额
-                    // $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
-                    $up_data['admin_tralight_price'] = number_format( $lightPrice,2); //代理商超重金额
-                    $up_data['agent_tralight_price'] = number_format(  $order['agent_xuzhong'] * $lightWeight,2); //代理商超重金额
-                    $up_data['tralight_price'] = number_format( $order['users_xuzhong'] * $lightWeight, 2); //用户超重金额
-                    $up_data['tralight_status'] = '1';
-                }
+
             }
 
             if(($kdnData['PackageFee'] != 0 ||  $kdnData['OtherFee'] != 0 ||  $kdnData['OverFee'] != 0) ){ // 耗材

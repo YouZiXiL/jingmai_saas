@@ -869,13 +869,15 @@ class OrderBusiness extends Backend
         $agentOne = $oneWeight + $profit['one_weight']; //代理商首单价
         $agentMore = $reWeight  + $profit['more_weight']; //代理商续单价
         $agentPrice = $agentOne + $agentMore * $sequelWeight;
-
+        $userOne = $agentOne + $profit['user_one_weight']; // 用首重单价
+        $userMore = $agentMore + $profit['user_more_weight']; // 用续重单价
 
         $content['admin_shouzhong']=sprintf("%.2f",$oneWeight);//平台首重
         $content['admin_xuzhong']=sprintf("%.2f",$reWeight);//平台续重
         $content['agent_shouzhong']=sprintf("%.2f",$agentOne);//代理商首重
         $content['agent_xuzhong']=sprintf("%.2f",$agentMore);//代理商续重
-
+        $content['users_shouzhong']=sprintf("%.2f",$userOne);//代理商首重
+        $content['users_xuzhong']=sprintf("%.2f",$userMore);//代理商续重
 
         $content['tagType'] = JiLuBusiness::$tag;
         $content['channelId'] = JiLuBusiness::$code;

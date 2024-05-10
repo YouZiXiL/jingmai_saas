@@ -572,7 +572,7 @@ class YunYang{
         $userFreight = $agentFreight + $agentFreight * $ratioUser;//代理商价格
         if(isset($channelItem['extFreightFlag'])){
             $agentFreight = $agentFreight + $channelItem['extFreight'];
-            $userFreight = $agentFreight + $channelItem['extFreight'];
+            $userFreight = $userFreight + $channelItem['extFreight'];
         }
         $agentPrice =  sprintf("%.2f",$agentFreight + $channelItem['freightInsured']);//代理商结算
         $userPrice =  sprintf("%.2f",$userFreight + $channelItem['freightInsured']);//代理商结算
