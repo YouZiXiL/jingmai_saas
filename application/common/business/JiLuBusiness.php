@@ -13,7 +13,7 @@ use think\Model;
 
 class JiLuBusiness
 {
-    public static string $code = '08_2'; //  快递渠道代号
+    public static string $code = '8_2'; //  快递渠道代号
     public static string $tag = '圆通快递'; // 前端显示的名字
 
     public Common $utils;
