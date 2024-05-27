@@ -148,7 +148,7 @@ class BBDBusiness
         if (empty($bbd))  return [];
         $bbdData = json_decode($bbd, true);
 
-        if(empty($bbdData) || $bbdData['code'] == 500) return [];
+        if(empty($bbdData) || $bbdData['code'] == 500 || $bbdData['code'] == 99) return [];
         $list = [];
         foreach ($bbdData['data'] as $key => &$item) {
             if ($item['CompanyCode'] == 'YUND'){

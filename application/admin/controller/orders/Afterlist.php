@@ -63,12 +63,21 @@ class Afterlist extends Backend
      */
     public function index()
     {
+        $showAuth = false;
+        $groups = $this->auth->getGroupIds()[0];
+        // 只有超管，管理员和客服展示
+        if(in_array($groups, [1,3,8])){
+            $showAuth = true;
+        }
+        $this->assignconfig('show',$showAuth);
+
         $this->relationSearch = true;
         //设置过滤方法
         $this->request->filter(['strip_tags', 'trim']);
         if (false === $this->request->isAjax()) {
             return $this->view->fetch();
         }
+
         //如果发送的来源是 Selectpage，则转发到 Selectpage
         if ($this->request->request('keyField')) {
             return $this->selectpage();

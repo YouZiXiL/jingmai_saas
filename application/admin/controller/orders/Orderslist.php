@@ -179,7 +179,8 @@ class Orderslist extends Backend
                     $couponpapermoney=0;
                 }
 
-                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight+$bjPrice-$tralight_price-$couponpapermoney,$v['agent_price'],2);
+//                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight+$bjPrice-$tralight_price-$couponpapermoney,$v['agent_price'],2);
+                $v['profit']=bcsub($v['final_price']-$couponpapermoney,$v['agent_price'],2);
 
                 $freight = $v['final_freight'];
                 if($v['final_freight'] == 0) $freight = $v['freight'];
@@ -431,6 +432,7 @@ class Orderslist extends Backend
             $params['sender_city']=$row['sender_city'];
             $params['receiver']=$row['receiver'];
             $params['receive_city']=$row['receive_city'];
+            $params['channel_merchant']=$row['channel_merchant'];
             $params['waybill']=$row['waybill'];
             $params['cope_status']=0;
             $params['salf_num']=1;

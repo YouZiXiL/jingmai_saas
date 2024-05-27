@@ -1,4 +1,4 @@
-define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefined, Backend, Table, Form) {
+define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'clipboard.min'], function ($, undefined, Backend, Table, Form, ClipboardJS) {
 
     var Controller = {
         index: function () {
@@ -13,6 +13,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     import_url: 'orders/afterlist/import',
                     table: 'after_sale',
                 }
+            });
+
+            var copy_waybill = new ClipboardJS('.btn-copy-waybill');
+            copy_waybill.on('success', function () {
+                Toastr.success("复制成功");
             });
 
             var table = $("#table");
@@ -42,24 +47,32 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 fixedRightNumber: 1,
                 columns: [
                     [
-                        {checkbox: true},
                         //{field: 'id', title: __('Id')},
                         //{field: 'order_id', title: __('Order_id')},
                         //{field: 'agent_id', title: __('Agent_id')},
                         //{field: 'user_id', title: __('User_id')},
                         //{field: 'out_trade_no', title: __('Out_trade_no'), operate: 'LIKE'},
                         {field: 'waybill', title: __('Waybill'), operate: 'LIKE',formatter:function (value, row, index) {
-                                this.url = 'orders/orderslist?waybill='+value;
-                                return Table.api.formatter.addtabs.call(this, value, row, index);
-                            }},
+                            this.url = 'orders/orderslist?waybill='+value;
+
+                            return `<div class="py-2" style="display: flex; flex-direction: column; align-items: start">
+                                        <div class="p-1 d-flex a-center"> 
+                                             <a href="${this.url}"  target="_self" data-value="${value}"  class="text-blue btn-waybill"> ${Table.api.formatter.addtabs.call(this, value, row, index)}  </a>
+                                             <span data-toggle="tooltip" data-clipboard-text="${value}" class="fa fa-files-o text-muted btn btn-xs btn-copy-waybill"></span>
+                                        </div>
+                                    </div> `;
+                        }},
                         {field: 'usersinfo.mobile', title: __('Nick_name'),formatter:function (value,row,index){
                                 if (row.op_type==='1'){
                                     return "<span >"+value+"</span>";
                                 }else{
-                                    return "<span style='color:#ff0000'>后台提交</span>";
+                                    return `<span style='color:#ff0000'>后台提交</span>`;
                                 }
 
                             }},
+
+                        {field: 'channel_merchant', title: __('渠道'), visible: Config.show},
+
                         {field: 'pic', title: __('Pic'), operate: false, events: Table.api.events.image, formatter: Table.api.formatter.image},
                         {field: 'salf_weight', title: __('Salf_weight'), operate:false,formatter:function (value, row, index) {
                                 if (value===0){

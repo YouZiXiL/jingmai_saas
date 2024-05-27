@@ -392,7 +392,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form' , 'clipboard.min'], fu
 
                         }},
                         {field: 'weight', title: __('货物信息'), operate: false, formatter: function (value, row) {
-
                             return `
                                 <style>
                                     .item_name{
