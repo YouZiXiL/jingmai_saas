@@ -179,8 +179,8 @@ class Orderslist extends Backend
                     $couponpapermoney=0;
                 }
 
-//                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight+$bjPrice-$tralight_price-$couponpapermoney,$v['agent_price'],2);
-                $v['profit']=bcsub($v['final_price']-$couponpapermoney,$v['agent_price'],2);
+                $v['profit']=bcsub($v['final_price']+$overload_price+$haocai_freight+$bjPrice-$tralight_price-$couponpapermoney,$v['agent_price'],2);
+//                $v['profit']=bcsub($v['final_price']-$couponpapermoney,$v['agent_price'],2);
 
                 $freight = $v['final_freight'];
                 if($v['final_freight'] == 0) $freight = $v['freight'];

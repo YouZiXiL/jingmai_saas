@@ -501,8 +501,11 @@ class Wxcallback extends Controller
                 $xcx_access_token= $agent_auth_xcx['auth_token'];
             }
 
-            $up_data['final_freight'] = $receive['total_freight'];
-            $up_data['admin_price'] = $receive['total_freight'];
+            if($receive['fee_over']==1){
+                $up_data['final_freight'] = $receive['total_freight'];
+                $up_data['admin_price'] = $receive['total_freight'];
+            }
+
 
             if(!empty($pamar['waybill'])){
                 $up_data['waybill'] = $pamar['waybill'];
