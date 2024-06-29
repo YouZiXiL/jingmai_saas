@@ -259,7 +259,7 @@ class BBDBusiness
             "remark"=> $order['bill_remark'],
             "Goods"=> $order['item_name']
         ];
-        $volume = (int) $order['vloum_long'] * (int)$order['vloum_long'] * (int)$order['vloum_long'];
+        $volume = (int) $order['vloum_long'] * (int)$order['vloum_width'] * (int)$order['vloum_height'];
         if($volume) $param['Volume'] = $volume;
 
         $resultJson = $this->create($param);

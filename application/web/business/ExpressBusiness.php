@@ -8,6 +8,7 @@ use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
 use app\common\business\OrderBusiness;
 use app\common\business\QBiDaBusiness;
+use app\common\business\YidaBusiness;
 use app\common\business\YunYang;
 use app\common\config\Channel;
 use app\common\library\douyin\Douyin;
@@ -245,20 +246,32 @@ class ExpressBusiness
             $KDNBusiness = new KDNBusiness();
             $BBDBusiness = new BBDBusiness();
             $jiLu = new JiLuBusiness();
+            $yidaBusiness = new YidaBusiness();
+
             // 组装查询参数
             $yyParams = $yunYang->queryPriceParams($senderInfo,$receiverInfo, $data);
             $bbdParams = $BBDBusiness->queryPriceParams($senderInfo,$receiverInfo, $data);
-            $queryList = [ 'yy' => $yyParams, 'bbd' => $bbdParams,];
+            $yidaParams = [];
+//            if($this->user->id == 60663){
+                $yidaParams = $yidaBusiness->queryPriceParams($senderInfo,$receiverInfo, $data);
+//            }
+            $queryList = [ 'yy' => $yyParams, 'bbd' => $bbdParams, 'yd' => $yidaParams];
             //  函数过滤空数组
             $queryList = filter_array($queryList);
             $response =  $this->common->multiRequest(...array_values($queryList));
+
             $keys = array_keys($queryList);
             $list = array_combine($keys, $response);
+
             $yyPackage = isset($list['yy'])?$yunYang->advanceHandle($list['yy'], $agent_info, $data):[];
             $bbdPackage = isset($list['bbd'])?$BBDBusiness->advanceHandle($list['bbd'], $agent_info, $data):[];
+            $ydPackage = [];
+//            if($this->user->id == 60663){
+                $ydPackage = isset($list['yd'])?$yidaBusiness->advanceHandle($list['yd'], $agent_info, $data):[];
+//            }
             $jiLuPackage = $jiLu->queryPriceHandle($agent_info, $data,$senderInfo['province'], $receiverInfo['province']);
             $kdnPackage = $KDNBusiness->queryPriceHandle($agent_info, $data,$senderInfo, $receiverInfo);
-            $result = array_merge_recursive($yyPackage, filter_array([$kdnPackage, $jiLuPackage]), $bbdPackage) ;
+            $result = array_merge_recursive($yyPackage, filter_array([$kdnPackage, $jiLuPackage, $ydPackage]), $bbdPackage) ;
 
             usort($result, function ($a, $b){
                 if (empty($a['final_price']) || empty($b['final_price'])) {
@@ -683,6 +696,19 @@ class ExpressBusiness
             $resultJson= $BBDBusiness->cancel($orders['waybill'], $cancelReason);
             $res=json_decode($resultJson,true);
             if(isset($res['code']) && $res['code'] == '00'){
+                // 取消成功  执行退款操作
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderCancel($orders, $cancelReason);
+            }else{
+                throw new Exception($resultJson);
+            }
+
+        }
+        else if($orders['channel_merchant'] == Channel::$yd){
+            $YdBusiness = new YidaBusiness();
+            $resultJson= $YdBusiness->cancel($orders['waybill']);
+            $res=json_decode($resultJson,true);
+            if(isset($res['code']) && $res['code'] == 200){
                 // 取消成功  执行退款操作
                 $orderBusiness = new OrderBusiness();
                 $orderBusiness->orderCancel($orders, $cancelReason);

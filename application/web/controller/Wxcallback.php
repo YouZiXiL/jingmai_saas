@@ -15,6 +15,7 @@ use app\common\business\RebateListController;
 use app\common\business\SetupBusiness;
 use app\common\business\WanLi;
 use app\common\business\WxBusiness;
+use app\common\business\YidaBusiness;
 use app\common\config\Channel;
 use app\common\config\ProfitConfig;
 use app\common\library\alipay\Alipay;
@@ -1114,6 +1115,19 @@ class Wxcallback extends Controller
 
     }
 
+    // 易达回调
+    function yd_callback(){
+        $params = $this->request->post();
+        $paramJson = json_encode($params, JSON_UNESCAPED_UNICODE );
+        recordLog('yida/callback',$paramJson);
+        Queue::push(YdJob::class, $params,'ydJob');
+        return json([
+            'code'=> 200,
+            'msg'=> 'success',
+            'success'=> true,
+        ]);
+    }
+
 
     /**
      * 包包达回调
@@ -1207,9 +1221,11 @@ class Wxcallback extends Controller
                     $up_data['order_status'] = '待取件';
                 }else if($insertData['status'] == 'PICKED_UP'){
                     $up_data['order_status'] = '已取件';
-                }else if($insertData['status'] == 'EX_TRANSIT'){
+                }
+                else if($insertData['status'] == 'EX_TRANSIT'){
                     $up_data['order_status'] = '运输中';
-                }else if($insertData['status'] == 'IN_TRANSIT'){
+                }
+                else if($insertData['status'] == 'IN_TRANSIT'){
                     $up_data['final_weight'] = $insertData['calcFeeWeight'];
                     $up_data['final_freight'] = $insertData['orderPrice'];
                     if( empty($order['final_weight_time'])){
@@ -1319,7 +1335,8 @@ class Wxcallback extends Controller
 
                     }
 
-                }else if($insertData['status'] == 'SIGNED_IN'){ // 已签收
+                }
+                else if($insertData['status'] == 'SIGNED_IN'){ // 已签收
                     $up_data['order_status'] = '已签收';
                     // 返佣计算
                     if(
@@ -1330,7 +1347,8 @@ class Wxcallback extends Controller
                         $rebateListController = new RebateListController();
                         $rebateListController->handle($order, $agent_info, $users);
                     }
-                }else if($insertData['status'] == 'CANCELED'){ // 已取消
+                }
+                else if($insertData['status'] == 'CANCELED'){ // 已取消
                     $orderBusiness = new OrderBusiness();
                     $orderBusiness->orderCancel($order);
                     if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $order['weight'] >= $agent_info['wx_im_weight'] ){
@@ -1340,9 +1358,11 @@ class Wxcallback extends Controller
 
                     $rebateController = new RebateListController();
                     $rebateController->upState($order, $users,3);
-                }else if($insertData['status'] == 'ABNORMAL'){
+                }
+                else if($insertData['status'] == 'ABNORMAL'){
                     $up_data['order_status'] = '异常订单';
-                }else if($insertData['status'] == 'ADJUST_ACCOUNTS_WEIGHT'){
+                }
+                else if($insertData['status'] == 'ADJUST_ACCOUNTS_WEIGHT'){
                     $common = new Common();
                     $content = [
                         'title' => '调账重量推送',
@@ -1351,7 +1371,8 @@ class Wxcallback extends Controller
                         'body' => "bbd调账重量推送"
                     ];
                     $common->wxrobot_channel_exception($content);
-                }else if($insertData['status'] == 'SECONDARY_WEIGHT'){
+                }
+                else if($insertData['status'] == 'SECONDARY_WEIGHT'){
                     $common = new Common();
                     $content = [
                         'title' => '二次重量推送',
@@ -1360,7 +1381,8 @@ class Wxcallback extends Controller
                         'body' => "bbd二次重量推送"
                     ];
                     $common->wxrobot_channel_exception($content);
-                }else if($insertData['status'] == 'BACKING_COST'){
+                }
+                else if($insertData['status'] == 'BACKING_COST'){
                     $common = new Common();
                     $content = [
                         'title' => '逆向费用推送',
@@ -2449,6 +2471,79 @@ class Wxcallback extends Controller
                             //推送企业微信消息
                             $Common->wxrobot_balance([
                                 'name' => '包包达',
+                                'price' => $balance,
+                            ]);
+                        }
+                    }else if(isset($result['code']) ){ // 下单失败
+                        $out_refund_no=$Common->get_uniqid();//下单退款订单号
+                        //支付下单失败  执行退款操作
+                        $update=[
+                            'pay_status'=>2,
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                            'yy_fail_reason'=> $result['msg']??'响应超时',
+                            'order_status'=>'下单失败',
+                            'out_refund_no'=>$out_refund_no,
+                        ];
+                        $data = [
+                            'type'=>3,
+                            'order_id'=>$orders['id'],
+                            'out_refund_no' => $out_refund_no,
+                            'reason'=>$result['msg']??'响应超时',
+                        ];
+                        // 将该任务推送到消息队列，等待对应的消费者去执行
+                        Queue::push(DoJob::class, $data,'way_type');
+
+                        if (!empty($agent_info['wx_im_bot']) && !empty($agent_info['wx_im_weight']) && $orders['weight'] >= $agent_info['wx_im_weight'] ){
+                            //推送企业微信消息
+                            $Common->wxim_bot($agent_info['wx_im_bot'],$orders);
+                        }
+                    }else{ // 其他状况
+                        $update=[
+                            'pay_status'=> 1,
+                            'yy_fail_reason'=> '响应超时',
+                            'order_status'=>'未知',
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        ];
+                    }
+                    break;
+                case Channel::$yd:
+                    $YDBusiness = new YidaBusiness();
+                    $result = $YDBusiness->create($orders);
+                    $result = json_decode($result, true);
+                    if( isset($result['code']) && $result['code'] == '200'){
+                        $rebateList = new RebateListController();
+                        $rebateList->create($orders, $agent_info);
+                        $update=[
+                            'id' => $orders['id'],
+                            'pay_status'=> 1,
+                            'shopbill'=>$result['data']['orderNo'],
+                            'waybill'=>$result['data']['deliveryId'],
+                            'wx_out_trade_no'=>$inBodyResourceArray['transaction_id'],
+                        ];
+
+                        if(!empty($orders["couponid"])){
+                            $couponinfo=Couponlist::get(["id"=>$orders["couponid"],"state"=>1]);
+                            if($couponinfo){
+                                $couponinfo->state=2;
+                                $couponinfo->save();
+                                $coupon = Couponlists::get(["papercode"=>$couponinfo->papercode]);
+                                if($coupon){
+                                    $coupon->state = 4;
+                                    $coupon->save();
+                                }
+                            }
+                        }
+                        $Dbcommmon->set_agent_amount($agent_info['id'],'setDec',$orders['agent_price'],0,'订单号：'.$orders['out_trade_no'] .' 下单支付成功');
+                        // 易达达账号余额
+                        $balance = $YDBusiness->accountBalance();
+                        $setup= new SetupBusiness();
+                        // 设置的提醒金额
+                        $balanceValue = $setup->getBalanceValue($orders['channel_merchant']);
+                        // 余额变动提醒
+                        if((int)$balance <= (int)$balanceValue){
+                            //推送企业微信消息
+                            $Common->wxrobot_balance([
+                                'name' => '易达',
                                 'price' => $balance,
                             ]);
                         }

@@ -9,6 +9,7 @@ use app\common\business\BBDBusiness;
 use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
 use app\common\business\OrderBusiness;
+use app\common\business\YidaBusiness;
 use app\common\config\Channel;
 use app\common\controller\Backend;
 use app\common\library\R;
@@ -284,6 +285,18 @@ class Orderslist extends Backend
             $resultJson = $BBDBusiness->cancel($row['waybill']);
             $res=json_decode($resultJson,true);
             if(isset($res['code']) && $res['code']=='00'){
+                // 取消成功  执行退款操作
+                $orderBusiness = new OrderBusiness();
+                $orderBusiness->orderCancel($orderModel, '后台取消', '已作废');
+            }else{
+                return R::error($resultJson);
+            }
+        }
+        else if($row['channel_merchant']==Channel::$yd){
+            $YiDaBusiness = new YidaBusiness();
+            $resultJson = $YiDaBusiness->cancel($row['shopbill']);
+            $res=json_decode($resultJson,true);
+            if(isset($res['code']) && $res['code']== 200){
                 // 取消成功  执行退款操作
                 $orderBusiness = new OrderBusiness();
                 $orderBusiness->orderCancel($orderModel, '后台取消', '已作废');

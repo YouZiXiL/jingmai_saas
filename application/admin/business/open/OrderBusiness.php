@@ -9,6 +9,7 @@ use app\common\business\JiLuBusiness;
 use app\common\business\KDNBusiness;
 use app\common\business\ProfitBusiness;
 use app\common\business\QBiDaBusiness;
+use app\common\business\YidaBusiness;
 use app\common\business\YunYang;
 use app\common\config\Channel;
 use app\common\config\ProfitConfig;
@@ -682,6 +683,99 @@ class OrderBusiness extends Backend
             $orderInfo->isUpdate()->save($updateOrder);
             $this->success('下单成功',null, $orderInfo);
         }else{
+            // 下单失败
+            $updateOrder=[
+                'id' => $orderInfo['id'],
+                'pay_status'=> 2,
+                'yy_fail_reason'=> $result['msg']??'系统错误',
+                'order_status'=>'下单失败',
+            ];
+            $orderInfo->isUpdate()->save($updateOrder);
+            $this->error($resultJson);
+        }
+    }
+
+    // 易达参数组装
+
+    /**
+     * @throws ModelNotFoundException
+     * @throws DbException
+     * @throws DataNotFoundException
+     */
+    public function ydPriceHandle(string $yd, array $agent_info, array $paramData)
+    {
+        recordLog('yida/queryPriceResult', $yd);
+        if (empty($yd))  return [];
+        $ydData = json_decode($yd, true);
+        if(empty($ydData) || $ydData['code'] == 500) return [];
+        $yto = $ydData['data']['YTO'][0];
+        $weight = $yto['calcFeeWeight'];
+        $detailPrice = json_decode($yto['price'], true)[0] ;
+        $adminOne= $detailPrice['first'];//平台首重单价
+        $adminMore= $detailPrice['add'];//平台续重单价
+        $YidaBusiness = new YidaBusiness();
+        $profit = $YidaBusiness->getProfitToAgent($agent_info['id']);
+        $agentOne= number_format($adminOne + $profit['one_weight'],2);//代理商首重
+        $agentMore = $adminMore +  $profit['more_weight'];//代理商续重
+        $agentPrice = number_format( (float)$agentOne + $agentMore * ($weight-1) + (float)$yto['preBjFee'],2);// 代理商结算
+
+        $userOne = number_format((float)$agentOne + $profit['user_one_weight'],2);//用户首重
+        $userMore = $agentMore +  $profit['user_more_weight'];//用户续重单价
+        $userPrice = number_format((float)$userOne + $userMore * ($weight-1) + (float)$yto['preBjFee'],2);// 代理商结算
+
+
+        $content['admin_shouzhong']= $adminOne;//平台首重
+        $content['admin_xuzhong']= $adminMore;//平台续重
+        $content['agent_shouzhong']= $agentOne;//代理商首重
+        $content['agent_xuzhong']= (float)  number_format($agentMore, 2);//代理商续重
+        $content['users_shouzhong']= $userOne;//用户首重
+        $content['users_xuzhong']= number_format($userMore, 2);//用户商续重
+        $content['tagType'] =  YidaBusiness::$tag;
+        $content['channelId'] = $yto['channelId'];
+        $content['channel'] = $yto['channelName'];
+        $content['freight'] =  number_format($yto['preOrderFee'], 2); // 运费
+        $content['agent_price'] = $agentPrice;
+        $content['final_price']=  $userPrice;
+        $content["info"]= $paramData['info'];
+        $content['senderInfo']=$paramData['sender'];
+        $content['receiverInfo']=$paramData['receiver'];
+        $content['channel_tag'] = '智能'; // 渠道类型
+        $content['channel_merchant'] = Channel::$yd; // 渠道商
+
+        $requireId = SnowFlake::createId();
+        cache($requireId, json_encode($content), $this->ttl);
+
+        $list['freight'] = $content['agent_price'];
+        $list['tagType'] =  $content['tagType'];
+        $list['onePrice']=  $content['agent_shouzhong'];
+        $list['morePrice']= $content['agent_xuzhong'];
+        $list['channelLogoUrl']= request()->domain().'/assets/img/express/yt.png' ;
+        $list['requireId']= (string) $requireId;
+        return $list;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function ydCreateOrder(Order $orderInfo)
+    {
+        $yd = new YidaBusiness();
+        $resultJson = $yd->create($orderInfo->toArray());
+        $result = json_decode($resultJson, true);
+        if( isset($result['code']) && $result['code'] == 200){
+            // 下单成功
+            $db= new Dbcommom();
+            $db->set_agent_amount($orderInfo['agent_id'],'setDec',$orderInfo['agent_price'],0,'运单号：'. $orderInfo['out_trade_no'].' 下单支付成功');
+            $updateOrder=[
+                'id' => $orderInfo['id'],
+                'pay_status'=> 1,
+                'shopbill'=>$result['data']['orderNo'],
+                'waybill'=>$result['data']['deliveryId'],
+            ];
+            $orderInfo->isUpdate()->save($updateOrder);
+            $this->success('下单成功',null, $orderInfo);
+        }
+        else{
             // 下单失败
             $updateOrder=[
                 'id' => $orderInfo['id'],

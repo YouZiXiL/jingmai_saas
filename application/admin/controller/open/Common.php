@@ -6,6 +6,7 @@ use app\common\business\BBDBusiness;
 use app\common\business\FengHuoDi;
 use app\common\business\JiLuBusiness;
 use app\common\business\QBiDaBusiness;
+use app\common\business\YidaBusiness;
 use app\common\business\YunYang;
 use app\common\controller\Backend;
 use think\Exception;
@@ -28,6 +29,7 @@ class Common extends Backend
         $data['qbdAmt']  = $this->qbdBalance();
         $data['wanliAmt'] = $this->wlBalance();
         $data['bbdAmt'] = $this->bbdBalance();
+        $data['ydAmt'] = $this->ydBalance();
         $this->view->assign('data',$data);
         return $this->view->fetch();
     }
@@ -64,6 +66,11 @@ class Common extends Backend
     public function bbdBalance(){
         $bbd = new BBDBusiness();
         return $bbd->queryBalance();
+    }
+
+    public function ydBalance(){
+        $bbd = new YidaBusiness();
+        return $bbd->accountBalance();
     }
 
 }

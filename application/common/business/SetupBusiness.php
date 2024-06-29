@@ -10,7 +10,7 @@ class SetupBusiness
 {
     /**
      * 获取余额变动通知配置
-     * @param $name  参数有'YY, QBD, JILU ,FHD, WANL'
+     * @param $name  参数有'YY, QBD, JILU ,FHD, WANL，YD'
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException

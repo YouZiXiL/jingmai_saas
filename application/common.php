@@ -542,13 +542,18 @@ if(!function_exists('recordLog')){
         $time = date('H:i:s', time());
         $path = root_path("runtime/log/{$name}/{$date}");
         $file = "{$path}/{$day}.log";
-        if(!file_exists($path)){
-            mkdir($path,0755,true);
+        try {
+            if(!file_exists($path)){
+                mkdir($path,0755,true);
+            }
+            if(!is_file($file)){
+                fopen($file, "w",true);
+                chmod($file, 0644);
+            }
+            file_put_contents( $file, "[{$time}]".PHP_EOL. $content.PHP_EOL.'-----------------'. PHP_EOL, FILE_APPEND);
+        }catch (\Exception $e){
+            echo $e->getMessage();
         }
-        if(!is_file($file)){
-            fopen($file, "w",true);
-        }
-        file_put_contents( $file, "[{$time}]".PHP_EOL. $content.PHP_EOL.'-----------------'. PHP_EOL, FILE_APPEND);
     }
 }
 
