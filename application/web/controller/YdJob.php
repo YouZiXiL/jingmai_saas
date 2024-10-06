@@ -142,14 +142,14 @@ class YdJob
             else if($pushType == 2){
 
                 if($order['final_weight'] == 0){
-                    $update['final_weight'] = $context['realWeight'];
-                }elseif(number_format($context['realWeight'], 2) != number_format($order['final_weight'],2)){
+                    $update['final_weight'] = $context['calcFeeWeight'];
+                }elseif(number_format($context['calcFeeWeight'], 2) != number_format($order['final_weight'],2)){
                     $common = new Common();
                     $content = [
                         'title' => '计费重量变化',
                         'user' =>  'JX', //$order['channel_merchant'],
                         'waybill' =>  $order['waybill'],
-                        'body' => "计费重量：" . $context['realWeight']
+                        'body' => "计费重量：" . $context['calcFeeWeight']
                     ];
                     $common->wxrobot_channel_exception($content);
                 }
@@ -159,15 +159,15 @@ class YdJob
                 $originalFreight = 0;
 
                 foreach ($context['feeBlockList'] as $item){
-                    if($item->type == 0){ // 运费
-                        $originalFreight = $item->fee;
-                    }else if($item->type == 1){ // 保价费
-                        $insuredPrice = $item->fee;
+                    if($item['type'] == 0){ // 运费
+                        $originalFreight = $item['fee'];
+                    }else if($item['type'] == 1){ // 保价费
+                        $insuredPrice = $item['fee'];
                     }else { // 耗材
-                        $haoCai = $item->fee;
+                        $haoCai = $item['fee'];
                     }
                 }
-
+                $update['final_freight'] = $originalFreight;
                 if($originalFreight> $order['freight']){
                     if($context['realWeight'] > $order['weight']){
                         // 有超重(超轻)，换单费用就加到超重金额里
@@ -268,7 +268,7 @@ class YdJob
                 '-' . $e->getMessage().
                 '-' . $e->getTraceAsString()
             );
-            return false;
+            return true;
         }
 
     }

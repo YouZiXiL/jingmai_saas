@@ -12,6 +12,11 @@ use think\exception\DbException;
 class YidaBusiness
 {
     public static string $tag = '圆通③';
+    public static array $tags = [
+        'YTO' => '圆通③',
+        'STO-INT' => '申通③',
+        'JT' => '极兔③',
+    ];
 
     public string $url = 'https://www.yida178.cn/prod-api/thirdApi/execute';
     protected Common $utils;
@@ -82,7 +87,6 @@ class YidaBusiness
             "vloumHeight"=> $param['info']['vloumHeight']?:0,
             "guaranteeValueAmount"=> $param['info']['insured'],
             "customerType"=>"kd",
-            "deliveryType"=>"YTO",
             "onlinePay"=>"Y",
             "payMethod"=> 30,
             "thirdNo"=> $this->utils->get_uniqid()
@@ -98,10 +102,10 @@ class YidaBusiness
      * @throws DbException
      * @throws DataNotFoundException
      */
-    public function getProfitToAgent($agentId)
+    public function getProfitToAgent($agentId,$type)
     {
         $profitBusiness = new ProfitBusiness();
-        return $profitBusiness->getProfitFind($agentId, ['code' => 'YD_YTO']);
+        return $profitBusiness->getProfitFind($agentId, ['code' => "YD_$type"]);
     }
 
     public function queryPriceParams(array $sender, array $receiver, $param)
@@ -132,7 +136,6 @@ class YidaBusiness
             "vloumWidth"=> $param['vloum_width']?:0,
             "vloumHeight"=> $param['vloum_height']?:0,
             "customerType"=>"kd",
-            "deliveryType"=>"YTO",
             "onlinePay"=>"Y",
             "payMethod"=> 30,
             "guaranteeValueAmount"=> $param['insured'],
@@ -146,25 +149,21 @@ class YidaBusiness
         ];
     }
 
-    public function advanceHandle($res, $agent_info, $param)
-    {
-        if (empty($res))  return [];
-        $result = json_decode($res, true);
-        if(empty($result) || $result['code'] == 500 ) return [];
-        $yto = $result['data']['YTO'][0];
-        $weight = $yto['calcFeeWeight'];
-        $detailPrice = json_decode($yto['price'], true)[0] ;
+    public function advanceStep(array $canal,array $agent_info, array $param){
+        $weight = $canal['calcFeeWeight'];
+        $detailPrice = json_decode($canal['price'], true)[0] ;
         $adminOne= $detailPrice['first'];//平台首重单价
         $adminMore= $detailPrice['add'];//平台续重单价
         $YidaBusiness = new YidaBusiness();
-        $profit = $YidaBusiness->getProfitToAgent($agent_info['id']);
+
+        $profit = $YidaBusiness->getProfitToAgent($agent_info['id'],$canal['deliveryType']);
         $agentOne= number_format($adminOne + $profit['one_weight'],2);//代理商首重
         $agentMore = $adminMore +  $profit['more_weight'];//代理商续重
-        $agentPrice = number_format( (float)$agentOne + $agentMore * ($weight-1) + (float)$yto['preBjFee'],2);// 代理商结算
+        $agentPrice = number_format( (float)$agentOne + $agentMore * ($weight-1) + (float)$canal['preBjFee'],2);// 代理商结算
 
         $userOne = number_format((float)$agentOne + $profit['user_one_weight'],2);//用户首重
         $userMore = $agentMore +  $profit['user_more_weight'];//用户续重单价
-        $userPrice = number_format((float)$userOne + $userMore * ($weight-1) + (float)$yto['preBjFee'],2);// 代理商结算
+        $userPrice = number_format((float)$userOne + $userMore * ($weight-1) + (float)$canal['preBjFee'],2);// 代理商结算
 
 
         $content['admin_shouzhong']= $adminOne;//平台首重
@@ -173,10 +172,10 @@ class YidaBusiness
         $content['agent_xuzhong']= (float)  number_format($agentMore, 2);//代理商续重
         $content['users_shouzhong']= $userOne;//用户首重
         $content['users_xuzhong']= number_format($userMore, 2);//用户商续重
-        $content['tagType'] =  YidaBusiness::$tag;
-        $content['channelId'] = $yto['channelId'];
-        $content['channel'] = $yto['channelName'];
-        $content['freight'] =  number_format($yto['preOrderFee'], 2); // 运费
+        $content['tagType'] =  YidaBusiness::$tags[$canal['deliveryType']];
+        $content['channelId'] = $canal['deliveryType'];
+        $content['channel'] = $canal['channelName'];
+        $content['freight'] =  number_format($canal['preOrderFee'], 2); // 运费
         $content['agent_price'] = $agentPrice;
         $content['final_price']=  $userPrice;
 
@@ -195,14 +194,34 @@ class YidaBusiness
         $list['onePrice'] =  $content['users_shouzhong'];
         $list['morePrice'] = $content['users_xuzhong'];
         $list['tag_type'] = $content['tagType'];
-        $list['logo']=  request()->domain().'/assets/img/express/yt.png' ;
-
+        $list['logo']=  request()->domain()."/assets/img/express/{$canal['deliveryType']}.png" ;
+        if($canal['deliveryType'] == 'STO-INT') $list['logo']=  request()->domain()."/assets/img/express/sto.png" ;
+        if($canal['deliveryType'] == 'YTO')  $list['tj'] = true;
         return $list;
+    }
+
+    public function advanceHandle($res, $agent_info, $param)
+    {
+        if (empty($res))  return [];
+        $result = json_decode($res, true);
+        if(empty($result) || $result['code'] == 500 ) return [];
+        $list = [];
+        if (isset($result['data']['YTO'][0])){
+            $list[] = $this->advanceStep($result['data']['YTO'][0],$agent_info, $param);
+        }
+        if (isset($result['data']['STO-INT'][0])){
+            $list[] = $this->advanceStep( $result['data']['STO-INT'][0],$agent_info, $param);
+        }
+        if (isset($result['data']['JT'][0])){
+            $list[] = $this->advanceStep($result['data']['JT'][0],$agent_info, $param);
+        }
+        return $list;
+
     }
 
     public function create(array $order){
         $params = [
-            "deliveryType"=>"YTO",
+            "deliveryType"=>$order['channel_id'],
             "thirdNo"=>$order['out_trade_no'],
             "senderProvince"=>$order['sender_province'],
             "senderCity"=>$order['sender_city'],

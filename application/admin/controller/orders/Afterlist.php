@@ -519,7 +519,6 @@ class Afterlist extends Backend
                     }catch (\Exception $e){
                         recordLog('after-list',$row['out_trade_no'] . '- 发送反馈通知模版失败' . $e->getMessage(). PHP_EOL . $e->getTraceAsString());
                     }
-
                 }
                 else { // 审核驳回
                     try {

@@ -151,6 +151,10 @@ class Admin extends Backend
                         $params['users_shouzhong']=1; //用户首重价格
                         $params['users_xuzhong']=1; //用户续重价格
                         $params['users_shouzhong_ratio']=14; //用户增加比例%
+                        $params['agent_shouzhong']=0.1;
+                        $params['agent_xuzhong']=0.1;
+                        $params['db_agent_ratio']=3;
+                        $params['sf_agent_ratio']=3;
                         $params['zizhu']=1; //自助取消订单
                         $params['zhonghuo']=1; //重货渠道
                         $params['ordtips']=1;  //下单提示弹框

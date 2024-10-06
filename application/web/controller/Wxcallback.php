@@ -976,11 +976,12 @@ class Wxcallback extends Controller
                 $orderBusiness->orderFail($order, $resData['Reason']);
             }
 
-            if(empty($order['final_weight_time']) && $kdnData['Cost'] != 0 ){  // 超重
-                $overloadWeight =ceil( $kdnData['Weight'] - $order['weight']); // 超出重量
+            if(empty($order['final_weight_time']) && $kdnData['Cost'] != 0 ){
+                $up_data['final_weight'] = round($kdnData['Weight']) ;
+                $overloadWeight =ceil($kdnData['Weight'] - $order['weight']);
                 if ($overloadWeight != 0){
                     $overloadPrice = $kdnData['Cost'] - $order['freight']; // 超出金额
-                    if($overloadPrice > 0){
+                    if($overloadPrice > 0){ // 超重
 //                    $profit = $KDNBusiness->getProfitToAgent($agent_info['id']);
                         $up_data['admin_overload_price'] = number_format( $order['admin_xuzhong'] * $overloadWeight,2); //代理商超重金额
                         $up_data['agent_overload_price'] = number_format( $order['agent_xuzhong'] * $overloadWeight,2); //代理商超重金额
@@ -1012,6 +1013,7 @@ class Wxcallback extends Controller
                         $up_data['agent_tralight_price'] = number_format(  $order['agent_xuzhong'] * $lightWeight,2); //代理商超重金额
                         $up_data['tralight_price'] = number_format( $order['users_xuzhong'] * $lightWeight, 2); //用户超重金额
                         $up_data['tralight_status'] = '1';
+                        $up_data['final_weight_time']=time();
                     }
                 }
 

@@ -230,6 +230,8 @@ class YunYang{
             $list[$k]['onePrice'] =  $user['onePrice'];
             $list[$k]['morePrice'] = $user['morePrice'];
             $list[$k]['tag_type'] = $v['tagType'];
+            $list[$k]['logo'] = $v['channelLogoUrl'];
+            if($v['tagType'] == '申通')   $list[$k]['logo']=  request()->domain()."/assets/img/express/sto.png" ;
         }
 
         if(isset($list)){
@@ -349,6 +351,7 @@ class YunYang{
         if($channel['tagType'] == '百世'){ // 强制保价
             if($channel['insured_price'] < 4) $channel['insured_price'] = 4;
         }
+        if($channel['tagType'] == '圆通') $channel['tagType'] = '圆通①';
         $channel['agent_price']= $agent['price'];// 代理商结算金额
         $channel['final_price']= $user['price'];//用户支付总价
         $channel['admin_shouzhong']= $admin['onePrice'];//平台首重

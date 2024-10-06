@@ -663,6 +663,7 @@ class Yunyang extends Controller
             case '圆通':
             case '圆通快递':
             case '圆通①':
+            case '圆通③':
                 $cpCode='YTO'; break;
             case '顺丰':
             case '顺丰快递':
@@ -672,6 +673,7 @@ class Yunyang extends Controller
             case '京东':
                 $cpCode='JD'; break;
             case '极兔':
+            case '极兔③':
                 $cpCode='JT'; break;
             case '德邦大件快递360':
             case '德邦快递':
@@ -685,9 +687,12 @@ class Yunyang extends Controller
             case '中通':
                 $cpCode='ZTO'; break;
             case '申通':
+            case '申通③':
                 $cpCode='STO'; break;
             case '顺心捷达':
                 $cpCode='CP471906'; break;
+            case '菜鸟':
+                $cpCode='ZMKM'; break;
             default:
                 return R::error("快递类型错误");
         }
@@ -1314,7 +1319,6 @@ class Yunyang extends Controller
      */
     function after_sale(): Json
     {
-        Log::info('异常反馈');
         $pamar=$this->request->param();
         $file = $this->request->file('pic');
       try {

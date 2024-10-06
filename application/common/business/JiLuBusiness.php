@@ -14,7 +14,8 @@ use think\Model;
 class JiLuBusiness
 {
     public static string $code = '8_2'; //  快递渠道代号
-    public static string $tag = '圆通快递'; // 前端显示的名字
+    public static string $tag = '圆通④'; // 前端显示的名字
+    public static string $express = '圆通快递';
 
     public Common $utils;
     public string $baseUlr;
@@ -182,7 +183,7 @@ class JiLuBusiness
 
         $content['tagType'] = JiLuBusiness::$tag;
         $content['channelId'] =  JiLuBusiness::$code;
-        $content['channel'] = '圆通';
+        $content['channel'] = JiLuBusiness::$express;
         $content['freight'] =  number_format($freight, 2);
         $content['agent_price'] = number_format($agentPrice, 2);
         $content['final_price']=  number_format($userPrice, 2);

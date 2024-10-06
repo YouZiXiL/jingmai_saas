@@ -71,7 +71,6 @@ class Saleratio extends Backend
             $profitBusiness = new ProfitBusiness();
             $profit = $profitBusiness->getProfit($this->auth->id);
             $express = $profitBusiness->getExpress();
-
             $this->view->assign('agent_id', $this->auth->id);
             $this->view->assign('profit', $profit);
             $this->view->assign('express', $express);

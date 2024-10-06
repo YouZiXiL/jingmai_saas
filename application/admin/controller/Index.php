@@ -198,7 +198,11 @@ class Index extends Backend
                 $insert['avatar'] = '/assets/img/avatar.png'; //设置新管理员默认头像。
                 $insert['users_shouzhong']=1; //用户首重价格
                 $insert['users_xuzhong']=1; //用户续重价格
+                $insert['agent_shouzhong']=0.1;
+                $insert['agent_xuzhong']=0.1;
                 $insert['users_shouzhong_ratio']=14; //用户增加比例%
+                $insert['db_agent_ratio']=3;
+                $insert['sf_agent_ratio']=3;
                 $insert['zizhu']=1; //自助取消订单
                 $insert['zhonghuo']=1; //重货渠道
                 $insert['ordtips']=1;  //下单提示弹框

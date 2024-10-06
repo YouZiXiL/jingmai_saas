@@ -138,12 +138,11 @@ class Order extends Backend
         $qbdRes = isset($list['qbd'])?$orderBusiness->qbdPriceHandle($list['qbd'], $agent_info, $paramData):[];
 //        $kdnRes = isset($list['kdn'])?$orderBusiness->kdnPriceHandle($list['kdn'], $agent_info, $paramData):[];
         $bbdRes = isset($list['bbd'])?$orderBusiness->bbdPriceHandle($list['bbd'], $agent_info, $paramData):[];
-        $ydRes = [];
         $ydRes = isset($list['yd'])?$orderBusiness->ydPriceHandle($list['yd'], $agent_info, $paramData):[];
 
         $jlRes = $orderBusiness->jlPriceHandle($agent_info, $paramData);
         $kdnRes =  $orderBusiness->kdnPriceHandle($agent_info, $paramData);
-        $priceList = array_merge_recursive($yyRes, $qbdRes, $bbdRes, filter_array([$kdnRes, $jlRes, $ydRes]) ) ;
+        $priceList = array_merge_recursive($yyRes, $qbdRes, $bbdRes, $ydRes,filter_array([$kdnRes, $jlRes]) ) ;
 
         if (empty($priceList)){
             throw new Exception('没有指定快递渠道请联系客服');

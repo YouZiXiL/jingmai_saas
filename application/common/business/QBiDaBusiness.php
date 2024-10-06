@@ -123,15 +123,6 @@ class QBiDaBusiness
                 }
                 $item['channel'] = $v['channelName'];
                 $v['channelName'] = 'JX-顺丰标快';
-//                if($v['isNew']){
-//                    $v["agent_price"]=number_format($v["channelFee"]  + $v["guarantFee"],2);
-//                    $v["users_price"]=$v["agent_price"];
-//                }else{
-//                    $agentPrice = $v["channelFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$v["guarantFee"];
-//                    $userPrice = $agentPrice + $agentPrice*$agent_info["sf_users_ratio"]/100;
-//                    $v["agent_price"]=number_format($agentPrice,2);
-//                    $v["users_price"]=number_format($userPrice,2);
-//                }
                 $agentPrice = $v["channelFee"] + ($v["discount"]/10+$agent_info["sf_agent_ratio"]/100)+$v["guarantFee"];
                 $userPrice = $agentPrice + $agentPrice * $agent_info["sf_users_ratio"]/100;
                 $v["agent_price"]=number_format($agentPrice,2);
@@ -140,7 +131,9 @@ class QBiDaBusiness
                 $v["final_price"]=bcadd( $v["users_price"], $v["guarantFee"],2);
                 $v['tagType'] = $channelTag;
                 $v['channel_tag'] = Channel::$qbd;
+                $v['channelId'] = $v['productCode'];
                 $v["insured"]=$param['insured'];
+                $v["freight"]=$v['channelFee'];
                 $v["channel_merchant"]= Channel::$qbd;
                 $v['jijian_id']=$param['jijian_id'];//寄件id
                 $v['shoujian_id']=$param['shoujian_id'];//收件id

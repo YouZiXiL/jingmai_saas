@@ -664,9 +664,44 @@ class Test extends Controller
     public function bbdQueryPrice(){
         $str = null;
         $arr = json_decode($str, true);
-        dd(empty($arr));
         $BBDBusiness = new BBDBusiness();
         $result = $BBDBusiness->queryPriceTest();
         return R::ok(json_decode($result) );
+    }
+
+    public function push(){
+        $order = Order::field('id, out_trade_no,waybill')
+            ->where('channel_merchant', 'YD')
+            ->where('pay_status', 1)
+            ->where('final_weight', 0)
+            ->where('order_status', '已签收')
+            ->limit(0,200)
+            ->select();
+
+            if($order){
+                foreach ($order as $item){
+
+                    $item = $item->toArray();
+
+                        $res = db('yd_callback')->field('id,raw')
+                            ->where('thirdNo', $item['out_trade_no'])
+                            ->where('pushType', 2)
+                            ->find();
+                        $util = new Common();
+                        $url = 'https://jingxi.bajiehuidi.com/web/wxcallback/yd_callback';
+                    try {
+                        if($res)$util->httpRequest($url, json_decode($res['raw'], true), 'POST');
+
+                    } catch (\Exception $e) {
+                        echo $e->getMessage(). PHP_EOL.
+                            json_encode($res,JSON_UNESCAPED_UNICODE) . PHP_EOL
+                            .$item['out_trade_no'];
+                    }
+
+                }
+
+            }
+        return R::ok($order);
+
     }
 }

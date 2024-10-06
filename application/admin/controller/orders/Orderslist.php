@@ -484,7 +484,9 @@ class Orderslist extends Backend
         $kuaidi100_key=config('site.kuaidi100_key');
         $common=new Common();
         $out_trade_no=$common->get_uniqid();
-        $content=json_encode(['发收人姓名'=>$row['sender'],'快递单号'=>$row['waybill']]);
+        $orderCode = $common->generateShortCode($ids);
+        $link = request()->host() . "/cz/{$orderCode}";
+        $content=json_encode(['发收人姓名'=>$row['sender'],'运单号'=>$row['waybill'], '补缴链接'=>$link], JSON_UNESCAPED_UNICODE);
         $sendData = [
             'sign'=>strtoupper(md5($kuaidi100_key.$kuaidi100_userid)),
             'userid'=>$kuaidi100_userid,
@@ -539,7 +541,9 @@ class Orderslist extends Backend
         $kuaidi100_key=config('site.kuaidi100_key');
         $common=new Common();
         $out_trade_no=$common->get_uniqid();
-        $content=json_encode(['发收人姓名'=>$row['sender'],'快递单号'=>$row['waybill']]);
+        $orderCode = $common->generateShortCode($ids);
+        $link = request()->host() . "/hc/{$orderCode}";
+        $content=json_encode(['发收人姓名'=>$row['sender'],'运单号'=>$row['waybill'], '补缴链接'=>$link], JSON_UNESCAPED_UNICODE);
         $sendData = [
             'sign'=>strtoupper(md5($kuaidi100_key.$kuaidi100_userid)),
             'userid'=>$kuaidi100_userid,

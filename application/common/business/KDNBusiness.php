@@ -85,8 +85,8 @@ class KDNBusiness
      * @return bool|string
      */
     public function create($param){
+        recordLog('kdn-create-order',$param['OrderCode'] . PHP_EOL .json_encode($param,JSON_UNESCAPED_UNICODE));
         $postData =$this->setParams($param, 1801);
-        recordLog('kdn-create-order',$param['OrderCode'] . PHP_EOL .json_encode($postData,JSON_UNESCAPED_UNICODE));
         $result =  $this->post($postData);
         recordLog('kdn-create-order',
             '订单：'.$param['OrderCode']. PHP_EOL .
@@ -471,6 +471,7 @@ class KDNBusiness
         $list['onePrice']=$content['users_shouzhong'];
         $list['morePrice']=$content['users_xuzhong'];
         $list['tag_type']=$content['tagType'];
+        $list['tj'] = true;
         $list['logo']= request()->domain().'/assets/img/express/yt.png' ;
         return $list;
     }

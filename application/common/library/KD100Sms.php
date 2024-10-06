@@ -51,7 +51,7 @@ class KD100Sms
         if($autoSms){
             $link = request()->host() . "/cz/{$orderCode}";
             $content=json_encode(['发收人姓名'=>$order['sender'],'运单号'=>$order['waybill'], '补缴链接'=>$link], JSON_UNESCAPED_UNICODE);
-            $resJson = $this->send($content, $out_trade_no, $order,self::$overloadId);
+            $resJson = $this->send($content, $out_trade_no, $order, self::$overloadId);
             $this->pushLog($resJson, $order, 1);
         }
 

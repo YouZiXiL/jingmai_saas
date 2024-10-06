@@ -265,13 +265,10 @@ class ExpressBusiness
 
             $yyPackage = isset($list['yy'])?$yunYang->advanceHandle($list['yy'], $agent_info, $data):[];
             $bbdPackage = isset($list['bbd'])?$BBDBusiness->advanceHandle($list['bbd'], $agent_info, $data):[];
-            $ydPackage = [];
-//            if($this->user->id == 60663){
-                $ydPackage = isset($list['yd'])?$yidaBusiness->advanceHandle($list['yd'], $agent_info, $data):[];
-//            }
+            $ydPackage = isset($list['yd'])?$yidaBusiness->advanceHandle($list['yd'], $agent_info, $data):[];
             $jiLuPackage = $jiLu->queryPriceHandle($agent_info, $data,$senderInfo['province'], $receiverInfo['province']);
             $kdnPackage = $KDNBusiness->queryPriceHandle($agent_info, $data,$senderInfo, $receiverInfo);
-            $result = array_merge_recursive($yyPackage, filter_array([$kdnPackage, $jiLuPackage, $ydPackage]), $bbdPackage) ;
+            $result = array_merge_recursive($yyPackage, $ydPackage,filter_array([$kdnPackage, $jiLuPackage]), $bbdPackage) ;
 
             usort($result, function ($a, $b){
                 if (empty($a['final_price']) || empty($b['final_price'])) {
@@ -706,7 +703,7 @@ class ExpressBusiness
         }
         else if($orders['channel_merchant'] == Channel::$yd){
             $YdBusiness = new YidaBusiness();
-            $resultJson= $YdBusiness->cancel($orders['waybill']);
+            $resultJson= $YdBusiness->cancel($orders['shopbill']);
             $res=json_decode($resultJson,true);
             if(isset($res['code']) && $res['code'] == 200){
                 // 取消成功  执行退款操作
